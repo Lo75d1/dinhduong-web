@@ -1,0 +1,568 @@
+// Prisma schema — Nutrition DB (rebuilt from VDD + RNI official sources)
+// Data provenance: every Food/Dish row is tagged with `source` = "VDD" | "RNI"
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================================================================
+// FOOD — thực phẩm (bao gồm cả "món ăn hoàn chỉnh" của VDD, foodType=MON_AN)
+// =====================================================================
+model Food {
+  id String @id @default(cuid())
+
+  // ---- identity / provenance ----
+  name           String
+  nameNormalized String  @default("") // lowercase, không dấu — phục vụ tìm kiếm
+  source         String // "VDD" | "RNI"
+  sourceCode     String? // Mã số gốc trong file nguồn
+  sourceNote     String? // Ghi chú nguồn tham khảo (VD: "Bộ Y tế Việt Nam (2015)...")
+  unit           String  @default("g")
+  wastePercent   Float? // Tỷ lệ thải bỏ (%)
+
+  // ---- app-derived classification (KHÔNG phải số đo gốc — xem README-data.md) ----
+  foodType         String? // "TS" tươi sống | "CB" chế biến | "MA" món ăn (đã nấu, từ VDD Món ăn)
+  foodGroup        String? // 1 trong 10 nhóm chuẩn (chỉ có khi source=VDD)
+  proteinOrigin    String? // "Thịt đỏ" | "Thịt trắng" | "Trứng sữa" | "Thực vật" | "Chế biến"
+  giLevel          Int? // 0-3, hiện luôn null — CHƯA CÓ NGUỒN, cần bổ sung riêng (xem README-data.md)
+  purinLevel       Int? // 0-3, suy từ purinMg (RNI): <50=0, 50-100=1, 100-150=2, >150=3
+  cholesterolLevel Int? // 0-3, suy từ cholesterolMg: 0=0, 1-20=1, 20-50=2, >50=3
+
+  // raw source classification kept for traceability (không dùng để tính toán)
+  vddGroupRaw String? // "Nhóm" gốc trong file VDD (15 nhóm, trước khi map xuống 10 nhóm chuẩn)
+  vddGroupEn  String?
+
+  // ---- macro (per 100g) ----
+  energyKcal     Float?
+  energyKj       Float?
+  waterG         Float?
+  proteinG       Float?
+  animalProteinG Float?
+  lipidG         Float?
+  glucidG        Float?
+  fiberG         Float?
+  ashG           Float?
+
+  // ---- minerals ----
+  calciumMg      Float?
+  ironMg         Float?
+  magnesiumMg    Float?
+  manganeseMg    Float?
+  phosphorusMg   Float?
+  potassiumMg    Float?
+  sodiumMg       Float?
+  zincMg         Float?
+  copperMgVdd    Float? // VDD báo cáo Đồng theo mg — KHÔNG cùng đơn vị với copperMcgRni, xem README-data.md
+  copperMcgRni   Float? // RNI báo cáo Đồng theo µg
+  seleniumMcg    Float?
+  fluorideMcg    Float?
+  phytosterolsMg Float?
+  purinMg        Float? // Purin thô (mg), chỉ có ở RNI — nguồn của purinLevel ở trên
+
+  // ---- vitamins ----
+  retinolMcg              Float?
+  vitARaeMcg              Float?
+  vitAMgVdd               Float? // đơn vị mg đáng ngờ trong file gốc VDD — xem README-data.md
+  vitAMcgRni              Float?
+  vitAReMcg               Float?
+  betaCarotenMcg          Float?
+  alphaCarotenMcg         Float?
+  cryptoxanthinBetaMcg    Float?
+  lycopeneMcg             Float?
+  luteinZeaxanthinMcg     Float?
+  vitCMg                  Float?
+  vitB1Mg                 Float?
+  vitB2Mg                 Float?
+  vitB3Mg                 Float?
+  niacinEquivMg           Float?
+  vitB5Mg                 Float?
+  vitB6Mg                 Float?
+  folateTotalMcg          Float?
+  folateFoodMcg           Float?
+  folateDfeMcg            Float?
+  folicAcidMcg            Float?
+  vitB12Mcg               Float?
+  vitB12AddedMcg          Float?
+  biotinMcg               Float?
+  vitDMcg                 Float?
+  vitD2Mcg                Float?
+  vitD3Mcg                Float?
+  vitEMg                  Float?
+  vitEAddedMg             Float?
+  tocopherolAlphaMg       Float?
+  tocopherolBetaMg        Float?
+  tocopherolGammaMg       Float?
+  tocopherolDeltaMg       Float?
+  tocotrienolAlphaMg      Float?
+  tocotrienolBetaMg       Float?
+  tocotrienolGammaMg      Float?
+  tocotrienolDeltaMg      Float?
+  vitKMcg                 Float?
+  dihydrophylloquinoneMcg Float?
+  menaquinone4Mcg         Float?
+  cholineMg               Float?
+
+  // ---- amino acids (mg) ----
+  tryptophanMg    Float?
+  threonineMg     Float?
+  isoleucineMg    Float?
+  leucineMg       Float?
+  lysineMg        Float?
+  methionineMg    Float?
+  cystineMg       Float?
+  phenylalanineMg Float?
+  tyrosineMg      Float?
+  valineMg        Float?
+  arginineMg      Float?
+  histidineMg     Float?
+  alanineMg       Float?
+  asparticAcidMg  Float?
+  glutamicAcidMg  Float?
+  glycineMg       Float?
+  prolineMg       Float?
+  serineMg        Float?
+  hydroxyprolineG Float?
+
+  // ---- fatty acids (g unless noted) ----
+  satFatTotalG         Float?
+  palmiticC160G        Float?
+  margaricC170G        Float?
+  stearicC180G         Float?
+  behenicC220G         Float?
+  lignocericC240G      Float?
+  mufaTotalG           Float?
+  myristoleicC141G     Float?
+  palmitoleicC161G     Float?
+  oleicC181G           Float?
+  pufaTotalG           Float?
+  linoleicC182G        Float?
+  linolenicC183G       Float?
+  arachidonicC204G     Float?
+  epaC205G             Float?
+  dhaC226G             Float?
+  cholesterolMg        Float?
+  transFatTotalG       Float?
+  rniUnknownFattyAcidG Float? // cột "Arginine (g)" trong file RNI gốc, nằm giữa nhóm axit béo — có thể là lỗi đặt tên (Arachidic?), giữ nguyên chưa đoán sửa
+
+  // fatty acids chỉ có ở VDD (không map được sang RNI)
+  c40G             Float?
+  c60G             Float?
+  c80G             Float?
+  c100G            Float?
+  c120G            Float?
+  c140G            Float?
+  c181UndiffG      Float?
+  c161UndiffG      Float?
+  c182UndiffG      Float?
+  c183UndiffG      Float?
+  c200G            Float?
+  c130G            Float?
+  c150G            Float?
+  c151G            Float?
+  c161TransG       Float?
+  c171G            Float?
+  c181TransG       Float?
+  c1811TransG      Float?
+  c201G            Float?
+  c221UndiffG      Float?
+  c221cG           Float?
+  c221tG           Float?
+  c241cG           Float?
+  c182ClaG         Float?
+  c182TtG          Float?
+  c182IG           Float?
+  c182NfdG         Float?
+  c183N6CccG       Float?
+  c183IG           Float?
+  c184G            Float?
+  c202N6CcG        Float?
+  c203UndiffG      Float?
+  c203N3G          Float?
+  c203N6G          Float?
+  c204UndiffG      Float?
+  c215G            Float?
+  c224G            Float?
+  c225N3DpaG       Float?
+  transMonoenoicG  Float?
+  transPolyenoicG  Float?
+  stigmasterolMg   Float?
+  campesterolMg    Float?
+  betaSitosterolMg Float?
+
+  // ---- sugars / carbs breakdown ----
+  sugarsTotalG Float?
+  glucoseG     Float?
+  fructoseG    Float?
+  lactoseG     Float?
+  maltoseG     Float?
+  galactoseG   Float?
+  sucroseG     Float?
+  starchG      Float?
+  phyticAcidMg Float?
+  sugarsAddedG Float?
+
+  // ---- other ----
+  caffeineMg        Float?
+  theobromineMg     Float?
+  alcoholG          Float?
+  isoflavoneTotalMg Float?
+  daidzeinMg        Float?
+  genisteinMg       Float?
+  glyceteinMg       Float?
+
+  dishIngredients DishIngredient[]
+  aliases         FoodAlias[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([nameNormalized])
+  @@index([source])
+  @@index([foodGroup])
+  @@map("foods")
+}
+
+// Tên gọi khác/tên địa phương (vd "cà chua" ~ "cà tô mát" Nam bộ) — LUÔN là gợi ý
+// theo kiến thức chung, KHÔNG có nguồn kiểm chứng, chỉ phục vụ tìm kiếm, KHÔNG BAO
+// GIỜ thay thế Food.name gốc. verified=false cho tới khi có người xác nhận qua Admin.
+model FoodAlias {
+  id String @id @default(cuid())
+
+  food   Food   @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  foodId String
+
+  alias           String
+  aliasNormalized String  @default("")
+  region          String? // "Bắc" | "Trung" | "Nam" | null nếu không rõ/dùng chung
+  verified        Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([foodId])
+  @@index([aliasNormalized])
+  @@map("food_aliases")
+}
+
+// =====================================================================
+// DISH — món ăn dạng công thức (nguyên liệu + khối lượng). Hiện chỉ có RNI
+// (VDD Món ăn không có công thức nguyên liệu nên đã nhập vào Food, foodType=MA)
+// =====================================================================
+model Dish {
+  id String @id @default(cuid())
+
+  name           String
+  nameNormalized String  @default("") // lowercase, không dấu — phục vụ tìm kiếm
+  source         String // "RNI" (chỗ để mở rộng nguồn khác sau này)
+  sourceCode     String?
+  totalWeightG   Float? // Khối lượng mặc định (g)
+  servingUnit    String? // Đơn vị khẩu phần (VD: "Cái", "Chén")
+  isActive       Boolean @default(true)
+
+  // Nhãn phân loại gốc của RNI (115 giá trị, KHÔNG thuần bệnh lý — xem README-data.md)
+  categoryRaw String? // nguyên văn "Nhóm món ăn" gốc, luôn lưu, không mất thông tin
+  diseaseDiet String? // suy ra nếu categoryRaw khớp 1 trong 4 nhãn bệnh lý (đái tháo đường/suy thận/tăng huyết áp/ung thư), else null
+  ageGroup    String? // suy ra nếu categoryRaw chứa mốc tuổi/tháng, else null
+
+  cookingSteps String? @db.Text // "Cách chế biến" gốc — đây là văn bản công thức nấu, KHÔNG phải 1 chip method
+
+  ingredients DishIngredient[]
+
+  createdAt DateTime @default(now())
+
+  @@index([name])
+  @@index([nameNormalized])
+  @@index([diseaseDiet])
+  @@map("dishes")
+}
+
+model DishIngredient {
+  id String @id @default(cuid())
+
+  dish   Dish   @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  dishId String
+
+  foodNameRaw String // tên nguyên liệu như trong file gốc (luôn có)
+  food        Food?   @relation(fields: [foodId], references: [id])
+  foodId      String? // liên kết tới bảng Food nếu khớp được tên — có thể null
+
+  quantityG Float?
+  sortOrder Int    @default(0)
+
+  // Năng lượng nguyên liệu (Kcal/100g) theo file gốc RNI — có sẵn cho MỌI nguyên liệu
+  // kể cả khi chưa liên kết được `food` (chỉ có Kcal, không có đạm/béo/đường)
+  energyKcalRaw Float?
+
+  @@index([dishId])
+  @@index([foodId])
+  @@map("dish_ingredients")
+}
+
+// =====================================================================
+// NUTRITION_RECOMMENDATION — khuyến nghị theo nhóm tuổi + giới (72 dòng,
+// nguồn: Webdinhduong/dataweb_chuan-1.xlsx sheet "KhuyenNghi")
+// =====================================================================
+model NutritionRecommendation {
+  id String @id @default(cuid())
+
+  stt               Int?
+  ageGroup          String // NhomTuoi, vd "0-5 tháng"
+  gender            String // GioiTinh
+  energyKcal        Float?
+  referenceWeightKg Float? // CanNangThamChieu
+  physicalActivity  String? // HoatDongTheLuc
+
+  // Đạm/béo/đường: phân số (0-1) của tổng năng lượng, vd 0.13 = 13%. KHÔNG phải gram.
+  proteinMinPct Float?
+  proteinMaxPct Float?
+  lipidMinPct   Float?
+  lipidMaxPct   Float?
+  glucidMinPct  Float?
+  glucidMaxPct  Float?
+
+  vitA       Float?
+  vitAType   String?
+  vitD       Float?
+  vitDType   String?
+  vitE       Float?
+  vitEType   String?
+  vitK       Float?
+  vitKType   String?
+  vitB1      Float?
+  vitB1Type  String?
+  vitB2      Float?
+  vitB2Type  String?
+  vitB3      Float?
+  vitB3Type  String?
+  vitB5      Float?
+  vitB5Type  String?
+  vitB6      Float?
+  vitB6Type  String?
+  vitB9      Float?
+  vitB9Type  String?
+  vitB12     Float?
+  vitB12Type String?
+  vitC       Float?
+  vitCType   String?
+
+  calcium        Float?
+  calciumType    String?
+  iron           Float?
+  ironType       String?
+  zinc           Float?
+  zincType       String?
+  magnesium      Float?
+  magnesiumType  String?
+  iodine         Float?
+  iodineType     String?
+  phosphorus     Float?
+  phosphorusType String?
+  fiber          Float?
+  fiberType      String?
+  water          Float?
+  waterType      String? // đôi khi là ghi chú dạng công thức, vd "100 ml/kg" thay vì số cố định
+  sodium         Float?
+  sodiumType     String?
+  potassium      Float?
+  potassiumType  String?
+  chloride       Float?
+  chlorideType   String?
+
+  @@index([ageGroup])
+  @@index([gender])
+  @@map("nutrition_recommendations")
+}
+
+// =====================================================================
+// DIET_CODE — Mã chế độ ăn bệnh lý Bộ Y tế (246 dòng, sheet "MCDA")
+// =====================================================================
+model DietCode {
+  id String @id @default(cuid())
+
+  code         String // MaCDA
+  targetGroup  String // DoiTuong: TreEm | NguoiLon
+  diseaseGroup String // NhomBenh
+  name         String // TenCheDoAn
+
+  energyMinKcal  Float?
+  energyMaxKcal  Float?
+  proteinMinG    Float?
+  proteinMaxG    Float?
+  lipidMinG      Float?
+  lipidMaxG      Float?
+  glucidMinG     Float?
+  glucidMaxG     Float?
+  sodiumMinMg    Float?
+  sodiumMaxMg    Float?
+  potassiumMinMg Float?
+  potassiumMaxMg Float?
+  waterMinMl     Float?
+  waterMaxMl     Float?
+  mealsMin       Float?
+  mealsMax       Float?
+  note           String?
+
+  @@index([code])
+  @@index([targetGroup])
+  @@index([diseaseGroup])
+  @@map("diet_codes")
+}
+
+// =====================================================================
+// CHILD_GROWTH_STANDARD — chuẩn tăng trưởng WHO 0-18 tuổi (40 dòng,
+// mốc theo năm/nửa năm — không phải theo tháng, xem README-data.md)
+// =====================================================================
+model ChildGrowthStandard {
+  id String @id @default(cuid())
+
+  gender    String // GioiTinh
+  ageYears  Float? // TuoiNam
+  ageMonths Float // TuoiThang
+
+  weightM3sd Float? // CnM3sd
+  weightM2sd Float?
+  weightAvg  Float?
+  weightP2sd Float?
+  weightP3sd Float?
+
+  heightM3sd Float? // CcM3sd
+  heightM2sd Float?
+  heightAvg  Float?
+  heightP2sd Float?
+  heightP3sd Float?
+
+  @@index([gender])
+  @@index([ageMonths])
+  @@map("child_growth_standards")
+}
+
+// =====================================================================
+// APP DATA — tài khoản, bệnh nhân và khẩu phần lưu trên server.
+// Các bảng này tách biệt hoàn toàn với Food/Dish là dữ liệu nguồn VDD/RNI.
+// =====================================================================
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  displayName  String
+  passwordHash String
+  role         String    @default("CLINICIAN") // CLINICIAN | ADMIN
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions Session[]
+  patients Patient[]
+  rations  Ration[]
+  submissions       FoodSubmission[] @relation("SubmissionAuthor")
+  reviewedSubmissions FoodSubmission[] @relation("SubmissionReviewer")
+
+  @@map("app_users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("app_sessions")
+}
+
+model Patient {
+  id          String    @id @default(cuid())
+  ownerId     String
+  name        String
+  dateOfBirth DateTime?
+  gender      String?
+  note        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  owner   User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  rations Ration[]
+
+  @@index([ownerId])
+  @@index([name])
+  @@map("patients")
+}
+
+model Ration {
+  id          String      @id @default(cuid())
+  ownerId     String
+  patientId   String?
+  title       String
+  observedAt  DateTime    @default(now())
+  profileJson Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  owner   User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  patient Patient?  @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  items   RationItem[]
+
+  @@index([ownerId, observedAt])
+  @@index([patientId, observedAt])
+  @@map("rations")
+}
+
+model RationItem {
+  id               String   @id @default(cuid())
+  rationId         String
+  foodId           String?
+  meal             String
+  dish             String
+  foodName         String
+  edibleGrams      Float
+  inputGrams       Float
+  inputBasis       String
+  conversionFactor Float
+  wastePercent     Float?
+  note             String?
+  nutrientsJson    Json
+  classifyJson     Json
+  sortOrder        Int
+  createdAt        DateTime @default(now())
+
+  ration Ration @relation(fields: [rationId], references: [id], onDelete: Cascade)
+
+  @@index([rationId, sortOrder])
+  @@index([foodId])
+  @@map("ration_items")
+}
+
+// Bản nháp do người dùng đề xuất. Không phải Food/Dish nguồn và không được
+// tự động đưa vào bảng dữ liệu chính, kể cả khi trạng thái là APPROVED.
+model FoodSubmission {
+  id          String   @id @default(cuid())
+  submitterId String
+  reviewerId  String?
+  name        String
+  foodType    String?
+  description String   @db.Text
+  sourceNote  String?  @db.Text
+  energyKcal  Float?
+  proteinG    Float?
+  lipidG      Float?
+  glucidG     Float?
+  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote  String?  @db.Text
+  reviewedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submitter User  @relation("SubmissionAuthor", fields: [submitterId], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("SubmissionReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
+
+  @@index([submitterId, createdAt])
+  @@index([status, createdAt])
+  @@map("food_submissions")
+}

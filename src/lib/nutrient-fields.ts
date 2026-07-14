@@ -1,0 +1,173 @@
+// Grouped nutrient field metadata for rendering Food detail pages.
+// Keys must match Prisma `Food` model field names exactly.
+
+export type NutrientField = { key: string; label: string; unit: string };
+export type NutrientGroup = { title: string; fields: NutrientField[] };
+
+export const NUTRIENT_GROUPS: NutrientGroup[] = [
+  {
+    title: "Năng lượng & thành phần chính",
+    fields: [
+      { key: "energyKcal", label: "Năng lượng", unit: "kcal" },
+      { key: "energyKj", label: "Năng lượng", unit: "kJ" },
+      { key: "waterG", label: "Nước", unit: "g" },
+      { key: "proteinG", label: "Chất đạm", unit: "g" },
+      { key: "animalProteinG", label: "Đạm động vật", unit: "g" },
+      { key: "lipidG", label: "Chất béo", unit: "g" },
+      { key: "glucidG", label: "Chất bột đường", unit: "g" },
+      { key: "fiberG", label: "Chất xơ", unit: "g" },
+      { key: "ashG", label: "Tro", unit: "g" },
+    ],
+  },
+  {
+    title: "Khoáng chất",
+    fields: [
+      { key: "calciumMg", label: "Canxi", unit: "mg" },
+      { key: "ironMg", label: "Sắt", unit: "mg" },
+      { key: "magnesiumMg", label: "Magie", unit: "mg" },
+      { key: "manganeseMg", label: "Mangan", unit: "mg" },
+      { key: "phosphorusMg", label: "Phospho", unit: "mg" },
+      { key: "potassiumMg", label: "Kali", unit: "mg" },
+      { key: "sodiumMg", label: "Natri", unit: "mg" },
+      { key: "zincMg", label: "Kẽm", unit: "mg" },
+      { key: "copperMgVdd", label: "Đồng (nguồn VDD)", unit: "mg" },
+      { key: "copperMcgRni", label: "Đồng (nguồn RNI)", unit: "µg" },
+      { key: "seleniumMcg", label: "Selen", unit: "µg" },
+      { key: "fluorideMcg", label: "Fluor", unit: "µg" },
+      { key: "phytosterolsMg", label: "Phytosterol", unit: "mg" },
+      { key: "purinMg", label: "Purin", unit: "mg" },
+    ],
+  },
+  {
+    title: "Vitamin",
+    fields: [
+      { key: "retinolMcg", label: "Retinol", unit: "µg" },
+      { key: "vitARaeMcg", label: "Vitamin A (RAE)", unit: "µg" },
+      { key: "vitAMcgRni", label: "Vitamin A (nguồn RNI)", unit: "µg" },
+      { key: "vitAReMcg", label: "Vitamin A (RE)", unit: "µg" },
+      { key: "betaCarotenMcg", label: "Beta-caroten", unit: "µg" },
+      { key: "alphaCarotenMcg", label: "Alpha-caroten", unit: "µg" },
+      { key: "cryptoxanthinBetaMcg", label: "Beta-cryptoxanthin", unit: "µg" },
+      { key: "lycopeneMcg", label: "Lycopen", unit: "µg" },
+      { key: "luteinZeaxanthinMcg", label: "Lutein + Zeaxanthin", unit: "µg" },
+      { key: "vitCMg", label: "Vitamin C", unit: "mg" },
+      { key: "vitB1Mg", label: "Vitamin B1", unit: "mg" },
+      { key: "vitB2Mg", label: "Vitamin B2", unit: "mg" },
+      { key: "vitB3Mg", label: "Vitamin B3 (PP)", unit: "mg" },
+      { key: "niacinEquivMg", label: "Niacin quy đổi", unit: "mg" },
+      { key: "vitB5Mg", label: "Vitamin B5", unit: "mg" },
+      { key: "vitB6Mg", label: "Vitamin B6", unit: "mg" },
+      { key: "folateTotalMcg", label: "Folate tổng số", unit: "µg" },
+      { key: "folateFoodMcg", label: "Folate (từ thực phẩm)", unit: "µg" },
+      { key: "folateDfeMcg", label: "Folate DFE", unit: "µg" },
+      { key: "folicAcidMcg", label: "Acid folic", unit: "µg" },
+      { key: "vitB12Mcg", label: "Vitamin B12", unit: "µg" },
+      { key: "vitB12AddedMcg", label: "Vitamin B12 bổ sung", unit: "µg" },
+      { key: "biotinMcg", label: "Biotin (Vitamin H)", unit: "µg" },
+      { key: "vitDMcg", label: "Vitamin D", unit: "µg" },
+      { key: "vitD2Mcg", label: "Vitamin D2", unit: "µg" },
+      { key: "vitD3Mcg", label: "Vitamin D3", unit: "µg" },
+      { key: "vitEMg", label: "Vitamin E", unit: "mg" },
+      { key: "vitEAddedMg", label: "Vitamin E bổ sung", unit: "mg" },
+      { key: "vitKMcg", label: "Vitamin K", unit: "µg" },
+      { key: "cholineMg", label: "Choline", unit: "mg" },
+    ],
+  },
+  {
+    title: "Axit amin",
+    fields: [
+      { key: "tryptophanMg", label: "Tryptophan", unit: "mg" },
+      { key: "threonineMg", label: "Threonine", unit: "mg" },
+      { key: "isoleucineMg", label: "Isoleucine", unit: "mg" },
+      { key: "leucineMg", label: "Leucine", unit: "mg" },
+      { key: "lysineMg", label: "Lysine", unit: "mg" },
+      { key: "methionineMg", label: "Methionine", unit: "mg" },
+      { key: "cystineMg", label: "Cystine", unit: "mg" },
+      { key: "phenylalanineMg", label: "Phenylalanine", unit: "mg" },
+      { key: "tyrosineMg", label: "Tyrosine", unit: "mg" },
+      { key: "valineMg", label: "Valine", unit: "mg" },
+      { key: "arginineMg", label: "Arginine", unit: "mg" },
+      { key: "histidineMg", label: "Histidine", unit: "mg" },
+      { key: "alanineMg", label: "Alanine", unit: "mg" },
+      { key: "asparticAcidMg", label: "Axit Aspartic", unit: "mg" },
+      { key: "glutamicAcidMg", label: "Axit Glutamic", unit: "mg" },
+      { key: "glycineMg", label: "Glycine", unit: "mg" },
+      { key: "prolineMg", label: "Proline", unit: "mg" },
+      { key: "serineMg", label: "Serine", unit: "mg" },
+    ],
+  },
+  {
+    title: "Axit béo & Cholesterol",
+    fields: [
+      { key: "satFatTotalG", label: "Axit béo bão hòa (tổng)", unit: "g" },
+      { key: "mufaTotalG", label: "Axit béo không no đơn (tổng)", unit: "g" },
+      { key: "pufaTotalG", label: "Axit béo không no đa (tổng)", unit: "g" },
+      { key: "transFatTotalG", label: "Axit béo trans (tổng)", unit: "g" },
+      { key: "cholesterolMg", label: "Cholesterol", unit: "mg" },
+      { key: "palmiticC160G", label: "Palmitic (C16:0)", unit: "g" },
+      { key: "stearicC180G", label: "Stearic (C18:0)", unit: "g" },
+      { key: "oleicC181G", label: "Oleic (C18:1)", unit: "g" },
+      { key: "linoleicC182G", label: "Linoleic (C18:2)", unit: "g" },
+      { key: "linolenicC183G", label: "Linolenic (C18:3)", unit: "g" },
+      { key: "arachidonicC204G", label: "Arachidonic (C20:4)", unit: "g" },
+      { key: "epaC205G", label: "EPA (C20:5)", unit: "g" },
+      { key: "dhaC226G", label: "DHA (C22:6)", unit: "g" },
+    ],
+  },
+  {
+    title: "Đường & tinh bột",
+    fields: [
+      { key: "sugarsTotalG", label: "Đường tổng số", unit: "g" },
+      { key: "sugarsAddedG", label: "Đường bổ sung", unit: "g" },
+      { key: "glucoseG", label: "Glucose", unit: "g" },
+      { key: "fructoseG", label: "Fructose", unit: "g" },
+      { key: "lactoseG", label: "Lactose", unit: "g" },
+      { key: "maltoseG", label: "Maltose", unit: "g" },
+      { key: "galactoseG", label: "Galactose", unit: "g" },
+      { key: "sucroseG", label: "Sucrose", unit: "g" },
+      { key: "starchG", label: "Tinh bột", unit: "g" },
+    ],
+  },
+  {
+    title: "Khác",
+    fields: [
+      { key: "caffeineMg", label: "Caffeine", unit: "mg" },
+      { key: "theobromineMg", label: "Theobromine", unit: "mg" },
+      { key: "alcoholG", label: "Cồn", unit: "g" },
+      { key: "isoflavoneTotalMg", label: "Isoflavone tổng số", unit: "mg" },
+    ],
+  },
+];
+
+// Danh sách phẳng dùng cho bộ chọn chất trong báo cáo khẩu phần.
+export const ALL_NUTRIENT_FIELDS = NUTRIENT_GROUPS.flatMap((group) => group.fields);
+
+export const LEVEL_LABELS: Record<number, string> = {
+  0: "Không/thấp",
+  1: "Thấp",
+  2: "Trung bình",
+  3: "Cao",
+};
+
+// Bộ chất cốt lõi để tính tổng khẩu phần (mirror app cũ ~18 chất chính).
+// key khớp field Prisma `Food`; dùng chung cho API tìm kiếm + máy tính.
+export const CORE_CALC_FIELDS: NutrientField[] = [
+  { key: "energyKcal", label: "Năng lượng", unit: "kcal" },
+  { key: "proteinG", label: "Đạm", unit: "g" },
+  { key: "lipidG", label: "Béo", unit: "g" },
+  { key: "glucidG", label: "Đường bột", unit: "g" },
+  { key: "fiberG", label: "Chất xơ", unit: "g" },
+  { key: "waterG", label: "Nước", unit: "g" },
+  { key: "calciumMg", label: "Canxi", unit: "mg" },
+  { key: "ironMg", label: "Sắt", unit: "mg" },
+  { key: "zincMg", label: "Kẽm", unit: "mg" },
+  { key: "sodiumMg", label: "Natri", unit: "mg" },
+  { key: "potassiumMg", label: "Kali", unit: "mg" },
+  { key: "magnesiumMg", label: "Magie", unit: "mg" },
+  { key: "phosphorusMg", label: "Phospho", unit: "mg" },
+  { key: "vitARaeMcg", label: "Vitamin A (RAE)", unit: "µg" },
+  { key: "vitCMg", label: "Vitamin C", unit: "mg" },
+  { key: "vitB1Mg", label: "Vitamin B1", unit: "mg" },
+  { key: "vitB2Mg", label: "Vitamin B2", unit: "mg" },
+  { key: "vitB3Mg", label: "Vitamin B3", unit: "mg" },
+];

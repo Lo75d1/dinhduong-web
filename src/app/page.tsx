@@ -1,0 +1,24 @@
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+
+// The dashboard reads live database counts. Rendering it at request time keeps
+// production Docker builds free of database credentials.
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const [foodCount, dishCount] = await Promise.all([prisma.food.count(), prisma.dish.count()]);
+  return <div className="-mx-5 -my-8 overflow-hidden bg-[#f1f6f4] sm:-mx-8">
+    <section className="relative border-b-4 border-[#123c36] bg-white px-5 py-14 sm:px-10 lg:px-16">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#50a486] to-transparent" />
+      <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.35fr_.65fr] lg:items-end">
+        <div className="[animation:clinical-enter_450ms_ease_both]"><p className="text-sm font-semibold tracking-[0.16em] text-[#123c36]">CỔNG HỖ TRỢ DINH DƯỠNG LÂM SÀNG</p><h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-[#123c36] sm:text-5xl">Dữ liệu khẩu phần rõ ràng cho từng quyết định chăm sóc.</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-neutral-900">Tra cứu thành phần thực phẩm, lập khẩu phần theo bữa và xuất báo cáo đối chiếu. Thiết kế cho bác sĩ, dinh dưỡng viên, phụ huynh và người chăm sóc.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/tinh-khau-phan" className="rounded-md bg-[#123c36] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#0b302b]">Mở phiếu tính khẩu phần →</Link><Link href="/thuc-pham" className="rounded-md border-2 border-[#123c36] bg-white px-5 py-3 font-semibold text-[#123c36] hover:bg-[#e9f2eb]">Tra cứu thực phẩm</Link></div></div>
+        <aside className="rounded-xl border-2 border-[#9dbbae] bg-[#f6fbf8] p-5 shadow-[0_10px_25px_rgba(18,60,54,0.08)] [animation:clinical-enter_550ms_ease_both]"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">TÌNH TRẠNG HỆ THỐNG</p><div className="mt-4 space-y-3"><Metric label="Thực phẩm / sản phẩm" value={foodCount.toLocaleString("vi-VN")} /><Metric label="Món ăn có công thức" value={dishCount.toLocaleString("vi-VN")} /><div className="border-t border-[#adc4b9] pt-3 text-sm text-neutral-900"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-700" />Dữ liệu hiển thị theo 100 g phần ăn được</div></div></aside>
+      </div>
+    </section>
+    <section className="px-5 py-10 sm:px-10 lg:px-16"><div className="mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">QUY TRÌNH LÀM VIỆC</p><h2 className="mt-1 text-2xl font-semibold text-[#123c36]">Chọn điểm bắt đầu</h2></div><p className="max-w-xl text-sm text-neutral-900">Mỗi chức năng giữ nguồn dữ liệu, đơn vị tính và giới hạn sử dụng để thuận tiện khi kiểm tra hồ sơ.</p></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Link href="/thuc-pham" className="clinical-card group rounded-xl border-2 border-[#7f948d] bg-white p-6 hover:-translate-y-0.5 hover:border-[#123c36]"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">01 · TRA CỨU</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Thực phẩm và món ăn</h3><p className="mt-3 text-neutral-900">Tìm theo tên, nhóm và loại dữ liệu. Kiểm tra giá trị gốc trên 100 g trước khi đưa vào khẩu phần.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Mở tra cứu →</span></Link><Link href="/tinh-khau-phan" className="clinical-card group rounded-xl border-2 border-[#123c36] bg-[#f8fcfa] p-6 hover:-translate-y-0.5 hover:bg-white"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">02 · PHÂN TÍCH</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Phiếu tính khẩu phần</h3><p className="mt-3 text-neutral-900">Nhập theo bữa, đối chiếu năng lượng – vi chất – chuẩn tăng trưởng và xuất báo cáo chuyên môn.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Bắt đầu tính →</span></Link></div><div className="mt-8 rounded-lg border-l-4 border-[#a77b10] bg-[#fff9e8] p-4 text-sm text-neutral-900"><b>Căn cứ chuyên môn:</b> Bảng thành phần thực phẩm Việt Nam – Viện Dinh dưỡng; khuyến nghị dinh dưỡng VDD; mã chế độ ăn Bộ Y tế; WHO Child Growth Standards 2006 và WHO Growth Reference 2007. <Link href="/ve-he-thong" className="font-semibold text-[#123c36] underline underline-offset-2">Xem nguồn và phạm vi sử dụng</Link></div></div></section>
+  </div>;
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return <div className="flex items-baseline justify-between gap-4 border-b border-[#d0dfd8] pb-2"><span className="text-sm text-neutral-900">{label}</span><span className="text-xl font-semibold text-[#123c36]">{value}</span></div>;
+}

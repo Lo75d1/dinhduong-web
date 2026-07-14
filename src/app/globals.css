@@ -1,0 +1,273 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f1f6f4;
+  --foreground: #111827;
+  --ink: #111827;
+  --institution: #123c36;
+  --clinical-teal: #0f5c51;
+  --clinical-mint: #dcebe5;
+  --clinical-line: #9bb6ab;
+  --clinical-paper: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Times New Roman", Times, serif;
+  --font-mono: "Courier New", Courier, monospace;
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(219, 238, 229, 0.72), transparent 32rem),
+    linear-gradient(180deg, #f8fbfa 0%, var(--background) 26rem);
+  color: var(--ink);
+  font-family: "Times New Roman", Times, serif;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+button:not(:disabled):active,
+a:active {
+  transform: translateY(1px);
+}
+
+.hospital-main {
+  position: relative;
+}
+
+.hospital-main::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 3%;
+  width: 12rem;
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, transparent, #2d8c76, transparent);
+}
+
+.clinical-page-heading {
+  position: relative;
+  border: 1px solid #b1c8bd;
+  border-left: 6px solid var(--clinical-teal);
+  border-radius: 0.85rem;
+  background: linear-gradient(120deg, #ffffff, #f3f9f6);
+  box-shadow: 0 8px 24px rgba(18, 60, 54, 0.07);
+  padding: 1.25rem 1.4rem;
+}
+
+.clinical-page-heading::after {
+  content: "HỒ SƠ DINH DƯỠNG";
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  color: #69877b;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.clinical-panel {
+  box-shadow: 0 10px 28px rgba(18, 60, 54, 0.06);
+  animation: clinical-enter 360ms ease both;
+}
+
+.clinical-stepper {
+  box-shadow: 0 6px 18px rgba(18, 60, 54, 0.07);
+}
+
+.clinical-step {
+  position: relative;
+  overflow: hidden;
+}
+
+.clinical-step[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 12%;
+  right: 12%;
+  height: 3px;
+  border-radius: 99px;
+  background: #bde7d7;
+  animation: clinical-sweep 280ms ease-out;
+}
+
+.clinical-card {
+  box-shadow: 0 6px 18px rgba(18, 60, 54, 0.045);
+}
+
+/* Khu tính khẩu phần có bảng dài và nhiều cột: chừa mép để đọc như phiếu bệnh viện. */
+.calculation-workspace .overflow-x-auto {
+  border-radius: 0.5rem;
+}
+
+.calculation-workspace table th,
+.calculation-workspace table td {
+  vertical-align: middle;
+}
+
+.calculation-workspace table th:first-child,
+.calculation-workspace table td:first-child {
+  padding-left: 1rem !important;
+}
+
+.calculation-workspace table th:last-child,
+.calculation-workspace table td:last-child {
+  padding-right: 1rem !important;
+}
+
+.calculation-workspace table thead th {
+  padding-top: 0.72rem !important;
+  padding-bottom: 0.72rem !important;
+}
+
+.calculation-workspace table tbody td {
+  padding-top: 0.6rem !important;
+  padding-bottom: 0.6rem !important;
+}
+
+.calculation-workspace .clinical-panel > :first-child {
+  border-radius: 0.4rem 0.4rem 0 0;
+}
+
+@keyframes clinical-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes clinical-sweep {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+::selection {
+  background: #cfe6da;
+  color: #111827;
+}
+
+input,
+select,
+textarea {
+  color: #111827;
+  background-color: #ffffff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid #1f6b5d;
+  outline-offset: 1px;
+}
+
+/* Toàn bộ chữ trung tính dùng màu đen để dễ đọc với font serif. */
+.text-neutral-400 {
+  color: #171717 !important;
+}
+
+.text-neutral-500 {
+  color: #171717 !important;
+}
+
+.text-neutral-600 {
+  color: #171717 !important;
+}
+
+/* Bảng báo cáo cần đọc rõ khi đối chiếu và khi in. */
+.text-sm {
+  font-size: 1rem !important;
+}
+
+.text-xs,
+.text-\[11px\] {
+  font-size: 0.875rem !important;
+}
+
+table th,
+table td {
+  border: 1px solid #aeb8b4;
+}
+
+table th {
+  background-color: #e1ece6;
+  color: #102d28;
+}
+
+.border-neutral-100,
+.border-neutral-200,
+.border-neutral-300 {
+  border-color: #aeb8b4 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .calculation-workspace table th:first-child,
+  .calculation-workspace table td:first-child {
+    padding-left: 0.7rem !important;
+  }
+
+  .calculation-workspace table th:last-child,
+  .calculation-workspace table td:last-child {
+    padding-right: 0.7rem !important;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 12mm;
+  }
+
+  header,
+  footer,
+  [data-no-print] {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+    font-size: 12pt;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  [data-print-header] {
+    display: block;
+    margin-bottom: 8mm;
+  }
+
+  section,
+  div {
+    break-inside: avoid;
+  }
+
+  svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
+
+[data-print-header] {
+  display: none;
+}
