@@ -8,7 +8,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
     const requester = await requireSessionUser();
     if (requester.role !== "ADMIN") return Response.json({ error: "Bạn không có quyền quản trị." }, { status: 403 });
     const body = await request.json().catch(() => null);
-    const role = body?.role === "ADMIN" ? "ADMIN" : body?.role === "CLINICIAN" ? "CLINICIAN" : null;
+    const role = body?.role === "ADMIN" ? "ADMIN" : body?.role === "EDITOR" ? "EDITOR" : body?.role === "CLINICIAN" ? "CLINICIAN" : null;
     if (!role) return Response.json({ error: "Vai trò không hợp lệ." }, { status: 400 });
     const { id } = await params;
     if (id === requester.id && role !== "ADMIN") return Response.json({ error: "Không thể tự gỡ quyền quản trị của chính mình." }, { status: 400 });

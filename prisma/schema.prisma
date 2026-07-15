@@ -613,3 +613,21 @@ model PageVisit {
   @@index([path, createdAt])
   @@map("page_visits")
 }
+
+// Nhật ký bất biến cho thao tác biên tập dữ liệu nguồn. Không dùng để tính khẩu phần.
+model DataChangeLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  actorId    String
+  actorName  String
+  beforeJson Json?
+  afterJson  Json?
+  reason     String
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@map("data_change_logs")
+}
