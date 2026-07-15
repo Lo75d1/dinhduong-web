@@ -566,3 +566,47 @@ model FoodSubmission {
   @@index([status, createdAt])
   @@map("food_submissions")
 }
+
+// Cấu hình công khai do quản trị viên tự chỉnh trong Admin. Tách riêng hoàn toàn
+// khỏi dữ liệu nguồn Food/Dish để thay đổi thông tin liên hệ không ảnh hưởng CSDL dinh dưỡng.
+model SiteSetting {
+  id           String   @id @default("public")
+  contactName  String
+  organization String?
+  phone        String?
+  email        String?
+  address      String?
+  zaloUrl      String?
+  updatedAt    DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+// Tin nhắn từ trang Liên hệ. Chỉ quản trị viên được đọc/cập nhật trạng thái.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  audience  String?
+  message   String   @db.Text
+  status    String   @default("NEW") // NEW | IN_PROGRESS | CLOSED
+  adminNote String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@map("contact_messages")
+}
+
+// Thống kê tối thiểu, ẩn danh: không lưu IP, user-agent, cookie hay thông tin bệnh nhân.
+model PageVisit {
+  id        String   @id @default(cuid())
+  path      String
+  sessionId String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path, createdAt])
+  @@map("page_visits")
+}

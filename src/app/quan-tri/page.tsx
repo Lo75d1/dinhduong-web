@@ -1,5 +1,5 @@
-import AdminConsole from "./AdminConsole";
+import AdminPortal from "./AdminPortal";
 
 export default function QuanTriPage() {
-  return <AdminConsole />;
+  return <AdminPortal />;
 }
