@@ -22,6 +22,8 @@ model Food {
   source         String // "VDD" | "RNI"
   sourceCode     String? // Mã số gốc trong file nguồn
   sourceNote     String? // Ghi chú nguồn tham khảo (VD: "Bộ Y tế Việt Nam (2015)...")
+  imageUrl       String? @db.Text
+  imageSourceUrl String? @db.Text
   unit           String  @default("g")
   wastePercent   Float? // Tỷ lệ thải bỏ (%)
 
