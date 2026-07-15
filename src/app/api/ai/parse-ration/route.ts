@@ -4,6 +4,7 @@ import { normalizeVi } from "@/lib/normalize";
 import { searchTokens } from "@/lib/search";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import { CLASSIFY_SELECT_KEYS } from "@/lib/food-classify";
+import { getGeminiConfig } from "@/lib/gemini-settings";
 
 const MAX_TEXT_LENGTH = 3_000;
 const FOOD_SELECT = {
@@ -39,17 +40,18 @@ export async function POST(request: NextRequest) {
   if (text.length < 8) return Response.json({ error: "Nhập mô tả khẩu phần tối thiểu 8 ký tự." }, { status: 400 });
   if (body?.externalProcessingConsent !== true) return Response.json({ error: "Cần xác nhận trước khi gửi mô tả khẩu phần sang dịch vụ AI bên ngoài." }, { status: 400 });
 
-  // Key chung chỉ nằm ở máy chủ (GEMINI_API_KEY); tuyệt đối không gửi xuống trình duyệt.
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) return Response.json({ error: "AI chưa được quản trị viên bật. Vui lòng liên hệ quản trị để cấu hình Gemini dùng chung." }, { status: 503 });
+  // Key chung chỉ nằm ở máy chủ/database đã mã hóa; tuyệt đối không gửi xuống trình duyệt.
+  let config: Awaited<ReturnType<typeof getGeminiConfig>>;
+  try { config = await getGeminiConfig(); } catch { return Response.json({ error: "AI chưa được quản trị viên bật hoặc cấu hình an toàn chưa hoàn chỉnh." }, { status: 503 }); }
+  if (!config) return Response.json({ error: "AI chưa được quản trị viên bật. Vui lòng liên hệ quản trị để cấu hình Gemini dùng chung." }, { status: 503 });
 
   const schema = { type: "OBJECT", properties: { items: { type: "ARRAY", items: { type: "OBJECT", properties: { meal: { type: "STRING" }, dishName: { type: "STRING" }, foodName: { type: "STRING" }, edibleGrams: { type: "NUMBER" }, note: { type: "STRING" } }, required: ["meal", "dishName", "foodName", "edibleGrams", "note"] } } }, required: ["items"] };
   const prompt = `Bóc tách khẩu phần thành JSON, không tư vấn điều trị. Mỗi dòng là một thực phẩm hoặc món có thể tra cứu. Giữ nguyên tên người dùng nói để foodName dễ khớp CSDL Việt Nam. Nếu chỉ nêu tên món (ví dụ “phở bò 350 g”) thì giữ 1 dòng foodName="phở bò"; KHÔNG tự bịa nguyên liệu. Chỉ tách nguyên liệu khi người dùng đã nêu rõ trong ngoặc/danh sách; khi đó KHÔNG thêm lại dòng món tổng để tránh đếm đôi. Chỉ lấy số lượng đã ghi; không rõ gram thì edibleGrams=0 và note="chưa rõ lượng". meal là bữa nếu có; dishName là tên món/nhóm món, rỗng nếu thực phẩm ăn trực tiếp. Không tạo số dinh dưỡng. Trả đúng JSON schema.\nDữ liệu: ${text}`;
 
   let payload: { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash")}:generateContent`, {
-      method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent`, {
+      method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": config.apiKey },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0, maxOutputTokens: 2048, response_mime_type: "application/json", response_schema: schema } }),
     });
     if (!response.ok) return Response.json({ error: "Gemini chưa thể xử lý yêu cầu. Quản trị viên cần kiểm tra hạn mức hoặc cấu hình AI." }, { status: 502 });

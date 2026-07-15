@@ -577,6 +577,9 @@ model SiteSetting {
   email        String?
   address      String?
   zaloUrl      String?
+  geminiKeyEncrypted String? @db.Text
+  geminiModel        String? @default("gemini-2.5-flash")
+  geminiEnabled      Boolean @default(false)
   updatedAt    DateTime @updatedAt
 
   @@map("site_settings")

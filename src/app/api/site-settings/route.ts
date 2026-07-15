@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const settings = await prisma.siteSetting.findUnique({ where: { id: "public" } });
+    const settings = await prisma.siteSetting.findUnique({ where: { id: "public" }, select: { id: true, contactName: true, organization: true, phone: true, email: true, address: true, zaloUrl: true, updatedAt: true } });
     return Response.json(settings ?? defaultSiteSettings, { headers: { "Cache-Control": "public, max-age=300" } });
   } catch {
     return Response.json(defaultSiteSettings, { headers: { "Cache-Control": "public, max-age=60" } });
