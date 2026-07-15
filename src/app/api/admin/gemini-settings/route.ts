@@ -24,6 +24,7 @@ export async function PATCH(request: Request) {
     const settings = await prisma.siteSetting.upsert({ where: { id: "public" }, create: { id: "public", ...defaultSiteSettings, ...update }, update });
     return Response.json(safe(settings));
   } catch (error) {
+    console.error("[admin/gemini-settings] PATCH failed", error);
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
     if (error instanceof Error && error.message === "FORBIDDEN") return Response.json({ error: "Bạn không có quyền quản trị." }, { status: 403 });
     if (error instanceof Error && error.message === "APP_SECRET_MISSING") return Response.json({ error: "VPS chưa có APP_SECRET đủ mạnh; không thể lưu key an toàn." }, { status: 503 });

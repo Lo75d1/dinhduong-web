@@ -38,6 +38,7 @@ export async function PATCH(request: Request) {
     const settings = await prisma.siteSetting.upsert({ where: { id: "public" }, create: { id: "public", ...data }, update: data });
     return Response.json(settings);
   } catch (error) {
+    console.error("[admin/site-settings] PATCH failed", error);
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
     if (error instanceof Error && error.message === "FORBIDDEN") return Response.json({ error: "Bạn không có quyền quản trị." }, { status: 403 });
     return Response.json({ error: "Chưa thể lưu thiết lập." }, { status: 503 });
