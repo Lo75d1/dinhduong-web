@@ -1,5 +1,6 @@
 import { requireSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { safeErrorSummary } from "@/lib/app-error-log";
 
 export async function GET() {
   try {
@@ -9,6 +10,6 @@ export async function GET() {
     return Response.json({ items });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
-    return Response.json({ error: "Chưa thể tải nhật ký lỗi." }, { status: 503 });
+    return Response.json({ error: `Chưa thể tải nhật ký lỗi: ${safeErrorSummary(error)}` }, { status: 503 });
   }
 }

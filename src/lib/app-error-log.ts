@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 type Actor = { id?: string; email?: string } | null | undefined;
 
-function sanitize(value: string) {
+export function safeErrorSummary(error: unknown) {
+  const value = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
   return value
     .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, "[DATABASE_URL REDACTED]")
     .replace(/AIza[\w-]{20,}/g, "[GEMINI_KEY REDACTED]")
@@ -13,8 +14,7 @@ function sanitize(value: string) {
 }
 
 export async function logAppError(source: string, error: unknown, actor?: Actor) {
-  const raw = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
-  const message = sanitize(raw || "Unknown error");
+  const message = safeErrorSummary(error || "Unknown error");
   console.error(`[${source}]`, message);
   await prisma.appErrorLog.create({ data: { source: source.slice(0, 120), message, actorId: actor?.id || null, actorEmail: actor?.email || null } }).catch(() => undefined);
 }

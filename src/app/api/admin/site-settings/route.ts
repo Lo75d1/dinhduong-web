@@ -1,7 +1,7 @@
 import { requireSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cleanPublicText, defaultSiteSettings } from "@/lib/site-settings";
-import { logAppError } from "@/lib/app-error-log";
+import { logAppError, safeErrorSummary } from "@/lib/app-error-log";
 
 async function requireAdmin() {
   const user = await requireSessionUser();
@@ -44,6 +44,6 @@ export async function PATCH(request: Request) {
     await logAppError("admin/site-settings PATCH", error, actor);
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
     if (error instanceof Error && error.message === "FORBIDDEN") return Response.json({ error: "Bạn không có quyền quản trị." }, { status: 403 });
-    return Response.json({ error: "Chưa thể lưu thiết lập." }, { status: 503 });
+    return Response.json({ error: `Chưa thể lưu thiết lập: ${safeErrorSummary(error)}` }, { status: 503 });
   }
 }
