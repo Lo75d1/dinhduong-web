@@ -577,6 +577,8 @@ model SiteSetting {
   email        String?
   address      String?
   zaloUrl      String?
+  thankYouTitle String? @default("Lời cảm ơn")
+  thankYouBody  String? @db.Text
   geminiKeyEncrypted String? @db.Text
   geminiModel        String? @default("gemini-2.5-flash")
   geminiEnabled      Boolean @default(false)

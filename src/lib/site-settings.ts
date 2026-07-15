@@ -5,6 +5,8 @@ export const defaultSiteSettings = {
   email: "",
   address: "",
   zaloUrl: "https://zalo.me/g/dhgc4wmunry94r4cbxzm",
+  thankYouTitle: "Lời cảm ơn",
+  thankYouBody: "Dinh dưỡng 2597 trân trọng cảm ơn Ban Giám đốc, các khoa/phòng, nhân viên y tế và đồng nghiệp đã đóng góp ý kiến để hoàn thiện sáng kiến cải tiến này.",
 };
 
 export function cleanPublicText(value: unknown, maxLength: number) {

@@ -30,6 +30,8 @@ export async function PATCH(request: Request) {
       email: cleanPublicText(body?.email, 254) || null,
       address: cleanPublicText(body?.address, 300) || null,
       zaloUrl: cleanPublicText(body?.zaloUrl, 500) || null,
+      thankYouTitle: cleanPublicText(body?.thankYouTitle, 160) || "Lời cảm ơn",
+      thankYouBody: cleanPublicText(body?.thankYouBody, 4_000) || null,
     };
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) return Response.json({ error: "Email chưa đúng định dạng." }, { status: 400 });
     if (data.zaloUrl && !/^https:\/\/zalo\.me\//.test(data.zaloUrl)) return Response.json({ error: "Link hỗ trợ phải là link Zalo hợp lệ." }, { status: 400 });
