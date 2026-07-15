@@ -1,0 +1,5 @@
+"use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+type User={displayName:string;email:string;role:string};
+export default function AccountMenu(){const [user,setUser]=useState<User|null>(null);useEffect(()=>{void fetch("/api/auth/me",{cache:"no-store"}).then(r=>r.json()).then(d=>setUser(d.user??null)).catch(()=>undefined)},[]);if(!user)return <Link href="/dang-nhap" className="rounded-md border border-[#123c36] bg-white px-3 py-2 text-[#123c36] hover:bg-[#edf4f0]">Đăng nhập</Link>;return <div className="flex flex-wrap items-center gap-2"><Link href="/tai-khoan" className="rounded-md border border-[#123c36] bg-[#edf4f0] px-3 py-2 text-[#123c36]"><span className="block max-w-32 truncate">{user.displayName}</span><span className="block text-[10px] font-normal">{user.role==="ADMIN"?"Quản trị viên":user.role==="EDITOR"?"Biên tập dữ liệu":"Tài khoản cá nhân"}</span></Link>{user.role==="ADMIN"&&<Link href="/quan-tri" className="rounded-md bg-[#123c36] px-3 py-2 text-white">Quản trị</Link>}</div>}
