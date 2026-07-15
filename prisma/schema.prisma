@@ -616,6 +616,21 @@ model PageVisit {
   @@map("page_visits")
 }
 
+// Nhật ký lỗi vận hành: chỉ lưu nguồn lỗi, thông điệp đã lọc và thời điểm.
+// Không ghi API key, mật khẩu, chuỗi kết nối, hồ sơ bệnh nhân hoặc dữ liệu khẩu phần.
+model AppErrorLog {
+  id         String   @id @default(cuid())
+  source     String
+  message    String   @db.Text
+  actorId    String?
+  actorEmail String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([source, createdAt])
+  @@map("app_error_logs")
+}
+
 // Nhật ký bất biến cho thao tác biên tập dữ liệu nguồn. Không dùng để tính khẩu phần.
 model DataChangeLog {
   id         String   @id @default(cuid())

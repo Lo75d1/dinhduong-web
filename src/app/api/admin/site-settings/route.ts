@@ -1,10 +1,12 @@
 import { requireSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cleanPublicText, defaultSiteSettings } from "@/lib/site-settings";
+import { logAppError } from "@/lib/app-error-log";
 
 async function requireAdmin() {
   const user = await requireSessionUser();
   if (user.role !== "ADMIN") throw new Error("FORBIDDEN");
+  return user;
 }
 
 export async function GET() {
@@ -18,8 +20,9 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  let actor: { id: string; email: string } | undefined;
   try {
-    await requireAdmin();
+    actor = await requireAdmin();
     const body = await request.json().catch(() => null);
     const contactName = cleanPublicText(body?.contactName, 100);
     if (!contactName) return Response.json({ error: "Cần có tên người/đơn vị phụ trách." }, { status: 400 });
@@ -38,7 +41,7 @@ export async function PATCH(request: Request) {
     const settings = await prisma.siteSetting.upsert({ where: { id: "public" }, create: { id: "public", ...data }, update: data });
     return Response.json(settings);
   } catch (error) {
-    console.error("[admin/site-settings] PATCH failed", error);
+    await logAppError("admin/site-settings PATCH", error, actor);
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
     if (error instanceof Error && error.message === "FORBIDDEN") return Response.json({ error: "Bạn không có quyền quản trị." }, { status: 403 });
     return Response.json({ error: "Chưa thể lưu thiết lập." }, { status: 503 });
