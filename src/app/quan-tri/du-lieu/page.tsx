@@ -1,3 +1,8 @@
 import DataManager from "./DataManager";
-export const metadata = { title: "Biên tập dữ liệu | Dinh dưỡng 2597" };
-export default function Page() { return <DataManager />; }
+import RniImageSync from "./RniImageSync";
+
+export const metadata = { title: "Biên tập dữ liệu | Dinh dưỡng 2598" };
+
+export default function Page() {
+  return <div className="flex flex-col gap-5"><DataManager /><RniImageSync /></div>;
+}

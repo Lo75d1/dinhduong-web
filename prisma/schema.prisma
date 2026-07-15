@@ -262,6 +262,8 @@ model Dish {
   nameNormalized String  @default("") // lowercase, không dấu — phục vụ tìm kiếm
   source         String // "RNI" (chỗ để mở rộng nguồn khác sau này)
   sourceCode     String?
+  imageSourceId  String? // imgBinaryObjectId từ RNI; ảnh được tải qua proxy, không lưu base64 vào DB
+  imageSourceUrl String? @db.Text
   totalWeightG   Float? // Khối lượng mặc định (g)
   servingUnit    String? // Đơn vị khẩu phần (VD: "Cái", "Chén")
   isActive       Boolean @default(true)
