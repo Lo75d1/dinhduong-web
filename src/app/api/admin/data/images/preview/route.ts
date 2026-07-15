@@ -8,6 +8,12 @@ export const runtime = "nodejs";
 type SheetRow = { sourceCode: string; imageUrl: string; imageSourceUrl: string };
 
 function text(value: unknown) {
+  if (value && typeof value === "object") {
+    const linked = value as { text?: unknown; hyperlink?: unknown; result?: unknown };
+    if (typeof linked.hyperlink === "string") return linked.hyperlink.trim();
+    if (typeof linked.text === "string") return linked.text.trim();
+    if (typeof linked.result === "string") return linked.result.trim();
+  }
   return String(value ?? "").trim();
 }
 
