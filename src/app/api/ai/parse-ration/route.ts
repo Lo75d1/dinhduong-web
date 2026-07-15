@@ -35,15 +35,18 @@ function rankCandidate(candidate: FoodRecord, query: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => null) as { text?: unknown; externalProcessingConsent?: unknown } | null;
+  const body = await request.json().catch(() => null) as { text?: unknown; externalProcessingConsent?: unknown; apiKey?: unknown; model?: unknown } | null;
   const text = asText(body?.text, MAX_TEXT_LENGTH);
   if (text.length < 8) return Response.json({ error: "Nhập mô tả khẩu phần tối thiểu 8 ký tự." }, { status: 400 });
   if (body?.externalProcessingConsent !== true) return Response.json({ error: "Cần xác nhận trước khi gửi mô tả khẩu phần sang dịch vụ AI bên ngoài." }, { status: 400 });
 
   // Key chung chỉ nằm ở máy chủ/database đã mã hóa; tuyệt đối không gửi xuống trình duyệt.
-  let config: Awaited<ReturnType<typeof getGeminiConfig>>;
-  try { config = await getGeminiConfig(); } catch { return Response.json({ error: "AI chưa được quản trị viên bật hoặc cấu hình an toàn chưa hoàn chỉnh." }, { status: 503 }); }
-  if (!config) return Response.json({ error: "AI chưa được quản trị viên bật. Vui lòng liên hệ quản trị để cấu hình Gemini dùng chung." }, { status: 503 });
+  const suppliedKey = typeof body?.apiKey === "string" ? body.apiKey.trim() : "";
+  if (suppliedKey && !/^AIza[\w-]{20,}$/.test(suppliedKey)) return Response.json({ error: "API Gemini riêng chưa đúng định dạng." }, { status: 400 });
+  let config: { apiKey: string; model: string; source: "user" | "admin" | "environment" } | null;
+  if (suppliedKey) config = { apiKey: suppliedKey, model: typeof body?.model === "string" && /^gemini-[a-z0-9.-]{3,80}$/i.test(body.model) ? body.model : "gemini-2.5-flash", source: "user" };
+  else try { config = await getGeminiConfig(); } catch { return Response.json({ error: "AI dùng chung chưa sẵn sàng. Bạn có thể dán API Gemini riêng cho lần nhập này." }, { status: 503 }); }
+  if (!config) return Response.json({ error: "AI dùng chung chưa được bật. Bạn có thể dán API Gemini riêng cho lần nhập này." }, { status: 503 });
 
   const schema = { type: "OBJECT", properties: { items: { type: "ARRAY", items: { type: "OBJECT", properties: { meal: { type: "STRING" }, dishName: { type: "STRING" }, foodName: { type: "STRING" }, edibleGrams: { type: "NUMBER" }, note: { type: "STRING" } }, required: ["meal", "dishName", "foodName", "edibleGrams", "note"] } } }, required: ["items"] };
   const prompt = `Bóc tách khẩu phần thành JSON, không tư vấn điều trị. Mỗi dòng là một thực phẩm hoặc món có thể tra cứu. Giữ nguyên tên người dùng nói để foodName dễ khớp CSDL Việt Nam. Nếu chỉ nêu tên món (ví dụ “phở bò 350 g”) thì giữ 1 dòng foodName="phở bò"; KHÔNG tự bịa nguyên liệu. Chỉ tách nguyên liệu khi người dùng đã nêu rõ trong ngoặc/danh sách; khi đó KHÔNG thêm lại dòng món tổng để tránh đếm đôi. Chỉ lấy số lượng đã ghi; không rõ gram thì edibleGrams=0 và note="chưa rõ lượng". meal là bữa nếu có; dishName là tên món/nhóm món, rỗng nếu thực phẩm ăn trực tiếp. Không tạo số dinh dưỡng. Trả đúng JSON schema.\nDữ liệu: ${text}`;
@@ -73,5 +76,5 @@ export async function POST(request: NextRequest) {
     const safeSuggestion = !exact && suggestions[0]?.score >= 220 && (suggestions.length === 1 || suggestions[0].score - suggestions[1].score >= 60) ? suggestions[0].candidate : null;
     return { ...item, food: exact ?? safeSuggestion, matchType: exact ? "exact" : safeSuggestion ? "suggested" : "none", candidates: suggestions.map((entry) => entry.candidate) };
   });
-  return Response.json({ items: matches, keyMode: "system" });
+  return Response.json({ items: matches, keyMode: config.source });
 }
