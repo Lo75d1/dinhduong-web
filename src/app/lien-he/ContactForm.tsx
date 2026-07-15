@@ -7,7 +7,7 @@ export default function ContactForm() {
   const [settings, setSettings] = useState(defaultSiteSettings);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  useEffect(() => { void fetch("/api/site-settings").then((r) => r.json()).then((data) => setSettings({ ...defaultSiteSettings, ...data })).catch(() => undefined); }, []);
+  useEffect(() => { void fetch("/api/site-settings", { cache: "no-store" }).then((r) => r.json()).then((data) => setSettings({ ...defaultSiteSettings, ...data })).catch(() => undefined); }, []);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setSending(true); setMessage("");
     const form = event.currentTarget;
