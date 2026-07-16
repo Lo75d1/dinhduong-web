@@ -24,24 +24,41 @@ export async function POST(request: Request) {
     if (!reason) return Response.json({ error: "Cần ghi lý do và nguồn đối chiếu trước khi cập nhật." }, { status: 400 });
     if (!requested.length) return Response.json({ error: "Chưa có dòng ảnh hợp lệ để cập nhật." }, { status: 400 });
 
+    // Chia lô để tránh vượt timeout Prisma interactive transaction khi số dòng
+    // lớn (cùng lỗi/cách sửa đã áp dụng cho rni-commit/route.ts).
+    const BATCH_SIZE = 300;
     let updated = 0;
     let skipped = 0;
-    await prisma.$transaction(async (tx) => {
-      for (const item of requested) {
-        const id = typeof item.id === "string" ? item.id : "";
-        const sourceCode = typeof item.sourceCode === "string" ? item.sourceCode : "";
-        const imageUrl = officialImageUrl(item.imageUrl);
-        const imageSourceUrl = officialImageUrl(item.imageSourceUrl) ?? "https://viendinhduong.vn/vi/cong-cu-va-tien-ich/gia-tri-dinh-duong-mon-an";
-        if (!id || !sourceCode || !imageUrl) { skipped++; continue; }
-        const before = await tx.food.findUnique({ where: { id }, select: snapshot });
-        if (!before || before.source !== "VDD") { skipped++; continue; }
-        if (before.sourceCode && before.sourceCode !== sourceCode) { skipped++; continue; }
-        if (before.sourceCode === sourceCode && before.imageUrl === imageUrl && before.imageSourceUrl === imageSourceUrl) { skipped++; continue; }
-        const after = await tx.food.update({ where: { id }, data: { sourceCode, imageUrl, imageSourceUrl }, select: snapshot });
-        await tx.dataChangeLog.create({ data: { entityType: "FOOD", entityId: id, action: "IMPORT_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
-        updated++;
+    const failedBatches: string[] = [];
+    for (let start = 0; start < requested.length; start += BATCH_SIZE) {
+      const batch = requested.slice(start, start + BATCH_SIZE);
+      try {
+        const result = await prisma.$transaction(async (tx) => {
+          let batchUpdated = 0;
+          let batchSkipped = 0;
+          for (const item of batch) {
+            const id = typeof item.id === "string" ? item.id : "";
+            const sourceCode = typeof item.sourceCode === "string" ? item.sourceCode : "";
+            const imageUrl = officialImageUrl(item.imageUrl);
+            const imageSourceUrl = officialImageUrl(item.imageSourceUrl) ?? "https://viendinhduong.vn/vi/cong-cu-va-tien-ich/gia-tri-dinh-duong-mon-an";
+            if (!id || !sourceCode || !imageUrl) { batchSkipped++; continue; }
+            const before = await tx.food.findUnique({ where: { id }, select: snapshot });
+            if (!before || before.source !== "VDD") { batchSkipped++; continue; }
+            if (before.sourceCode && before.sourceCode !== sourceCode) { batchSkipped++; continue; }
+            if (before.sourceCode === sourceCode && before.imageUrl === imageUrl && before.imageSourceUrl === imageSourceUrl) { batchSkipped++; continue; }
+            const after = await tx.food.update({ where: { id }, data: { sourceCode, imageUrl, imageSourceUrl }, select: snapshot });
+            await tx.dataChangeLog.create({ data: { entityType: "FOOD", entityId: id, action: "IMPORT_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
+            batchUpdated++;
+          }
+          return { batchUpdated, batchSkipped };
+        }, { maxWait: 10_000, timeout: 30_000 });
+        updated += result.batchUpdated;
+        skipped += result.batchSkipped;
+      } catch (error) {
+        failedBatches.push(`dòng ${start + 1}-${start + batch.length}: ${error instanceof Error ? error.message.slice(0, 200) : "lỗi không xác định"}`);
       }
-    }, { maxWait: 10_000, timeout: 60_000 });
+    }
+    if (failedBatches.length) return Response.json({ updated, skipped, warning: `Còn ${failedBatches.length} lô lỗi, mỗi lô đã tự rollback riêng (không mất dữ liệu): ${failedBatches.join("; ")}` });
     return Response.json({ updated, skipped });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
