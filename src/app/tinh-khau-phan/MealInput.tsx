@@ -387,7 +387,17 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   function addAiItems(items: AiRationItem[]) {
     const newRows = items.flatMap((item) => {
       const food = item.food;
-      if (!food) return [];
+      const meal = item.meal || work?.meal || UNASSIGNED_MEAL;
+      const dish = item.dishName || work?.dish || UNASSIGNED_DISH;
+      // Chưa khớp thực phẩm vẫn thêm dòng vào bảng (giữ đúng tên AI ghi nhận
+      // được) để không mất cấu trúc bữa/món đã nhập — chỉ là chưa có
+      // nutrients/classify nên KHÔNG tính vào tổng dinh dưỡng cho tới khi
+      // người dùng tự chọn đúng thực phẩm ở bảng khẩu phần.
+      if (!food) {
+        const row = makeRow(meal, dish, null, mode);
+        const grams = item.edibleGrams || row.grams;
+        return [{ ...row, foodName: item.foodName, grams, inputGrams: mode === "menu" ? (calculateQuantity({ grams, basis: "edible", wastePercent: row.wastePercent }).rawGrams ?? grams) : grams, inputBasis: mode === "menu" ? "raw" as const : "edible" as const, note: `AI chưa khớp CSDL, cần chọn lại thực phẩm.${item.note ? ` ${item.note}` : ""}` }];
+      }
       const nutrients: Record<string, number | null> = {};
       for (const field of CORE_CALC_FIELDS) nutrients[field.key] = typeof food[field.key] === "number" ? food[field.key] as number : null;
       const classify = {
@@ -397,8 +407,6 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
         purinLevel: typeof food.purinLevel === "number" ? food.purinLevel : null,
         cholesterolLevel: typeof food.cholesterolLevel === "number" ? food.cholesterolLevel : null,
       };
-      const meal = item.meal || work?.meal || UNASSIGNED_MEAL;
-      const dish = item.dishName || work?.dish || UNASSIGNED_DISH;
       const row = makeRow(meal, dish, { id: food.id, name: food.name, nutrients, classify, wastePercent: typeof food.wastePercent === "number" ? food.wastePercent : null }, mode);
       const grams = item.edibleGrams || row.grams;
       return [{ ...row, grams, inputGrams: mode === "menu" ? (calculateQuantity({ grams, basis: "edible", wastePercent: row.wastePercent }).rawGrams ?? grams) : grams, inputBasis: mode === "menu" ? "raw" as const : "edible" as const, note: item.note ? `AI: ${item.note}` : "AI: đã kiểm tra khớp CSDL" }];
