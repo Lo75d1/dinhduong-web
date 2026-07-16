@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import AiRationInput, { type AiRationItem } from "./AiRationInput";
 import { basisForMode, calculateQuantity, isValidWastePercent } from "./quantity";
@@ -70,6 +71,8 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   const [results, setResults] = useState<FoodResult[]>([]);
   const [dishResults, setDishResults] = useState<DishResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [portalReady, setPortalReady] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualEnergy, setManualEnergy] = useState("");
@@ -89,6 +92,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
     setRows(loadRows());
     setMode(loadRationMode());
     setHydrated(true);
+    setPortalReady(true);
   }, []);
 
   useEffect(() => {
@@ -418,7 +422,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   }
 
   return (
-    <section className="flex flex-col gap-4" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
+    <section className="flex flex-col gap-4 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">Nhập khẩu phần</h1>
@@ -433,88 +437,17 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
 
       <AiRationInput onConfirm={addAiItems} />
 
-      <div className="rounded-lg border border-neutral-200 bg-white p-3">
-        <div className="mb-2 text-xs text-neutral-500">
-          {work ? (
-            <>
-              Đang thêm vào: <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700">{work.meal} › {work.dish}</span>
-            </>
-          ) : (
-            "Chọn một món ở bên dưới trước; nếu không, thực phẩm sẽ được đưa vào mục Chưa phân bữa."
-          )}
-        </div>
-        <div className="mb-3 flex gap-2 border-b border-neutral-200 pb-3" role="tablist" aria-label="Nguồn thêm vào khẩu phần">
-          <button type="button" role="tab" aria-selected={searchKind === "food"} onClick={() => changeSearchKind("food")} className={`rounded-md px-3 py-2 text-sm font-semibold ${searchKind === "food" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Thực phẩm</button>
-          <button type="button" role="tab" aria-selected={searchKind === "dish"} onClick={() => changeSearchKind("dish")} className={`rounded-md px-3 py-2 text-sm font-semibold ${searchKind === "dish" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Món ăn theo công thức</button>
-        </div>
-        {searchKind === "food" && <>
-        <div className="mb-2 flex flex-wrap items-center gap-1.5" aria-label="Lọc loại thực phẩm">
-          <span className="mr-1 text-sm font-medium text-neutral-800">▾ Lọc</span>
-          {FOOD_TYPE_FILTERS.map((filter) => (
-            <button key={filter.value || "all"} type="button" aria-pressed={foodType === filter.value} onClick={() => changeFoodType(filter.value)} className={`rounded-full border px-2.5 py-1 text-xs font-medium ${foodType === filter.value ? "border-emerald-700 bg-emerald-700 text-white" : "border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50"}`}>
-              {filter.label}
-            </button>
-          ))}
-        </div>
-        <div className="mb-2 grid gap-2 sm:grid-cols-2">
-          <label className="text-xs font-medium text-neutral-800">Nguồn dữ liệu
-            <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
-              <option value="">Tất cả nguồn</option>
-              {filterOptions.sources.map((source) => <option key={source} value={source}>{source}</option>)}
-            </select>
-          </label>
-          <label className="text-xs font-medium text-neutral-800">Nhóm thực phẩm
-            <select value={groupFilter} onChange={(event) => setGroupFilter(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
-              <option value="">Tất cả nhóm</option>
-              {filterOptions.groups.map((group) => <option key={group} value={group}>{group}</option>)}
-            </select>
-          </label>
-        </div>
-        </>}
-        {searchKind === "dish" && <div className="mb-2 grid gap-2 sm:grid-cols-3">
-          <label className="text-xs font-medium text-neutral-800">Nhóm món gốc<select value={dishCategory} onChange={(event) => setDishCategory(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Tất cả nhóm</option>{dishFilterOptions.categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-          <label className="text-xs font-medium text-neutral-800">Nhóm tuổi<select value={dishAge} onChange={(event) => setDishAge(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Tất cả nhóm tuổi</option>{dishFilterOptions.ageGroups.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-          <label className="text-xs font-medium text-neutral-800">Chế độ bệnh lý<select value={dishDisease} onChange={(event) => setDishDisease(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Không giới hạn</option>{dishFilterOptions.diseaseGroups.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
-        </div>}
-        <div className="mb-2 flex justify-end"><button type="button" onClick={clearSearchFilters} className="text-xs font-semibold text-[#123c36] underline underline-offset-2 hover:text-black">Xóa từ khóa và bộ lọc</button></div>
-        <div className="relative">
-          <label className="sr-only" htmlFor="food-search">{searchKind === "food" ? "Tìm thực phẩm" : "Tìm món ăn"}</label>
-          <input id="food-search" disabled={!hydrated} type="text" value={q} onChange={(event) => updateSearch(event.target.value)} placeholder={searchKind === "food" ? "VD: cá chép, sữa chua; gõ không dấu được" : "VD: bún riêu, cháo thịt; gõ không dấu được"} className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:cursor-wait disabled:bg-neutral-50" />
-          {searchKind === "food" && q.trim().length >= 1 && (
-            <div className="absolute z-10 mt-1 max-h-72 w-full overflow-auto rounded-md border border-neutral-200 bg-white shadow-lg">
-              {searching && <div className="px-3 py-2 text-sm text-neutral-400">Đang tìm...</div>}
-              {!searching && results.length === 0 && <div className="px-3 py-2 text-sm text-neutral-400">Không có kết quả.</div>}
-              {results.map((food) => {
-                const meta = typeMeta(food.foodType);
-                return (
-                <button key={food.id} onClick={() => pickFood(food)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-emerald-50">
-                  {food.imageUrl ? <img src={food.imageUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-8 w-8 shrink-0" />}
-                  <span className="flex-1">{food.name}</span>
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${meta.chip}`}>{meta.label}</span>
-                  <span className="shrink-0 text-xs text-neutral-400">{food.source} · {typeof food.energyKcal === "number" ? `${food.energyKcal} kcal/100g` : "—"}</span>
-                </button>
-                );
-              })}
-            </div>
-          )}
-          {searchKind === "dish" && q.trim().length >= 1 && <div className="absolute z-10 mt-1 max-h-80 w-full overflow-auto rounded-md border border-neutral-300 bg-white shadow-lg">
-            {searching && <div className="px-3 py-2 text-sm text-neutral-700">Đang tìm...</div>}
-            {!searching && dishResults.length === 0 && <div className="px-3 py-2 text-sm text-neutral-700">Không có món phù hợp.</div>}
-            {dishResults.map((dish) => <button key={dish.id} type="button" onClick={() => pickDish(dish)} className="flex w-full items-start gap-2 border-b border-neutral-200 px-3 py-3 text-left last:border-0 hover:bg-emerald-50">{dish.imageSourceId ? <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt="" className="h-10 w-10 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-10 w-10 shrink-0" />}<div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-neutral-950">{dish.name}</span><span className="text-xs text-neutral-800">{dish.ingredients.length} nguyên liệu {dish.totalWeightG ? `· ${dish.totalWeightG}g` : ""}</span></div><div className="mt-1 flex flex-wrap gap-1 text-xs text-neutral-800">{dish.categoryRaw && <span className="rounded bg-neutral-100 px-1.5 py-0.5">{dish.categoryRaw}</span>}{dish.ageGroup && <span className="rounded bg-sky-50 px-1.5 py-0.5">{dish.ageGroup}</span>}{dish.diseaseDiet && <span className="rounded bg-rose-50 px-1.5 py-0.5">{dish.diseaseDiet}</span>}</div><p className="mt-1 text-xs text-neutral-800">Bấm để thêm các nguyên liệu đã liên kết dữ liệu vào một món mới trong bữa đang chọn.</p></div></button>)}
-          </div>}
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2 border-t border-neutral-100 pt-3">
-          <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
-          <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
-        </div>
-        {showManualForm && <form onSubmit={addManualFood} className="mt-3 rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
-          <label className="mt-4 flex items-start gap-2 rounded border border-[#a77b10] bg-[#fff8df] p-3 text-sm font-semibold text-neutral-950"><input type="checkbox" checked={submitManualForReview} onChange={(event) => setSubmitManualForReview(event.target.checked)} className="mt-1" />Đồng thời gửi bản nháp để quản trị viên kiểm duyệt dùng chung</label>
-          {submitManualForReview && <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Mô tả / căn cứ đề xuất<textarea value={manualDescription} onChange={(event) => setManualDescription(event.target.value)} placeholder="Ví dụ: sản phẩm nào, phần ăn, thông tin nhãn..." className="mt-1 min-h-20 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Nguồn tham khảo<textarea value={manualSourceNote} onChange={(event) => setManualSourceNote(event.target.value)} placeholder="Nhãn sản phẩm, tài liệu hoặc đường dẫn để đối chiếu..." className="mt-1 min-h-16 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>}
-          <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
-        </form>}
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
+        <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
       </div>
+      {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
+        <label className="mt-4 flex items-start gap-2 rounded border border-[#a77b10] bg-[#fff8df] p-3 text-sm font-semibold text-neutral-950"><input type="checkbox" checked={submitManualForReview} onChange={(event) => setSubmitManualForReview(event.target.checked)} className="mt-1" />Đồng thời gửi bản nháp để quản trị viên kiểm duyệt dùng chung</label>
+        {submitManualForReview && <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Mô tả / căn cứ đề xuất<textarea value={manualDescription} onChange={(event) => setManualDescription(event.target.value)} placeholder="Ví dụ: sản phẩm nào, phần ăn, thông tin nhãn..." className="mt-1 min-h-20 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Nguồn tham khảo<textarea value={manualSourceNote} onChange={(event) => setManualSourceNote(event.target.value)} placeholder="Nhãn sản phẩm, tài liệu hoặc đường dẫn để đối chiếu..." className="mt-1 min-h-16 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>}
+        <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
+      </form>}
 
       {tree.length === 0 ? (
         <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">Chưa có bữa ăn nào. Bấm “+ Thêm bữa ăn” để bắt đầu.</div>
@@ -539,6 +472,91 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
           ))}
         </div>
       )}
+
+      {/* Ô tìm kiếm ghim cố định dưới màn hình — theo yêu cầu người dùng, tránh
+          phải cuộn lên xuống liên tục để thêm thực phẩm khi danh sách bữa/món
+          đã dài. Bộ lọc gộp gọn, ẩn mặc định (bấm "Bộ lọc" mới hiện); danh sách
+          gợi ý mở NGƯỢC LÊN TRÊN (bottom-full) vì thanh này neo ở đáy màn hình.
+          Portal thẳng ra document.body: .clinical-panel (Calculator.tsx) có
+          animation kết thúc bằng transform: translateY(0) giữ nguyên
+          (animation-fill-mode: both) — dù là identity transform, nó vẫn tạo
+          containing block mới cho position:fixed, khiến thanh này bị "nhốt"
+          trong khung thay vì ghim theo viewport nếu không portal ra ngoài. */}
+      {portalReady && createPortal(
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-[#123c36] bg-white shadow-[0_-6px_18px_rgba(0,0,0,0.15)]">
+        <div className="mx-auto max-w-7xl px-3 py-2 sm:px-5">
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
+            <span>{work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa."}</span>
+            <div className="flex items-center gap-2">
+              {(foodType || sourceFilter || groupFilter || dishCategory || dishAge || dishDisease || q) && <button type="button" onClick={clearSearchFilters} className="font-semibold text-[#123c36] underline underline-offset-2">Xóa lọc</button>}
+              <button type="button" onClick={() => setFiltersOpen((current) => !current)} className="font-semibold text-[#123c36] underline underline-offset-2">{filtersOpen ? "Ẩn bộ lọc ▲" : "Bộ lọc ▾"}</button>
+            </div>
+          </div>
+          {filtersOpen && <div className="mb-2 rounded-md border border-neutral-200 bg-neutral-50 p-2">
+            {searchKind === "food" && <>
+              <div className="flex flex-wrap items-center gap-1.5" aria-label="Lọc loại thực phẩm">
+                {FOOD_TYPE_FILTERS.map((filter) => (
+                  <button key={filter.value || "all"} type="button" aria-pressed={foodType === filter.value} onClick={() => changeFoodType(filter.value)} className={`rounded-full border px-2.5 py-1 text-xs font-medium ${foodType === filter.value ? "border-emerald-700 bg-emerald-700 text-white" : "border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50"}`}>
+                    {filter.label}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <label className="text-xs font-medium text-neutral-800">Nguồn dữ liệu
+                  <select value={sourceFilter} onChange={(event) => setSourceFilter(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+                    <option value="">Tất cả nguồn</option>
+                    {filterOptions.sources.map((source) => <option key={source} value={source}>{source}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs font-medium text-neutral-800">Nhóm thực phẩm
+                  <select value={groupFilter} onChange={(event) => setGroupFilter(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm">
+                    <option value="">Tất cả nhóm</option>
+                    {filterOptions.groups.map((group) => <option key={group} value={group}>{group}</option>)}
+                  </select>
+                </label>
+              </div>
+            </>}
+            {searchKind === "dish" && <div className="grid gap-2 sm:grid-cols-3">
+              <label className="text-xs font-medium text-neutral-800">Nhóm món gốc<select value={dishCategory} onChange={(event) => setDishCategory(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Tất cả nhóm</option>{dishFilterOptions.categories.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+              <label className="text-xs font-medium text-neutral-800">Nhóm tuổi<select value={dishAge} onChange={(event) => setDishAge(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Tất cả nhóm tuổi</option>{dishFilterOptions.ageGroups.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+              <label className="text-xs font-medium text-neutral-800">Chế độ bệnh lý<select value={dishDisease} onChange={(event) => setDishDisease(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Không giới hạn</option>{dishFilterOptions.diseaseGroups.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
+            </div>}
+          </div>}
+          <div className="flex items-center gap-1.5">
+            <div className="flex shrink-0 gap-1" role="tablist" aria-label="Nguồn thêm vào khẩu phần">
+              <button type="button" role="tab" aria-selected={searchKind === "food"} onClick={() => changeSearchKind("food")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "food" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Thực phẩm</button>
+              <button type="button" role="tab" aria-selected={searchKind === "dish"} onClick={() => changeSearchKind("dish")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "dish" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Món ăn</button>
+            </div>
+            <div className="relative min-w-0 flex-1">
+              <label className="sr-only" htmlFor="food-search">{searchKind === "food" ? "Tìm thực phẩm" : "Tìm món ăn"}</label>
+              <input id="food-search" disabled={!hydrated} type="text" value={q} onChange={(event) => updateSearch(event.target.value)} placeholder={searchKind === "food" ? "VD: cá chép, sữa chua; gõ không dấu được" : "VD: bún riêu, cháo thịt; gõ không dấu được"} className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:cursor-wait disabled:bg-neutral-50" />
+              {searchKind === "food" && q.trim().length >= 1 && (
+                <div className="absolute inset-x-0 bottom-full z-10 mb-1 max-h-72 overflow-auto rounded-md border border-neutral-200 bg-white shadow-lg">
+                  {searching && <div className="px-3 py-2 text-sm text-neutral-400">Đang tìm...</div>}
+                  {!searching && results.length === 0 && <div className="px-3 py-2 text-sm text-neutral-400">Không có kết quả.</div>}
+                  {results.map((food) => {
+                    const meta = typeMeta(food.foodType);
+                    return (
+                    <button key={food.id} onClick={() => pickFood(food)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-emerald-50">
+                      {food.imageUrl ? <img src={food.imageUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-8 w-8 shrink-0" />}
+                      <span className="flex-1">{food.name}</span>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${meta.chip}`}>{meta.label}</span>
+                      <span className="shrink-0 text-xs text-neutral-400">{food.source} · {typeof food.energyKcal === "number" ? `${food.energyKcal} kcal/100g` : "—"}</span>
+                    </button>
+                    );
+                  })}
+                </div>
+              )}
+              {searchKind === "dish" && q.trim().length >= 1 && <div className="absolute inset-x-0 bottom-full z-10 mb-1 max-h-80 overflow-auto rounded-md border border-neutral-300 bg-white shadow-lg">
+                {searching && <div className="px-3 py-2 text-sm text-neutral-700">Đang tìm...</div>}
+                {!searching && dishResults.length === 0 && <div className="px-3 py-2 text-sm text-neutral-700">Không có món phù hợp.</div>}
+                {dishResults.map((dish) => <button key={dish.id} type="button" onClick={() => pickDish(dish)} className="flex w-full items-start gap-2 border-b border-neutral-200 px-3 py-3 text-left last:border-0 hover:bg-emerald-50">{dish.imageSourceId ? <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt="" className="h-10 w-10 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-10 w-10 shrink-0" />}<div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-neutral-950">{dish.name}</span><span className="text-xs text-neutral-800">{dish.ingredients.length} nguyên liệu {dish.totalWeightG ? `· ${dish.totalWeightG}g` : ""}</span></div><div className="mt-1 flex flex-wrap gap-1 text-xs text-neutral-800">{dish.categoryRaw && <span className="rounded bg-neutral-100 px-1.5 py-0.5">{dish.categoryRaw}</span>}{dish.ageGroup && <span className="rounded bg-sky-50 px-1.5 py-0.5">{dish.ageGroup}</span>}{dish.diseaseDiet && <span className="rounded bg-rose-50 px-1.5 py-0.5">{dish.diseaseDiet}</span>}</div><p className="mt-1 text-xs text-neutral-800">Bấm để thêm các nguyên liệu đã liên kết dữ liệu vào một món mới trong bữa đang chọn.</p></div></button>)}
+              </div>}
+            </div>
+          </div>
+        </div>
+      </div>,
+      document.body)}
     </section>
   );
 }
