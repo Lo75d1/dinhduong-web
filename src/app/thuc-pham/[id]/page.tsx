@@ -68,8 +68,7 @@ export default async function ThucPhamDetailPage({
       </div>
 
       <p className="text-xs text-neutral-400">
-        Giá trị dinh dưỡng tính trên 100{food.unit}. Xem README-data.md để biết các giả định/quy tắc
-        suy luận.
+        Giá trị dinh dưỡng tính trên 100{food.unit}.
       </p>
 
       {NUTRIENT_GROUPS.map((group) => {

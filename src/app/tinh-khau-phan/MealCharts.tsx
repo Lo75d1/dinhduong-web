@@ -217,7 +217,7 @@ export default function MealCharts({ rows }: { rows: Row[] }) {
         <div className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
           GI (chỉ số đường huyết): {round(giOverallCoverage)}% thực phẩm trong khẩu phần có nguồn dữ liệu —
           {giOverallCoverage === 0
-            ? " CSDL hiện chưa có nguồn GI cho bất kỳ thực phẩm nào (xem README-data.md mục 10), nên không thể hiển thị."
+            ? " CSDL hiện chưa có nguồn GI cho bất kỳ thực phẩm nào, nên không thể hiển thị."
             : " xem mức GI trung bình từng bữa ở bảng dưới."}
         </div>
         {giOverallCoverage > 0 && (
@@ -286,7 +286,7 @@ export default function MealCharts({ rows }: { rows: Row[] }) {
         <h2 className="text-sm font-semibold text-neutral-700">Natri theo bữa &amp; nhóm thực phẩm</h2>
         <p className="mt-0.5 text-xs text-neutral-400">
           Khuyến nghị WHO: dưới 2.000 mg natri/ngày (≈ 5g muối). Chỉ ~22% thực phẩm có nhóm phân loại
-          (xem README-data.md mục 10) — phần còn lại gộp vào “{UNCLASSIFIED_GROUP}”.
+          — phần còn lại gộp vào “{UNCLASSIFIED_GROUP}”.
         </p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
           {groupBuckets.map((b) => (
