@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         await tx.dataChangeLog.create({ data: { entityType: "DISH", entityId: id, action: "IMPORT_RNI_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
         updated++;
       }
-    });
+    }, { maxWait: 10_000, timeout: 60_000 });
     return Response.json({ updated, skipped });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
