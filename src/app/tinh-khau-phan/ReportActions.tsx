@@ -7,7 +7,7 @@ import { aggregateIngredients, buildDetailRows, buildReportLines, type FoodRepor
 import type { Profile } from "./PersonalProfile";
 import type { Row } from "./types";
 
-export type ReportMeta = { subjectName: string; subjectGroup: string; clinicalCourse: string; authorName: string; authorRole: string; authorOrganization: string; reportDate: string };
+export type ReportMeta = { subjectName: string; subjectGroup: string; clinicalCourse: string; authorName: string; authorRole: string; authorOrganization: string; reportDate: string; menuNote: string };
 const ROLES = ["Bác sĩ", "Dinh dưỡng viên", "Huấn luyện viên / PT", "Phụ huynh / người chăm sóc", "Khác"];
 const escapeXml = (value: string | number | null | undefined) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const round = (value: number) => Math.round(value * 100) / 100;
@@ -49,6 +49,7 @@ function buildExcelXml(rows: Row[], profile: Profile | null, meta: ReportMeta, r
     ["Người được đánh giá", meta.subjectName || "Chưa ghi"],
     ["Nhóm / mục tiêu", meta.subjectGroup || "Chưa ghi"],
     ["Hồ sơ", profileText(profile)],
+    ["Ghi chú thực đơn / khẩu phần", meta.menuNote || "Chưa ghi"],
     ["Diễn biến bệnh lý / theo dõi", meta.clinicalCourse || "Chưa ghi"],
     ["Ngày lập", meta.reportDate || "Chưa ghi"],
     ["Người lập", `${meta.authorName || "Chưa ghi"}${meta.authorRole ? ` (${meta.authorRole})` : ""}`],

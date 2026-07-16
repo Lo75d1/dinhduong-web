@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import LegacyChartReport from "./LegacyChartReport";
@@ -25,7 +25,8 @@ export default function Calculator() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [visibleSections, setVisibleSections] = useState<string[]>(["overview"]);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
-  const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10) }));
+  const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
+  const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
   const foodRows = rows.filter((r) => r.foodId);
 
   const totals: Record<string, number> = {};
@@ -62,13 +63,14 @@ export default function Calculator() {
         <h2 className="mt-1 text-2xl font-semibold text-neutral-950">Nhập dữ liệu khẩu phần</h2>
         <p className="mt-1 text-neutral-800">Nhập hồ sơ, tạo bữa/món và thêm thực phẩm trên toàn bộ chiều rộng màn hình.</p>
       </div>
-      <div className="mt-5 flex flex-col gap-5"><PersonalProfile onChange={setProfile} /><MealInput onRowsChange={setRows} /></div>
+      <div className="mt-5 flex flex-col gap-5"><PersonalProfile onChange={setProfile} /><MealInput onRowsChange={setRows} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
       <div className="mt-6 flex justify-end border-t-2 border-[#7f948d] pt-4"><button onClick={() => setActiveView("analysis")} className="rounded-md bg-[#123c36] px-5 py-3 font-semibold text-white">Sang kết quả &amp; phân tích →</button></div>
     </section>
 
     <section className={activeView === "analysis" ? "clinical-panel min-w-0 rounded-xl border-2 border-[#7f948d] bg-white p-6" : "hidden"}>
-      <section data-print-header><p className="text-center text-sm font-semibold tracking-[0.16em] text-[#123c36]">BÁO CÁO PHÂN TÍCH KHẨU PHẦN</p><h1 className="mt-2 text-center text-2xl font-semibold">Phiếu đánh giá dinh dưỡng</h1><div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 border-y-2 border-[#123c36] py-3 text-sm"><p><b>Người được đánh giá:</b> {reportMeta.subjectName || "Chưa ghi"}</p><p><b>Ngày lập:</b> {reportMeta.reportDate || "Chưa ghi"}</p><p><b>Nhóm / mục tiêu:</b> {reportMeta.subjectGroup || "Chưa ghi"}</p><p><b>Người lập:</b> {reportMeta.authorName || "Chưa ghi"} ({reportMeta.authorRole})</p><p className="col-span-2"><b>Đơn vị / cơ sở:</b> {reportMeta.authorOrganization || "Chưa ghi"}</p><p className="col-span-2"><b>Hồ sơ:</b> {profile ? `${profile.gender}, ${profile.age || "—"} ${profile.ageUnit}, ${profile.weight || "—"} kg, ${profile.height || "—"} cm${profile.physiology.startsWith("pregnant_") ? ` · Thai kỳ: ${profile.pregnancyWeek ? `tuần ${profile.pregnancyWeek}` : "chưa ghi tuần"}${profile.prePregnancyWeight ? ` · trước thai ${profile.prePregnancyWeight} kg` : ""}` : ""}` : "Chưa nhập"}</p>{profile?.pregnancyNote && <p className="col-span-2"><b>Ghi chú thai kỳ:</b> {profile.pregnancyNote}</p>}{reportMeta.clinicalCourse && <p className="col-span-2"><b>Diễn biến bệnh lý / theo dõi:</b> {reportMeta.clinicalCourse}</p>}</div></section>
+      <section data-print-header><p className="text-center text-sm font-semibold tracking-[0.16em] text-[#123c36]">BÁO CÁO PHÂN TÍCH KHẨU PHẦN</p><h1 className="mt-2 text-center text-2xl font-semibold">Phiếu đánh giá dinh dưỡng</h1><div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 border-y-2 border-[#123c36] py-3 text-sm"><p><b>Người được đánh giá:</b> {reportMeta.subjectName || "Chưa ghi"}</p><p><b>Ngày lập:</b> {reportMeta.reportDate || "Chưa ghi"}</p><p><b>Nhóm / mục tiêu:</b> {reportMeta.subjectGroup || "Chưa ghi"}</p><p><b>Người lập:</b> {reportMeta.authorName || "Chưa ghi"} ({reportMeta.authorRole})</p><p className="col-span-2"><b>Đơn vị / cơ sở:</b> {reportMeta.authorOrganization || "Chưa ghi"}</p><p className="col-span-2"><b>Hồ sơ:</b> {profile ? `${profile.gender}, ${profile.age || "—"} ${profile.ageUnit}, ${profile.weight || "—"} kg, ${profile.height || "—"} cm${profile.physiology.startsWith("pregnant_") ? ` · Thai kỳ: ${profile.pregnancyWeek ? `tuần ${profile.pregnancyWeek}` : "chưa ghi tuần"}${profile.prePregnancyWeight ? ` · trước thai ${profile.prePregnancyWeight} kg` : ""}` : ""}` : "Chưa nhập"}</p>{profile?.pregnancyNote && <p className="col-span-2"><b>Ghi chú thai kỳ:</b> {profile.pregnancyNote}</p>}{reportMeta.menuNote && <p className="col-span-2"><b>Ghi chú thực đơn / khẩu phần:</b> {reportMeta.menuNote}</p>}{reportMeta.clinicalCourse && <p className="col-span-2"><b>Diễn biến bệnh lý / theo dõi:</b> {reportMeta.clinicalCourse}</p>}</div></section>
       <div className="border-b-2 border-[#123c36] pb-3"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 2 · KẾT QUẢ</p><h2 className="mt-1 text-2xl font-semibold text-neutral-950">Kết quả &amp; phân tích</h2><p className="mt-1 text-neutral-800">Chỉ tích các nhóm bảng cần dùng để màn hình gọn và đúng mục tiêu chuyên môn.</p></div>
+      <NoteBox value={reportMeta.menuNote} onChange={setMenuNote} />
       {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-5 flex flex-col gap-5">
         <div className="clinical-card rounded-lg border-2 border-[#7f948d] bg-[#f7faf8] p-4" data-no-print>
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold text-neutral-950">Chọn nhóm kết quả cần xem</h3><p className="text-sm text-neutral-800">Có thể mở nhiều nhóm cùng lúc.</p></div><div className="flex flex-wrap items-center justify-end gap-2"><ServerRationActions rows={rows} profile={profile} /><ReportActions rows={rows} profile={profile} meta={reportMeta} onMetaChange={setReportMeta} /></div></div>
@@ -80,5 +82,22 @@ export default function Calculator() {
         {visibleSections.includes("charts") && <LegacyChartReport rows={rows} />}
       </div>}
     </section>
+  </div>;
+}
+
+// Ô ghi chú chung cho thực đơn/khẩu phần — nhỏ gọn mặc định, tự cao dần theo nội
+// dung gõ vào (không cuộn ẩn bên trong ô). Cùng 1 state (reportMeta.menuNote)
+// dùng ở cả bước 1 và bước 2 nên luôn đồng bộ; bản in/Excel lấy từ state này.
+function NoteBox({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+  function autoGrow(event: ChangeEvent<HTMLTextAreaElement>) {
+    const el = event.target;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+    onChange(el.value);
+  }
+  return <div data-no-print className="rounded-lg border-2 border-[#7f948d] bg-white p-4">
+    <label className="text-sm font-semibold text-neutral-950">Ghi chú thực đơn / khẩu phần
+      <textarea value={value} onChange={autoGrow} rows={2} placeholder="Ghi chú chung cho cả thực đơn/khẩu phần này — sẽ hiện ở cả bước nhập liệu, kết quả và khi in/xuất báo cáo." className="mt-1 w-full resize-none overflow-hidden rounded-md border border-neutral-400 px-3 py-2 text-sm font-normal" />
+    </label>
   </div>;
 }
