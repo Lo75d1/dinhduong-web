@@ -12,6 +12,13 @@ const headers = { "user-agent": "DinhDuong2598/1.0 (clinical nutrition reference
 type VddItem = { code?: unknown; image?: unknown; name_vi?: unknown };
 type VddResponse = { data?: VddItem[]; last_page?: unknown };
 
+// Tên VDD trong DB có dạng "Tiếng Việt (English name)" nhưng API nguồn chỉ trả
+// tên thuần Việt (name_vi) — phải cắt bỏ phần trong ngoặc mới so khớp được
+// (cùng lỗi/cách sửa đã áp dụng cho link-ingredients.ts, xem README-data.md mục 16).
+function stripParenSuffix(name: string) {
+  return name.replace(/\s*\([^()]*\)\s*$/, "").trim();
+}
+
 function imageUrl(value: unknown) {
   if (typeof value !== "string" || !value.trim()) return "";
   try {
@@ -57,7 +64,10 @@ export async function POST() {
       entries.push(food); byCode.set(food.sourceCode, entries);
     }
     const byName = new Map<string, typeof foods>();
-    for (const food of foods) { const key = food.nameNormalized || normalizeVi(food.name); const entries = byName.get(key) ?? []; entries.push(food); byName.set(key, entries); }
+    for (const food of foods) {
+      const keys = new Set([food.nameNormalized || normalizeVi(food.name), normalizeVi(stripParenSuffix(food.name))]);
+      for (const key of keys) { const entries = byName.get(key) ?? []; entries.push(food); byName.set(key, entries); }
+    }
     const items = vddRows.map((row) => { const candidates = byCode.get(row.sourceCode) ?? byName.get(row.nameNormalized) ?? []; const food = candidates.length === 1 ? candidates[0] : null; return { ...row, status: food ? "MATCHED" : candidates.length > 1 ? "AMBIGUOUS" : "NOT_FOUND", food }; });
     const matched = items.filter((item) => item.status === "MATCHED");
     return Response.json({ items, summary: { sourceRows: vddRows.length, matched: matched.length, unchanged: matched.filter((item) => item.food?.imageUrl === item.imageUrl).length, notFound: items.filter((item) => item.status === "NOT_FOUND").length, ambiguous: items.filter((item) => item.status === "AMBIGUOUS").length } });
