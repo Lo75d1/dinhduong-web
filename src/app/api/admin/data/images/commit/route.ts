@@ -34,13 +34,14 @@ export async function POST(request: Request) {
         const imageSourceUrl = officialImageUrl(item.imageSourceUrl) ?? "https://viendinhduong.vn/vi/cong-cu-va-tien-ich/gia-tri-dinh-duong-mon-an";
         if (!id || !sourceCode || !imageUrl) { skipped++; continue; }
         const before = await tx.food.findUnique({ where: { id }, select: snapshot });
-        if (!before || before.sourceCode !== sourceCode) { skipped++; continue; }
-        if (before.imageUrl === imageUrl && before.imageSourceUrl === imageSourceUrl) { skipped++; continue; }
-        const after = await tx.food.update({ where: { id }, data: { imageUrl, imageSourceUrl }, select: snapshot });
+        if (!before || before.source !== "VDD") { skipped++; continue; }
+        if (before.sourceCode && before.sourceCode !== sourceCode) { skipped++; continue; }
+        if (before.sourceCode === sourceCode && before.imageUrl === imageUrl && before.imageSourceUrl === imageSourceUrl) { skipped++; continue; }
+        const after = await tx.food.update({ where: { id }, data: { sourceCode, imageUrl, imageSourceUrl }, select: snapshot });
         await tx.dataChangeLog.create({ data: { entityType: "FOOD", entityId: id, action: "IMPORT_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
         updated++;
       }
-    });
+    }, { maxWait: 10_000, timeout: 60_000 });
     return Response.json({ updated, skipped });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
