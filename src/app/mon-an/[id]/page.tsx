@@ -22,6 +22,7 @@ export default async function MonAnDetailPage({
               proteinG: true,
               lipidG: true,
               glucidG: true,
+              imageUrl: true,
             },
           },
         },
@@ -127,6 +128,7 @@ export default async function MonAnDetailPage({
           <table className="w-full text-sm">
             <thead className="text-left text-neutral-500">
               <tr>
+                <th className="py-1 font-medium"></th>
                 <th className="py-1 font-medium">Nguyên liệu</th>
                 <th className="py-1 text-right font-medium">Khối lượng</th>
               </tr>
@@ -134,6 +136,12 @@ export default async function MonAnDetailPage({
             <tbody>
               {dish.ingredients.map((ing) => (
                 <tr key={ing.id} className="border-t border-neutral-100">
+                  <td className="py-1.5 pr-2">
+                    {ing.food?.imageUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={ing.food.imageUrl} alt="" className="h-8 w-8 rounded object-cover" loading="lazy" />
+                    )}
+                  </td>
                   <td className="py-1.5">
                     {ing.food ? (
                       <Link href={`/thuc-pham/${ing.food.id}`} className="text-emerald-700 hover:underline">
