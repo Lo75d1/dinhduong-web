@@ -6,13 +6,22 @@ export const runtime = "nodejs";
 
 const apiUrl = "https://app.thucdongiadinh.vn/api/services/app/MonAn/GetAllServerPaging";
 const sourceUrl = "https://app.thucdongiadinh.vn/app/xay-dung-khau-phan/nbt-xay-dung-thuc-don";
-const headers = { "user-agent": "DinhDuong2598/1.0 (clinical nutrition reference)", referer: sourceUrl, origin: "https://app.thucdongiadinh.vn", accept: "application/json" };
+// Giữ đúng bộ header từ fetch_monan_dungsan_api.py: API RNI có thể từ chối
+// request server-side nếu không giống phiên làm việc của trình duyệt.
+const headers = {
+  "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  referer: sourceUrl,
+  origin: "https://app.thucdongiadinh.vn",
+  accept: "application/json, text/plain, */*",
+  "content-type": "application/json",
+  "x-requested-with": "XMLHttpRequest",
+};
 type RniItem = { id?: unknown; imgBinaryObjectId?: unknown };
 type RniResult = { result?: { totalCount?: unknown; items?: RniItem[] } };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function fetchPage(skipCount: number) {
-  const response = await fetch(apiUrl, { method: "POST", headers: { ...headers, "content-type": "application/json" }, cache: "no-store", signal: AbortSignal.timeout(30_000), body: JSON.stringify({ keyword: "", isActive: true, arrNhomMonAnId: [], sorting: "", skipCount, maxResultCount: 1000 }) });
+  const response = await fetch(apiUrl, { method: "POST", headers, cache: "no-store", signal: AbortSignal.timeout(30_000), body: JSON.stringify({ keyword: "", isActive: true, arrNhomMonAnId: [], sorting: "", skipCount, maxResultCount: 1000 }) });
   if (!response.ok) throw new Error(`RNI trả về HTTP ${response.status}`);
   return response.json() as Promise<RniResult>;
 }
