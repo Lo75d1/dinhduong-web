@@ -13,6 +13,7 @@ const SELECT = {
   unit: true,
   wastePercent: true,
   foodType: true,
+  imageUrl: true,
   ...Object.fromEntries(CORE_CALC_FIELDS.map((f) => [f.key, true])),
   ...Object.fromEntries(CLASSIFY_SELECT_KEYS.map((k) => [k, true])),
 } as const;

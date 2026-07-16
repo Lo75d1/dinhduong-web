@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     },
     orderBy: { name: "asc" }, take: 50,
     select: {
-      id: true, name: true, totalWeightG: true, servingUnit: true, categoryRaw: true, ageGroup: true, diseaseDiet: true,
+      id: true, name: true, totalWeightG: true, servingUnit: true, categoryRaw: true, ageGroup: true, diseaseDiet: true, imageSourceId: true,
       ingredients: { orderBy: { sortOrder: "asc" }, select: { id: true, foodNameRaw: true, quantityG: true, food: { select: FOOD_SELECT } } },
     },
   });

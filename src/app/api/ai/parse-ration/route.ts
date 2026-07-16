@@ -51,19 +51,31 @@ export async function POST(request: NextRequest) {
   const schema = { type: "OBJECT", properties: { items: { type: "ARRAY", items: { type: "OBJECT", properties: { meal: { type: "STRING" }, dishName: { type: "STRING" }, foodName: { type: "STRING" }, edibleGrams: { type: "NUMBER" }, note: { type: "STRING" } }, required: ["meal", "dishName", "foodName", "edibleGrams", "note"] } } }, required: ["items"] };
   const prompt = `Bóc tách khẩu phần thành JSON, không tư vấn điều trị. Mỗi dòng là một thực phẩm hoặc món có thể tra cứu. Giữ nguyên tên người dùng nói để foodName dễ khớp CSDL Việt Nam. Nếu chỉ nêu tên món (ví dụ “phở bò 350 g”) thì giữ 1 dòng foodName="phở bò"; KHÔNG tự bịa nguyên liệu. Chỉ tách nguyên liệu khi người dùng đã nêu rõ trong ngoặc/danh sách; khi đó KHÔNG thêm lại dòng món tổng để tránh đếm đôi. Chỉ lấy số lượng đã ghi; không rõ gram thì edibleGrams=0 và note="chưa rõ lượng". meal là bữa nếu có; dishName là tên món/nhóm món, rỗng nếu thực phẩm ăn trực tiếp. Không tạo số dinh dưỡng. Trả đúng JSON schema.\nDữ liệu: ${text}`;
 
-  let payload: { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+  let payload: { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }> };
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.model)}:generateContent`, {
       method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": config.apiKey },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0, maxOutputTokens: 2048, response_mime_type: "application/json", response_schema: schema } }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0, maxOutputTokens: 8192, response_mime_type: "application/json", response_schema: schema } }),
     });
     if (!response.ok) return Response.json({ error: "Gemini chưa thể xử lý yêu cầu. Quản trị viên cần kiểm tra hạn mức hoặc cấu hình AI." }, { status: 502 });
     payload = await response.json() as typeof payload;
   } catch { return Response.json({ error: "Không thể kết nối Gemini. Vui lòng thử lại." }, { status: 502 }); }
 
+  const finishReason = payload.candidates?.[0]?.finishReason;
   const responseText = payload.candidates?.[0]?.content?.parts?.map((part) => part.text ?? "").join("") ?? "";
+  // Dù đã đặt response_mime_type=application/json, một số model/phiên bản vẫn bọc
+  // kết quả trong ```json ... ``` — cắt bỏ trước khi parse thay vì thất bại luôn.
+  const cleaned = responseText.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
   let parsed: { items?: ParsedItem[] };
-  try { parsed = JSON.parse(responseText) as { items?: ParsedItem[] }; } catch { return Response.json({ error: "Gemini trả về dữ liệu không đúng định dạng. Vui lòng thử lại." }, { status: 502 }); }
+  try {
+    parsed = JSON.parse(cleaned) as { items?: ParsedItem[] };
+  } catch {
+    if (finishReason && finishReason !== "STOP") {
+      const reasonLabel = finishReason === "MAX_TOKENS" ? "phản hồi bị cắt do quá dài — hãy chia mô tả thành đoạn ngắn hơn" : finishReason === "SAFETY" ? "bị chặn bởi bộ lọc an toàn của Gemini" : `dừng bất thường (${finishReason})`;
+      return Response.json({ error: `Gemini chưa trả xong kết quả (${reasonLabel}). Vui lòng thử lại với mô tả ngắn hơn.` }, { status: 502 });
+    }
+    return Response.json({ error: "Gemini trả về dữ liệu không đúng định dạng. Vui lòng thử lại." }, { status: 502 });
+  }
   const items = (Array.isArray(parsed.items) ? parsed.items : []).slice(0, 40).map((item) => ({ meal: asText(item.meal), dishName: asText(item.dishName), foodName: asText(item.foodName), edibleGrams: asGrams(item.edibleGrams), note: asText(item.note, 300) })).filter((item) => item.foodName);
   const queries = [...new Set(items.map((item) => normalizeVi(item.foodName)).filter(Boolean))];
   const foods = queries.length ? await prisma.food.findMany({ where: { OR: queries.map((query) => ({ AND: searchTokens(query).map((token) => ({ OR: [{ nameNormalized: { contains: token } }, { aliases: { some: { aliasNormalized: { contains: token } } } }] })) })) }, take: 250, select: FOOD_SELECT }) : [];

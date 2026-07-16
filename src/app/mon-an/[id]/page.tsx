@@ -66,7 +66,7 @@ export default async function MonAnDetailPage({
         <div className="mt-2 flex items-start gap-4">
           {dish.imageSourceId && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt={dish.name} className="h-24 w-24 shrink-0 rounded-lg border border-neutral-200 object-cover" />
+            <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt={dish.name} className="h-40 w-40 shrink-0 rounded-lg border border-neutral-200 object-cover sm:h-48 sm:w-48" />
           )}
           <h1 className="text-2xl font-semibold">{dish.name}</h1>
         </div>

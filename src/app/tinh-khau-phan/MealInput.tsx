@@ -17,11 +17,11 @@ import {
   saveRows,
 } from "./types";
 
-type FoodResult = { id: string; name: string; source: string } & Record<string, number | null | string>;
+type FoodResult = { id: string; name: string; source: string; imageUrl?: string | null } & Record<string, number | null | string>;
 type FoodType = "" | "TS" | "CB" | "MA" | "SP";
 type SearchKind = "food" | "dish";
 type DishIngredientResult = { id: string; foodNameRaw: string; quantityG: number | null; food: FoodResult | null };
-type DishResult = { id: string; name: string; totalWeightG: number | null; servingUnit: string | null; categoryRaw: string | null; ageGroup: string | null; diseaseDiet: string | null; ingredients: DishIngredientResult[] };
+type DishResult = { id: string; name: string; totalWeightG: number | null; servingUnit: string | null; categoryRaw: string | null; ageGroup: string | null; diseaseDiet: string | null; imageSourceId?: string | null; ingredients: DishIngredientResult[] };
 
 const FOOD_TYPE_FILTERS: { value: FoodType; label: string; chip: string }[] = [
   { value: "", label: "Tất cả", chip: "bg-neutral-100 text-neutral-800" },
@@ -479,9 +479,10 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
               {results.map((food) => {
                 const meta = typeMeta(food.foodType);
                 return (
-                <button key={food.id} onClick={() => pickFood(food)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-emerald-50">
-                  <span>{food.name}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta.chip}`}>{meta.label}</span>
+                <button key={food.id} onClick={() => pickFood(food)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-emerald-50">
+                  {food.imageUrl ? <img src={food.imageUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-8 w-8 shrink-0" />}
+                  <span className="flex-1">{food.name}</span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${meta.chip}`}>{meta.label}</span>
                   <span className="shrink-0 text-xs text-neutral-400">{food.source} · {typeof food.energyKcal === "number" ? `${food.energyKcal} kcal/100g` : "—"}</span>
                 </button>
                 );
@@ -491,7 +492,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
           {searchKind === "dish" && q.trim().length >= 1 && <div className="absolute z-10 mt-1 max-h-80 w-full overflow-auto rounded-md border border-neutral-300 bg-white shadow-lg">
             {searching && <div className="px-3 py-2 text-sm text-neutral-700">Đang tìm...</div>}
             {!searching && dishResults.length === 0 && <div className="px-3 py-2 text-sm text-neutral-700">Không có món phù hợp.</div>}
-            {dishResults.map((dish) => <button key={dish.id} type="button" onClick={() => pickDish(dish)} className="block w-full border-b border-neutral-200 px-3 py-3 text-left last:border-0 hover:bg-emerald-50"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-neutral-950">{dish.name}</span><span className="text-xs text-neutral-800">{dish.ingredients.length} nguyên liệu {dish.totalWeightG ? `· ${dish.totalWeightG}g` : ""}</span></div><div className="mt-1 flex flex-wrap gap-1 text-xs text-neutral-800">{dish.categoryRaw && <span className="rounded bg-neutral-100 px-1.5 py-0.5">{dish.categoryRaw}</span>}{dish.ageGroup && <span className="rounded bg-sky-50 px-1.5 py-0.5">{dish.ageGroup}</span>}{dish.diseaseDiet && <span className="rounded bg-rose-50 px-1.5 py-0.5">{dish.diseaseDiet}</span>}</div><p className="mt-1 text-xs text-neutral-800">Bấm để thêm các nguyên liệu đã liên kết dữ liệu vào một món mới trong bữa đang chọn.</p></button>)}
+            {dishResults.map((dish) => <button key={dish.id} type="button" onClick={() => pickDish(dish)} className="flex w-full items-start gap-2 border-b border-neutral-200 px-3 py-3 text-left last:border-0 hover:bg-emerald-50">{dish.imageSourceId ? <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt="" className="h-10 w-10 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-10 w-10 shrink-0" />}<div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-neutral-950">{dish.name}</span><span className="text-xs text-neutral-800">{dish.ingredients.length} nguyên liệu {dish.totalWeightG ? `· ${dish.totalWeightG}g` : ""}</span></div><div className="mt-1 flex flex-wrap gap-1 text-xs text-neutral-800">{dish.categoryRaw && <span className="rounded bg-neutral-100 px-1.5 py-0.5">{dish.categoryRaw}</span>}{dish.ageGroup && <span className="rounded bg-sky-50 px-1.5 py-0.5">{dish.ageGroup}</span>}{dish.diseaseDiet && <span className="rounded bg-rose-50 px-1.5 py-0.5">{dish.diseaseDiet}</span>}</div><p className="mt-1 text-xs text-neutral-800">Bấm để thêm các nguyên liệu đã liên kết dữ liệu vào một món mới trong bữa đang chọn.</p></div></button>)}
           </div>}
         </div>
         <div className="mt-3 flex flex-wrap gap-2 border-t border-neutral-100 pt-3">

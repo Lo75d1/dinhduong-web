@@ -23,7 +23,7 @@ export default async function ThucPhamDetailPage({
         <div className="mt-2 flex items-start gap-4">
           {food.imageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={food.imageUrl} alt={food.name} className="h-24 w-24 shrink-0 rounded-lg border border-neutral-200 object-cover" />
+            <img src={food.imageUrl} alt={food.name} className="h-40 w-40 shrink-0 rounded-lg border border-neutral-200 object-cover sm:h-48 sm:w-48" />
           )}
           <h1 className="text-2xl font-semibold">{food.name}</h1>
         </div>
