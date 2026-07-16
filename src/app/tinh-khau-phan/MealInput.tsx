@@ -423,14 +423,9 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
 
   return (
     <section className="flex min-h-screen flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-neutral-900">Nhập khẩu phần</h1>
-          <p className="mt-1 text-sm text-neutral-500">Lập bữa ăn, món ăn và thực phẩm trước khi phân tích.</p>
-        </div>
-        <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">
-          {hydrated ? "+ Thêm bữa ăn" : "Đang tải..."}
-        </button>
+      <div>
+        <h1 className="text-xl font-semibold text-neutral-900">Nhập khẩu phần</h1>
+        <p className="mt-1 text-sm text-neutral-500">Lập bữa ăn, món ăn và thực phẩm trước khi phân tích.</p>
       </div>
 
       <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
@@ -438,6 +433,9 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       <AiRationInput onConfirm={addAiItems} />
 
       <div className="flex flex-wrap gap-2">
+        <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">
+          {hydrated ? "+ Thêm bữa ăn" : "Đang tải..."}
+        </button>
         <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
         <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
       </div>

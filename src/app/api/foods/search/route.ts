@@ -45,13 +45,16 @@ export async function GET(request: NextRequest) {
       ] })),
     },
     orderBy: { name: "asc" },
-    take: 60,
+    // Lấy nhiều ứng viên trước khi xếp hạng lại — take nhỏ + orderBy theo tên
+    // sẽ cắt mất các món khớp tốt (vd "Cơm ...") nếu có >N món khác chứa từ
+    // khoá đứng trước theo alphabet, trước khi kịp xếp theo độ liên quan.
+    take: 500,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     select: SELECT as any,
   });
 
-  // Prisma sắp theo tên để truy vấn ổn định; sau đó đưa trùng khớp sát nhất lên đầu.
+  // Ưu tiên trùng khớp đầu chữ (vd gõ "cơm" thì "Cơm ..." lên đầu) rồi mới đến chứa từ khoá.
   const searchable = items as unknown as Array<{ name: string; nameNormalized?: string }>;
   searchable.sort((a, b) => searchRank(a.nameNormalized ?? a.name, qNormalized) - searchRank(b.nameNormalized ?? b.name, qNormalized) || a.name.localeCompare(b.name, "vi"));
-  return Response.json({ items: items.slice(0, 20) });
+  return Response.json({ items: items.slice(0, 40) });
 }

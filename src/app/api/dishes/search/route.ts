@@ -24,12 +24,14 @@ export async function GET(request: NextRequest) {
       ...(age ? { ageGroup: age } : {}),
       ...(disease ? { diseaseDiet: disease } : {}),
     },
-    orderBy: { name: "asc" }, take: 50,
+    // take nhỏ + orderBy theo tên trước khi xếp hạng lại sẽ cắt mất các món
+    // khớp đầu chữ nếu có nhiều món khác chứa từ khoá đứng trước theo alphabet.
+    orderBy: { name: "asc" }, take: 300,
     select: {
       id: true, name: true, totalWeightG: true, servingUnit: true, categoryRaw: true, ageGroup: true, diseaseDiet: true, imageSourceId: true,
       ingredients: { orderBy: { sortOrder: "asc" }, select: { id: true, foodNameRaw: true, quantityG: true, food: { select: FOOD_SELECT } } },
     },
   });
   items.sort((a, b) => searchRank(a.name, q) - searchRank(b.name, q) || a.name.localeCompare(b.name, "vi"));
-  return Response.json({ items: items.slice(0, 15) });
+  return Response.json({ items: items.slice(0, 30) });
 }
