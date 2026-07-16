@@ -15,10 +15,11 @@ export async function POST(request: Request) {
     const items = Array.isArray(body?.items) ? body.items.slice(0, 10_000) : [];
     if (!reason) return Response.json({ error: "Cần ghi lý do và nguồn đối chiếu trước khi cập nhật." }, { status: 400 });
 
-    // Một transaction duy nhất cho toàn bộ (có thể tới hàng nghìn dòng) hay hết
-    // giờ (Prisma interactive transaction timeout) — chia nhỏ theo lô, mỗi lô
-    // một transaction atomic riêng, để không bị timeout khi số dòng lớn.
-    const BATCH_SIZE = 300;
+    // Chia lô + trong mỗi lô, gộp bước "tìm trước" thành 1 findMany và gộp ghi
+    // log thành 1 createMany — độ trễ mạng VPS<->Supabase khiến từng dòng gọi
+    // riêng (findUnique+update+create x N) vượt timeout dù đã chia lô 300 dòng;
+    // chỉ còn update là bắt buộc gọi riêng từng dòng.
+    const BATCH_SIZE = 150;
     let updated = 0;
     let skipped = 0;
     const failedBatches: string[] = [];
@@ -28,19 +29,25 @@ export async function POST(request: Request) {
         const result = await prisma.$transaction(async (tx) => {
           let batchUpdated = 0;
           let batchSkipped = 0;
-          for (const item of batch) {
-            const id = typeof item.id === "string" ? item.id : "";
-            const sourceCode = typeof item.sourceCode === "string" ? item.sourceCode : "";
-            const imageSourceId = typeof item.imageSourceId === "string" ? item.imageSourceId : "";
-            if (!id || !sourceCode || !uuid.test(imageSourceId)) { batchSkipped++; continue; }
-            const before = await tx.dish.findUnique({ where: { id }, select: snapshot });
-            if (!before || before.source !== "RNI" || before.sourceCode !== sourceCode || before.imageSourceId === imageSourceId) { batchSkipped++; continue; }
-            const after = await tx.dish.update({ where: { id }, data: { imageSourceId, imageSourceUrl: RNI_SOURCE_PAGE }, select: snapshot });
-            await tx.dataChangeLog.create({ data: { entityType: "DISH", entityId: id, action: "IMPORT_RNI_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
+          const valid = batch.map((item) => ({
+            id: typeof item.id === "string" ? item.id : "",
+            sourceCode: typeof item.sourceCode === "string" ? item.sourceCode : "",
+            imageSourceId: typeof item.imageSourceId === "string" ? item.imageSourceId : "",
+          })).filter((item) => item.id && item.sourceCode && uuid.test(item.imageSourceId));
+          batchSkipped += batch.length - valid.length;
+          const befores = await tx.dish.findMany({ where: { id: { in: valid.map((item) => item.id) } }, select: snapshot });
+          const beforeMap = new Map(befores.map((row) => [row.id, row]));
+          const logs: { entityType: string; entityId: string; action: string; actorId: string; actorName: string; beforeJson: object; afterJson: object; reason: string }[] = [];
+          for (const item of valid) {
+            const before = beforeMap.get(item.id);
+            if (!before || before.source !== "RNI" || before.sourceCode !== item.sourceCode || before.imageSourceId === item.imageSourceId) { batchSkipped++; continue; }
+            const after = await tx.dish.update({ where: { id: item.id }, data: { imageSourceId: item.imageSourceId, imageSourceUrl: RNI_SOURCE_PAGE }, select: snapshot });
+            logs.push({ entityType: "DISH", entityId: item.id, action: "IMPORT_RNI_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason });
             batchUpdated++;
           }
+          if (logs.length) await tx.dataChangeLog.createMany({ data: logs });
           return { batchUpdated, batchSkipped };
-        }, { maxWait: 10_000, timeout: 30_000 });
+        }, { maxWait: 10_000, timeout: 45_000 });
         updated += result.batchUpdated;
         skipped += result.batchSkipped;
       } catch (error) {

@@ -24,9 +24,11 @@ export async function POST(request: Request) {
     if (!reason) return Response.json({ error: "Cần ghi lý do và nguồn đối chiếu trước khi cập nhật." }, { status: 400 });
     if (!requested.length) return Response.json({ error: "Chưa có dòng ảnh hợp lệ để cập nhật." }, { status: 400 });
 
-    // Chia lô để tránh vượt timeout Prisma interactive transaction khi số dòng
-    // lớn (cùng lỗi/cách sửa đã áp dụng cho rni-commit/route.ts).
-    const BATCH_SIZE = 300;
+    // Chia lô + trong mỗi lô, gộp bước "tìm trước" thành 1 findMany và gộp ghi
+    // log thành 1 createMany — độ trễ mạng VPS<->Supabase khiến từng dòng gọi
+    // riêng (findUnique+update+create x N) vượt timeout dù đã chia lô 300 dòng;
+    // chỉ còn update là bắt buộc gọi riêng từng dòng.
+    const BATCH_SIZE = 150;
     let updated = 0;
     let skipped = 0;
     const failedBatches: string[] = [];
@@ -36,22 +38,28 @@ export async function POST(request: Request) {
         const result = await prisma.$transaction(async (tx) => {
           let batchUpdated = 0;
           let batchSkipped = 0;
-          for (const item of batch) {
-            const id = typeof item.id === "string" ? item.id : "";
-            const sourceCode = typeof item.sourceCode === "string" ? item.sourceCode : "";
-            const imageUrl = officialImageUrl(item.imageUrl);
-            const imageSourceUrl = officialImageUrl(item.imageSourceUrl) ?? "https://viendinhduong.vn/vi/cong-cu-va-tien-ich/gia-tri-dinh-duong-mon-an";
-            if (!id || !sourceCode || !imageUrl) { batchSkipped++; continue; }
-            const before = await tx.food.findUnique({ where: { id }, select: snapshot });
+          const valid = batch.map((item) => ({
+            id: typeof item.id === "string" ? item.id : "",
+            sourceCode: typeof item.sourceCode === "string" ? item.sourceCode : "",
+            imageUrl: officialImageUrl(item.imageUrl),
+            imageSourceUrl: officialImageUrl(item.imageSourceUrl) ?? "https://viendinhduong.vn/vi/cong-cu-va-tien-ich/gia-tri-dinh-duong-mon-an",
+          })).filter((item): item is typeof item & { imageUrl: string } => Boolean(item.id && item.sourceCode && item.imageUrl));
+          batchSkipped += batch.length - valid.length;
+          const befores = await tx.food.findMany({ where: { id: { in: valid.map((item) => item.id) } }, select: snapshot });
+          const beforeMap = new Map(befores.map((row) => [row.id, row]));
+          const logs: { entityType: string; entityId: string; action: string; actorId: string; actorName: string; beforeJson: object; afterJson: object; reason: string }[] = [];
+          for (const item of valid) {
+            const before = beforeMap.get(item.id);
             if (!before || before.source !== "VDD") { batchSkipped++; continue; }
-            if (before.sourceCode && before.sourceCode !== sourceCode) { batchSkipped++; continue; }
-            if (before.sourceCode === sourceCode && before.imageUrl === imageUrl && before.imageSourceUrl === imageSourceUrl) { batchSkipped++; continue; }
-            const after = await tx.food.update({ where: { id }, data: { sourceCode, imageUrl, imageSourceUrl }, select: snapshot });
-            await tx.dataChangeLog.create({ data: { entityType: "FOOD", entityId: id, action: "IMPORT_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
+            if (before.sourceCode && before.sourceCode !== item.sourceCode) { batchSkipped++; continue; }
+            if (before.sourceCode === item.sourceCode && before.imageUrl === item.imageUrl && before.imageSourceUrl === item.imageSourceUrl) { batchSkipped++; continue; }
+            const after = await tx.food.update({ where: { id: item.id }, data: { sourceCode: item.sourceCode, imageUrl: item.imageUrl, imageSourceUrl: item.imageSourceUrl }, select: snapshot });
+            logs.push({ entityType: "FOOD", entityId: item.id, action: "IMPORT_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason });
             batchUpdated++;
           }
+          if (logs.length) await tx.dataChangeLog.createMany({ data: logs });
           return { batchUpdated, batchSkipped };
-        }, { maxWait: 10_000, timeout: 30_000 });
+        }, { maxWait: 10_000, timeout: 45_000 });
         updated += result.batchUpdated;
         skipped += result.batchSkipped;
       } catch (error) {
