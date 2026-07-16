@@ -15,21 +15,39 @@ export async function POST(request: Request) {
     const items = Array.isArray(body?.items) ? body.items.slice(0, 10_000) : [];
     if (!reason) return Response.json({ error: "Cần ghi lý do và nguồn đối chiếu trước khi cập nhật." }, { status: 400 });
 
+    // Một transaction duy nhất cho toàn bộ (có thể tới hàng nghìn dòng) hay hết
+    // giờ (Prisma interactive transaction timeout) — chia nhỏ theo lô, mỗi lô
+    // một transaction atomic riêng, để không bị timeout khi số dòng lớn.
+    const BATCH_SIZE = 300;
     let updated = 0;
     let skipped = 0;
-    await prisma.$transaction(async (tx) => {
-      for (const item of items) {
-        const id = typeof item.id === "string" ? item.id : "";
-        const sourceCode = typeof item.sourceCode === "string" ? item.sourceCode : "";
-        const imageSourceId = typeof item.imageSourceId === "string" ? item.imageSourceId : "";
-        if (!id || !sourceCode || !uuid.test(imageSourceId)) { skipped++; continue; }
-        const before = await tx.dish.findUnique({ where: { id }, select: snapshot });
-        if (!before || before.source !== "RNI" || before.sourceCode !== sourceCode || before.imageSourceId === imageSourceId) { skipped++; continue; }
-        const after = await tx.dish.update({ where: { id }, data: { imageSourceId, imageSourceUrl: RNI_SOURCE_PAGE }, select: snapshot });
-        await tx.dataChangeLog.create({ data: { entityType: "DISH", entityId: id, action: "IMPORT_RNI_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
-        updated++;
+    const failedBatches: string[] = [];
+    for (let start = 0; start < items.length; start += BATCH_SIZE) {
+      const batch = items.slice(start, start + BATCH_SIZE);
+      try {
+        const result = await prisma.$transaction(async (tx) => {
+          let batchUpdated = 0;
+          let batchSkipped = 0;
+          for (const item of batch) {
+            const id = typeof item.id === "string" ? item.id : "";
+            const sourceCode = typeof item.sourceCode === "string" ? item.sourceCode : "";
+            const imageSourceId = typeof item.imageSourceId === "string" ? item.imageSourceId : "";
+            if (!id || !sourceCode || !uuid.test(imageSourceId)) { batchSkipped++; continue; }
+            const before = await tx.dish.findUnique({ where: { id }, select: snapshot });
+            if (!before || before.source !== "RNI" || before.sourceCode !== sourceCode || before.imageSourceId === imageSourceId) { batchSkipped++; continue; }
+            const after = await tx.dish.update({ where: { id }, data: { imageSourceId, imageSourceUrl: RNI_SOURCE_PAGE }, select: snapshot });
+            await tx.dataChangeLog.create({ data: { entityType: "DISH", entityId: id, action: "IMPORT_RNI_IMAGE_REFERENCE", actorId: actor.id, actorName: actor.displayName, beforeJson: before, afterJson: after, reason } });
+            batchUpdated++;
+          }
+          return { batchUpdated, batchSkipped };
+        }, { maxWait: 10_000, timeout: 30_000 });
+        updated += result.batchUpdated;
+        skipped += result.batchSkipped;
+      } catch (error) {
+        failedBatches.push(`dòng ${start + 1}-${start + batch.length}: ${error instanceof Error ? error.message.slice(0, 200) : "lỗi không xác định"}`);
       }
-    }, { maxWait: 10_000, timeout: 60_000 });
+    }
+    if (failedBatches.length) return Response.json({ updated, skipped, warning: `Còn ${failedBatches.length} lô lỗi, mỗi lô đã tự rollback riêng (không mất dữ liệu): ${failedBatches.join("; ")}` });
     return Response.json({ updated, skipped });
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();

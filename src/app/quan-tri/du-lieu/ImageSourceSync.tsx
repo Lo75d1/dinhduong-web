@@ -40,7 +40,8 @@ export default function ImageSourceSync() {
     const rniData = rniResult ? await rniResult.json() : { updated: 0 };
     setBusy(false);
     if ((vddResult && !vddResult.ok) || (rniResult && !rniResult.ok)) { setMessage(vddData.error ?? rniData.error ?? "Chưa thể hoàn tất cập nhật."); return; }
-    setMessage(`Đã cập nhật ${vddData.updated ?? 0} ảnh Viện Dinh dưỡng và ${rniData.updated ?? 0} ảnh RNI. Mọi thay đổi đã ghi nhật ký.`);
+    const warning = [vddData.warning, rniData.warning].filter(Boolean).join(" ");
+    setMessage(`Đã cập nhật ${vddData.updated ?? 0} ảnh Viện Dinh dưỡng và ${rniData.updated ?? 0} ảnh RNI. Mọi thay đổi đã ghi nhật ký.${warning ? ` ${warning}` : ""}`);
   }
 
   const totalMatched = (vddSummary?.matched ?? 0) + (rniSummary?.matched ?? 0);
