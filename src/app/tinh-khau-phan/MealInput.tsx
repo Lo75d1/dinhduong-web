@@ -422,7 +422,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   }
 
   return (
-    <section className="flex flex-col gap-4 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
+    <section className="flex min-h-screen flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-neutral-900">Nhập khẩu phần</h1>
