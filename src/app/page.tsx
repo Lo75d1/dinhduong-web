@@ -1,11 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { defaultSiteSettings } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [foodCount, dishCount] = await Promise.all([prisma.food.count(), prisma.dish.count()]);
+  const [foodCount, dishCount, settings] = await Promise.all([
+    prisma.food.count(),
+    prisma.dish.count(),
+    prisma.siteSetting.findUnique({ where: { id: "public" }, select: { thankYouTitle: true, thankYouBody: true } }).catch(() => null),
+  ]);
+  const thankYouTitle = settings?.thankYouTitle || defaultSiteSettings.thankYouTitle;
+  const thankYouBody = settings?.thankYouBody || defaultSiteSettings.thankYouBody;
   return <div className="-mx-5 -my-8 overflow-hidden bg-[#f1f6f4] sm:-mx-8">
     <section className="relative min-h-[510px] overflow-hidden border-b-4 border-[#123c36] bg-[#e6f1f2] px-5 py-12 sm:px-10 sm:py-16 lg:px-16">
       <Image src="/dinh-duong-2598-cover.jpg" alt="Rau xanh, thực phẩm lành mạnh và biểu mẫu đánh giá dinh dưỡng" fill priority sizes="100vw" className="object-cover object-center" />
@@ -16,7 +23,7 @@ export default async function Home() {
       </div>
     </section>
     <section className="px-5 py-10 sm:px-10 lg:px-16"><div className="mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">QUY TRÌNH LÀM VIỆC</p><h2 className="mt-1 text-2xl font-semibold text-[#123c36]">Chọn điểm bắt đầu</h2></div><p className="max-w-xl text-sm text-neutral-900">Mỗi chức năng giữ nguồn dữ liệu, đơn vị tính và giới hạn sử dụng để thuận tiện khi kiểm tra hồ sơ.</p></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Link href="/thuc-pham" className="clinical-card group rounded-xl border-2 border-[#7f948d] bg-white p-6 hover:-translate-y-0.5 hover:border-[#123c36]"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">01 · TRA CỨU</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Thực phẩm và món ăn</h3><p className="mt-3 text-neutral-900">Tìm theo tên, nhóm và loại dữ liệu. Kiểm tra giá trị gốc trên 100 g trước khi đưa vào khẩu phần.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Mở tra cứu →</span></Link><Link href="/tinh-khau-phan" className="clinical-card group rounded-xl border-2 border-[#123c36] bg-[#f8fcfa] p-6 hover:-translate-y-0.5 hover:bg-white"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">02 · PHÂN TÍCH</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Phiếu tính khẩu phần</h3><p className="mt-3 text-neutral-900">Nhập theo bữa, đối chiếu năng lượng – vi chất – chuẩn tăng trưởng và xuất báo cáo chuyên môn.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Bắt đầu tính →</span></Link></div><div className="mt-8 rounded-lg border-l-4 border-[#a77b10] bg-[#fff9e8] p-4 text-sm text-neutral-900"><b>Căn cứ chuyên môn:</b> Bảng thành phần thực phẩm Việt Nam – Viện Dinh dưỡng; khuyến nghị dinh dưỡng VDD; mã chế độ ăn Bộ Y tế; WHO Child Growth Standards 2006 và WHO Growth Reference 2007. <Link href="/tai-lieu-tham-khao" className="font-semibold text-[#123c36] underline underline-offset-2">Xem tài liệu tham khảo</Link></div></div></section>
-    <section className="px-5 pb-12 sm:px-10 lg:px-16"><div className="mx-auto max-w-6xl rounded-xl border-2 border-[#123c36] bg-white p-6 sm:p-8"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">GHI NHẬN ĐÓNG GÓP</p><h2 className="mt-1 text-2xl font-semibold text-neutral-950">Lời cảm ơn</h2><p className="mt-3 max-w-3xl text-neutral-900">Sáng kiến cải tiến này được hoàn thiện nhờ đóng góp ý kiến của Ban Giám đốc, các khoa/phòng, nhân viên y tế và đồng nghiệp tại Bệnh viện Đa khoa Nam Liên Chiểu.</p><Link href="/cam-on" className="mt-4 inline-block font-semibold text-[#123c36] underline underline-offset-2">Xem lời cảm ơn đầy đủ →</Link></div></section>
+    <section className="px-5 pb-12 sm:px-10 lg:px-16"><div className="mx-auto max-w-6xl overflow-hidden rounded-2xl border-2 border-[#123c36] bg-white shadow-[0_12px_30px_rgba(18,60,54,.1)]"><div className="bg-gradient-to-br from-[#123c36] via-[#1f5c4f] to-[#50a486] px-7 py-10 text-white sm:px-12"><p className="text-xs font-semibold tracking-[.2em]">GHI NHẬN ĐÓNG GÓP</p><h2 className="mt-3 font-serif text-3xl font-semibold leading-tight sm:text-4xl">{thankYouTitle}</h2></div><div className="px-7 py-8 sm:px-12"><div className="border-l-4 border-[#a77b10] pl-5"><p className="whitespace-pre-wrap font-serif text-lg leading-8 text-neutral-900">{thankYouBody}</p></div><p className="mt-6 border-t border-[#d0dbd6] pt-4 text-sm text-neutral-700">Mỗi ý kiến đóng góp là một phần quan trọng để công cụ phục vụ thực hành dinh dưỡng lâm sàng tốt hơn.</p><Link href="/lien-he" className="mt-5 inline-block rounded-md border-2 border-[#123c36] px-5 py-2.5 font-semibold text-[#123c36] hover:bg-[#edf4f0]">Gửi ý kiến đóng góp</Link></div></div></section>
   </div>;
 }
 
