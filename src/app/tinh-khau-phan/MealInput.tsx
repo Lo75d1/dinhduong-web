@@ -192,7 +192,9 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
 
   function addMeal() {
     const name = `Bữa ${tree.length + 1}`;
-    setRows((previous) => [...previous, makeRow(name, "", null, mode)]);
+    const dishName = "Món 1";
+    setRows((previous) => [...previous, makeRow(name, dishName, null, mode)]);
+    setWork({ meal: name, dish: dishName });
   }
 
   function addDish(meal: string) {
