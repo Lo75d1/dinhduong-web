@@ -483,8 +483,8 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
           containing block mới cho position:fixed, khiến thanh này bị "nhốt"
           trong khung thay vì ghim theo viewport nếu không portal ra ngoài. */}
       {portalReady && createPortal(
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-[#123c36] bg-white shadow-[0_-6px_18px_rgba(0,0,0,0.15)]">
-        <div className="mx-auto max-w-7xl px-3 py-2 sm:px-5">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-3">
+        <div className="pointer-events-auto w-full max-w-2xl rounded-2xl border border-neutral-300 bg-white px-3 py-2 shadow-xl">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
             <span>{work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa."}</span>
             <div className="flex items-center gap-2">
