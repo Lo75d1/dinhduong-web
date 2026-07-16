@@ -14,6 +14,7 @@ export default function AiRationInput({ onConfirm }: { onConfirm: (items: AiRati
   const [text, setText] = useState("");
   const [consent, setConsent] = useState(false);
   const [userApiKey, setUserApiKey] = useState("");
+  const [showOwnKey, setShowOwnKey] = useState(false);
   const [lastResult, setLastResult] = useState<AiRationItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -48,6 +49,13 @@ export default function AiRationInput({ onConfirm }: { onConfirm: (items: AiRati
     <p className="mt-3 rounded-md border-l-4 border-[#a77b10] bg-[#fff9e8] p-3 text-sm text-neutral-950"><b>Để khớp tốt:</b> ghi tên món/thực phẩm và lượng g/ml. Chỉ ghi nguyên liệu trong ngoặc khi bạn biết rõ; nếu không, cứ ghi tên món để hệ thống ưu tiên khớp món ăn có sẵn. Không nhập thông tin định danh bệnh nhân.</p>
     <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder={"Ví dụ: Sáng: phở bò 350 g.\nTrưa: cơm chín 200 g, cá chép kho 80 g."} className="mt-3 min-h-32 w-full rounded-md border-2 border-[#8fa99e] px-3 py-2 text-sm" />
     <label className="mt-3 flex items-start gap-2 rounded-md border border-amber-700 bg-amber-50 p-3 text-sm text-neutral-950"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-1" /><span>Tôi hiểu mô tả khẩu phần sẽ được gửi đến Gemini để bóc tách và không nhập tên, số điện thoại, địa chỉ, mã bệnh án hay thông tin định danh người bệnh.</span></label>
+    <button type="button" onClick={() => setShowOwnKey((current) => !current)} className="mt-2 text-xs font-semibold text-[#694d00] underline underline-offset-2">{showOwnKey ? "Ẩn tuỳ chọn dùng API key riêng ▲" : "Có API key Gemini riêng? Dùng để đỡ tốn hạn mức chung ▾"}</button>
+    {showOwnKey && <div className="mt-2 rounded-md border border-[#a77b10] bg-white p-3">
+      <label className="text-sm font-semibold text-neutral-950">API key Gemini của bạn (tuỳ chọn)
+        <input type="password" autoComplete="off" value={userApiKey} onChange={(event) => setUserApiKey(event.target.value)} placeholder="AIza…" className="mt-1 w-full max-w-sm rounded border border-neutral-400 px-2 py-1.5 text-sm" />
+      </label>
+      <p className="mt-1 text-xs text-neutral-700">Nếu bạn tự có API key Gemini (miễn phí tại aistudio.google.com), dán vào đây để lần bóc tách này dùng hạn mức của riêng bạn thay vì hạn mức chung của hệ thống. Key chỉ dùng cho lần gọi này, không lưu lại trên trình duyệt hay máy chủ. Để trống nếu không có — hệ thống sẽ dùng key chung.</p>
+    </div>}
     <div className="mt-3 flex flex-wrap items-center gap-3">
       <button type="button" onClick={parse} disabled={busy || !consent || text.trim().length < 8} className="rounded-md bg-[#73540d] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{busy ? "AI đang bóc tách..." : "Bóc tách bằng AI và thêm vào khẩu phần"}</button>
       <p className="text-xs text-neutral-900">Chỉ người quản trị cấu hình Gemini một lần trên máy chủ; key không hiển thị hay lưu trên trình duyệt.</p>
