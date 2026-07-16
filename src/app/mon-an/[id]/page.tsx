@@ -63,7 +63,13 @@ export default async function MonAnDetailPage({
         <Link href="/mon-an" className="text-sm text-emerald-700 hover:underline">
           ← Danh sách món ăn
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{dish.name}</h1>
+        <div className="mt-2 flex items-start gap-4">
+          {dish.imageSourceId && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt={dish.name} className="h-24 w-24 shrink-0 rounded-lg border border-neutral-200 object-cover" />
+          )}
+          <h1 className="text-2xl font-semibold">{dish.name}</h1>
+        </div>
         <div className="mt-2 flex flex-wrap gap-2 text-xs">
           <span className="rounded-full bg-neutral-100 px-2 py-1 text-neutral-600">
             Nguồn: {dish.source}

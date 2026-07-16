@@ -20,7 +20,13 @@ export default async function ThucPhamDetailPage({
         <Link href="/thuc-pham" className="text-sm text-emerald-700 hover:underline">
           ← Danh sách thực phẩm
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">{food.name}</h1>
+        <div className="mt-2 flex items-start gap-4">
+          {food.imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={food.imageUrl} alt={food.name} className="h-24 w-24 shrink-0 rounded-lg border border-neutral-200 object-cover" />
+          )}
+          <h1 className="text-2xl font-semibold">{food.name}</h1>
+        </div>
         <div className="mt-2 flex flex-wrap gap-2 text-xs">
           <span className="rounded-full bg-neutral-100 px-2 py-1 text-neutral-600">
             Nguồn: {food.source}
