@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import MedicationCatalogPreview from "./MedicationCatalogPreview";
 
 type MedicationRefItem = {
   id: string;
@@ -163,7 +162,6 @@ export default function MedicationImport() {
           <li>Lặp lại bước 1-5 với danh mục khác để mở rộng dần danh sách thuốc/TPBS dùng chung.</li>
         </ol>
       </details>
-      <MedicationCatalogPreview onAddLinks={appendProductLinks} />
       <div className="mt-3 rounded-md border-2 border-violet-500 bg-violet-100 p-3">
         <label className="text-sm font-semibold text-neutral-950">Tìm thuốc / thực phẩm chức năng trên Long Châu
           <div className="mt-1 flex flex-wrap gap-2">

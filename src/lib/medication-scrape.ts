@@ -3,22 +3,6 @@
 // dung viết là của nguồn). Chỉ nhận link đúng domain, không dùng làm proxy
 // fetch chung chung.
 const ALLOWED_HOST = "nhathuoclongchau.com.vn";
-const LONG_CHAU_ORIGIN = "https://nhathuoclongchau.com.vn";
-
-export const MEDICATION_CATALOG_SOURCES = {
-  drug: {
-    label: "Thuốc",
-    sitemapUrl: `${LONG_CHAU_ORIGIN}/sitemap_thuoc.xml`,
-    pathPrefix: "/thuoc/",
-  },
-  supplement: {
-    label: "Thực phẩm chức năng",
-    sitemapUrl: `${LONG_CHAU_ORIGIN}/sitemap_thuc-pham-chuc-nang.xml`,
-    pathPrefix: "/thuc-pham-chuc-nang/",
-  },
-} as const;
-
-export type MedicationCatalogSource = keyof typeof MEDICATION_CATALOG_SOURCES;
 
 export type MedicationScrapeResult = {
   name: string;
@@ -104,56 +88,6 @@ export function discoverProductLinks(categoryUrl: string, html: string): string[
     }
   }
   return [...links];
-}
-
-/**
- * Creates a review-only product URL list from Long Chau's public sitemaps.
- * It never writes to the database or touches categories other than drugs and
- * functional supplements. Product details are requested only after the admin
- * explicitly starts the import.
- */
-export async function collectMedicationCatalogLinks(rawSources: unknown): Promise<{
-  links: string[];
-  sourceCounts: Array<{ source: MedicationCatalogSource; label: string; count: number }>;
-}> {
-  const selected = normalizeCatalogSources(rawSources);
-  if (!selected.length) throw new Error("Chọn ít nhất một danh mục: Thuốc hoặc Thực phẩm chức năng.");
-
-  const sourceCounts: Array<{ source: MedicationCatalogSource; label: string; count: number }> = [];
-  const links = new Set<string>();
-
-  // One sitemap request at a time to keep the public source load low.
-  for (const source of selected) {
-    const definition = MEDICATION_CATALOG_SOURCES[source];
-    const response = await fetch(definition.sitemapUrl, {
-      headers: { "user-agent": "Mozilla/5.0 (compatible; DinhDuong2598/1.0; +clinical nutrition reference)" },
-      cache: "no-store",
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!response.ok) throw new Error(`Sitemap ${definition.label} trả về HTTP ${response.status}.`);
-
-    const xml = await response.text();
-    const sourceLinks = new Set<string>();
-    for (const match of xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/gi)) {
-      const url = isAllowedMedicationProductUrl(decodeHtmlEntities(match[1]));
-      if (url && url.pathname.toLowerCase().startsWith(definition.pathPrefix)) sourceLinks.add(url.toString());
-    }
-    if (!sourceLinks.size) throw new Error(`Không tìm thấy URL sản phẩm hợp lệ trong sitemap ${definition.label}.`);
-    for (const link of sourceLinks) links.add(link);
-    sourceCounts.push({ source, label: definition.label, count: sourceLinks.size });
-  }
-
-  if (links.size > 20_000) throw new Error("Sitemap trả về số lượng URL bất thường; đã dừng để bảo vệ hệ thống.");
-  return { links: [...links], sourceCounts };
-}
-
-function normalizeCatalogSources(rawSources: unknown): MedicationCatalogSource[] {
-  if (!Array.isArray(rawSources)) return [];
-  const seen = new Set<MedicationCatalogSource>();
-  for (const value of rawSources) {
-    if (value === "drug" || value === "supplement") seen.add(value);
-  }
-  return [...seen];
 }
 
 export async function fetchCategoryHtml(rawUrl: string): Promise<{ url: URL; html: string }> {
