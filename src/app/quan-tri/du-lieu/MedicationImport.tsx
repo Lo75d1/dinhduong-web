@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import MedicationCatalogPreview from "./MedicationCatalogPreview";
 
 type MedicationRefItem = {
   id: string;
@@ -65,12 +66,18 @@ export default function MedicationImport() {
     setBusy(true);
     setResults([]);
     setProgress({ done: 0, total: urls.length });
-    const collected: RowResult[] = [];
-    for (const url of urls) {
+    // Keep the page responsive for a catalogue import with thousands of URLs.
+    // Progress still counts every URL; the screen only retains the latest rows.
+    const recentResults: RowResult[] = [];
+    for (const [index, url] of urls.entries()) {
       const result = await importOne(url);
-      collected.push(result);
-      setResults([...collected]);
-      setProgress({ done: collected.length, total: urls.length });
+      if (recentResults.length === 100) recentResults.shift();
+      recentResults.push(result);
+      setResults([...recentResults]);
+      setProgress({ done: index + 1, total: urls.length });
+      // Keep a modest gap between public source-page requests. This matters
+      // when an Admin intentionally imports an entire allowed catalogue.
+      if (index + 1 < urls.length) await new Promise((resolve) => setTimeout(resolve, 450));
     }
     setBusy(false);
     setUrlsText("");
@@ -156,6 +163,7 @@ export default function MedicationImport() {
           <li>Lặp lại bước 1-5 với danh mục khác để mở rộng dần danh sách thuốc/TPBS dùng chung.</li>
         </ol>
       </details>
+      <MedicationCatalogPreview onAddLinks={appendProductLinks} />
       <div className="mt-3 rounded-md border-2 border-violet-500 bg-violet-100 p-3">
         <label className="text-sm font-semibold text-neutral-950">Tìm thuốc / thực phẩm chức năng trên Long Châu
           <div className="mt-1 flex flex-wrap gap-2">
