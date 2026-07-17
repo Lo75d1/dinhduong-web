@@ -77,8 +77,8 @@ export default function MedicationCatalogPreview({ onAddLinks }: { onAddLinks: (
           <p className="font-semibold">Đã tìm thấy {preview.total.toLocaleString("vi-VN")} URL sản phẩm.</p>
           <ul className="mt-1 list-disc pl-5 text-xs">
             {preview.sourceCounts.map((source) => <li key={source.source}>{source.label}: {source.count.toLocaleString("vi-VN")}</li>)}
-            <li>Đã có trong kho tham khảo: {preview.alreadyImported.toLocaleString("vi-VN")}</li>
-            <li>Sẽ cần tải chi tiết để bổ sung/cập nhật: {preview.pending.toLocaleString("vi-VN")}</li>
+            <li>Đã có trong kho tham khảo (sẽ được cập nhật theo nguồn nếu tiếp tục): {preview.alreadyImported.toLocaleString("vi-VN")}</li>
+            <li>Chưa có trong kho (sẽ được thêm mới): {preview.pending.toLocaleString("vi-VN")}</li>
           </ul>
           <p className="mt-2 text-xs">Khi nhập, hệ thống xử lý tuần tự từng trang để giảm tải nguồn. Danh sách lớn sẽ mất thời gian; chỉ bắt đầu sau bước xác nhận tiếp theo.</p>
           <button type="button" onClick={addPreviewToQueue} className="mt-2 rounded-md bg-amber-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-800">
