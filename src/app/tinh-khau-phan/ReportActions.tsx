@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ALL_NUTRIENT_FIELDS, NUTRIENT_GROUPS } from "@/lib/nutrient-fields";
 import { aggregateExchangeGroups } from "./exchange-units";
-import { loadMedicationRows } from "./medication-row";
+import { loadMedicationRows, medicationTimingLabel } from "./medication-row";
 import { aggregateIngredients, buildDetailRows, buildReportLines, type FoodReportValues, type ReportLine } from "./ration-detail";
 import type { Profile } from "./PersonalProfile";
 import { mealOrder, type Row } from "./types";
@@ -39,13 +39,11 @@ function valueForRaw(row: Row, key: string, reportValues: FoodReportValues) {
   return typeof snapshot === "number" ? snapshot : reportValues[row.foodId]?.values[key] ?? null;
 }
 
-const TIMING_LABEL: Record<string, string> = { kem: "Uống kèm bữa ăn", "khong-kem": "Uống không kèm bữa ăn", "": "Không rõ" };
-
 // Đọc trực tiếp từ localStorage vì thuốc/TPBS lưu tách hoàn toàn khỏi `rows`
 // (không tính vào dinh dưỡng) — xem medication-row.ts.
 function loadMedicationLinesForExport() {
   return loadMedicationRows()
-    .flatMap((med) => med.meals.map((meal) => ({ meal, name: med.name, timing: TIMING_LABEL[med.timing], note: med.note })))
+    .map((med) => ({ meal: med.meal, name: med.name, timing: medicationTimingLabel(med.timing), note: med.note }))
     .sort((a, b) => mealOrder(a.meal) - mealOrder(b.meal));
 }
 
@@ -113,7 +111,7 @@ function buildExcelXml(rows: Row[], profile: Profile | null, meta: ReportMeta, r
   const medicationSheet = medicationLines.length ? worksheet("Thuốc TPBS theo bữa", 4, [
     '<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="3"><Data ss:Type="String">THUỐC / TPBS THEO BỮA ĂN</Data></Cell></Row>',
     '<Row><Cell ss:StyleID="Note" ss:MergeAcross="3"><Data ss:Type="String">Chỉ để tham khảo lịch uống theo bữa — không tính vào dinh dưỡng khẩu phần.</Data></Cell></Row>',
-    `<Row>${["Bữa", "Thuốc / TPBS", "Thời điểm uống", "Ghi chú"].map((value) => cell(value, "Header")).join("")}</Row>`,
+    `<Row>${["Bữa", "Thuốc / TPBS", "Vị trí so với bữa", "Ghi chú"].map((value) => cell(value, "Header")).join("")}</Row>`,
     ...medicationLines.map((line) => `<Row>${cell(line.meal)}${cell(line.name)}${cell(line.timing)}${cell(line.note)}</Row>`),
   ].join("")) : "";
 

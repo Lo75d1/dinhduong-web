@@ -1,34 +1,53 @@
-// Dòng thuốc/TPBS trong khẩu phần — tách hoàn toàn khỏi Row (thực phẩm) để
-// KHÔNG lẫn vào tính dinh dưỡng (thuốc không có nutrients/kcal). Chỉ hiển thị
-// theo từng bữa ăn để bác sĩ/người nhập hình dung lịch uống thuốc kèm/không
-// kèm bữa ăn, giống cách Nhà thuốc Long Châu mô tả cách dùng trên trang sản phẩm.
+// Thuốc/TPBS được gắn vào MỘT bữa cụ thể, ở vị trí trước hoặc sau các món ăn.
+// Chúng không phải thực phẩm và hoàn toàn không tham gia phép tính dinh dưỡng.
 import { genId } from "./types";
 
-export type MedicationTiming = "kem" | "khong-kem" | "";
+export type MedicationTiming = "before" | "after" | "unspecified";
 
 export type MedicationRow = {
   uid: string;
-  meals: string[]; // tên các bữa áp dụng — một thuốc có thể uống vào nhiều bữa
+  meal: string;
   name: string;
   timing: MedicationTiming;
-  note: string; // ghi chú đơn thuốc: liều dùng, cách dùng, lưu ý...
+  note: string;
+};
+
+type LegacyMedicationRow = Partial<MedicationRow> & {
+  meals?: unknown;
+  timing?: "kem" | "khong-kem" | MedicationTiming | "";
 };
 
 const LS_KEY = "khauphan_meds_v1";
+
+export function medicationTimingLabel(timing: MedicationTiming) {
+  if (timing === "before") return "Dùng trước bữa";
+  if (timing === "after") return "Dùng sau bữa";
+  return "Cần xác định vị trí";
+}
 
 export function loadMedicationRows(): MedicationRow[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(LS_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as MedicationRow[];
-    return parsed.map((m) => ({
-      uid: m.uid,
-      meals: Array.isArray(m.meals) ? m.meals : [],
-      name: m.name ?? "",
-      timing: m.timing === "kem" || m.timing === "khong-kem" ? m.timing : "",
-      note: m.note ?? "",
-    }));
+    const parsed = JSON.parse(raw) as LegacyMedicationRow[];
+    if (!Array.isArray(parsed)) return [];
+
+    // Bản cũ cho phép một thuốc gắn nhiều bữa và chỉ ghi "kèm/không kèm".
+    // Tách thành từng dòng theo bữa nhưng không tự suy đoán trước hay sau bữa.
+    return parsed.flatMap((item) => {
+      const meals = Array.isArray(item.meals)
+        ? item.meals.filter((meal): meal is string => typeof meal === "string" && meal.trim().length > 0)
+        : typeof item.meal === "string" && item.meal.trim() ? [item.meal] : [];
+      const timing: MedicationTiming = item.timing === "before" || item.timing === "after" || item.timing === "unspecified" ? item.timing : "unspecified";
+      return meals.map((meal, index) => ({
+        uid: index === 0 && typeof item.uid === "string" && item.uid ? item.uid : genId(),
+        meal,
+        name: typeof item.name === "string" ? item.name : "",
+        timing,
+        note: typeof item.note === "string" ? item.note : "",
+      }));
+    }).filter((item) => item.name.trim());
   } catch {
     return [];
   }
@@ -39,10 +58,10 @@ export function saveMedicationRows(rows: MedicationRow[]) {
   try {
     window.localStorage.setItem(LS_KEY, JSON.stringify(rows));
   } catch {
-    // localStorage đầy hoặc bị chặn — bỏ qua, không chặn UI
+    // localStorage đầy hoặc bị chặn — không chặn việc nhập khẩu phần.
   }
 }
 
-export function makeMedicationRow(meals: string[], name: string, timing: MedicationTiming, note: string): MedicationRow {
-  return { uid: genId(), meals, name, timing, note };
+export function makeMedicationRow(meal: string, name: string, timing: MedicationTiming, note: string): MedicationRow {
+  return { uid: genId(), meal, name, timing, note };
 }

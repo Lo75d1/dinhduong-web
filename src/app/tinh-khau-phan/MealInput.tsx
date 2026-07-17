@@ -12,7 +12,6 @@ import {
   type MedicationTiming,
 } from "./medication-row";
 import { basisForMode, calculateQuantity, isValidWastePercent } from "./quantity";
-import { MEDICATION_REFS } from "../thuoc-va-dinh-duong/data";
 import {
   type DishNode,
   type MealNode,
@@ -97,9 +96,9 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   const [medRefId, setMedRefId] = useState("");
   const [medSearch, setMedSearch] = useState("");
   const [medName, setMedName] = useState("");
-  const [medTiming, setMedTiming] = useState<MedicationTiming>("");
+  const [medTiming, setMedTiming] = useState<MedicationTiming>("after");
   const [medNote, setMedNote] = useState("");
-  const [medMeals, setMedMeals] = useState<string[]>([]);
+  const [medMeal, setMedMeal] = useState("");
   const [dbMedRefs, setDbMedRefs] = useState<{ id: string; name: string; category: string | null }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -455,19 +454,10 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   function applyMedRef(refId: string) {
     setMedRefId(refId);
     if (!refId) return;
-    if (refId.startsWith("db:")) {
-      const ref = dbMedRefs.find((item) => `db:${item.id}` === refId);
-      if (!ref) return;
-      setMedName(ref.name);
-      setMedNote("");
-      setMedTiming("");
-      return;
-    }
-    const ref = MEDICATION_REFS.find((item) => item.id === refId);
+    const ref = dbMedRefs.find((item) => item.id === refId);
     if (!ref) return;
     setMedName(ref.name);
-    setMedNote(ref.dosingNote);
-    setMedTiming(/bữa/i.test(ref.dosingNote) ? "kem" : "");
+    setMedNote("");
   }
 
   const normalizedMedicationQuery = medSearch.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -477,20 +467,21 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
     return searchable.includes(normalizedMedicationQuery);
   });
 
-  function toggleMedMeal(meal: string) {
-    setMedMeals((previous) => (previous.includes(meal) ? previous.filter((m) => m !== meal) : [...previous, meal]));
+  function openMedicationForm(meal = "") {
+    setMedMeal(meal || tree[0]?.meal || "");
+    setShowMedForm(true);
   }
 
   function addMedication(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = medName.trim();
-    if (!name || medMeals.length === 0) return;
-    setMedRows((previous) => [...previous, makeMedicationRow(medMeals, name, medTiming, medNote.trim())]);
+    if (!name || !medMeal) return;
+    setMedRows((previous) => [...previous, makeMedicationRow(medMeal, name, medTiming, medNote.trim())]);
     setMedRefId("");
     setMedName("");
-    setMedTiming("");
+    setMedTiming("after");
     setMedNote("");
-    setMedMeals([]);
+    setShowMedForm(false);
   }
 
   function deleteMedication(uid: string) {
@@ -514,7 +505,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
         </button>
         <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
         <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
-        <button type="button" disabled={tree.length === 0} onClick={() => setShowMedForm((current) => !current)} title={tree.length === 0 ? "Thêm bữa ăn trước khi gắn thuốc" : undefined} className="rounded-md border border-violet-700 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50">💊 Thuốc / TPBS</button>
+        <button type="button" disabled={tree.length === 0} onClick={() => openMedicationForm()} title={tree.length === 0 ? "Thêm bữa ăn trước khi gắn thuốc" : undefined} className="rounded-md border border-violet-700 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50">💊 Thêm thuốc / TPBS</button>
       </div>
       {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
@@ -537,44 +528,35 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
             <input value={medSearch} onChange={(event) => setMedSearch(event.target.value)} placeholder="Gõ tên hoặc nhóm, ví dụ: đái tháo đường, vitamin D..." className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />
             <span className="mt-1 block text-xs font-normal text-neutral-700">Tìm trong danh mục dùng chung đã được quản trị viên nhập; không phải tìm kiếm/khuyến cáo điều trị.</span>
           </label>
-          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Chọn thuốc / TPBS (có thể để trống rồi tự nhập)
-            <select value={medRefId} onChange={(event) => applyMedRef(event.target.value)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5">
+          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Chọn từ toàn bộ danh mục Thuốc / TPBS ({filteredDbMedRefs.length}/{dbMedRefs.length})
+            <select size={Math.min(9, Math.max(4, filteredDbMedRefs.length))} value={medRefId} onChange={(event) => applyMedRef(event.target.value)} className="mt-1 h-56 w-full rounded border border-violet-400 bg-white px-2 py-1.5 font-normal">
               <option value="">— Tự nhập tên thuốc/TPBS —</option>
-              {MEDICATION_REFS.length > 0 && <optgroup label="Thuốc mẫu (có ghi chú liều dùng)">
-                {MEDICATION_REFS.map((ref) => <option key={ref.id} value={ref.id}>{ref.name}</option>)}
-              </optgroup>}
-              {dbMedRefs.length > 0 && <optgroup label="Đã nhập từ Long Châu">
-                {filteredDbMedRefs.map((ref) => <option key={ref.id} value={`db:${ref.id}`}>{ref.name}{ref.category ? ` — ${ref.category}` : ""}</option>)}
-              </optgroup>}
+              {filteredDbMedRefs.map((ref) => <option key={ref.id} value={ref.id}>{ref.name}{ref.category ? ` — ${ref.category}` : ""}</option>)}
             </select>
+            <span className="mt-1 block text-xs font-normal text-neutral-700">Danh sách hiển thị toàn bộ dữ liệu đã nhập; gõ ở ô tìm phía trên để lọc nhanh theo tên hoặc nhóm.</span>
             {dbMedRefs.length > 0 && filteredDbMedRefs.length === 0 && <span className="mt-1 block text-xs font-semibold text-violet-900">Không thấy thuốc/TPBS phù hợp trong danh mục đã nhập. Có thể tự nhập tên và ghi chú theo đơn.</span>}
           </label>
           <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Tên thuốc / TPBS
             <input required value={medName} onChange={(event) => setMedName(event.target.value)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />
           </label>
-          <label className="text-sm font-semibold text-neutral-950">Thời điểm uống so với bữa ăn
+          <label className="text-sm font-semibold text-neutral-950">Vị trí hiển thị trong bữa
             <select value={medTiming} onChange={(event) => setMedTiming(event.target.value as MedicationTiming)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5">
-              <option value="">Không rõ / không quy định</option>
-              <option value="kem">Uống kèm bữa ăn</option>
-              <option value="khong-kem">Uống không kèm bữa ăn</option>
+              <option value="before">Trước bữa ăn (nằm trên các món)</option>
+              <option value="after">Sau bữa ăn (nằm dưới các món)</option>
             </select>
           </label>
-          <div className="text-sm font-semibold text-neutral-950">Áp dụng vào bữa
-            <div className="mt-1 flex flex-wrap gap-2">
-              {tree.map((meal) => (
-                <label key={meal.meal} className="flex items-center gap-1.5 rounded border border-violet-300 bg-white px-2 py-1 text-xs font-medium text-neutral-900">
-                  <input type="checkbox" checked={medMeals.includes(meal.meal)} onChange={() => toggleMedMeal(meal.meal)} />
-                  {meal.meal}
-                </label>
-              ))}
-            </div>
-          </div>
+          <label className="text-sm font-semibold text-neutral-950">Gắn vào một bữa
+            <select required value={medMeal} onChange={(event) => setMedMeal(event.target.value)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5">
+              <option value="">— Chọn bữa —</option>
+              {tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}
+            </select>
+          </label>
           <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Ghi chú đơn thuốc (liều dùng, cách dùng, lưu ý...)
             <textarea value={medNote} onChange={(event) => setMedNote(event.target.value)} className="mt-1 min-h-20 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />
           </label>
         </div>
-        <button disabled={medMeals.length === 0} className="mt-4 rounded-md bg-violet-700 px-4 py-2 font-semibold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50">Thêm vào bữa đã chọn</button>
-        {medMeals.length === 0 && <p className="mt-2 text-xs font-semibold text-violet-900">Chọn ít nhất một bữa ăn để gắn thuốc vào.</p>}
+        <button disabled={!medMeal} className="mt-4 rounded-md bg-violet-700 px-4 py-2 font-semibold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50">Thêm vào vị trí đã chọn trong bữa</button>
+        {!medMeal && <p className="mt-2 text-xs font-semibold text-violet-900">Chọn một bữa để gắn thuốc/TPBS vào đúng vị trí.</p>}
       </form>}
 
       {tree.length === 0 ? (
@@ -587,11 +569,12 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
               node={meal}
               mode={mode}
               work={work}
-              medications={medRows.filter((med) => med.meals.includes(meal.meal))}
+              medications={medRows.filter((med) => med.meal === meal.meal)}
               onSelectDish={(dish) => setWork({ meal: meal.meal, dish })}
               onRenameMeal={(name) => renameMeal(meal.meal, name)}
               onDeleteMeal={() => deleteMeal(meal.meal)}
               onAddDish={() => addDish(meal.meal)}
+              onAddMedication={() => openMedicationForm(meal.meal)}
               onRenameDish={(oldDish, name) => renameDish(meal.meal, oldDish, name)}
               onDeleteDish={(dish) => deleteDish(meal.meal, dish)}
               onDeleteFoodRow={deleteFoodRow}
@@ -715,32 +698,34 @@ function EditableTitle({ value, onCommit, className, placeholder }: { value: str
   return <input value={text} placeholder={placeholder} onChange={(event) => setText(event.target.value)} onBlur={() => { if (text.trim()) onCommit(text.trim()); else setText(value); }} className={className} />;
 }
 
-function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onRenameDish, onDeleteDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onDeleteMedication }: {
-  node: MealNode; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onDeleteMedication: (uid: string) => void;
+function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onDeleteMedication }: {
+  node: MealNode; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onDeleteMedication: (uid: string) => void;
 }) {
+  const beforeMeal = medications.filter((med) => med.timing === "before");
+  const afterMeal = medications.filter((med) => med.timing === "after");
+  const unspecified = medications.filter((med) => med.timing === "unspecified");
   return <section className="overflow-hidden rounded-lg border-2 border-[#52786d] bg-white shadow-sm">
     <div className="grid grid-cols-[88px_minmax(0,1fr)_auto] items-center gap-3 bg-[#0c5f4d] px-3 py-2.5 text-white">
       <span className="text-xs font-semibold tracking-[0.12em] text-[#d5ebaf]">BỮA ĂN</span>
       <EditableTitle value={node.meal} onCommit={onRenameMeal} className="min-w-0 rounded border border-white/30 bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#d5ebaf]" />
-      <div className="flex shrink-0 items-center gap-2"><button onClick={onAddDish} className="rounded-md border border-[#d5ebaf] bg-[#15745e] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a846c]">＋ Món</button><button onClick={onDeleteMeal} className="rounded-md px-2 py-1.5 text-sm text-white hover:bg-[#0a4c3d]" title="Xóa bữa">✕</button></div>
+      <div className="flex shrink-0 items-center gap-2"><button onClick={onAddMedication} className="rounded-md border border-violet-200 bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">💊 Thuốc</button><button onClick={onAddDish} className="rounded-md border border-[#d5ebaf] bg-[#15745e] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a846c]">＋ Món</button><button onClick={onDeleteMeal} className="rounded-md px-2 py-1.5 text-sm text-white hover:bg-[#0a4c3d]" title="Xóa bữa">✕</button></div>
     </div>
+    <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={beforeMeal} onDelete={onDeleteMedication} />
     {node.dishes.length === 0 ? <div className="px-4 py-4 text-sm text-neutral-900">Chưa có món. Bấm “＋ Món” để bắt đầu nhập.</div> : <div className="divide-y-2 divide-[#8ba39b]">{node.dishes.map((dish) => <DishBlock key={dish.dish} node={dish} mode={mode} isWork={work?.meal === node.meal && work.dish === dish.dish} onSelect={() => onSelectDish(dish.dish)} onRename={(name) => onRenameDish(dish.dish, name)} onDelete={() => onDeleteDish(dish.dish)} onDeleteFoodRow={onDeleteFoodRow} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</div>}
-    {medications.length > 0 && <div className="divide-y divide-violet-200 border-t-2 border-violet-300 bg-violet-50">
-      {medications.map((med) => (
-        <div key={med.uid} className="flex flex-wrap items-start gap-2 px-3 py-2.5">
-          <span className="mt-0.5 shrink-0 text-lg" aria-hidden>💊</span>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-violet-950">{med.name}</span>
-              {med.timing && <span className="rounded-full bg-violet-700 px-2 py-0.5 text-xs font-semibold text-white">{med.timing === "kem" ? "Uống kèm bữa ăn" : "Uống không kèm bữa ăn"}</span>}
-            </div>
-            {med.note && <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-900">{med.note}</p>}
-          </div>
-          <button onClick={() => onDeleteMedication(med.uid)} className="shrink-0 rounded px-2 py-1 text-violet-800 hover:bg-violet-100" title="Xóa thuốc">✕</button>
-        </div>
-      ))}
-    </div>}
+    <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={afterMeal} onDelete={onDeleteMedication} />
+    <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={unspecified} onDelete={onDeleteMedication} warning />
   </section>;
+}
+
+function MedicationInMeal({ title, medications, onDelete, warning = false }: { title: string; medications: MedicationRow[]; onDelete: (uid: string) => void; warning?: boolean }) {
+  if (!medications.length) return null;
+  return <div className={`divide-y border-y-2 ${warning ? "border-amber-300 divide-amber-200 bg-amber-50" : "border-violet-300 divide-violet-200 bg-violet-50"}`}>
+    <div className={`px-3 py-2 text-xs font-bold tracking-wide ${warning ? "text-amber-900" : "text-violet-900"}`}>{title}</div>
+    {medications.map((med) => <div key={med.uid} className="flex flex-wrap items-start gap-2 px-3 py-2.5">
+      <div className="min-w-0 flex-1"><p className="font-semibold text-violet-950">{med.name}</p>{med.note && <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-900">{med.note}</p>}</div>
+      <button onClick={() => onDelete(med.uid)} className="shrink-0 rounded px-2 py-1 text-violet-800 hover:bg-violet-100" title="Xóa thuốc">✕</button>
+    </div>)}
+  </div>;
 }
 
 function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteFoodRow, onUpdateQuantity, onUpdateNote }: {
