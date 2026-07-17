@@ -652,3 +652,20 @@ model DataChangeLog {
   @@index([actorId, createdAt])
   @@map("data_change_logs")
 }
+
+// Thuốc/TPBS tham khảo để bác sĩ nhập nhanh khi kê đơn trong khẩu phần — CHỈ
+// lưu dữ kiện lấy từ trang sản phẩm công khai (tên, phân loại, ảnh), KHÔNG
+// lưu mô tả/hướng dẫn dùng nguyên văn của nguồn (tránh sao chép nội dung có
+// bản quyền). sourceUrl duy nhất để nhập lại 1 link không tạo dòng trùng.
+model MedicationRef {
+  id              String   @id @default(cuid())
+  name            String
+  category        String?
+  imageUrl        String?
+  sourceUrl       String   @unique
+  sourceLabel     String?
+  createdByLabel  String?
+  createdAt       DateTime @default(now())
+
+  @@map("medication_refs")
+}

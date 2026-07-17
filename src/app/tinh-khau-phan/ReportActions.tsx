@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { ALL_NUTRIENT_FIELDS, NUTRIENT_GROUPS } from "@/lib/nutrient-fields";
 import { aggregateExchangeGroups } from "./exchange-units";
+import { loadMedicationRows } from "./medication-row";
 import { aggregateIngredients, buildDetailRows, buildReportLines, type FoodReportValues, type ReportLine } from "./ration-detail";
 import type { Profile } from "./PersonalProfile";
-import type { Row } from "./types";
+import { mealOrder, type Row } from "./types";
 
 export type ReportMeta = { subjectName: string; subjectGroup: string; clinicalCourse: string; authorName: string; authorRole: string; authorOrganization: string; reportDate: string; menuNote: string };
 const ROLES = ["Bác sĩ", "Dinh dưỡng viên", "Huấn luyện viên / PT", "Phụ huynh / người chăm sóc", "Khác"];
@@ -36,6 +37,16 @@ function lineStyle(line: ReportLine): CellStyle {
 function valueForRaw(row: Row, key: string, reportValues: FoodReportValues) {
   const snapshot = row.nutrients[key];
   return typeof snapshot === "number" ? snapshot : reportValues[row.foodId]?.values[key] ?? null;
+}
+
+const TIMING_LABEL: Record<string, string> = { kem: "Uống kèm bữa ăn", "khong-kem": "Uống không kèm bữa ăn", "": "Không rõ" };
+
+// Đọc trực tiếp từ localStorage vì thuốc/TPBS lưu tách hoàn toàn khỏi `rows`
+// (không tính vào dinh dưỡng) — xem medication-row.ts.
+function loadMedicationLinesForExport() {
+  return loadMedicationRows()
+    .flatMap((med) => med.meals.map((meal) => ({ meal, name: med.name, timing: TIMING_LABEL[med.timing], note: med.note })))
+    .sort((a, b) => mealOrder(a.meal) - mealOrder(b.meal));
 }
 
 function buildExcelXml(rows: Row[], profile: Profile | null, meta: ReportMeta, reportValues: FoodReportValues) {
@@ -98,6 +109,14 @@ function buildExcelXml(rows: Row[], profile: Profile | null, meta: ReportMeta, r
     ...foods.map((row) => `<Row>${cell(row.meal)}${cell(row.dish)}${cell(row.foodName)}${cell(round(row.grams), "Number")}${cell(reportValues[row.foodId]?.source || "Bản chụp lúc nhập / chưa truy xuất")}${cell(row.note)}${ALL_NUTRIENT_FIELDS.map((field) => { const value = valueForRaw(row, field.key, reportValues); return cell(value === null ? "—" : round(value), value === null ? "Cell" : "Number"); }).join("")}</Row>`),
   ].join(""));
 
+  const medicationLines = loadMedicationLinesForExport();
+  const medicationSheet = medicationLines.length ? worksheet("Thuốc TPBS theo bữa", 4, [
+    '<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="3"><Data ss:Type="String">THUỐC / TPBS THEO BỮA ĂN</Data></Cell></Row>',
+    '<Row><Cell ss:StyleID="Note" ss:MergeAcross="3"><Data ss:Type="String">Chỉ để tham khảo lịch uống theo bữa — không tính vào dinh dưỡng khẩu phần.</Data></Cell></Row>',
+    `<Row>${["Bữa", "Thuốc / TPBS", "Thời điểm uống", "Ghi chú"].map((value) => cell(value, "Header")).join("")}</Row>`,
+    ...medicationLines.map((line) => `<Row>${cell(line.meal)}${cell(line.name)}${cell(line.timing)}${cell(line.note)}</Row>`),
+  ].join("")) : "";
+
   const notesSheet = worksheet("Căn cứ và ghi chú", 3, [
     '<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="2"><Data ss:Type="String">CĂN CỨ VÀ LƯU Ý ĐỌC BÁO CÁO</Data></Cell></Row>',
     `<Row>${["Nội dung", "Chi tiết", "Ghi chú"].map((value) => cell(value, "Header")).join("")}</Row>`,
@@ -107,7 +126,7 @@ function buildExcelXml(rows: Row[], profile: Profile | null, meta: ReportMeta, r
     `<Row>${cell("Dấu ≥")}${cell("Tổng tối thiểu do ít nhất một thực phẩm chưa có số liệu cho chất tương ứng.")}${cell("Không diễn giải là bằng 0.")}</Row>`,
   ].join(""));
 
-  return `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Cell"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#B7C3BE"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D6DED9"/></Borders><Alignment ss:Vertical="Center" ss:WrapText="1"/></Style><Style ss:ID="Title"><Font ss:Bold="1" ss:Size="16" ss:Color="#123C36"/><Alignment ss:Vertical="Center"/></Style><Style ss:ID="MetaLabel"><Font ss:Bold="1"/><Interior ss:Color="#E8EFEB" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#B7C3BE"/></Borders></Style><Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#DCE7E1" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#7F948D"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#7F948D"/></Borders><Alignment ss:Vertical="Center" ss:WrapText="1"/></Style><Style ss:ID="Number" ss:Parent="Cell"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><NumberFormat ss:Format="0.00"/></Style><Style ss:ID="Food" ss:Parent="Cell"/><Style ss:ID="Dish" ss:Parent="Cell"><Font ss:Bold="1"/><Interior ss:Color="#FFF7DB" ss:Pattern="Solid"/></Style><Style ss:ID="Meal" ss:Parent="Cell"><Font ss:Bold="1"/><Interior ss:Color="#E4F3FB" ss:Pattern="Solid"/></Style><Style ss:ID="Day" ss:Parent="Cell"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0E5E93" ss:Pattern="Solid"/></Style><Style ss:ID="Note" ss:Parent="Cell"><Font ss:Italic="1" ss:Color="#2E4A43"/><Alignment ss:WrapText="1"/></Style></Styles>${infoSheet}${detailSheet}${warehouseSheet}${exchangeSheet}${rawSheet}${notesSheet}</Workbook>`;
+  return `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Styles><Style ss:ID="Cell"><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#B7C3BE"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D6DED9"/></Borders><Alignment ss:Vertical="Center" ss:WrapText="1"/></Style><Style ss:ID="Title"><Font ss:Bold="1" ss:Size="16" ss:Color="#123C36"/><Alignment ss:Vertical="Center"/></Style><Style ss:ID="MetaLabel"><Font ss:Bold="1"/><Interior ss:Color="#E8EFEB" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#B7C3BE"/></Borders></Style><Style ss:ID="Header"><Font ss:Bold="1"/><Interior ss:Color="#DCE7E1" ss:Pattern="Solid"/><Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#7F948D"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#7F948D"/></Borders><Alignment ss:Vertical="Center" ss:WrapText="1"/></Style><Style ss:ID="Number" ss:Parent="Cell"><Alignment ss:Horizontal="Right" ss:Vertical="Center"/><NumberFormat ss:Format="0.00"/></Style><Style ss:ID="Food" ss:Parent="Cell"/><Style ss:ID="Dish" ss:Parent="Cell"><Font ss:Bold="1"/><Interior ss:Color="#FFF7DB" ss:Pattern="Solid"/></Style><Style ss:ID="Meal" ss:Parent="Cell"><Font ss:Bold="1"/><Interior ss:Color="#E4F3FB" ss:Pattern="Solid"/></Style><Style ss:ID="Day" ss:Parent="Cell"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#0E5E93" ss:Pattern="Solid"/></Style><Style ss:ID="Note" ss:Parent="Cell"><Font ss:Italic="1" ss:Color="#2E4A43"/><Alignment ss:WrapText="1"/></Style></Styles>${infoSheet}${detailSheet}${warehouseSheet}${exchangeSheet}${rawSheet}${medicationSheet}${notesSheet}</Workbook>`;
 }
 
 async function loadReportValues(rows: Row[]): Promise<FoodReportValues> {
