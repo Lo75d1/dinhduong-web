@@ -150,9 +150,9 @@ export default function MedicationImport() {
 
       {results.length > 0 && <div className="mt-3 divide-y divide-violet-200 rounded-lg border border-violet-300 bg-white">
         {results.map((result) => (
-          <div key={result.url} className="flex items-center gap-2 px-3 py-2 text-sm">
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${result.status === "ok" ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-900"}`}>{result.status === "ok" ? "OK" : "Lỗi"}</span>
-            <span className="min-w-0 flex-1 truncate text-neutral-900">{result.status === "ok" ? result.item?.name : result.error}</span>
+          <div key={result.url} className="flex items-start gap-2 px-3 py-2 text-sm">
+            <span className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${result.status === "ok" ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-900"}`}>{result.status === "ok" ? "OK" : "Lỗi"}</span>
+            <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-neutral-900">{result.status === "ok" ? result.item?.name : result.error}</span>
           </div>
         ))}
       </div>}
