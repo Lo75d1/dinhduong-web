@@ -95,6 +95,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   const [medRows, setMedRows] = useState<MedicationRow[]>([]);
   const [showMedForm, setShowMedForm] = useState(false);
   const [medRefId, setMedRefId] = useState("");
+  const [medSearch, setMedSearch] = useState("");
   const [medName, setMedName] = useState("");
   const [medTiming, setMedTiming] = useState<MedicationTiming>("");
   const [medNote, setMedNote] = useState("");
@@ -469,6 +470,13 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
     setMedTiming(/bữa/i.test(ref.dosingNote) ? "kem" : "");
   }
 
+  const normalizedMedicationQuery = medSearch.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const filteredDbMedRefs = dbMedRefs.filter((item) => {
+    if (!normalizedMedicationQuery) return true;
+    const searchable = `${item.name} ${item.category ?? ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    return searchable.includes(normalizedMedicationQuery);
+  });
+
   function toggleMedMeal(meal: string) {
     setMedMeals((previous) => (previous.includes(meal) ? previous.filter((m) => m !== meal) : [...previous, meal]));
   }
@@ -525,16 +533,21 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
           <button type="button" onClick={() => setShowMedForm(false)} className="px-2 text-sm text-neutral-800">✕</button>
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Chọn từ thuốc mẫu (demo, có thể để trống rồi tự nhập)
+          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Tìm thuốc / TPBS đã nhập từ Long Châu
+            <input value={medSearch} onChange={(event) => setMedSearch(event.target.value)} placeholder="Gõ tên hoặc nhóm, ví dụ: đái tháo đường, vitamin D..." className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />
+            <span className="mt-1 block text-xs font-normal text-neutral-700">Tìm trong danh mục dùng chung đã được quản trị viên nhập; không phải tìm kiếm/khuyến cáo điều trị.</span>
+          </label>
+          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Chọn thuốc / TPBS (có thể để trống rồi tự nhập)
             <select value={medRefId} onChange={(event) => applyMedRef(event.target.value)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5">
               <option value="">— Tự nhập tên thuốc/TPBS —</option>
               {MEDICATION_REFS.length > 0 && <optgroup label="Thuốc mẫu (có ghi chú liều dùng)">
                 {MEDICATION_REFS.map((ref) => <option key={ref.id} value={ref.id}>{ref.name}</option>)}
               </optgroup>}
               {dbMedRefs.length > 0 && <optgroup label="Đã nhập từ Long Châu">
-                {dbMedRefs.map((ref) => <option key={ref.id} value={`db:${ref.id}`}>{ref.name}</option>)}
+                {filteredDbMedRefs.map((ref) => <option key={ref.id} value={`db:${ref.id}`}>{ref.name}{ref.category ? ` — ${ref.category}` : ""}</option>)}
               </optgroup>}
             </select>
+            {dbMedRefs.length > 0 && filteredDbMedRefs.length === 0 && <span className="mt-1 block text-xs font-semibold text-violet-900">Không thấy thuốc/TPBS phù hợp trong danh mục đã nhập. Có thể tự nhập tên và ghi chú theo đơn.</span>}
           </label>
           <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Tên thuốc / TPBS
             <input required value={medName} onChange={(event) => setMedName(event.target.value)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />

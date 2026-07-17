@@ -93,6 +93,20 @@ export async function fetchCategoryHtml(rawUrl: string): Promise<{ url: URL; htm
   return { url, html: await response.text() };
 }
 
+// Tìm kiếm theo đúng trang tìm kiếm công khai của Long Châu. Không gọi API nội
+// bộ, không dò toàn catalogue và chỉ trả các URL sản phẩm đang hiển thị trong
+// kết quả; Admin vẫn là người chọn rồi mới nhập vào danh mục dùng chung.
+export async function searchMedicationProductLinks(rawQuery: string): Promise<string[]> {
+  const query = rawQuery.trim().replace(/\s+/g, " ");
+  if (query.length < 2) throw new Error("Nhập tối thiểu 2 ký tự để tìm sản phẩm.");
+  if (query.length > 100) throw new Error("Từ khóa tìm kiếm quá dài.");
+
+  const url = new URL("https://nhathuoclongchau.com.vn/tim-kiem");
+  url.searchParams.set("s", query);
+  const { html } = await fetchCategoryHtml(url.toString());
+  return discoverProductLinks(url.toString(), html).slice(0, 60);
+}
+
 function decodeHtmlEntities(value: string): string {
   return value
     .replace(/&amp;/g, "&")

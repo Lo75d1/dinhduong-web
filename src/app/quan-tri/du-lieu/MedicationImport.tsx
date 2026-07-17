@@ -21,9 +21,13 @@ export default function MedicationImport() {
   const [results, setResults] = useState<RowResult[]>([]);
   const [items, setItems] = useState<MedicationRefItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
+  const [listQuery, setListQuery] = useState("");
   const [categoryUrl, setCategoryUrl] = useState("");
   const [scanningCategory, setScanningCategory] = useState(false);
   const [categoryMessage, setCategoryMessage] = useState("");
+  const [sourceQuery, setSourceQuery] = useState("");
+  const [searchingSource, setSearchingSource] = useState(false);
+  const [sourceSearchMessage, setSourceSearchMessage] = useState("");
 
   async function loadList() {
     setLoadingList(true);
@@ -95,11 +99,43 @@ export default function MedicationImport() {
     }
   }
 
+  function appendProductLinks(found: string[]) {
+    setUrlsText((previous) => {
+      const existing = new Set(previous.split("\n").map((line) => line.trim()).filter(Boolean));
+      for (const link of found) existing.add(link);
+      return [...existing].join("\n");
+    });
+  }
+
+  async function searchLongChau() {
+    const query = sourceQuery.trim();
+    if (query.length < 2) return;
+    setSearchingSource(true);
+    setSourceSearchMessage("");
+    try {
+      const res = await fetch("/api/admin/medications/search", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ query }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setSourceSearchMessage(data.error ?? "Chưa tìm được sản phẩm từ Long Châu."); return; }
+      const found: string[] = data.links ?? [];
+      if (!found.length) { setSourceSearchMessage("Không thấy sản phẩm hiển thị sẵn từ từ khóa này. Thử tên hoạt chất, thương hiệu hoặc nhóm TPBS khác."); return; }
+      appendProductLinks(found);
+      setSourceSearchMessage(`Đã tìm thấy và thêm ${found.length} link sản phẩm vào danh sách chờ nhập bên dưới.`);
+    } finally {
+      setSearchingSource(false);
+    }
+  }
+
   async function removeItem(id: string) {
     if (!window.confirm("Xoá thuốc này khỏi danh sách tham khảo?")) return;
     await fetch(`/api/admin/medications/${id}`, { method: "DELETE" });
     setItems((previous) => previous.filter((item) => item.id !== id));
   }
+
+  const normalizedListQuery = listQuery.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const filteredItems = items.filter((item) => {
+    if (!normalizedListQuery) return true;
+    return `${item.name} ${item.category ?? ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedListQuery);
+  });
 
   return (
     <section className="rounded-xl border-2 border-violet-700 bg-violet-50 p-5">
@@ -120,6 +156,18 @@ export default function MedicationImport() {
           <li>Lặp lại bước 1-5 với danh mục khác để mở rộng dần danh sách thuốc/TPBS dùng chung.</li>
         </ol>
       </details>
+      <div className="mt-3 rounded-md border-2 border-violet-500 bg-violet-100 p-3">
+        <label className="text-sm font-semibold text-neutral-950">Tìm thuốc / thực phẩm chức năng trên Long Châu
+          <div className="mt-1 flex flex-wrap gap-2">
+            <input value={sourceQuery} onChange={(event) => setSourceQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void searchLongChau(); } }} placeholder="Ví dụ: metformin, omega 3, vitamin D, men vi sinh..." disabled={searchingSource} className="min-w-0 flex-1 rounded border border-violet-400 bg-white px-2 py-1.5 text-sm disabled:opacity-60" />
+            <button type="button" disabled={searchingSource || sourceQuery.trim().length < 2} onClick={() => void searchLongChau()} className="shrink-0 rounded-md bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50">
+              {searchingSource ? "Đang tìm..." : "Tìm trên Long Châu"}
+            </button>
+          </div>
+        </label>
+        <p className="mt-1 text-xs text-neutral-800">Kết quả chỉ là các link sản phẩm công khai đang hiện theo từ khóa. Hệ thống không quét toàn bộ catalogue, không lấy mô tả/hướng dẫn dùng và chỉ nhập sau khi bạn bấm nút xác nhận ở dưới.</p>
+        {sourceSearchMessage && <p className="mt-1 text-xs font-semibold text-violet-950">{sourceSearchMessage}</p>}
+      </div>
       <div className="mt-3 rounded-md border border-violet-300 bg-white p-3">
         <label className="text-sm font-semibold text-neutral-900">Quét nhanh 1 trang danh mục (VD: nhathuoclongchau.com.vn/thuoc/thuoc-tri-tieu-duong)
           <div className="mt-1 flex flex-wrap gap-2">
@@ -157,10 +205,15 @@ export default function MedicationImport() {
         ))}
       </div>}
 
-      <h3 className="mt-5 text-lg font-semibold text-neutral-900">Danh sách đã nhập ({items.length})</h3>
+      <div className="mt-5 flex flex-wrap items-end justify-between gap-2">
+        <div><h3 className="text-lg font-semibold text-neutral-900">Danh sách đã nhập ({items.length})</h3><p className="text-xs text-neutral-700">Tra cứu theo tên sản phẩm hoặc nhóm thuốc/TPBS trước khi xoá hay dùng lại.</p></div>
+        <label className="text-sm font-semibold text-neutral-900">Tìm trong danh sách
+          <input value={listQuery} onChange={(event) => setListQuery(event.target.value)} placeholder="Tên hoặc nhóm thuốc/TPBS" className="mt-1 block rounded border border-violet-400 bg-white px-2 py-1.5 text-sm font-normal" />
+        </label>
+      </div>
       {loadingList ? <p className="mt-1 text-sm text-neutral-700">Đang tải...</p> : items.length === 0 ? <p className="mt-1 text-sm text-neutral-700">Chưa có thuốc nào.</p> : (
         <div className="mt-2 divide-y divide-violet-200 rounded-lg border border-violet-300 bg-white">
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <div key={item.id} className="flex items-center gap-3 px-3 py-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded border border-violet-200 object-contain" /> : <span className="h-10 w-10 shrink-0" />}
@@ -172,6 +225,7 @@ export default function MedicationImport() {
               <button type="button" onClick={() => void removeItem(item.id)} className="shrink-0 rounded px-2 py-1 text-rose-800 hover:bg-rose-50" title="Xoá">✕</button>
             </div>
           ))}
+          {filteredItems.length === 0 && <p className="px-3 py-4 text-sm text-neutral-700">Không có thuốc/TPBS khớp từ kho đã nhập.</p>}
         </div>
       )}
     </section>
