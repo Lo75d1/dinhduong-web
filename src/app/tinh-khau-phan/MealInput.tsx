@@ -94,6 +94,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   const [medRows, setMedRows] = useState<MedicationRow[]>([]);
   const [medTiming, setMedTiming] = useState<MedicationTiming>("after");
   const [medTargetMeal, setMedTargetMeal] = useState("");
+  const [medNote, setMedNote] = useState("");
   const [dbMedRefs, setDbMedRefs] = useState<{ id: string; name: string; category: string | null; imageUrl?: string | null }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -457,6 +458,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   function activateMedicationSearch(meal = "") {
     setMedTargetMeal(meal || work?.meal || tree[0]?.meal || "");
     setMedTiming("after");
+    setMedNote("");
     changeSearchKind("medication");
   }
 
@@ -465,8 +467,9 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       window.alert("Hãy chọn một bữa để đặt mốc thuốc/TPBS.");
       return;
     }
-    setMedRows((previous) => [...previous, makeMedicationRow(medTargetMeal, ref.name, medTiming, "")]);
+    setMedRows((previous) => [...previous, makeMedicationRow(medTargetMeal, ref.name, medTiming, medNote.trim())]);
     setQ("");
+    setMedNote("");
   }
 
   function deleteMedication(uid: string) {
@@ -576,21 +579,28 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
               <label className="text-xs font-medium text-neutral-800">Chế độ bệnh lý<select value={dishDisease} onChange={(event) => setDishDisease(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Không giới hạn</option>{dishFilterOptions.diseaseGroups.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
             </div>}
           </div>}
-          {searchKind === "medication" && <div className="mb-2 grid gap-2 rounded-md border border-violet-200 bg-violet-50 p-2 sm:grid-cols-2">
-            <label className="text-xs font-semibold text-violet-950">Đặt theo mốc bữa
-              <select value={medTargetMeal} onChange={(event) => setMedTargetMeal(event.target.value)} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
-                <option value="">Chọn bữa…</option>
-                {tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}
-              </select>
-            </label>
-            <label className="text-xs font-semibold text-violet-950">Vị trí trong trình tự ngày
-              <select value={medTiming} onChange={(event) => setMedTiming(event.target.value as MedicationTiming)} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
-                <option value="before">Trước bữa (nằm trên món)</option>
-                <option value="after">Sau bữa (nằm dưới món)</option>
-                <option value="standalone">Mốc riêng, không kèm bữa</option>
-              </select>
-            </label>
-            <p className="text-xs text-violet-950 sm:col-span-2">Mốc riêng vẫn được đặt theo thứ tự ngay sau bữa đã chọn, nhưng hiển thị tách biệt để thể hiện thuốc không dùng kèm bữa ăn.</p>
+          {searchKind === "medication" && <div className="mb-2 rounded-md border border-violet-200 bg-violet-50 p-2">
+            <div className="mb-2 flex flex-wrap gap-2" role="group" aria-label="Cách hiển thị thuốc hoặc thực phẩm bổ sung">
+              <button type="button" onClick={() => setMedTiming("after")} aria-pressed={medTiming !== "standalone"} className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${medTiming !== "standalone" ? "border-violet-700 bg-violet-700 text-white" : "border-violet-300 bg-white text-violet-950"}`}>Gắn theo bữa ăn</button>
+              <button type="button" onClick={() => setMedTiming("standalone")} aria-pressed={medTiming === "standalone"} className={`rounded-md border px-3 py-1.5 text-xs font-semibold ${medTiming === "standalone" ? "border-violet-700 bg-violet-700 text-white" : "border-violet-300 bg-white text-violet-950"}`}>Mốc thuốc riêng</button>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-violet-950">{medTiming === "standalone" ? "Đặt sau mốc bữa" : "Gắn theo bữa"}
+                <select value={medTargetMeal} onChange={(event) => setMedTargetMeal(event.target.value)} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+                  <option value="">Chọn bữa…</option>
+                  {tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}
+                </select>
+              </label>
+              {medTiming === "standalone" ? <div className="rounded-md border border-violet-200 bg-white px-2 py-1.5 text-xs leading-5 text-violet-950"><b>Mốc riêng không kèm bữa:</b> hiển thị thành một thẻ riêng ngay sau bữa đã chọn, không lẫn vào danh sách món ăn.</div> : <label className="text-xs font-semibold text-violet-950">Vị trí trong bữa
+                <select value={medTiming} onChange={(event) => setMedTiming(event.target.value as "before" | "after")} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+                  <option value="before">Trước bữa (nằm trên món)</option>
+                  <option value="after">Sau bữa (nằm dưới món)</option>
+                </select>
+              </label>}
+              <label className="text-xs font-semibold text-violet-950 sm:col-span-2">Ghi chú bác sĩ / dinh dưỡng viên <span className="font-normal">(giờ dùng, liều, dặn dò…)</span>
+                <input value={medNote} onChange={(event) => setMedNote(event.target.value)} placeholder={medTiming === "standalone" ? "VD: 15:00, uống cách bữa trưa 2 giờ…" : "VD: uống với nước, theo đơn…"} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900" />
+              </label>
+            </div>
           </div>}
           <div className="flex items-center gap-1.5">
             <div className="flex shrink-0 gap-1" role="tablist" aria-label="Nguồn thêm vào khẩu phần">
