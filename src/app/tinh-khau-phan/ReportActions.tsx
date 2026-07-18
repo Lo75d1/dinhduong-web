@@ -43,7 +43,7 @@ function valueForRaw(row: Row, key: string, reportValues: FoodReportValues) {
 // (không tính vào dinh dưỡng) — xem medication-row.ts.
 function loadMedicationLinesForExport() {
   return loadMedicationRows()
-    .map((med) => ({ meal: med.meal, name: med.name, timing: medicationTimingLabel(med.timing), note: med.note }))
+    .map((med) => ({ meal: med.meal, name: med.name, dose: [med.dose, med.doseUnit].filter(Boolean).join(" "), timing: medicationTimingLabel(med.timing), note: med.note }))
     .sort((a, b) => mealOrder(a.meal) - mealOrder(b.meal));
 }
 
@@ -108,11 +108,11 @@ function buildExcelXml(rows: Row[], profile: Profile | null, meta: ReportMeta, r
   ].join(""));
 
   const medicationLines = loadMedicationLinesForExport();
-  const medicationSheet = medicationLines.length ? worksheet("Thuốc TPBS theo bữa", 4, [
-    '<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="3"><Data ss:Type="String">THUỐC / TPBS THEO BỮA ĂN</Data></Cell></Row>',
-    '<Row><Cell ss:StyleID="Note" ss:MergeAcross="3"><Data ss:Type="String">Chỉ để tham khảo lịch uống theo bữa — không tính vào dinh dưỡng khẩu phần.</Data></Cell></Row>',
-    `<Row>${["Bữa", "Thuốc / TPBS", "Vị trí so với bữa", "Ghi chú"].map((value) => cell(value, "Header")).join("")}</Row>`,
-    ...medicationLines.map((line) => `<Row>${cell(line.meal)}${cell(line.name)}${cell(line.timing)}${cell(line.note)}</Row>`),
+  const medicationSheet = medicationLines.length ? worksheet("Thuốc TPBS theo bữa", 5, [
+    '<Row ss:Height="26"><Cell ss:StyleID="Title" ss:MergeAcross="4"><Data ss:Type="String">THUỐC / TPBS THEO BỮA ĂN</Data></Cell></Row>',
+    '<Row><Cell ss:StyleID="Note" ss:MergeAcross="4"><Data ss:Type="String">Chỉ để tham khảo lịch uống theo bữa — không tính vào dinh dưỡng khẩu phần.</Data></Cell></Row>',
+    `<Row>${["Bữa", "Thuốc / TPBS", "Liều lượng", "Vị trí so với bữa", "Ghi chú"].map((value) => cell(value, "Header")).join("")}</Row>`,
+    ...medicationLines.map((line) => `<Row>${cell(line.meal)}${cell(line.name)}${cell(line.dose)}${cell(line.timing)}${cell(line.note)}</Row>`),
   ].join("")) : "";
 
   const notesSheet = worksheet("Căn cứ và ghi chú", 3, [

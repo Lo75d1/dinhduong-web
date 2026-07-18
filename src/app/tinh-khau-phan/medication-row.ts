@@ -9,6 +9,8 @@ export type MedicationRow = {
   meal: string;
   name: string;
   timing: MedicationTiming;
+  dose: string;
+  doseUnit: string;
   note: string;
 };
 
@@ -46,6 +48,8 @@ export function loadMedicationRows(): MedicationRow[] {
         meal,
         name: typeof item.name === "string" ? item.name : "",
         timing,
+        dose: typeof item.dose === "string" ? item.dose : "",
+        doseUnit: typeof item.doseUnit === "string" ? item.doseUnit : "",
         note: typeof item.note === "string" ? item.note : "",
       }));
     }).filter((item) => item.name.trim());
@@ -63,6 +67,6 @@ export function saveMedicationRows(rows: MedicationRow[]) {
   }
 }
 
-export function makeMedicationRow(meal: string, name: string, timing: MedicationTiming, note: string): MedicationRow {
-  return { uid: genId(), meal, name, timing, note };
+export function makeMedicationRow(meal: string, name: string, timing: MedicationTiming, dose: string, doseUnit: string, note: string): MedicationRow {
+  return { uid: genId(), meal, name, timing, dose, doseUnit, note };
 }

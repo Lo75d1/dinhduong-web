@@ -94,6 +94,8 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   const [medRows, setMedRows] = useState<MedicationRow[]>([]);
   const [medTiming, setMedTiming] = useState<MedicationTiming>("after");
   const [medTargetMeal, setMedTargetMeal] = useState("");
+  const [medDose, setMedDose] = useState("");
+  const [medDoseUnit, setMedDoseUnit] = useState("viên");
   const [medNote, setMedNote] = useState("");
   const [dbMedRefs, setDbMedRefs] = useState<{ id: string; name: string; category: string | null; imageUrl?: string | null }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -460,6 +462,8 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   function activateMedicationSearch(meal = "") {
     setMedTargetMeal(meal || work?.meal || tree[0]?.meal || "");
     setMedTiming("after");
+    setMedDose("");
+    setMedDoseUnit("viên");
     setMedNote("");
     changeSearchKind("medication");
   }
@@ -469,13 +473,18 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       window.alert("Hãy chọn một bữa để đặt mốc thuốc/TPBS.");
       return;
     }
-    setMedRows((previous) => [...previous, makeMedicationRow(medTargetMeal, ref.name, medTiming, medNote.trim())]);
+    setMedRows((previous) => [...previous, makeMedicationRow(medTargetMeal, ref.name, medTiming, medDose.trim(), medDoseUnit.trim(), medNote.trim())]);
     setQ("");
+    setMedDose("");
     setMedNote("");
   }
 
   function deleteMedication(uid: string) {
     setMedRows((previous) => previous.filter((row) => row.uid !== uid));
+  }
+
+  function updateMedication(uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) {
+    setMedRows((previous) => previous.map((row) => row.uid === uid ? { ...row, ...patch } : row));
   }
 
   return (
@@ -526,6 +535,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
               onDeleteFoodRow={deleteFoodRow}
               onUpdateQuantity={updateQuantity}
               onUpdateNote={updateNote}
+              onUpdateMedication={updateMedication}
               onDeleteMedication={deleteMedication}
             />
           ))}
@@ -600,7 +610,14 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
                   <option value="after">Sau bữa (nằm dưới món)</option>
                 </select>
               </label>}
-              <label className="text-xs font-semibold text-violet-950 sm:col-span-2">Ghi chú bác sĩ / dinh dưỡng viên <span className="font-normal">(giờ dùng, liều, dặn dò…)</span>
+              <label className="text-xs font-semibold text-violet-950">Liều lượng
+                <input value={medDose} onChange={(event) => setMedDose(event.target.value)} placeholder="VD: 1; 0,5; 500" className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900" />
+              </label>
+              <label className="text-xs font-semibold text-violet-950">Đơn vị liều
+                <input value={medDoseUnit} onChange={(event) => setMedDoseUnit(event.target.value)} list="medication-dose-units" placeholder="VD: viên, ml, mg" className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900" />
+                <datalist id="medication-dose-units"><option value="viên" /><option value="gói" /><option value="ống" /><option value="ml" /><option value="mg" /><option value="g" /><option value="giọt" /><option value="muỗng" /></datalist>
+              </label>
+              <label className="text-xs font-semibold text-violet-950 sm:col-span-2">Ghi chú bác sĩ / dinh dưỡng viên <span className="font-normal">(giờ dùng, cách dùng, dặn dò…)</span>
                 <input value={medNote} onChange={(event) => setMedNote(event.target.value)} placeholder={medTiming === "standalone" ? "VD: 15:00, uống cách bữa trưa 2 giờ…" : "VD: uống với nước, theo đơn…"} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900" />
               </label>
             </div>
@@ -678,8 +695,8 @@ function EditableTitle({ value, onCommit, className, placeholder }: { value: str
   return <input value={text} placeholder={placeholder} onChange={(event) => setText(event.target.value)} onBlur={() => { if (text.trim()) onCommit(text.trim()); else setText(value); }} className={className} />;
 }
 
-function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onDeleteMedication }: {
-  node: MealNode; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onDeleteMedication: (uid: string) => void;
+function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
+  node: MealNode; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onUpdateMedication: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDeleteMedication: (uid: string) => void;
 }) {
   const beforeMeal = medications.filter((med) => med.timing === "before");
   const afterMeal = medications.filter((med) => med.timing === "after");
@@ -691,20 +708,23 @@ function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, 
       <EditableTitle value={node.meal} onCommit={onRenameMeal} className="min-w-0 rounded border border-white/30 bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#d5ebaf]" />
       <div className="flex shrink-0 items-center gap-2"><button onClick={onAddMedication} className="rounded-md border border-violet-200 bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">💊 Thuốc</button><button onClick={onAddDish} className="rounded-md border border-[#d5ebaf] bg-[#15745e] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a846c]">＋ Món</button><button onClick={onDeleteMeal} className="rounded-md px-2 py-1.5 text-sm text-white hover:bg-[#0a4c3d]" title="Xóa bữa">✕</button></div>
     </div>
-    <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={beforeMeal} onDelete={onDeleteMedication} />
+    <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={beforeMeal} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} />
     {node.dishes.length === 0 ? <div className="px-4 py-4 text-sm text-neutral-900">Chưa có món. Bấm “＋ Món” để bắt đầu nhập.</div> : <div className="divide-y-2 divide-[#8ba39b]">{node.dishes.map((dish) => <DishBlock key={dish.dish} node={dish} mode={mode} isWork={work?.meal === node.meal && work.dish === dish.dish} onSelect={() => onSelectDish(dish.dish)} onRename={(name) => onRenameDish(dish.dish, name)} onDelete={() => onDeleteDish(dish.dish)} onDeleteFoodRow={onDeleteFoodRow} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</div>}
-    <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={afterMeal} onDelete={onDeleteMedication} />
-    <MedicationInMeal title="💊 Mốc thuốc / TPBS riêng — không kèm bữa" medications={standalone} onDelete={onDeleteMedication} standalone />
-    <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={unspecified} onDelete={onDeleteMedication} warning />
+    <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={afterMeal} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} />
+    <MedicationInMeal title="💊 Mốc thuốc / TPBS riêng — không kèm bữa" medications={standalone} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} standalone />
+    <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={unspecified} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} warning />
   </section>;
 }
 
-function MedicationInMeal({ title, medications, onDelete, warning = false, standalone = false }: { title: string; medications: MedicationRow[]; onDelete: (uid: string) => void; warning?: boolean; standalone?: boolean }) {
+function MedicationInMeal({ title, medications, onUpdate, onDelete, warning = false, standalone = false }: { title: string; medications: MedicationRow[]; onUpdate: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDelete: (uid: string) => void; warning?: boolean; standalone?: boolean }) {
   if (!medications.length) return null;
   return <div className={`divide-y border-y-2 ${warning ? "border-amber-300 divide-amber-200 bg-amber-50" : standalone ? "border-violet-500 divide-violet-200 bg-white" : "border-violet-300 divide-violet-200 bg-violet-50"}`}>
     <div className={`px-3 py-2 text-xs font-bold tracking-wide ${warning ? "text-amber-900" : "text-violet-900"}`}>{title}{standalone && <span className="ml-2 font-normal">(đặt sau mốc bữa này trong trình tự ngày)</span>}</div>
-    {medications.map((med) => <div key={med.uid} className="flex flex-wrap items-start gap-2 px-3 py-2.5">
-      <div className="min-w-0 flex-1"><p className="font-semibold text-violet-950">{med.name}</p>{med.note && <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-900">{med.note}</p>}</div>
+    {medications.map((med) => <div key={med.uid} className="grid gap-2 px-3 py-2.5 sm:grid-cols-[minmax(220px,1fr)_100px_110px_minmax(220px,1fr)_auto] sm:items-center">
+      <p className="font-semibold text-violet-950">{med.name}</p>
+      <label className="text-xs font-semibold text-violet-950"><span className="sm:sr-only">Liều lượng</span><input value={med.dose} onChange={(event) => onUpdate(med.uid, { dose: event.target.value })} placeholder="Liều" aria-label={`Liều lượng ${med.name}`} className="w-full rounded border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-950" /></label>
+      <label className="text-xs font-semibold text-violet-950"><span className="sm:sr-only">Đơn vị</span><input value={med.doseUnit} onChange={(event) => onUpdate(med.uid, { doseUnit: event.target.value })} placeholder="Đơn vị" aria-label={`Đơn vị liều ${med.name}`} className="w-full rounded border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-950" /></label>
+      <label className="text-xs font-semibold text-violet-950"><span className="sm:sr-only">Ghi chú</span><input value={med.note} onChange={(event) => onUpdate(med.uid, { note: event.target.value })} placeholder="Giờ dùng, cách dùng, dặn dò…" aria-label={`Ghi chú ${med.name}`} className="w-full rounded border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-950" /></label>
       <button onClick={() => onDelete(med.uid)} className="shrink-0 rounded px-2 py-1 text-violet-800 hover:bg-violet-100" title="Xóa thuốc">✕</button>
     </div>)}
   </div>;
