@@ -97,6 +97,8 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   const [medNote, setMedNote] = useState("");
   const [dbMedRefs, setDbMedRefs] = useState<{ id: string; name: string; category: string | null; imageUrl?: string | null }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mealPlanRef = useRef<HTMLDivElement | null>(null);
+  const [shouldScrollToMealPlan, setShouldScrollToMealPlan] = useState(false);
 
   useEffect(() => {
     // localStorage chỉ đọc sau hydration để HTML server/client không lệch nhau.
@@ -107,6 +109,15 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
     setHydrated(true);
     setPortalReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!shouldScrollToMealPlan) return;
+    const frame = window.requestAnimationFrame(() => {
+      mealPlanRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setShouldScrollToMealPlan(false);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [shouldScrollToMealPlan, rows.length]);
 
   useEffect(() => {
     fetch("/api/dishes/filter-options")
@@ -446,6 +457,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
     setRows((previous) => newRows.reduce((current, row) => insertRowsIntoDish(current, row.meal, row.dish, [row]), previous));
     const last = items[items.length - 1];
     if (last) setWork({ meal: last.meal || work?.meal || UNASSIGNED_MEAL, dish: last.dishName || work?.dish || UNASSIGNED_DISH });
+    setShouldScrollToMealPlan(true);
   }
 
   const normalizedMedicationQuery = q.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -502,6 +514,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
       </form>}
 
+      <div ref={mealPlanRef} tabIndex={-1} className="scroll-mt-6 outline-none">
       {tree.length === 0 ? (
         <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">Chưa có bữa ăn nào. Bấm “+ Thêm bữa ăn” để bắt đầu.</div>
       ) : (
@@ -528,6 +541,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
           ))}
         </div>
       )}
+      </div>
 
       {/* Ô tìm kiếm ghim cố định dưới màn hình — theo yêu cầu người dùng, tránh
           phải cuộn lên xuống liên tục để thêm thực phẩm khi danh sách bữa/món
