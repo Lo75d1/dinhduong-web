@@ -16,12 +16,13 @@ import ExchangeUnits from "./ExchangeUnits";
 import ReportActions from "./ReportActions";
 import type { ReportMeta } from "./ReportActions";
 import ServerRationActions from "./ServerRationActions";
-import type { Row } from "./types";
+import type { RationMode, Row } from "./types";
 
 const round = (n: number) => Math.round(n * 10) / 10;
 
 export default function Calculator() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [rationMode, setRationMode] = useState<RationMode>("recall24h");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [visibleSections, setVisibleSections] = useState<string[]>(["overview"]);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
@@ -63,7 +64,7 @@ export default function Calculator() {
         <h2 className="mt-1 text-2xl font-semibold text-neutral-950">Nhập dữ liệu khẩu phần</h2>
         <p className="mt-1 text-neutral-800">Nhập hồ sơ, tạo bữa/món và thêm thực phẩm trên toàn bộ chiều rộng màn hình.</p>
       </div>
-      <div className="mt-5 flex flex-col gap-5"><PersonalProfile onChange={setProfile} /><MealInput onRowsChange={setRows} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
+      <div className="mt-5 flex flex-col gap-5"><PersonalProfile onChange={setProfile} /><MealInput onRowsChange={setRows} onModeChange={setRationMode} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
       <div className="mt-6 flex justify-end border-t-2 border-[#7f948d] pt-4"><button onClick={() => setActiveView("analysis")} className="rounded-md bg-[#123c36] px-5 py-3 font-semibold text-white">Sang kết quả &amp; phân tích →</button></div>
     </section>
 
@@ -73,10 +74,10 @@ export default function Calculator() {
       <NoteBox value={reportMeta.menuNote} onChange={setMenuNote} />
       {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-5 flex flex-col gap-5">
         <div className="clinical-card rounded-lg border-2 border-[#7f948d] bg-[#f7faf8] p-4" data-no-print>
-          <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold text-neutral-950">Chọn nhóm kết quả cần xem</h3><p className="text-sm text-neutral-800">Có thể mở nhiều nhóm cùng lúc.</p></div><div className="flex flex-wrap items-center justify-end gap-2"><ServerRationActions rows={rows} profile={profile} /><ReportActions rows={rows} profile={profile} meta={reportMeta} onMetaChange={setReportMeta} /></div></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold text-neutral-950">Chọn nhóm kết quả cần xem</h3><p className="text-sm text-neutral-800">Có thể mở nhiều nhóm cùng lúc.</p></div><div className="flex flex-wrap items-center justify-end gap-2"><ServerRationActions rows={rows} profile={profile} /><ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} /></div></div>
           <div className="mt-3 flex flex-wrap gap-2">{[["overview", "Tổng quan & khẩu phần"], ["clinical", "Khuyến nghị & vi chất"], ["exchange", "Quy đổi thực đơn"], ["charts", "10 biểu đồ phân tích"]].map(([key, label]) => <label key={key} className={`cursor-pointer rounded-md border-2 px-3 py-2 text-sm font-semibold ${visibleSections.includes(key) ? "border-[#123c36] bg-emerald-50 text-[#123c36]" : "border-neutral-400 bg-white text-neutral-900"}`}><input type="checkbox" checked={visibleSections.includes(key)} onChange={() => toggleSection(key)} className="mr-2" />{label}</label>)}</div>
         </div>
-        {visibleSections.includes("overview") && <><ClinicalSummary rows={rows} totals={totals} profile={profile} /><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)}g</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Một số thực phẩm không được đo đủ mọi chất; chất thiếu số liệu được tính là 0 nên tổng có thể thấp hơn thực tế. Dữ liệu nhập vẫn được lưu tạm trên trình duyệt.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /><RationDetail rows={rows} /></>}
+        {visibleSections.includes("overview") && <><ClinicalSummary rows={rows} totals={totals} profile={profile} /><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Dinh dưỡng tính trên gram sống sạch vì dữ liệu VDD/RNI được công bố cho 100 g phần ăn được ở trạng thái sống sạch. Khối lượng mua/xuất kho có cộng phần thải bỏ và được trình bày ở bảng quy đổi riêng.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /><RationDetail rows={rows} mode={rationMode} /></>}
         {visibleSections.includes("clinical") && <>{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></>}
         {visibleSections.includes("exchange") && <ExchangeUnits rows={rows} />}
         {visibleSections.includes("charts") && <LegacyChartReport rows={rows} />}

@@ -60,7 +60,7 @@ function toInputNumber(value: string): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[]) => void }) {
+export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [mode, setMode] = useState<RationMode>("recall24h");
   const [hydrated, setHydrated] = useState(false);
@@ -150,8 +150,10 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   }, [rows, hydrated]);
 
   useEffect(() => {
-    if (hydrated) saveRationMode(mode);
-  }, [mode, hydrated]);
+    if (!hydrated) return;
+    saveRationMode(mode);
+    onModeChange?.(mode);
+  }, [mode, hydrated, onModeChange]);
 
   useEffect(() => {
     if (hydrated) saveMedicationRows(medRows);
@@ -190,7 +192,6 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
 
   function changeMode(nextMode: RationMode) {
     if (nextMode === mode) return;
-    const targetBasis = basisForMode(nextMode);
     setRows((previous) =>
       previous.map((row) => {
         if (!row.foodId) return row;
@@ -201,16 +202,11 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
           wastePercent: row.wastePercent,
         });
         const edibleGrams = current.edibleGrams ?? row.grams;
-        const target = calculateQuantity({
-          grams: edibleGrams,
-          basis: "edible",
-          wastePercent: row.wastePercent,
-        });
         return {
           ...row,
           grams: edibleGrams,
-          inputBasis: targetBasis,
-          inputGrams: targetBasis === "raw" ? (target.rawGrams ?? edibleGrams) : edibleGrams,
+          inputBasis: "edible",
+          inputGrams: edibleGrams,
           conversionFactor: 1,
         };
       })
@@ -373,11 +369,10 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       const nutrients: Record<string, number | null> = {};
       for (const field of CORE_CALC_FIELDS) nutrients[field.key] = typeof food[field.key] === "number" ? food[field.key] as number : null;
       const classify = { foodGroup: typeof food.foodGroup === "string" ? food.foodGroup : null, proteinOrigin: typeof food.proteinOrigin === "string" ? food.proteinOrigin : null, giLevel: typeof food.giLevel === "number" ? food.giLevel : null, purinLevel: typeof food.purinLevel === "number" ? food.purinLevel : null, cholesterolLevel: typeof food.cholesterolLevel === "number" ? food.cholesterolLevel : null };
-      const rawGrams = typeof ingredient.quantityG === "number" && ingredient.quantityG > 0 ? ingredient.quantityG : 100;
+      const cleanGrams = typeof ingredient.quantityG === "number" && ingredient.quantityG > 0 ? ingredient.quantityG : 100;
       const wastePercent = typeof food.wastePercent === "number" ? food.wastePercent : null;
       const row = makeRow(meal, dishName, { id: food.id, name: food.name, nutrients, classify, wastePercent }, mode);
-      const edibleGrams = calculateQuantity({ grams: rawGrams, basis: "raw", wastePercent: row.wastePercent }).edibleGrams ?? rawGrams;
-      return { ...row, grams: edibleGrams, inputGrams: mode === "menu" ? rawGrams : edibleGrams, inputBasis: mode === "menu" ? "raw" as const : "edible" as const, conversionFactor: 1, note: `Từ công thức: ${dish.name}` };
+      return { ...row, grams: cleanGrams, inputGrams: cleanGrams, inputBasis: "edible" as const, conversionFactor: 1, note: `Từ công thức: ${dish.name}` };
     });
     setRows((previous) => insertRowsIntoDish(previous, meal, dishName, newRows));
     setWork({ meal, dish: dishName });
@@ -430,7 +425,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       if (!food) {
         const row = makeRow(meal, dish, null, mode);
         const grams = item.edibleGrams || row.grams;
-        return [{ ...row, foodName: item.foodName, grams, inputGrams: mode === "menu" ? (calculateQuantity({ grams, basis: "edible", wastePercent: row.wastePercent }).rawGrams ?? grams) : grams, inputBasis: mode === "menu" ? "raw" as const : "edible" as const, note: `AI chưa khớp CSDL, cần chọn lại thực phẩm.${item.note ? ` ${item.note}` : ""}` }];
+        return [{ ...row, foodName: item.foodName, grams, inputGrams: grams, inputBasis: "edible" as const, note: `AI chưa khớp CSDL, cần chọn lại thực phẩm.${item.note ? ` ${item.note}` : ""}` }];
       }
       const nutrients: Record<string, number | null> = {};
       for (const field of CORE_CALC_FIELDS) nutrients[field.key] = typeof food[field.key] === "number" ? food[field.key] as number : null;
@@ -443,7 +438,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       };
       const row = makeRow(meal, dish, { id: food.id, name: food.name, nutrients, classify, wastePercent: typeof food.wastePercent === "number" ? food.wastePercent : null }, mode);
       const grams = item.edibleGrams || row.grams;
-      return [{ ...row, grams, inputGrams: mode === "menu" ? (calculateQuantity({ grams, basis: "edible", wastePercent: row.wastePercent }).rawGrams ?? grams) : grams, inputBasis: mode === "menu" ? "raw" as const : "edible" as const, note: item.note ? `AI: ${item.note}` : "AI: đã kiểm tra khớp CSDL" }];
+      return [{ ...row, grams, inputGrams: grams, inputBasis: "edible" as const, note: item.note ? `AI: ${item.note}` : "AI: đã kiểm tra khớp CSDL" }];
     });
     if (!newRows.length) return;
     setRows((previous) => newRows.reduce((current, row) => insertRowsIntoDish(current, row.meal, row.dish, [row]), previous));
@@ -679,11 +674,11 @@ function ModeSelector({ mode, disabled, onChange }: { mode: RationMode; disabled
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <button disabled={disabled} onClick={() => onChange("recall24h")} aria-pressed={isRecall} className={`rounded-md border p-3 text-left text-sm disabled:cursor-wait disabled:opacity-60 ${isRecall ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-neutral-200 hover:border-emerald-300"}`}>
           <span className="block font-semibold">Khẩu phần 24 giờ</span>
-          <span className="mt-1 block text-xs text-neutral-600">Nhập lượng đã ăn; hệ thống quy đổi nguyên liệu khi có tỷ lệ thải bỏ.</span>
+          <span className="mt-1 block text-xs text-neutral-700">Nhập lượng thực tế đã ăn và hệ số đổi về sống sạch. Dinh dưỡng VDD/RNI tính trên 100 g sống sạch.</span>
         </button>
         <button disabled={disabled} onClick={() => onChange("menu")} aria-pressed={!isRecall} className={`rounded-md border p-3 text-left text-sm disabled:cursor-wait disabled:opacity-60 ${!isRecall ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-neutral-200 hover:border-emerald-300"}`}>
           <span className="block font-semibold">Lập thực đơn</span>
-          <span className="mt-1 block text-xs text-neutral-600">Nhập lượng nguyên liệu; hệ thống quy đổi phần ăn được để tính dinh dưỡng.</span>
+          <span className="mt-1 block text-xs text-neutral-700">Nhập trực tiếp lượng sống sạch để lập thực đơn. Phần mua/xuất kho được cộng thải bỏ ở bảng riêng.</span>
         </button>
       </div>
     </div>
@@ -739,7 +734,7 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
       <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 rounded border border-[#8ba39b] bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
       <button onClick={onDelete} className="rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>
     </div>
-    {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía trên.</div> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] table-fixed border-collapse text-sm"><colgroup><col className="w-[42%]"/><col className="w-[15%]"/><col className="w-[11%]"/><col className="w-[13%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-3 py-2.5 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-2 py-2.5 text-right font-semibold">Đã ăn</th><th className="px-2 py-2.5 text-right font-semibold">Hệ số</th><th className="px-2 py-2.5 text-right font-semibold">Nguyên liệu</th></> : <><th className="px-2 py-2.5 text-right font-semibold">Nguyên liệu</th><th className="px-2 py-2.5 text-right font-semibold">Ăn được</th><th className="px-2 py-2.5 text-right font-semibold">Quy đổi</th></>}<th className="px-2 py-2.5 font-semibold">Ghi chú</th><th className="px-2 py-2.5" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div>}
+    {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía trên.</div> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] table-fixed border-collapse text-sm"><colgroup><col className="w-[42%]"/><col className="w-[15%]"/><col className="w-[11%]"/><col className="w-[13%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-3 py-2.5 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-2 py-2.5 text-right font-semibold">Đã ăn</th><th className="px-2 py-2.5 text-right font-semibold">Hệ số về sống sạch</th><th className="px-2 py-2.5 text-right font-semibold">Sống sạch</th></> : <><th className="px-2 py-2.5 text-right font-semibold">Sống sạch</th><th className="px-2 py-2.5 text-right font-semibold">Mua / xuất kho</th><th className="px-2 py-2.5 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-2.5 font-semibold">Ghi chú</th><th className="px-2 py-2.5" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div>}
   </div>;
 }
 
@@ -755,11 +750,11 @@ function FoodRow({ row, mode, onDelete, onUpdateQuantity, onUpdateNote }: { row:
     {mode === "recall24h" ? <>
       <td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Lượng đã ăn ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
       <td className="px-2 py-2"><input aria-label={`Hệ số quy đổi ${row.foodName}`} type="number" min={0} step="any" value={row.conversionFactor} onChange={(event) => onUpdateQuantity(row.uid, "conversionFactor", toInputNumber(event.target.value))} className={inputClass} /></td>
-      <td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.rawGrams === null ? "—" : `${round(quantity.rawGrams)} g`}</td>
-    </> : <>
-      <td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Nguyên liệu ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
       <td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.edibleGrams === null ? "—" : `${round(quantity.edibleGrams)} g`}</td>
-      <td className="px-2 py-3 text-right text-sm text-neutral-900">{row.conversionFactor !== 1 ? `× ${row.conversionFactor}` : "1:1"}</td>
+    </> : <>
+      <td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Lượng sống sạch ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
+      <td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.rawGrams === null ? "—" : `${round(quantity.rawGrams)} g`}</td>
+      <td className="px-2 py-3 text-right text-sm text-neutral-900">{isValidWastePercent(row.wastePercent) ? `${row.wastePercent}%` : "1:1 mặc định"}</td>
     </>}
     <td className="px-2 py-2"><input aria-label={`Ghi chú ${row.foodName}`} value={row.note} onChange={(event) => onUpdateNote(row.uid, event.target.value)} className="w-full rounded border border-[#8ba39b] bg-white px-2 py-1.5 text-sm" /></td>
     <td className="px-2 py-2 text-center"><button onClick={onDelete} className="rounded px-2 py-1.5 text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa thực phẩm">✕</button></td>

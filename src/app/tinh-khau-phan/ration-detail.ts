@@ -64,7 +64,7 @@ export function buildDetailRows(rows: Row[]): DetailRow[] {
         inputBasis: row.inputBasis,
         conversionFactor: row.conversionFactor,
         wastePercent: row.wastePercent,
-        // `grams` là giá trị chuẩn đã được MealInput xác nhận là phần ăn được.
+        // `grams` là giá trị sống sạch chuẩn đã được MealInput xác nhận.
         edibleGrams: row.grams,
         rawGrams: quantity.rawGrams,
         energyKcal: numberOrZero(row.nutrients.energyKcal) * factor,
@@ -135,14 +135,19 @@ export function buildReportLines(rows: Row[], fields: ReportField[], reportValue
   let currentMeal = "";
   let currentDish = "";
 
+  const sumRawGrams = (items: Row[]) => items.reduce((sum, row) => {
+    const quantity = calculateQuantity({ grams: row.inputGrams, basis: row.inputBasis, conversionFactor: row.conversionFactor, wastePercent: row.wastePercent });
+    return sum + (quantity.rawGrams ?? row.grams);
+  }, 0);
+
   const closeDish = () => {
     if (!dishRows.length) return;
-    out.push({ kind: "dish", key: `dish-${out.length}`, meal: currentMeal, dish: currentDish, foodName: `Tổng món: ${currentDish || "(Chưa đặt món)"}`, edibleGrams: dishRows.reduce((sum, row) => sum + row.grams, 0), rawGrams: null, values: summarize(dishRows, fields, reportValues) });
+    out.push({ kind: "dish", key: `dish-${out.length}`, meal: currentMeal, dish: currentDish, foodName: `Tổng món: ${currentDish || "(Chưa đặt món)"}`, edibleGrams: dishRows.reduce((sum, row) => sum + row.grams, 0), rawGrams: sumRawGrams(dishRows), values: summarize(dishRows, fields, reportValues) });
     dishRows = [];
   };
   const closeMeal = () => {
     if (!mealRows.length) return;
-    out.push({ kind: "meal", key: `meal-${out.length}`, meal: currentMeal, dish: "", foodName: `Tổng bữa: ${currentMeal || "(Chưa đặt bữa)"}`, edibleGrams: mealRows.reduce((sum, row) => sum + row.grams, 0), rawGrams: null, values: summarize(mealRows, fields, reportValues) });
+    out.push({ kind: "meal", key: `meal-${out.length}`, meal: currentMeal, dish: "", foodName: `Tổng bữa: ${currentMeal || "(Chưa đặt bữa)"}`, edibleGrams: mealRows.reduce((sum, row) => sum + row.grams, 0), rawGrams: sumRawGrams(mealRows), values: summarize(mealRows, fields, reportValues) });
     mealRows = [];
   };
 
@@ -162,6 +167,6 @@ export function buildReportLines(rows: Row[], fields: ReportField[], reportValue
   }
   closeDish();
   closeMeal();
-  if (foods.length) out.push({ kind: "day", key: "day", meal: "", dish: "", foodName: "TỔNG CẢ NGÀY", edibleGrams: foods.reduce((sum, row) => sum + row.grams, 0), rawGrams: null, values: summarize(foods, fields, reportValues) });
+  if (foods.length) out.push({ kind: "day", key: "day", meal: "", dish: "", foodName: "TỔNG CẢ NGÀY", edibleGrams: foods.reduce((sum, row) => sum + row.grams, 0), rawGrams: sumRawGrams(foods), values: summarize(foods, fields, reportValues) });
   return out;
 }

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ALL_NUTRIENT_FIELDS, NUTRIENT_GROUPS, type NutrientField } from "@/lib/nutrient-fields";
 import { aggregateIngredients, buildDetailRows, buildReportLines, type FoodReportValues } from "./ration-detail";
-import type { Row } from "./types";
+import type { RationMode, Row } from "./types";
 
 const DEFAULT_FIELDS = ["proteinG", "lipidG", "glucidG", "fiberG"];
 const round = (value: number) => Math.round(value * 10) / 10;
@@ -14,7 +14,7 @@ function formatValue(value: { total: number; incomplete: boolean } | undefined, 
   return `${value.incomplete ? "≥ " : ""}${round(value.total)} ${unit}`;
 }
 
-export default function RationDetail({ rows }: { rows: Row[] }) {
+export default function RationDetail({ rows, mode }: { rows: Row[]; mode: RationMode }) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>(DEFAULT_FIELDS);
   const [reportValues, setReportValues] = useState<FoodReportValues>({});
   const foodRows = rows.filter((row) => row.foodId);
@@ -77,6 +77,8 @@ export default function RationDetail({ rows }: { rows: Row[] }) {
     return { mealSpans, dishSpans };
   }, [reportLines]);
   const ingredients = useMemo(() => aggregateIngredients(buildDetailRows(rows)), [rows]);
+  const massLabel = "g sống sạch dùng tính";
+  const displayMass = (line: { edibleGrams: number }) => grams(line.edibleGrams);
   if (!foodRows.length) return null;
 
   function toggleField(key: string) {
@@ -89,7 +91,8 @@ export default function RationDetail({ rows }: { rows: Row[] }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold text-neutral-800">Dinh dưỡng khẩu phần chi tiết</h2>
-            <p className="mt-1 text-xs text-neutral-500">Dòng vàng = tổng món · xanh nhạt = tổng bữa · xanh đậm = tổng cả ngày. Dấu ≥ cho biết còn thực phẩm thiếu số liệu chất đó.</p>
+            <p className="mt-1 text-xs text-neutral-700">{mode === "menu" ? "Chế độ Lập thực đơn: hiển thị gram sống sạch dùng để lập món và tính dinh dưỡng." : "Chế độ Khẩu phần 24 giờ: lượng đã ăn được đổi bằng hệ số về gram sống sạch trước khi tính dinh dưỡng."} Dữ liệu VDD/RNI được áp dụng trên 100 g phần ăn được ở trạng thái sống sạch.</p>
+            <p className="mt-1 text-xs text-neutral-700">Dòng vàng = tổng món · xanh nhạt = tổng bữa · xanh đậm = tổng cả ngày. Dấu ≥ cho biết còn thực phẩm thiếu số liệu chất đó.</p>
           </div>
           <details className="rounded-md border border-neutral-300 bg-white text-sm">
             <summary className="cursor-pointer px-3 py-1.5 font-medium text-neutral-700">⚙ Chọn chất ({fields.length})</summary>
@@ -115,22 +118,22 @@ export default function RationDetail({ rows }: { rows: Row[] }) {
             <thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-500">
               <tr>
                 <th className="w-[9%] px-2 py-2 font-medium">Bữa</th><th className="w-[16%] px-2 py-2 font-medium">Món</th><th className="w-[30%] px-2 py-2 font-medium">Thực phẩm</th>
-                <th className="px-2 py-2 text-right font-medium">g ăn được</th><th className="px-2 py-2 text-right font-medium">Kcal</th>
+                <th className="px-2 py-2 text-right font-medium">{massLabel}</th><th className="px-2 py-2 text-right font-medium">Kcal</th>
                 {fields.map((field) => <th key={field.key} className="px-2 py-2 text-right font-medium">{field.label} ({field.unit})</th>)}
               </tr>
             </thead>
             <tbody>
               {reportLines.map((line) => {
                 const style = line.kind === "dish" ? "bg-amber-50" : line.kind === "meal" ? "bg-sky-50" : line.kind === "day" ? "bg-sky-800 text-white font-semibold" : "border-b border-neutral-100";
-                if (line.kind === "meal" || line.kind === "day") return <tr key={line.key} className={style}><td colSpan={3} className="px-3 py-2 font-semibold">{line.foodName}</td><td className="px-2 py-2 text-right tabular-nums">{grams(line.edibleGrams)}</td><td className="px-2 py-2 text-right tabular-nums">{formatValue(line.values.energyKcal, "kcal")}</td>{fields.map((field) => <td key={field.key} className="px-2 py-2 text-right tabular-nums">{formatValue(line.values[field.key], field.unit)}</td>)}</tr>;
-                if (line.kind === "dish") return <tr key={line.key} className={style}><td className="px-3 py-2 font-semibold" colSpan={1}>Tổng món</td><td className="px-2 py-2 text-right tabular-nums">{grams(line.edibleGrams)}</td><td className="px-2 py-2 text-right tabular-nums">{formatValue(line.values.energyKcal, "kcal")}</td>{fields.map((field) => <td key={field.key} className="px-2 py-2 text-right tabular-nums">{formatValue(line.values[field.key], field.unit)}</td>)}</tr>;
+                if (line.kind === "meal" || line.kind === "day") return <tr key={line.key} className={style}><td colSpan={3} className="px-3 py-2 font-semibold">{line.foodName}</td><td className="px-2 py-2 text-right tabular-nums">{displayMass(line)}</td><td className="px-2 py-2 text-right tabular-nums">{formatValue(line.values.energyKcal, "kcal")}</td>{fields.map((field) => <td key={field.key} className="px-2 py-2 text-right tabular-nums">{formatValue(line.values[field.key], field.unit)}</td>)}</tr>;
+                if (line.kind === "dish") return <tr key={line.key} className={style}><td className="px-3 py-2 font-semibold" colSpan={3}>{line.foodName}</td><td className="px-2 py-2 text-right tabular-nums">{displayMass(line)}</td><td className="px-2 py-2 text-right tabular-nums">{formatValue(line.values.energyKcal, "kcal")}</td>{fields.map((field) => <td key={field.key} className="px-2 py-2 text-right tabular-nums">{formatValue(line.values[field.key], field.unit)}</td>)}</tr>;
                 const mealSpan = mergedCells.mealSpans.get(line.key);
                 const dishSpan = mergedCells.dishSpans.get(line.key);
                 return <tr key={line.key} className={style}>
                   {mealSpan && <td rowSpan={mealSpan} className="align-top bg-[#edf4f0] px-2 py-3 font-semibold text-[#123c36]">{line.meal}</td>}
                   {dishSpan && <td rowSpan={dishSpan} className="align-top bg-[#f8f4e8] px-2 py-3 font-semibold text-neutral-950">{line.dish || "(Chưa đặt món)"}</td>}
                   <td className="px-2 py-2 font-medium">{line.foodName}</td>
-                  <td className="px-2 py-2 text-right tabular-nums">{grams(line.edibleGrams)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{displayMass(line)}</td>
                   <td className="px-2 py-2 text-right tabular-nums">{formatValue(line.values.energyKcal, "kcal")}</td>
                   {fields.map((field) => <td key={field.key} className="px-2 py-2 text-right tabular-nums">{formatValue(line.values[field.key], field.unit)}</td>)}
                 </tr>;
@@ -141,14 +144,14 @@ export default function RationDetail({ rows }: { rows: Row[] }) {
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-neutral-800">Quy đổi thực phẩm sống / xuất kho</h2>
-        <p className="mt-1 text-xs text-neutral-500">Gộp mọi lần dùng cùng thực phẩm. Dấu “—” nghĩa là chưa đủ tỷ lệ thải bỏ để quy đổi an toàn.</p>
-        <div className="mt-3 overflow-x-auto"><table className="min-w-[620px] w-full text-sm"><thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-500"><tr><th className="px-2 py-2 font-medium">Thực phẩm</th><th className="px-2 py-2 text-right font-medium">Ăn được</th><th className="px-2 py-2 text-right font-medium">Thải bỏ</th><th className="px-2 py-2 text-right font-medium">Nguyên liệu cần dùng</th></tr></thead><tbody>{ingredients.map((item) => <tr key={item.key} className="border-b border-neutral-100"><td className="px-2 py-2 font-medium">{item.foodName}</td><td className="px-2 py-2 text-right">{grams(item.edibleGrams)}</td><td className="px-2 py-2 text-right text-neutral-600">{item.wastePercent === null ? "Chưa có" : `${item.wastePercent}%`}</td><td className="px-2 py-2 text-right">{grams(item.rawGrams)}</td></tr>)}</tbody></table></div>
+        <h2 className="text-sm font-semibold text-neutral-800">Quy đổi sống sạch → mua / xuất kho</h2>
+        <p className="mt-1 text-xs text-neutral-700">Gộp mọi lần dùng cùng thực phẩm. Nếu chưa có tỷ lệ thải bỏ, hệ thống tạm quy đổi 1:1 và ghi rõ để người dùng kiểm tra lại.</p>
+        <div className="mt-3 overflow-x-auto"><table className="min-w-[620px] w-full text-sm"><thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-700"><tr><th className="px-2 py-2 font-medium">Thực phẩm</th><th className="px-2 py-2 text-right font-medium">Sống sạch</th><th className="px-2 py-2 text-right font-medium">Thải bỏ</th><th className="px-2 py-2 text-right font-medium">Mua / xuất kho</th></tr></thead><tbody>{ingredients.map((item) => <tr key={item.key} className="border-b border-neutral-100"><td className="px-2 py-2 font-medium">{item.foodName}</td><td className="px-2 py-2 text-right">{grams(item.edibleGrams)}</td><td className="px-2 py-2 text-right text-neutral-700">{item.wastePercent === null ? "Chưa có · tạm 1:1" : `${item.wastePercent}%`}</td><td className="px-2 py-2 text-right">{grams(item.rawGrams)}</td></tr>)}</tbody></table></div>
       </div>
 
       <details className="rounded-lg border border-neutral-200 bg-white p-4">
         <summary className="cursor-pointer text-sm font-semibold text-neutral-800">🔍 Dữ liệu gốc thực phẩm (trên 100g)</summary>
-        <p className="mt-2 text-xs text-neutral-500">Bảng này là số liệu thô từ CSDL. Kết quả khẩu phần = giá trị /100g × g ăn được /100.</p>
+        <p className="mt-2 text-xs text-neutral-700">Bảng này là số liệu thô từ CSDL VDD/RNI. Kết quả khẩu phần = giá trị /100 g sống sạch × g sống sạch quy đổi /100.</p>
         <div className="mt-3 overflow-x-auto"><table className="min-w-[760px] w-full text-sm"><thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-500"><tr><th className="px-2 py-2 font-medium">Thực phẩm</th><th className="px-2 py-2 font-medium">Nguồn</th><th className="px-2 py-2 text-right font-medium">Thải bỏ</th><th className="px-2 py-2 text-right font-medium">Năng lượng (kcal)</th>{fields.map((field) => <th key={field.key} className="px-2 py-2 text-right font-medium">{field.label} ({field.unit})</th>)}</tr></thead><tbody>{foodRows.map((row) => <tr key={row.uid} className="border-b border-neutral-100"><td className="px-2 py-2 font-medium">{row.foodName}</td><td className="px-2 py-2">{reportValues[row.foodId]?.source ?? "CSDL"}</td><td className="px-2 py-2 text-right">{row.wastePercent === null ? "—" : `${row.wastePercent}%`}</td><td className="px-2 py-2 text-right tabular-nums">{row.nutrients.energyKcal ?? "—"}</td>{fields.map((field) => <td key={field.key} className="px-2 py-2 text-right tabular-nums">{reportValues[row.foodId]?.values[field.key] ?? row.nutrients[field.key] ?? "—"}</td>)}</tr>)}</tbody></table></div>
       </details>
     </section>

@@ -12,13 +12,13 @@ export type Row = {
   dish: string;
   foodId: string; // rỗng nếu là dòng "món trống, chưa có thực phẩm"
   foodName: string;
-  // Khối lượng ăn được chuẩn hóa (g), luôn là đầu vào cho phép tính dinh dưỡng.
+  // Khối lượng phần ăn được ở trạng thái sống sạch (g), dùng tính dinh dưỡng VDD/RNI.
   grams: number;
   // Dữ liệu người dùng đã nhập, phục vụ hai chế độ khẩu phần/thực đơn.
   inputGrams: number;
   inputBasis: QuantityBasis;
   conversionFactor: number;
-  // Snapshot tỷ lệ thải bỏ lúc chọn thực phẩm; null nghĩa là chưa có dữ liệu quy đổi.
+  // Snapshot tỷ lệ thải bỏ để đổi sống sạch sang khối lượng mua/xuất kho.
   wastePercent: number | null;
   note: string;
   // snapshot dinh dưỡng/100g lúc thêm (CORE_CALC_FIELDS) — tránh phải gọi lại API để tính tổng
@@ -95,7 +95,7 @@ export function loadRows(): Row[] {
     const raw = window.localStorage.getItem(LS_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as Row[];
-    // Rows cũ chỉ có `grams`; xem chúng như lượng ăn được để giữ nguyên kết quả cũ.
+    // Rows cũ chỉ có `grams`; xem chúng như lượng sống sạch để giữ nguyên kết quả cũ.
     return parsed.map((r) => ({
       ...r,
       inputGrams: typeof r.inputGrams === "number" ? r.inputGrams : r.grams,

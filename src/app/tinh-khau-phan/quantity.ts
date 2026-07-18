@@ -1,8 +1,8 @@
 /**
  * Quy đổi khối lượng cho hai chế độ nhập khẩu phần.
  *
- * Chất dinh dưỡng trong CSDL luôn tính trên 100 g phần ăn được, vì vậy
- * `edibleGrams` là giá trị chuẩn dùng cho mọi phép tính dinh dưỡng.
+ * Chất dinh dưỡng VDD/RNI tính trên 100 g phần ăn được ở trạng thái sống sạch,
+ * vì vậy `edibleGrams` là gram sống sạch chuẩn dùng cho phép tính dinh dưỡng.
  */
 
 export type RationMode = "recall24h" | "menu";
@@ -24,8 +24,11 @@ export type QuantityResult = {
   conversionAvailable: boolean;
 };
 
-export function basisForMode(mode: RationMode): QuantityBasis {
-  return mode === "recall24h" ? "edible" : "raw";
+export function basisForMode(_mode: RationMode): QuantityBasis {
+  // Cả hai chế độ đều chuẩn hóa đầu vào về gram sống sạch. Khẩu phần 24 giờ
+  // dùng conversionFactor để đổi lượng đã ăn/chín về sống sạch; lập thực đơn
+  // nhập trực tiếp sống sạch. `raw` chỉ dành cho khối lượng mua/xuất kho.
+  return "edible";
 }
 
 export function isValidWastePercent(value: number | null | undefined): value is number {
