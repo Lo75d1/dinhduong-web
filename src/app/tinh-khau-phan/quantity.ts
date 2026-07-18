@@ -42,14 +42,16 @@ function validFactor(value: number | null | undefined): number {
 
 /**
  * `grams` là lượng người dùng nhập; `conversionFactor` đổi lượng đó về gram.
- * Nếu thiếu hoặc không hợp lệ tỷ lệ thải bỏ, không suy đoán khối lượng ở đầu
- * còn lại. Điều này tránh biến một giá trị thiếu dữ liệu thành 0% thải bỏ.
+ * Nếu thiếu tỷ lệ thải bỏ, giữ trạng thái thiếu dữ liệu (`wastePercent: null`)
+ * nhưng dùng quy đổi thao tác mặc định 1:1. Nhờ đó người dùng vẫn nhập được
+ * khẩu phần; báo cáo/UI sẽ ghi rõ đây không phải tỷ lệ thải bỏ đã xác minh.
  */
 export function calculateQuantity(input: QuantityInput): QuantityResult {
   const conversionFactor = validFactor(input.conversionFactor);
   const inputGrams = nonNegative(input.grams);
   const convertedGrams = inputGrams * conversionFactor;
   const wastePercent = isValidWastePercent(input.wastePercent) ? input.wastePercent : null;
+  const effectiveWastePercent = wastePercent ?? 0;
 
   if (input.basis === "edible") {
     return {
@@ -57,8 +59,8 @@ export function calculateQuantity(input: QuantityInput): QuantityResult {
       conversionFactor,
       wastePercent,
       edibleGrams: convertedGrams,
-      rawGrams: wastePercent === null ? null : convertedGrams / (1 - wastePercent / 100),
-      conversionAvailable: wastePercent !== null,
+      rawGrams: convertedGrams / (1 - effectiveWastePercent / 100),
+      conversionAvailable: true,
     };
   }
 
@@ -66,8 +68,8 @@ export function calculateQuantity(input: QuantityInput): QuantityResult {
     inputGrams,
     conversionFactor,
     wastePercent,
-    edibleGrams: wastePercent === null ? null : convertedGrams * (1 - wastePercent / 100),
+    edibleGrams: convertedGrams * (1 - effectiveWastePercent / 100),
     rawGrams: convertedGrams,
-    conversionAvailable: wastePercent !== null,
+    conversionAvailable: true,
   };
 }

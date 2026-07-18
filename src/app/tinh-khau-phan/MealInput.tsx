@@ -189,19 +189,9 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   function changeMode(nextMode: RationMode) {
     if (nextMode === mode) return;
     const targetBasis = basisForMode(nextMode);
-    const missingWasteCount = rows.filter((r) => r.foodId && !isValidWastePercent(r.wastePercent)).length;
-    if (
-      missingWasteCount > 0 &&
-      !window.confirm(
-        `${missingWasteCount} thực phẩm chưa có tỷ lệ thải bỏ. Các dòng này sẽ giữ nguyên lượng ăn được để tránh quy đổi sai. Bạn vẫn muốn đổi chế độ?`
-      )
-    ) {
-      return;
-    }
-
     setRows((previous) =>
       previous.map((row) => {
-        if (!row.foodId || !isValidWastePercent(row.wastePercent)) return row;
+        if (!row.foodId) return row;
         const current = calculateQuantity({
           grams: row.inputGrams,
           basis: row.inputBasis,
@@ -383,8 +373,8 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       const classify = { foodGroup: typeof food.foodGroup === "string" ? food.foodGroup : null, proteinOrigin: typeof food.proteinOrigin === "string" ? food.proteinOrigin : null, giLevel: typeof food.giLevel === "number" ? food.giLevel : null, purinLevel: typeof food.purinLevel === "number" ? food.purinLevel : null, cholesterolLevel: typeof food.cholesterolLevel === "number" ? food.cholesterolLevel : null };
       const rawGrams = typeof ingredient.quantityG === "number" && ingredient.quantityG > 0 ? ingredient.quantityG : 100;
       const wastePercent = typeof food.wastePercent === "number" ? food.wastePercent : null;
-      const edibleGrams = calculateQuantity({ grams: rawGrams, basis: "raw", wastePercent }).edibleGrams ?? rawGrams;
       const row = makeRow(meal, dishName, { id: food.id, name: food.name, nutrients, classify, wastePercent }, mode);
+      const edibleGrams = calculateQuantity({ grams: rawGrams, basis: "raw", wastePercent: row.wastePercent }).edibleGrams ?? rawGrams;
       return { ...row, grams: edibleGrams, inputGrams: mode === "menu" ? rawGrams : edibleGrams, inputBasis: mode === "menu" ? "raw" as const : "edible" as const, conversionFactor: 1, note: `Từ công thức: ${dish.name}` };
     });
     setRows((previous) => insertRowsIntoDish(previous, meal, dishName, newRows));
@@ -735,11 +725,25 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
 
 function FoodRow({ row, mode, onDelete, onUpdateQuantity, onUpdateNote }: { row: Row; mode: RationMode; onDelete: () => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void }) {
   const basis = basisForMode(mode);
-  const keepsLegacyEdible = mode === "menu" && row.inputBasis === "edible" && !isValidWastePercent(row.wastePercent);
   const quantity = calculateQuantity({ grams: row.inputGrams, basis: row.inputBasis, conversionFactor: row.conversionFactor, wastePercent: row.wastePercent });
   const inputClass = "w-full rounded border border-[#8ba39b] bg-white px-2 py-1.5 text-right tabular-nums";
   const value = row.inputBasis === basis ? row.inputGrams : row.grams;
-  return <tr className="align-top bg-white hover:bg-[#f7fbf8]"><td className="px-3 py-3"><div className="break-words font-semibold text-neutral-950">{row.foodName}</div><div className="mt-1 text-xs text-neutral-900">{isValidWastePercent(row.wastePercent) ? `Tỷ lệ thải bỏ: ${row.wastePercent}%` : "Chưa có dữ liệu tỷ lệ thải bỏ"}</div></td>{mode === "recall24h" ? <><td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Lượng đã ăn ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td><td className="px-2 py-2"><input aria-label={`Hệ số quy đổi ${row.foodName}`} type="number" min={0} step="any" value={row.conversionFactor} onChange={(event) => onUpdateQuantity(row.uid, "conversionFactor", toInputNumber(event.target.value))} className={inputClass} /></td><td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.rawGrams === null ? "—" : `${round(quantity.rawGrams)} g`}</td></> : <><td className="px-2 py-2">{keepsLegacyEdible ? <span className="text-xs font-semibold text-[#694d00]">Cần % thải bỏ</span> : <div className="flex items-center gap-1"><input aria-label={`Nguyên liệu ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div>}</td><td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{keepsLegacyEdible ? `${round(row.grams)} g*` : quantity.edibleGrams === null ? "—" : `${round(quantity.edibleGrams)} g`}</td><td className="px-2 py-3 text-right text-sm text-neutral-900">{row.conversionFactor !== 1 ? `× ${row.conversionFactor}` : "—"}</td></>}<td className="px-2 py-2"><input aria-label={`Ghi chú ${row.foodName}`} value={row.note} onChange={(event) => onUpdateNote(row.uid, event.target.value)} className="w-full rounded border border-[#8ba39b] bg-white px-2 py-1.5 text-sm" /></td><td className="px-2 py-2 text-center"><button onClick={onDelete} className="rounded px-2 py-1.5 text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa thực phẩm">✕</button></td></tr>;
+  const wasteLabel = isValidWastePercent(row.wastePercent) ? `Tỷ lệ thải bỏ: ${row.wastePercent}%` : "Chưa có tỷ lệ thải bỏ · quy đổi mặc định 1:1";
+
+  return <tr className="align-top bg-white hover:bg-[#f7fbf8]">
+    <td className="px-3 py-3"><div className="break-words font-semibold text-neutral-950">{row.foodName}</div><div className="mt-1 text-xs text-neutral-900">{wasteLabel}</div></td>
+    {mode === "recall24h" ? <>
+      <td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Lượng đã ăn ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
+      <td className="px-2 py-2"><input aria-label={`Hệ số quy đổi ${row.foodName}`} type="number" min={0} step="any" value={row.conversionFactor} onChange={(event) => onUpdateQuantity(row.uid, "conversionFactor", toInputNumber(event.target.value))} className={inputClass} /></td>
+      <td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.rawGrams === null ? "—" : `${round(quantity.rawGrams)} g`}</td>
+    </> : <>
+      <td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Nguyên liệu ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
+      <td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.edibleGrams === null ? "—" : `${round(quantity.edibleGrams)} g`}</td>
+      <td className="px-2 py-3 text-right text-sm text-neutral-900">{row.conversionFactor !== 1 ? `× ${row.conversionFactor}` : "1:1"}</td>
+    </>}
+    <td className="px-2 py-2"><input aria-label={`Ghi chú ${row.foodName}`} value={row.note} onChange={(event) => onUpdateNote(row.uid, event.target.value)} className="w-full rounded border border-[#8ba39b] bg-white px-2 py-1.5 text-sm" /></td>
+    <td className="px-2 py-2 text-center"><button onClick={onDelete} className="rounded px-2 py-1.5 text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa thực phẩm">✕</button></td>
+  </tr>;
 }
 
 function round(value: number) { return Math.round(value * 10) / 10; }
