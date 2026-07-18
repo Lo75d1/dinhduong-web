@@ -20,8 +20,8 @@
 
 body {
   background:
-    radial-gradient(circle at 12% 0%, rgba(219, 238, 229, 0.72), transparent 32rem),
-    linear-gradient(180deg, #f8fbfa 0%, var(--background) 26rem);
+    linear-gradient(rgba(248, 251, 250, 0.88), rgba(241, 246, 244, 0.94)),
+    url("/dinh-duong-2597-cover.jpg") center / cover fixed;
   color: var(--ink);
   font-family: "Times New Roman", Times, serif;
   font-size: 17px;

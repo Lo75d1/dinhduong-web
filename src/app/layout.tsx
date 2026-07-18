@@ -9,7 +9,7 @@ import AccountMenu from "./AccountMenu";
 const siteTitle = "Dinh dưỡng 2598";
 const siteDescription = "Tra cứu thực phẩm, món ăn và phân tích khẩu phần. Sáng kiến cải tiến tại Bệnh viện Đa khoa Nam Liên Chiểu · Sở Y tế thành phố Đà Nẵng.";
 const siteUrl = "https://dinhduong2598.food";
-const coverImage = "/dinh-duong-2598-cover.jpg";
+const coverImage = "/dinh-duong-2597-cover.jpg";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
