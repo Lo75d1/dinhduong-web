@@ -27,7 +27,7 @@ import {
 
 type FoodResult = { id: string; name: string; source: string; imageUrl?: string | null } & Record<string, number | null | string>;
 type FoodType = "" | "TS" | "CB" | "MA" | "SP";
-type SearchKind = "food" | "dish";
+type SearchKind = "food" | "dish" | "medication";
 type DishIngredientResult = { id: string; foodNameRaw: string; quantityG: number | null; food: FoodResult | null };
 type DishResult = { id: string; name: string; totalWeightG: number | null; servingUnit: string | null; categoryRaw: string | null; ageGroup: string | null; diseaseDiet: string | null; imageSourceId?: string | null; ingredients: DishIngredientResult[] };
 
@@ -92,14 +92,9 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
   const [submitManualForReview, setSubmitManualForReview] = useState(true);
   const [manualMessage, setManualMessage] = useState("");
   const [medRows, setMedRows] = useState<MedicationRow[]>([]);
-  const [showMedForm, setShowMedForm] = useState(false);
-  const [medRefId, setMedRefId] = useState("");
-  const [medSearch, setMedSearch] = useState("");
-  const [medName, setMedName] = useState("");
   const [medTiming, setMedTiming] = useState<MedicationTiming>("after");
-  const [medNote, setMedNote] = useState("");
-  const [medMeal, setMedMeal] = useState("");
-  const [dbMedRefs, setDbMedRefs] = useState<{ id: string; name: string; category: string | null }[]>([]);
+  const [medTargetMeal, setMedTargetMeal] = useState("");
+  const [dbMedRefs, setDbMedRefs] = useState<{ id: string; name: string; category: string | null; imageUrl?: string | null }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -150,7 +145,8 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.trim().length < 1) {
+    if (q.trim().length < 1 || searchKind === "medication") {
+      if (searchKind === "medication") setSearching(false);
       return;
     }
     debounceRef.current = setTimeout(async () => {
@@ -451,37 +447,26 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
     if (last) setWork({ meal: last.meal || work?.meal || UNASSIGNED_MEAL, dish: last.dishName || work?.dish || UNASSIGNED_DISH });
   }
 
-  function applyMedRef(refId: string) {
-    setMedRefId(refId);
-    if (!refId) return;
-    const ref = dbMedRefs.find((item) => item.id === refId);
-    if (!ref) return;
-    setMedName(ref.name);
-    setMedNote("");
-  }
-
-  const normalizedMedicationQuery = medSearch.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const normalizedMedicationQuery = q.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const filteredDbMedRefs = dbMedRefs.filter((item) => {
-    if (!normalizedMedicationQuery) return true;
+    if (!normalizedMedicationQuery) return false;
     const searchable = `${item.name} ${item.category ?? ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     return searchable.includes(normalizedMedicationQuery);
-  });
+  }).slice(0, 20);
 
-  function openMedicationForm(meal = "") {
-    setMedMeal(meal || tree[0]?.meal || "");
-    setShowMedForm(true);
+  function activateMedicationSearch(meal = "") {
+    setMedTargetMeal(meal || work?.meal || tree[0]?.meal || "");
+    setMedTiming("after");
+    changeSearchKind("medication");
   }
 
-  function addMedication(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const name = medName.trim();
-    if (!name || !medMeal) return;
-    setMedRows((previous) => [...previous, makeMedicationRow(medMeal, name, medTiming, medNote.trim())]);
-    setMedRefId("");
-    setMedName("");
-    setMedTiming("after");
-    setMedNote("");
-    setShowMedForm(false);
+  function pickMedication(ref: { id: string; name: string; category: string | null }) {
+    if (!medTargetMeal) {
+      window.alert("Hãy chọn một bữa để đặt mốc thuốc/TPBS.");
+      return;
+    }
+    setMedRows((previous) => [...previous, makeMedicationRow(medTargetMeal, ref.name, medTiming, "")]);
+    setQ("");
   }
 
   function deleteMedication(uid: string) {
@@ -505,7 +490,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
         </button>
         <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
         <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
-        <button type="button" disabled={tree.length === 0} onClick={() => openMedicationForm()} title={tree.length === 0 ? "Thêm bữa ăn trước khi gắn thuốc" : undefined} className="rounded-md border border-violet-700 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50">💊 Thêm thuốc / TPBS</button>
+        <button type="button" disabled={tree.length === 0} onClick={() => activateMedicationSearch()} title={tree.length === 0 ? "Thêm bữa ăn trước khi gắn thuốc" : undefined} className="rounded-md border border-violet-700 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50">💊 Thêm thuốc / TPBS</button>
       </div>
       {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
@@ -513,50 +498,6 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
         <label className="mt-4 flex items-start gap-2 rounded border border-[#a77b10] bg-[#fff8df] p-3 text-sm font-semibold text-neutral-950"><input type="checkbox" checked={submitManualForReview} onChange={(event) => setSubmitManualForReview(event.target.checked)} className="mt-1" />Đồng thời gửi bản nháp để quản trị viên kiểm duyệt dùng chung</label>
         {submitManualForReview && <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Mô tả / căn cứ đề xuất<textarea value={manualDescription} onChange={(event) => setManualDescription(event.target.value)} placeholder="Ví dụ: sản phẩm nào, phần ăn, thông tin nhãn..." className="mt-1 min-h-20 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Nguồn tham khảo<textarea value={manualSourceNote} onChange={(event) => setManualSourceNote(event.target.value)} placeholder="Nhãn sản phẩm, tài liệu hoặc đường dẫn để đối chiếu..." className="mt-1 min-h-16 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>}
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
-      </form>}
-
-      {showMedForm && <form onSubmit={addMedication} className="rounded-md border-2 border-violet-700 bg-violet-50 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-lg font-semibold text-neutral-900">💊 Thêm thuốc / TPBS vào bữa ăn</h3>
-            <p className="text-sm text-neutral-900">Hiển thị riêng theo bữa, không tính vào dinh dưỡng. Ghi chú liều dùng nên theo đúng cách Nhà thuốc/Dược thư mô tả, người dùng vẫn cần tự đối chiếu với chỉ định của bác sĩ.</p>
-          </div>
-          <button type="button" onClick={() => setShowMedForm(false)} className="px-2 text-sm text-neutral-800">✕</button>
-        </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Tìm thuốc / TPBS đã nhập từ Long Châu
-            <input value={medSearch} onChange={(event) => setMedSearch(event.target.value)} placeholder="Gõ tên hoặc nhóm, ví dụ: đái tháo đường, vitamin D..." className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />
-            <span className="mt-1 block text-xs font-normal text-neutral-700">Tìm trong danh mục dùng chung đã được quản trị viên nhập; không phải tìm kiếm/khuyến cáo điều trị.</span>
-          </label>
-          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Chọn từ toàn bộ danh mục Thuốc / TPBS ({filteredDbMedRefs.length}/{dbMedRefs.length})
-            <select size={Math.min(9, Math.max(4, filteredDbMedRefs.length))} value={medRefId} onChange={(event) => applyMedRef(event.target.value)} className="mt-1 h-56 w-full rounded border border-violet-400 bg-white px-2 py-1.5 font-normal">
-              <option value="">— Tự nhập tên thuốc/TPBS —</option>
-              {filteredDbMedRefs.map((ref) => <option key={ref.id} value={ref.id}>{ref.name}{ref.category ? ` — ${ref.category}` : ""}</option>)}
-            </select>
-            <span className="mt-1 block text-xs font-normal text-neutral-700">Danh sách hiển thị toàn bộ dữ liệu đã nhập; gõ ở ô tìm phía trên để lọc nhanh theo tên hoặc nhóm.</span>
-            {dbMedRefs.length > 0 && filteredDbMedRefs.length === 0 && <span className="mt-1 block text-xs font-semibold text-violet-900">Không thấy thuốc/TPBS phù hợp trong danh mục đã nhập. Có thể tự nhập tên và ghi chú theo đơn.</span>}
-          </label>
-          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Tên thuốc / TPBS
-            <input required value={medName} onChange={(event) => setMedName(event.target.value)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />
-          </label>
-          <label className="text-sm font-semibold text-neutral-950">Vị trí hiển thị trong bữa
-            <select value={medTiming} onChange={(event) => setMedTiming(event.target.value as MedicationTiming)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5">
-              <option value="before">Trước bữa ăn (nằm trên các món)</option>
-              <option value="after">Sau bữa ăn (nằm dưới các món)</option>
-            </select>
-          </label>
-          <label className="text-sm font-semibold text-neutral-950">Gắn vào một bữa
-            <select required value={medMeal} onChange={(event) => setMedMeal(event.target.value)} className="mt-1 w-full rounded border border-violet-400 bg-white px-2 py-1.5">
-              <option value="">— Chọn bữa —</option>
-              {tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}
-            </select>
-          </label>
-          <label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Ghi chú đơn thuốc (liều dùng, cách dùng, lưu ý...)
-            <textarea value={medNote} onChange={(event) => setMedNote(event.target.value)} className="mt-1 min-h-20 w-full rounded border border-violet-400 bg-white px-2 py-1.5" />
-          </label>
-        </div>
-        <button disabled={!medMeal} className="mt-4 rounded-md bg-violet-700 px-4 py-2 font-semibold text-white hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50">Thêm vào vị trí đã chọn trong bữa</button>
-        {!medMeal && <p className="mt-2 text-xs font-semibold text-violet-900">Chọn một bữa để gắn thuốc/TPBS vào đúng vị trí.</p>}
       </form>}
 
       {tree.length === 0 ? (
@@ -574,7 +515,7 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
               onRenameMeal={(name) => renameMeal(meal.meal, name)}
               onDeleteMeal={() => deleteMeal(meal.meal)}
               onAddDish={() => addDish(meal.meal)}
-              onAddMedication={() => openMedicationForm(meal.meal)}
+              onAddMedication={() => activateMedicationSearch(meal.meal)}
               onRenameDish={(oldDish, name) => renameDish(meal.meal, oldDish, name)}
               onDeleteDish={(dish) => deleteDish(meal.meal, dish)}
               onDeleteFoodRow={deleteFoodRow}
@@ -599,10 +540,10 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-3">
         <div className="pointer-events-auto w-full max-w-2xl rounded-2xl border border-neutral-300 bg-white px-3 py-2 shadow-xl">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
-            <span>{work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa."}</span>
+            <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa."}</span>
             <div className="flex items-center gap-2">
               {(foodType || sourceFilter || groupFilter || dishCategory || dishAge || dishDisease || q) && <button type="button" onClick={clearSearchFilters} className="font-semibold text-[#123c36] underline underline-offset-2">Xóa lọc</button>}
-              <button type="button" onClick={() => setFiltersOpen((current) => !current)} className="font-semibold text-[#123c36] underline underline-offset-2">{filtersOpen ? "Ẩn bộ lọc ▲" : "Bộ lọc ▾"}</button>
+              {searchKind !== "medication" && <button type="button" onClick={() => setFiltersOpen((current) => !current)} className="font-semibold text-[#123c36] underline underline-offset-2">{filtersOpen ? "Ẩn bộ lọc ▲" : "Bộ lọc ▾"}</button>}
             </div>
           </div>
           {filtersOpen && <div className="mb-2 rounded-md border border-neutral-200 bg-neutral-50 p-2">
@@ -635,14 +576,31 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
               <label className="text-xs font-medium text-neutral-800">Chế độ bệnh lý<select value={dishDisease} onChange={(event) => setDishDisease(event.target.value)} className="mt-1 w-full rounded-md border border-neutral-300 px-2 py-1.5 text-sm"><option value="">Không giới hạn</option>{dishFilterOptions.diseaseGroups.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
             </div>}
           </div>}
+          {searchKind === "medication" && <div className="mb-2 grid gap-2 rounded-md border border-violet-200 bg-violet-50 p-2 sm:grid-cols-2">
+            <label className="text-xs font-semibold text-violet-950">Đặt theo mốc bữa
+              <select value={medTargetMeal} onChange={(event) => setMedTargetMeal(event.target.value)} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+                <option value="">Chọn bữa…</option>
+                {tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}
+              </select>
+            </label>
+            <label className="text-xs font-semibold text-violet-950">Vị trí trong trình tự ngày
+              <select value={medTiming} onChange={(event) => setMedTiming(event.target.value as MedicationTiming)} className="mt-1 w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-900">
+                <option value="before">Trước bữa (nằm trên món)</option>
+                <option value="after">Sau bữa (nằm dưới món)</option>
+                <option value="standalone">Mốc riêng, không kèm bữa</option>
+              </select>
+            </label>
+            <p className="text-xs text-violet-950 sm:col-span-2">Mốc riêng vẫn được đặt theo thứ tự ngay sau bữa đã chọn, nhưng hiển thị tách biệt để thể hiện thuốc không dùng kèm bữa ăn.</p>
+          </div>}
           <div className="flex items-center gap-1.5">
             <div className="flex shrink-0 gap-1" role="tablist" aria-label="Nguồn thêm vào khẩu phần">
               <button type="button" role="tab" aria-selected={searchKind === "food"} onClick={() => changeSearchKind("food")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "food" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Thực phẩm</button>
               <button type="button" role="tab" aria-selected={searchKind === "dish"} onClick={() => changeSearchKind("dish")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "dish" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Món ăn</button>
+              <button type="button" role="tab" aria-selected={searchKind === "medication"} onClick={() => activateMedicationSearch()} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "medication" ? "bg-violet-700 text-white" : "border border-violet-300 bg-white text-violet-950"}`}>💊 Thuốc / TPBS</button>
             </div>
             <div className="relative min-w-0 flex-1">
-              <label className="sr-only" htmlFor="food-search">{searchKind === "food" ? "Tìm thực phẩm" : "Tìm món ăn"}</label>
-              <input id="food-search" disabled={!hydrated} type="text" value={q} onChange={(event) => updateSearch(event.target.value)} placeholder={searchKind === "food" ? "VD: cá chép, sữa chua; gõ không dấu được" : "VD: bún riêu, cháo thịt; gõ không dấu được"} className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:cursor-wait disabled:bg-neutral-50" />
+              <label className="sr-only" htmlFor="food-search">{searchKind === "food" ? "Tìm thực phẩm" : searchKind === "dish" ? "Tìm món ăn" : "Tìm thuốc hoặc thực phẩm bổ sung"}</label>
+              <input id="food-search" disabled={!hydrated} type="text" value={q} onChange={(event) => updateSearch(event.target.value)} placeholder={searchKind === "food" ? "VD: cá chép, sữa chua; gõ không dấu được" : searchKind === "dish" ? "VD: bún riêu, cháo thịt; gõ không dấu được" : "VD: metformin, vitamin D; gõ không dấu được"} className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:cursor-wait disabled:bg-neutral-50" />
               {searchKind === "food" && q.trim().length >= 1 && (
                 <div className="absolute inset-x-0 bottom-full z-10 mb-1 max-h-72 overflow-auto rounded-md border border-neutral-200 bg-white shadow-lg">
                   {searching && <div className="px-3 py-2 text-sm text-neutral-400">Đang tìm...</div>}
@@ -664,6 +622,15 @@ export default function MealInput({ onRowsChange }: { onRowsChange?: (rows: Row[
                 {searching && <div className="px-3 py-2 text-sm text-neutral-700">Đang tìm...</div>}
                 {!searching && dishResults.length === 0 && <div className="px-3 py-2 text-sm text-neutral-700">Không có món phù hợp.</div>}
                 {dishResults.map((dish) => <button key={dish.id} type="button" onClick={() => pickDish(dish)} className="flex w-full items-start gap-2 border-b border-neutral-200 px-3 py-3 text-left last:border-0 hover:bg-emerald-50">{dish.imageSourceId ? <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt="" className="h-10 w-10 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-10 w-10 shrink-0" />}<div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-neutral-950">{dish.name}</span><span className="text-xs text-neutral-800">{dish.ingredients.length} nguyên liệu {dish.totalWeightG ? `· ${dish.totalWeightG}g` : ""}</span></div><div className="mt-1 flex flex-wrap gap-1 text-xs text-neutral-800">{dish.categoryRaw && <span className="rounded bg-neutral-100 px-1.5 py-0.5">{dish.categoryRaw}</span>}{dish.ageGroup && <span className="rounded bg-sky-50 px-1.5 py-0.5">{dish.ageGroup}</span>}{dish.diseaseDiet && <span className="rounded bg-rose-50 px-1.5 py-0.5">{dish.diseaseDiet}</span>}</div><p className="mt-1 text-xs text-neutral-800">Bấm để thêm các nguyên liệu đã liên kết dữ liệu vào một món mới trong bữa đang chọn.</p></div></button>)}
+              </div>}
+              {searchKind === "medication" && q.trim().length >= 1 && <div className="absolute inset-x-0 bottom-full z-10 mb-1 max-h-80 overflow-auto rounded-md border border-violet-300 bg-white shadow-lg">
+                {filteredDbMedRefs.length === 0 && <div className="px-3 py-3 text-sm text-neutral-700">Không có thuốc / TPBS phù hợp trong danh mục đã nhập.</div>}
+                {filteredDbMedRefs.map((item) => <button key={item.id} type="button" onClick={() => pickMedication(item)} className="flex w-full items-center gap-3 border-b border-violet-100 px-3 py-2.5 text-left last:border-0 hover:bg-violet-50">
+                  {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-11 w-11 shrink-0 rounded-md border border-violet-100 object-contain" loading="lazy" /> : <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-violet-200 bg-violet-50 text-xl" aria-hidden="true">💊</span>}
+                  <span className="min-w-0 flex-1"><span className="block font-semibold text-neutral-950">{item.name}</span>{item.category && <span className="mt-0.5 block text-xs text-violet-900">{item.category}</span>}</span>
+                  <span className="shrink-0 rounded border border-violet-300 px-2 py-1 text-xs font-semibold text-violet-900">Thêm</span>
+                </button>)}
+                {filteredDbMedRefs.length === 20 && <p className="border-t border-violet-100 px-3 py-2 text-xs text-violet-900">Đang hiện 20 kết quả đầu. Gõ thêm tên hoặc nhóm để thu hẹp.</p>}
               </div>}
             </div>
           </div>
@@ -703,6 +670,7 @@ function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, 
 }) {
   const beforeMeal = medications.filter((med) => med.timing === "before");
   const afterMeal = medications.filter((med) => med.timing === "after");
+  const standalone = medications.filter((med) => med.timing === "standalone");
   const unspecified = medications.filter((med) => med.timing === "unspecified");
   return <section className="overflow-hidden rounded-lg border-2 border-[#52786d] bg-white shadow-sm">
     <div className="grid grid-cols-[88px_minmax(0,1fr)_auto] items-center gap-3 bg-[#0c5f4d] px-3 py-2.5 text-white">
@@ -713,14 +681,15 @@ function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, 
     <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={beforeMeal} onDelete={onDeleteMedication} />
     {node.dishes.length === 0 ? <div className="px-4 py-4 text-sm text-neutral-900">Chưa có món. Bấm “＋ Món” để bắt đầu nhập.</div> : <div className="divide-y-2 divide-[#8ba39b]">{node.dishes.map((dish) => <DishBlock key={dish.dish} node={dish} mode={mode} isWork={work?.meal === node.meal && work.dish === dish.dish} onSelect={() => onSelectDish(dish.dish)} onRename={(name) => onRenameDish(dish.dish, name)} onDelete={() => onDeleteDish(dish.dish)} onDeleteFoodRow={onDeleteFoodRow} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</div>}
     <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={afterMeal} onDelete={onDeleteMedication} />
+    <MedicationInMeal title="💊 Mốc thuốc / TPBS riêng — không kèm bữa" medications={standalone} onDelete={onDeleteMedication} standalone />
     <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={unspecified} onDelete={onDeleteMedication} warning />
   </section>;
 }
 
-function MedicationInMeal({ title, medications, onDelete, warning = false }: { title: string; medications: MedicationRow[]; onDelete: (uid: string) => void; warning?: boolean }) {
+function MedicationInMeal({ title, medications, onDelete, warning = false, standalone = false }: { title: string; medications: MedicationRow[]; onDelete: (uid: string) => void; warning?: boolean; standalone?: boolean }) {
   if (!medications.length) return null;
-  return <div className={`divide-y border-y-2 ${warning ? "border-amber-300 divide-amber-200 bg-amber-50" : "border-violet-300 divide-violet-200 bg-violet-50"}`}>
-    <div className={`px-3 py-2 text-xs font-bold tracking-wide ${warning ? "text-amber-900" : "text-violet-900"}`}>{title}</div>
+  return <div className={`divide-y border-y-2 ${warning ? "border-amber-300 divide-amber-200 bg-amber-50" : standalone ? "border-violet-500 divide-violet-200 bg-white" : "border-violet-300 divide-violet-200 bg-violet-50"}`}>
+    <div className={`px-3 py-2 text-xs font-bold tracking-wide ${warning ? "text-amber-900" : "text-violet-900"}`}>{title}{standalone && <span className="ml-2 font-normal">(đặt sau mốc bữa này trong trình tự ngày)</span>}</div>
     {medications.map((med) => <div key={med.uid} className="flex flex-wrap items-start gap-2 px-3 py-2.5">
       <div className="min-w-0 flex-1"><p className="font-semibold text-violet-950">{med.name}</p>{med.note && <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-900">{med.note}</p>}</div>
       <button onClick={() => onDelete(med.uid)} className="shrink-0 rounded px-2 py-1 text-violet-800 hover:bg-violet-100" title="Xóa thuốc">✕</button>

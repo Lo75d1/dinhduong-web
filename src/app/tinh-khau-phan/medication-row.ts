@@ -2,7 +2,7 @@
 // Chúng không phải thực phẩm và hoàn toàn không tham gia phép tính dinh dưỡng.
 import { genId } from "./types";
 
-export type MedicationTiming = "before" | "after" | "unspecified";
+export type MedicationTiming = "before" | "after" | "standalone" | "unspecified";
 
 export type MedicationRow = {
   uid: string;
@@ -22,6 +22,7 @@ const LS_KEY = "khauphan_meds_v1";
 export function medicationTimingLabel(timing: MedicationTiming) {
   if (timing === "before") return "Dùng trước bữa";
   if (timing === "after") return "Dùng sau bữa";
+  if (timing === "standalone") return "Mốc riêng, không kèm bữa";
   return "Cần xác định vị trí";
 }
 
@@ -39,7 +40,7 @@ export function loadMedicationRows(): MedicationRow[] {
       const meals = Array.isArray(item.meals)
         ? item.meals.filter((meal): meal is string => typeof meal === "string" && meal.trim().length > 0)
         : typeof item.meal === "string" && item.meal.trim() ? [item.meal] : [];
-      const timing: MedicationTiming = item.timing === "before" || item.timing === "after" || item.timing === "unspecified" ? item.timing : "unspecified";
+      const timing: MedicationTiming = item.timing === "before" || item.timing === "after" || item.timing === "standalone" || item.timing === "unspecified" ? item.timing : "unspecified";
       return meals.map((meal, index) => ({
         uid: index === 0 && typeof item.uid === "string" && item.uid ? item.uid : genId(),
         meal,
