@@ -22,6 +22,7 @@ export default function MedicationImport() {
   const [items, setItems] = useState<MedicationRefItem[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [listQuery, setListQuery] = useState("");
+  const [visibleListCount, setVisibleListCount] = useState(50);
   const [categoryUrl, setCategoryUrl] = useState("");
   const [scanningCategory, setScanningCategory] = useState(false);
   const [categoryMessage, setCategoryMessage] = useState("");
@@ -142,6 +143,7 @@ export default function MedicationImport() {
     if (!normalizedListQuery) return true;
     return `${item.name} ${item.category ?? ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().includes(normalizedListQuery);
   });
+  const visibleItems = filteredItems.slice(0, visibleListCount);
 
   return (
     <section className="rounded-xl border-2 border-violet-700 bg-violet-50 p-5">
@@ -219,7 +221,7 @@ export default function MedicationImport() {
       </div>
       {loadingList ? <p className="mt-1 text-sm text-neutral-700">Đang tải...</p> : items.length === 0 ? <p className="mt-1 text-sm text-neutral-700">Chưa có thuốc nào.</p> : (
         <div className="mt-2 divide-y divide-violet-200 rounded-lg border border-violet-300 bg-white">
-          {filteredItems.map((item) => (
+          {visibleItems.map((item) => (
             <div key={item.id} className="flex items-center gap-3 px-3 py-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded border border-violet-200 object-contain" /> : <span className="h-10 w-10 shrink-0" />}
@@ -234,6 +236,10 @@ export default function MedicationImport() {
           {filteredItems.length === 0 && <p className="px-3 py-4 text-sm text-neutral-700">Không có thuốc/TPBS khớp từ kho đã nhập.</p>}
         </div>
       )}
+      {filteredItems.length > 0 && <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-violet-300 bg-white px-3 py-2 text-xs text-violet-950">
+        <span>Đang hiển thị <b>{visibleItems.length}</b> / <b>{filteredItems.length}</b> thuốc / TPBS.</span>
+        {filteredItems.length > visibleItems.length && <button type="button" onClick={() => setVisibleListCount((count) => Math.min(count + 50, filteredItems.length))} className="rounded-md border border-violet-700 px-3 py-1.5 font-bold hover:bg-violet-50">Hiển thị thêm 50</button>}
+      </div>}
     </section>
   );
 }

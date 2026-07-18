@@ -9,10 +9,10 @@ import MedicationImport from "./MedicationImport";
 type TabId = "edit" | "classify" | "images" | "medications";
 
 const tabs: Array<{ id: TabId; label: string; description: string }> = [
-  { id: "edit", label: "Biên tập chi tiết", description: "Thực phẩm và món ăn" },
+  { id: "edit", label: "Biên tập chi tiết", description: "Dinh dưỡng VDD + RNI" },
   { id: "classify", label: "Phân loại hàng loạt", description: "Gán nhóm và chỉ số" },
-  { id: "images", label: "Ảnh tham chiếu", description: "Đối chiếu VDD và RNI" },
-  { id: "medications", label: "Thuốc & TPBS", description: "Danh mục tham khảo" },
+  { id: "images", label: "Ảnh tham chiếu", description: "Đối chiếu VDD + RNI" },
+  { id: "medications", label: "Thuốc & TPBS", description: "Long Châu dùng chung" },
 ];
 
 export default function DataWorkspace() {
@@ -49,6 +49,11 @@ export default function DataWorkspace() {
             );
           })}
         </nav>
+        <div className="grid border-t border-[#d7e3de] bg-[#f7fbf9] text-xs sm:grid-cols-3">
+          <div className="border-b border-r border-[#d7e3de] px-4 py-3"><b className="text-[#123c36]">VDD</b><span className="ml-1 text-[#55736a]">thực phẩm và món ăn có số liệu dinh dưỡng</span></div>
+          <div className="border-b border-r border-[#d7e3de] px-4 py-3"><b className="text-[#123c36]">RNI</b><span className="ml-1 text-[#55736a]">công thức, nguyên liệu và ảnh tham chiếu</span></div>
+          <div className="border-b border-[#d7e3de] px-4 py-3"><b className="text-violet-800">Long Châu</b><span className="ml-1 text-[#55736a]">thuốc / TPBS tham khảo để đưa vào mốc dùng thuốc</span></div>
+        </div>
       </section>
 
       {tab === "edit" && <DataManager />}

@@ -31,6 +31,7 @@ export default function BulkClassifyEditor() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<Partial<Record<keyof FoodRow, string>>>({});
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [visibleCount, setVisibleCount] = useState(300);
 
   const [field, setField] = useState<FieldKey>("foodGroup");
   const [value, setValue] = useState("");
@@ -72,7 +73,7 @@ export default function BulkClassifyEditor() {
     });
   }, [items, search, filters]);
 
-  const visible = filtered.slice(0, 300);
+  const visible = filtered.slice(0, visibleCount);
   const allVisibleSelected = filtered.length > 0 && filtered.every((item) => selected.has(item.id));
 
   function toggleOne(id: string, checked: boolean) {
@@ -146,9 +147,12 @@ export default function BulkClassifyEditor() {
           <td className="p-2">{item.cholesterolLevel ?? "—"}</td>
         </tr>)}</tbody>
       </table>
-      {filtered.length > visible.length && <p className="p-2 text-xs text-neutral-600">Hiển thị {visible.length}/{filtered.length} dòng (đã lọc) — chọn tất cả vẫn áp dụng cho toàn bộ {filtered.length} dòng.</p>}
       {!filtered.length && !loading && <p className="p-3 text-sm">Không có dòng nào khớp bộ lọc.</p>}
     </div>
+    {filtered.length > 0 && <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-[#c8d7d1] bg-[#f6faf8] px-3 py-2 text-xs text-[#36574e]">
+      <span>Đang hiển thị <b>{visible.length}</b> / <b>{filtered.length}</b> dòng đã lọc. “Chọn tất cả” vẫn áp dụng cho toàn bộ kết quả.</span>
+      {filtered.length > visible.length && <button type="button" onClick={() => setVisibleCount((count) => Math.min(count + 300, filtered.length))} className="rounded-md border border-[#0f5a4e] bg-white px-3 py-1.5 text-xs font-bold text-[#0f5a4e] hover:bg-[#eaf5ef]">Hiển thị thêm 300 dòng</button>}
+    </div>}
 
     {selected.size > 0 && <div className="mt-4 rounded-xl border-2 border-[#73540d] bg-[#fffdf6] p-4">
       <h3 className="font-semibold">Sửa hàng loạt cho {selected.size} dòng đã chọn</h3>
