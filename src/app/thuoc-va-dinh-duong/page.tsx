@@ -10,9 +10,8 @@ export default function MedicationNutritionPage() {
         <p className="text-xs font-semibold tracking-[0.16em] text-[#123c36]">DEMO — CHƯA PHÁT HÀNH CHÍNH THỨC</p>
         <h1 className="mt-1 text-3xl font-semibold">Tham khảo thuốc &amp; lưu ý dinh dưỡng</h1>
         <p className="mt-2 max-w-4xl text-neutral-900">
-          Hỗ trợ bác sĩ/dinh dưỡng viên lập thực đơn cho bệnh nhân đang dùng thuốc/thực phẩm bảo vệ sức khoẻ.
-          Dữ liệu chọn lọc thủ công từ trang chi tiết công khai của Nhà thuốc Long Châu — <b>chỉ tham khảo</b>,
-          không thay thế Dược thư Quốc gia Việt Nam hay chỉ định của bác sĩ điều trị.
+          Hỗ trợ lập thực đơn cho bệnh nhân đang dùng thuốc/TPBVSK — <b>chỉ tham khảo</b>, không thay thế Dược thư
+          Quốc gia hay chỉ định của bác sĩ điều trị.
         </p>
       </section>
 
@@ -65,13 +64,7 @@ export default function MedicationNutritionPage() {
       </div>
 
       <section className="rounded-lg border-2 border-dashed border-[#7f948d] bg-[#f7faf8] p-5 text-sm text-neutral-900">
-        <p className="font-semibold text-neutral-950">Đây là bản demo 2 thuốc mẫu để duyệt trước khi làm tiếp.</p>
-        <p className="mt-1">
-          Nếu ổn, bước tiếp theo: bạn gửi danh sách thuốc/TPBS ưu tiên (theo nhóm bệnh hay gặp nhất ở Long Châu),
-          mình bổ sung thêm từng thuốc theo đúng khuôn này, rồi mới tính chuyện đưa vào cơ sở dữ liệu chính thức
-          và liên kết trực tiếp với mã chế độ ăn (<code>diet_codes</code>) đang có trong hệ thống.
-        </p>
-        <Link href="/tinh-khau-phan" className="mt-3 inline-block rounded-md border-2 border-[#123c36] px-4 py-2 font-semibold text-[#123c36] hover:bg-white">
+        <Link href="/tinh-khau-phan" className="inline-block rounded-md border-2 border-[#123c36] px-4 py-2 font-semibold text-[#123c36] hover:bg-white">
           ← Về phiếu tính khẩu phần
         </Link>
       </section>
