@@ -34,7 +34,7 @@ export default function AiRationInput({ onConfirm }: { onConfirm: (items: AiRati
       onConfirm(result);
       setLastResult(result);
       const unmatched = result.filter((item) => !item.food).length;
-      setMessage(`Đã thêm ${result.length} dòng vào khẩu phần ở bảng bên dưới.${unmatched ? ` ${unmatched} dòng chưa khớp thực phẩm (chưa tính dinh dưỡng) — xoá dòng đó rồi tìm/thêm lại đúng thực phẩm.` : ""}`);
+      setMessage(`Đã thêm ${result.length} dòng.${unmatched ? ` ${unmatched} dòng chưa khớp — xoá rồi thêm lại đúng thực phẩm.` : ""}`);
       setText("");
     } catch { setMessage("Không thể gọi AI. Vui lòng thử lại."); } finally { setBusy(false); }
   }
@@ -43,22 +43,21 @@ export default function AiRationInput({ onConfirm }: { onConfirm: (items: AiRati
     <div className="border-b-2 border-[#a77b10] pb-3">
       <p className="text-xs font-semibold tracking-[0.14em] text-[#694d00]">AI HỖ TRỢ NHẬP LIỆU</p>
       <h2 className="mt-1 text-xl font-semibold">Dán mô tả khẩu phần</h2>
-      <p className="mt-1 text-sm text-neutral-900">Hệ thống dùng Gemini chung do quản trị viên cấu hình; người dùng không cần API key. AI chỉ bóc tách rồi thêm thẳng vào bảng khẩu phần bên dưới; không tự sửa dữ liệu gốc hoặc chẩn đoán.</p>
+      <p className="mt-1 text-sm text-neutral-900">AI bóc tách mô tả thành các dòng khẩu phần ở bảng dưới; không chẩn đoán.</p>
     </div>
     <div className="mt-3 flex flex-wrap gap-2">{samples.map((sample) => <button key={sample.title} type="button" onClick={() => setText(sample.text)} className="rounded border border-[#73540d] bg-white px-3 py-1.5 text-sm font-semibold text-[#694d00]">Dùng mẫu: {sample.title}</button>)}</div>
-    <p className="mt-3 rounded-md border-l-4 border-[#a77b10] bg-[#fff9e8] p-3 text-sm text-neutral-950"><b>Để khớp tốt:</b> ghi tên món/thực phẩm và lượng g/ml. Chỉ ghi nguyên liệu trong ngoặc khi bạn biết rõ; nếu không, cứ ghi tên món để hệ thống ưu tiên khớp món ăn có sẵn. Không nhập thông tin định danh bệnh nhân.</p>
+    <p className="mt-3 rounded-md border-l-4 border-[#a77b10] bg-[#fff9e8] p-3 text-sm text-neutral-950"><b>Mẹo:</b> ghi tên món/thực phẩm kèm lượng (g/ml). Không nhập thông tin định danh người bệnh.</p>
     <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder={"Ví dụ: Sáng: phở bò 350 g.\nTrưa: cơm chín 200 g, cá chép kho 80 g."} className="mt-3 min-h-32 w-full rounded-md border-2 border-[#8fa99e] px-3 py-2 text-sm" />
-    <label className="mt-3 flex items-start gap-2 rounded-md border border-amber-700 bg-amber-50 p-3 text-sm text-neutral-950"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-1" /><span>Tôi hiểu mô tả khẩu phần sẽ được gửi đến Gemini để bóc tách và không nhập tên, số điện thoại, địa chỉ, mã bệnh án hay thông tin định danh người bệnh.</span></label>
-    <button type="button" onClick={() => setShowOwnKey((current) => !current)} className="mt-2 text-xs font-semibold text-[#694d00] underline underline-offset-2">{showOwnKey ? "Ẩn tuỳ chọn dùng API key riêng ▲" : "Có API key Gemini riêng? Dùng để đỡ tốn hạn mức chung ▾"}</button>
+    <label className="mt-3 flex items-start gap-2 rounded-md border border-amber-700 bg-amber-50 p-3 text-sm text-neutral-950"><input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} className="mt-1" /><span>Tôi đồng ý gửi mô tả tới Gemini để bóc tách; không nhập thông tin định danh người bệnh.</span></label>
+    <button type="button" onClick={() => setShowOwnKey((current) => !current)} className="mt-2 text-xs font-semibold text-[#694d00] underline underline-offset-2">{showOwnKey ? "Ẩn ▲" : "Dùng API key Gemini riêng ▾"}</button>
     {showOwnKey && <div className="mt-2 rounded-md border border-[#a77b10] bg-white p-3">
       <label className="text-sm font-semibold text-neutral-950">API key Gemini của bạn (tuỳ chọn)
         <input type="password" autoComplete="off" value={userApiKey} onChange={(event) => setUserApiKey(event.target.value)} placeholder="AIza…" className="mt-1 w-full max-w-sm rounded border border-neutral-400 px-2 py-1.5 text-sm" />
       </label>
-      <p className="mt-1 text-xs text-neutral-700">Nếu bạn tự có API key Gemini (miễn phí tại aistudio.google.com), dán vào đây để lần bóc tách này dùng hạn mức của riêng bạn thay vì hạn mức chung của hệ thống. Key chỉ dùng cho lần gọi này, không lưu lại trên trình duyệt hay máy chủ. Để trống nếu không có — hệ thống sẽ dùng key chung.</p>
+      <p className="mt-1 text-xs text-neutral-700">Key chỉ dùng cho lần này, không lưu lại. Để trống sẽ dùng key chung.</p>
     </div>}
     <div className="mt-3 flex flex-wrap items-center gap-3">
-      <button type="button" onClick={parse} disabled={busy || !consent || text.trim().length < 8} className="rounded-md bg-[#73540d] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{busy ? "AI đang bóc tách..." : "Bóc tách bằng AI và thêm vào khẩu phần"}</button>
-      <p className="text-xs text-neutral-900">Chỉ người quản trị cấu hình Gemini một lần trên máy chủ; key không hiển thị hay lưu trên trình duyệt.</p>
+      <button type="button" onClick={parse} disabled={busy || !consent || text.trim().length < 8} className="rounded-md bg-[#73540d] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">{busy ? "Đang bóc tách..." : "Bóc tách bằng AI"}</button>
     </div>
     {message && <p className="mt-3 text-sm font-semibold text-neutral-950">{message}</p>}
     {lastResult.length > 0 && <div className="mt-4 overflow-x-auto border-2 border-[#a77b10]">
@@ -67,7 +66,7 @@ export default function AiRationInput({ onConfirm }: { onConfirm: (items: AiRati
         <tbody>{lastResult.map((item, index) => <tr key={`${item.foodName}-${index}`} className={item.food ? "bg-white" : "bg-[#fff0f0]"}>
           <td className="px-3 py-2">{item.meal || "(chưa rõ bữa)"}<br /><span className="text-xs">{item.dishName || "(thực phẩm trực tiếp)"}</span></td>
           <td className="px-3 py-2 font-semibold">{item.foodName}</td>
-          <td className="px-3 py-2">{item.food ? <><b>{item.food.name}</b><br /><span className="text-xs font-semibold text-[#123c36]">{item.matchType === "exact" ? "Khớp chính xác" : "Gợi ý, đã thêm — kiểm tra lại"} · {item.food.source}</span></> : <span className="font-semibold text-[#8a2323]">Chưa khớp — đã thêm với tên gốc, chưa tính dinh dưỡng</span>}</td>
+          <td className="px-3 py-2">{item.food ? <><b>{item.food.name}</b><br /><span className="text-xs font-semibold text-[#123c36]">{item.matchType === "exact" ? "Khớp chính xác" : "Gợi ý, đã thêm — kiểm tra lại"} · {item.food.source}</span></> : <span className="font-semibold text-[#8a2323]">Chưa khớp — chưa tính dinh dưỡng</span>}</td>
           <td className="px-3 py-2 text-right">{item.edibleGrams ? `${item.edibleGrams} g` : "Chưa rõ"}</td>
         </tr>)}</tbody>
       </table>
