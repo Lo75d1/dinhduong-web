@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import PriceEditor from "./PriceEditor";
 
 type Food = Record<string, string | number | null> & {
   id: string;
@@ -61,8 +62,9 @@ export default function DataManager() {
   };
 
   useEffect(() => {
-    void load();
     // Chỉ tải lần đầu; thao tác tìm kiếm dùng nút Tìm để tránh gọi API liên tục.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -183,7 +185,7 @@ export default function DataManager() {
           </div>
         </section>
 
-        {chosen ? <form onSubmit={save} className="rounded-2xl border-2 border-[#123c36] bg-white p-5 shadow-[0_8px_20px_rgba(18,60,54,.04)] sm:p-6">
+        {chosen ? <div className="space-y-5"><form onSubmit={save} className="rounded-2xl border-2 border-[#123c36] bg-white p-5 shadow-[0_8px_20px_rgba(18,60,54,.04)] sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#c8d7d1] pb-4">
             <div><p className="text-xs font-bold tracking-[.16em] text-[#0f5a4e]">BẢN GHI ĐANG CHỈNH</p><h3 className="mt-1 text-xl font-semibold text-[#122f2a]">Chỉnh sửa có kiểm soát</h3></div>
             <div className="rounded-lg border border-[#bed2c9] bg-[#f5faf7] px-3 py-2 text-xs text-[#35554c]">Mã nguồn: <b>{chosen.sourceCode || "—"}</b></div>
@@ -221,7 +223,7 @@ export default function DataManager() {
               {!logs.length && <p className="rounded-lg bg-[#f4f8f6] px-3 py-3 text-sm text-[#5a7169]">Chưa có lần thay đổi nào cho bản ghi này.</p>}
             </div>
           </section>
-        </form> : <section className="flex min-h-80 items-center justify-center rounded-2xl border-2 border-dashed border-[#8fa99e] bg-[#f8fbf9] p-8 text-center shadow-[0_8px_20px_rgba(18,60,54,.03)]"><div><p className="font-semibold text-[#23473f]">Chưa chọn bản ghi</p><p className="mt-1 max-w-sm text-sm leading-6 text-[#617871]">Chọn một thực phẩm hoặc món ăn trong danh sách để mở biểu mẫu chỉnh sửa ở đây.</p></div></section>}
+        </form><PriceEditor key={chosen.id} foodId={chosen.id} /></div> : <section className="flex min-h-80 items-center justify-center rounded-2xl border-2 border-dashed border-[#8fa99e] bg-[#f8fbf9] p-8 text-center shadow-[0_8px_20px_rgba(18,60,54,.03)]"><div><p className="font-semibold text-[#23473f]">Chưa chọn bản ghi</p><p className="mt-1 max-w-sm text-sm leading-6 text-[#617871]">Chọn một thực phẩm hoặc món ăn trong danh sách để mở biểu mẫu chỉnh sửa ở đây.</p></div></section>}
       </div>
     </div>
   );

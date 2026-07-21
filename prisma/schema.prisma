@@ -219,6 +219,7 @@ model Food {
 
   dishIngredients DishIngredient[]
   aliases         FoodAlias[]
+  prices          FoodPrice[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -228,6 +229,33 @@ model Food {
   @@index([source])
   @@index([foodGroup])
   @@map("foods")
+}
+
+// Giá tham khảo của thực phẩm — CHỈ MANG TÍNH THAM KHẢO, không phải số liệu chính
+// thống như dinh dưỡng. Giá biến động theo thời điểm/vùng và không có nguồn quốc
+// gia; vì vậy mỗi dòng LUÔN kèm nguồn (chuỗi bán lẻ), vùng miền và ngày cập nhật.
+// Một Food có thể có nhiều giá (theo vùng, theo nguồn). Không suy diễn giá thiếu.
+model FoodPrice {
+  id String @id @default(cuid())
+
+  food   Food   @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  foodId String
+
+  region    String? // "Bắc" | "Trung" | "Nam" | null (toàn quốc / không rõ)
+  amountVnd Float // Giá (VND) theo đơn vị `basis`
+  basis     String // "per_kg" | "per_100g" | "per_piece" | "per_pack"
+  packG     Float? // Khối lượng 1 đơn vị mua (g) khi basis = per_piece/per_pack
+  source    String? // Tên chuỗi bán lẻ / nguồn tham khảo
+  sourceUrl String? @db.Text
+  note      String? // Ghi chú thêm (mặc định coi là "chỉ tham khảo")
+  asOfDate  DateTime? // Thời điểm giá có hiệu lực / được ghi nhận
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([foodId])
+  @@index([foodId, region])
+  @@map("food_prices")
 }
 
 // Tên gọi khác/tên địa phương (vd "cà chua" ~ "cà tô mát" Nam bộ) — LUÔN là gợi ý
@@ -606,6 +634,31 @@ model ContactMessage {
 
   @@index([status, createdAt])
   @@map("contact_messages")
+}
+
+// Phiếu khảo sát mức độ khả dụng (System Usability Scale) cho nghiên cứu đánh giá
+// hiệu quả website. Ẩn danh: chỉ lưu vai trò + tần suất dùng + 10 câu (1-5) +
+// điểm SUS (tính ở server) + góp ý. KHÔNG lưu thông tin định danh người bệnh.
+model SusResponse {
+  id       String  @id @default(cuid())
+  role     String? // Bác sĩ / Dinh dưỡng viên / Điều dưỡng / ...
+  useFreq  String? // "1-2" | "3-5" | ">5"
+  q1       Int
+  q2       Int
+  q3       Int
+  q4       Int
+  q5       Int
+  q6       Int
+  q7       Int
+  q8       Int
+  q9       Int
+  q10      Int
+  susScore Float // 0-100, tính ở server từ q1..q10
+  comment  String? @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("sus_responses")
 }
 
 // Thống kê tối thiểu, ẩn danh: không lưu IP, user-agent, cookie hay thông tin bệnh nhân.
