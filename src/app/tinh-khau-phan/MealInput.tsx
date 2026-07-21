@@ -162,6 +162,7 @@ export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (q.trim().length < 1 || searchKind === "medication") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (searchKind === "medication") setSearching(false);
       return;
     }
@@ -655,7 +656,7 @@ export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange
                   <span className="min-w-0 flex-1"><span className="block font-semibold text-neutral-950">{item.name}</span>{item.category && <span className="mt-0.5 block text-xs text-violet-900">{item.category}</span>}</span>
                   <span className="shrink-0 rounded border border-violet-300 px-2 py-1 text-xs font-semibold text-violet-900">Thêm</span>
                 </button>)}
-                {filteredDbMedRefs.length === 20 && <p className="border-t border-violet-100 px-3 py-2 text-xs text-violet-900">Đang hiện 20 kết quả đầu. Gõ thêm tên hoặc nhóm để thu hẹp.</p>}
+                {filteredDbMedRefs.length === 20 && <p className="border-t border-violet-100 px-3 py-2 text-xs text-violet-900">20 kết quả đầu — gõ thêm để thu hẹp.</p>}
               </div>}
             </div>
           </div>
@@ -674,11 +675,11 @@ function ModeSelector({ mode, disabled, onChange }: { mode: RationMode; disabled
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <button disabled={disabled} onClick={() => onChange("recall24h")} aria-pressed={isRecall} className={`rounded-md border p-3 text-left text-sm disabled:cursor-wait disabled:opacity-60 ${isRecall ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-neutral-200 hover:border-emerald-300"}`}>
           <span className="block font-semibold">Khẩu phần 24 giờ</span>
-          <span className="mt-1 block text-xs text-neutral-700">Nhập lượng thực tế đã ăn và hệ số đổi về sống sạch. Dinh dưỡng VDD/RNI tính trên 100 g sống sạch.</span>
+          <span className="mt-1 block text-xs text-neutral-700">Nhập lượng đã ăn + hệ số đổi về sống sạch.</span>
         </button>
         <button disabled={disabled} onClick={() => onChange("menu")} aria-pressed={!isRecall} className={`rounded-md border p-3 text-left text-sm disabled:cursor-wait disabled:opacity-60 ${!isRecall ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-neutral-200 hover:border-emerald-300"}`}>
           <span className="block font-semibold">Lập thực đơn</span>
-          <span className="mt-1 block text-xs text-neutral-700">Nhập trực tiếp lượng sống sạch để lập thực đơn. Phần mua/xuất kho được cộng thải bỏ ở bảng riêng.</span>
+          <span className="mt-1 block text-xs text-neutral-700">Nhập trực tiếp lượng sống sạch.</span>
         </button>
       </div>
     </div>
