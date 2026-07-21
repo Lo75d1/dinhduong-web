@@ -651,7 +651,7 @@ export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange
               </div>}
               {searchKind === "medication" && q.trim().length >= 1 && <div className="absolute inset-x-0 bottom-full z-10 mb-1 max-h-80 overflow-auto rounded-md border border-violet-300 bg-white shadow-lg">
                 {filteredDbMedRefs.length === 0 && <div className="px-3 py-3 text-sm text-neutral-700">Không có thuốc / TPBS phù hợp trong danh mục đã nhập.</div>}
-                {filteredDbMedRefs.map((item) => <button key={item.id} type="button" onClick={() => pickMedication(item)} className="flex w-full items-center gap-3 border-b border-violet-100 px-3 py-2.5 text-left last:border-0 hover:bg-violet-50">
+                {filteredDbMedRefs.map((item) => <button key={item.id} type="button" onClick={() => pickMedication(item)} className="flex w-full items-center gap-3 border-b border-violet-100 px-3 py-1.5 text-left last:border-0 hover:bg-violet-50">
                   {item.imageUrl ? <img src={item.imageUrl} alt="" className="h-11 w-11 shrink-0 rounded-md border border-violet-100 object-contain" loading="lazy" /> : <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-violet-200 bg-violet-50 text-xl" aria-hidden="true">💊</span>}
                   <span className="min-w-0 flex-1"><span className="block font-semibold text-neutral-950">{item.name}</span>{item.category && <span className="mt-0.5 block text-xs text-violet-900">{item.category}</span>}</span>
                   <span className="shrink-0 rounded border border-violet-300 px-2 py-1 text-xs font-semibold text-violet-900">Thêm</span>
@@ -699,7 +699,7 @@ function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, 
   const standalone = medications.filter((med) => med.timing === "standalone");
   const unspecified = medications.filter((med) => med.timing === "unspecified");
   return <section className="overflow-hidden rounded-lg border-2 border-[#52786d] bg-white shadow-sm">
-    <div className="grid grid-cols-[88px_minmax(0,1fr)_auto] items-center gap-3 bg-[#0c5f4d] px-3 py-2.5 text-white">
+    <div className="grid grid-cols-[88px_minmax(0,1fr)_auto] items-center gap-3 bg-[#0c5f4d] px-3 py-1.5 text-white">
       <span className="text-xs font-semibold tracking-[0.12em] text-[#d5ebaf]">BỮA ĂN</span>
       <EditableTitle value={node.meal} onCommit={onRenameMeal} className="min-w-0 rounded border border-white/30 bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#d5ebaf]" />
       <div className="flex shrink-0 items-center gap-2"><button onClick={onAddMedication} className="rounded-md border border-violet-200 bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">💊 Thuốc</button><button onClick={onAddDish} className="rounded-md border border-[#d5ebaf] bg-[#15745e] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a846c]">＋ Món</button><button onClick={onDeleteMeal} className="rounded-md px-2 py-1.5 text-sm text-white hover:bg-[#0a4c3d]" title="Xóa bữa">✕</button></div>
@@ -716,7 +716,7 @@ function MedicationInMeal({ title, medications, onUpdate, onDelete, warning = fa
   if (!medications.length) return null;
   return <div className={`divide-y border-y-2 ${warning ? "border-amber-300 divide-amber-200 bg-amber-50" : standalone ? "border-violet-500 divide-violet-200 bg-white" : "border-violet-300 divide-violet-200 bg-violet-50"}`}>
     <div className={`px-3 py-2 text-xs font-bold tracking-wide ${warning ? "text-amber-900" : "text-violet-900"}`}>{title}{standalone && <span className="ml-2 font-normal">(đặt sau mốc bữa này trong trình tự ngày)</span>}</div>
-    {medications.map((med) => <div key={med.uid} className="grid gap-2 px-3 py-2.5 sm:grid-cols-[minmax(220px,1fr)_100px_110px_minmax(220px,1fr)_auto] sm:items-center">
+    {medications.map((med) => <div key={med.uid} className="grid gap-2 px-3 py-1.5 sm:grid-cols-[minmax(220px,1fr)_100px_110px_minmax(220px,1fr)_auto] sm:items-center">
       <p className="font-semibold text-violet-950">{med.name}</p>
       <label className="text-xs font-semibold text-violet-950"><span className="sm:sr-only">Liều lượng</span><input value={med.dose} onChange={(event) => onUpdate(med.uid, { dose: event.target.value })} placeholder="Liều" aria-label={`Liều lượng ${med.name}`} className="w-full rounded border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-950" /></label>
       <label className="text-xs font-semibold text-violet-950"><span className="sm:sr-only">Đơn vị</span><input value={med.doseUnit} onChange={(event) => onUpdate(med.uid, { doseUnit: event.target.value })} placeholder="Đơn vị" aria-label={`Đơn vị liều ${med.name}`} className="w-full rounded border border-violet-300 bg-white px-2 py-1.5 text-sm text-neutral-950" /></label>
@@ -735,30 +735,30 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
       <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 rounded border border-[#8ba39b] bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
       <button onClick={onDelete} className="rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>
     </div>
-    {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía trên.</div> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] table-fixed border-collapse text-sm"><colgroup><col className="w-[42%]"/><col className="w-[15%]"/><col className="w-[11%]"/><col className="w-[13%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-3 py-2.5 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-2 py-2.5 text-right font-semibold">Đã ăn</th><th className="px-2 py-2.5 text-right font-semibold">Hệ số về sống sạch</th><th className="px-2 py-2.5 text-right font-semibold">Sống sạch</th></> : <><th className="px-2 py-2.5 text-right font-semibold">Sống sạch</th><th className="px-2 py-2.5 text-right font-semibold">Mua / xuất kho</th><th className="px-2 py-2.5 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-2.5 font-semibold">Ghi chú</th><th className="px-2 py-2.5" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div>}
+    {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía trên.</div> : <div className="overflow-x-auto"><table className="w-full min-w-[920px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]"><colgroup><col className="w-[42%]"/><col className="w-[15%]"/><col className="w-[11%]"/><col className="w-[13%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-3 py-1.5 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-2 py-1.5 text-right font-semibold">Đã ăn</th><th className="px-2 py-1.5 text-right font-semibold">Hệ số về sống sạch</th><th className="px-2 py-1.5 text-right font-semibold">Sống sạch</th></> : <><th className="px-2 py-1.5 text-right font-semibold">Sống sạch</th><th className="px-2 py-1.5 text-right font-semibold">Mua / xuất kho</th><th className="px-2 py-1.5 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-1.5 font-semibold">Ghi chú</th><th className="px-2 py-1.5" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div>}
   </div>;
 }
 
 function FoodRow({ row, mode, onDelete, onUpdateQuantity, onUpdateNote }: { row: Row; mode: RationMode; onDelete: () => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void }) {
   const basis = basisForMode(mode);
   const quantity = calculateQuantity({ grams: row.inputGrams, basis: row.inputBasis, conversionFactor: row.conversionFactor, wastePercent: row.wastePercent });
-  const inputClass = "w-full rounded border border-[#8ba39b] bg-white px-2 py-1.5 text-right tabular-nums";
+  const inputClass = "w-full rounded border border-[#8ba39b] bg-white px-2 py-1 text-right tabular-nums";
   const value = row.inputBasis === basis ? row.inputGrams : row.grams;
   const wasteLabel = isValidWastePercent(row.wastePercent) ? `Tỷ lệ thải bỏ: ${row.wastePercent}%` : "Chưa có tỷ lệ thải bỏ · quy đổi mặc định 1:1";
 
   return <tr className="align-top bg-white hover:bg-[#f7fbf8]">
-    <td className="px-3 py-3"><div className="break-words font-semibold text-neutral-950">{row.foodName}</div><div className="mt-1 text-xs text-neutral-900">{wasteLabel}</div></td>
+    <td className="px-2 py-1"><div className="break-words font-semibold text-neutral-950">{row.foodName}</div><div className="text-xs text-neutral-700">{wasteLabel}</div></td>
     {mode === "recall24h" ? <>
-      <td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Lượng đã ăn ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
-      <td className="px-2 py-2"><input aria-label={`Hệ số quy đổi ${row.foodName}`} type="number" min={0} step="any" value={row.conversionFactor} onChange={(event) => onUpdateQuantity(row.uid, "conversionFactor", toInputNumber(event.target.value))} className={inputClass} /></td>
-      <td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.edibleGrams === null ? "—" : `${round(quantity.edibleGrams)} g`}</td>
+      <td className="px-2 py-1"><div className="flex items-center gap-1"><input aria-label={`Lượng đã ăn ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
+      <td className="px-2 py-1"><input aria-label={`Hệ số quy đổi ${row.foodName}`} type="number" min={0} step="any" value={row.conversionFactor} onChange={(event) => onUpdateQuantity(row.uid, "conversionFactor", toInputNumber(event.target.value))} className={inputClass} /></td>
+      <td className="px-2 py-1 text-right font-semibold tabular-nums text-neutral-950">{quantity.edibleGrams === null ? "—" : `${round(quantity.edibleGrams)} g`}</td>
     </> : <>
-      <td className="px-2 py-2"><div className="flex items-center gap-1"><input aria-label={`Lượng sống sạch ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
-      <td className="px-2 py-3 text-right font-semibold tabular-nums text-neutral-950">{quantity.rawGrams === null ? "—" : `${round(quantity.rawGrams)} g`}</td>
-      <td className="px-2 py-3 text-right text-sm text-neutral-900">{isValidWastePercent(row.wastePercent) ? `${row.wastePercent}%` : "1:1 mặc định"}</td>
+      <td className="px-2 py-1"><div className="flex items-center gap-1"><input aria-label={`Lượng sống sạch ${row.foodName}`} type="number" min={0} value={value} onChange={(event) => onUpdateQuantity(row.uid, "inputGrams", toInputNumber(event.target.value))} className={inputClass} /><span className="shrink-0 text-xs">g</span></div></td>
+      <td className="px-2 py-1 text-right font-semibold tabular-nums text-neutral-950">{quantity.rawGrams === null ? "—" : `${round(quantity.rawGrams)} g`}</td>
+      <td className="px-2 py-1 text-right text-sm text-neutral-900">{isValidWastePercent(row.wastePercent) ? `${row.wastePercent}%` : "1:1 mặc định"}</td>
     </>}
-    <td className="px-2 py-2"><input aria-label={`Ghi chú ${row.foodName}`} value={row.note} onChange={(event) => onUpdateNote(row.uid, event.target.value)} className="w-full rounded border border-[#8ba39b] bg-white px-2 py-1.5 text-sm" /></td>
-    <td className="px-2 py-2 text-center"><button onClick={onDelete} className="rounded px-2 py-1.5 text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa thực phẩm">✕</button></td>
+    <td className="px-2 py-1"><input aria-label={`Ghi chú ${row.foodName}`} value={row.note} onChange={(event) => onUpdateNote(row.uid, event.target.value)} className="w-full rounded border border-[#8ba39b] bg-white px-2 py-1 text-sm" /></td>
+    <td className="px-1 py-1 text-center"><button onClick={onDelete} className="rounded px-2 py-1 text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa thực phẩm">✕</button></td>
   </tr>;
 }
 
