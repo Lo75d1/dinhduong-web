@@ -559,7 +559,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
           trong khung thay vì ghim theo viewport nếu không portal ra ngoài. */}
       {portalReady && createPortal(
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-3">
-        <div className="pointer-events-auto w-full max-w-2xl rounded-2xl border border-neutral-300 bg-white px-3 py-2 shadow-xl">
+        <div className="pointer-events-auto relative w-full max-w-5xl rounded-2xl border border-neutral-300 bg-white px-3 py-2 shadow-xl">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
             <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa."}</span>
             <div className="flex items-center gap-2">
@@ -633,7 +633,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
               <button type="button" role="tab" aria-selected={searchKind === "dish"} onClick={() => changeSearchKind("dish")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "dish" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Món ăn</button>
               <button type="button" role="tab" aria-selected={searchKind === "medication"} onClick={() => activateMedicationSearch()} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "medication" ? "bg-violet-700 text-white" : "border border-violet-300 bg-white text-violet-950"}`}>💊 Thuốc / TPBS</button>
             </div>
-            <div className="relative min-w-0 flex-1">
+            <div className="min-w-0 flex-1">
               <label className="sr-only" htmlFor="food-search">{searchKind === "food" ? "Tìm thực phẩm" : searchKind === "dish" ? "Tìm món ăn" : "Tìm thuốc hoặc thực phẩm bổ sung"}</label>
               <input id="food-search" disabled={!hydrated} type="text" value={q} onChange={(event) => updateSearch(event.target.value)} placeholder={searchKind === "food" ? "VD: cá chép, sữa chua; gõ không dấu được" : searchKind === "dish" ? "VD: bún riêu, cháo thịt; gõ không dấu được" : "VD: metformin, vitamin D; gõ không dấu được"} className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:cursor-wait disabled:bg-neutral-50" />
               {searchKind === "food" && q.trim().length >= 1 && (
