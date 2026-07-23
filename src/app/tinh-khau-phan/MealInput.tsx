@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import AiRationInput, { type AiRationItem } from "./AiRationInput";
+import Modal from "./Modal";
 import {
   loadMedicationRows,
   makeMedicationRow,
@@ -483,6 +484,8 @@ export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange
     setMedRows((previous) => previous.map((row) => row.uid === uid ? { ...row, ...patch } : row));
   }
 
+  const [aiOpen, setAiOpen] = useState(false);
+
   return (
     <section className="flex min-h-screen flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
       <div>
@@ -492,7 +495,12 @@ export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange
 
       <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
 
-      <AiRationInput onConfirm={addAiItems} />
+      <div>
+        <button type="button" onClick={() => setAiOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI: dán mô tả khẩu phần</button>
+      </div>
+      <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu">
+        <AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} />
+      </Modal>
 
       <div className="flex flex-wrap gap-2">
         <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">

@@ -10,7 +10,7 @@ const samples = [
   { title: "Thực phẩm trực tiếp", text: "Phụ sáng: chuối phần ăn được 100 g, sữa chua 100 g." },
 ] as const;
 
-export default function AiRationInput({ onConfirm }: { onConfirm: (items: AiRationItem[]) => void }) {
+export default function AiRationInput({ onConfirm, embedded = false }: { onConfirm: (items: AiRationItem[]) => void; embedded?: boolean }) {
   const [text, setText] = useState("");
   const [consent, setConsent] = useState(false);
   const [userApiKey, setUserApiKey] = useState("");
@@ -39,12 +39,12 @@ export default function AiRationInput({ onConfirm }: { onConfirm: (items: AiRati
     } catch { setMessage("Không thể gọi AI. Vui lòng thử lại."); } finally { setBusy(false); }
   }
 
-  return <section className="rounded-lg border-2 border-[#73540d] bg-[#fffdf6] p-4" data-no-print>
-    <div className="border-b-2 border-[#a77b10] pb-3">
+  return <section className={embedded ? "" : "rounded-lg border-2 border-[#73540d] bg-[#fffdf6] p-4"} data-no-print>
+    {embedded ? <p className="text-sm text-neutral-900">AI bóc tách mô tả thành các dòng khẩu phần ở bảng dưới; không chẩn đoán.</p> : <div className="border-b-2 border-[#a77b10] pb-3">
       <p className="text-xs font-semibold tracking-[0.14em] text-[#694d00]">AI HỖ TRỢ NHẬP LIỆU</p>
       <h2 className="mt-1 text-xl font-semibold">Dán mô tả khẩu phần</h2>
       <p className="mt-1 text-sm text-neutral-900">AI bóc tách mô tả thành các dòng khẩu phần ở bảng dưới; không chẩn đoán.</p>
-    </div>
+    </div>}
     <div className="mt-3 flex flex-wrap gap-2">{samples.map((sample) => <button key={sample.title} type="button" onClick={() => setText(sample.text)} className="rounded border border-[#73540d] bg-white px-3 py-1.5 text-sm font-semibold text-[#694d00]">Dùng mẫu: {sample.title}</button>)}</div>
     <details className="mt-3 rounded-md border-l-4 border-[#a77b10] bg-[#fff9e8] text-sm text-neutral-950"><summary className="cursor-pointer px-3 py-2 font-semibold">Mẹo nhập &amp; lưu ý bảo mật</summary><p className="px-3 pb-3">Ghi tên món/thực phẩm kèm lượng (g/ml). Không nhập thông tin định danh người bệnh.</p></details>
     <textarea value={text} onChange={(event) => setText(event.target.value)} placeholder={"Ví dụ: Sáng: phở bò 350 g.\nTrưa: cơm chín 200 g, cá chép kho 80 g."} className="mt-3 min-h-32 w-full rounded-md border-2 border-[#8fa99e] px-3 py-2 text-sm" />

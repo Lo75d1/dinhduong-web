@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Modal from "./Modal";
 import WhoGrowthAssessment from "./WhoGrowthAssessment";
 import type { WhoGrowthEntry } from "@/lib/who-growth";
 
@@ -143,18 +144,20 @@ export default function PersonalProfile({ onChange }: { onChange?: (p: Profile) 
   else if (isChild && hasBasics) summary = `✓ Trẻ em ${round(ageMonth)} tháng tuổi — xem biểu đồ tăng trưởng bên dưới`;
 
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4">
+    <>
       <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        type="button"
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left hover:bg-neutral-50"
       >
-        <h2 className="text-sm font-semibold text-neutral-700">Hồ sơ cá nhân</h2>
-        <span className="text-xs text-neutral-400">{open ? "▴" : "▾"}</span>
+        <span className="min-w-0">
+          <span className="block text-sm font-semibold text-neutral-700">Hồ sơ cá nhân</span>
+          <span className="mt-1 block text-xs text-neutral-500">{summary}</span>
+        </span>
+        <span className="shrink-0 rounded-md border-2 border-[#123c36] px-2.5 py-1 text-xs font-semibold text-[#123c36]">Mở ▸</span>
       </button>
-      {!open && <p className="mt-1 text-xs text-neutral-500">{summary}</p>}
-
-      {open && (
-        <div className="mt-3 flex flex-col gap-3">
+      <Modal open={open} onClose={() => setOpen(false)} title="Hồ sơ cá nhân">
+        <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Tuổi">
               <input
@@ -285,8 +288,8 @@ export default function PersonalProfile({ onChange }: { onChange?: (p: Profile) 
             </div>
           )}
         </div>
-      )}
-    </div>
+      </Modal>
+    </>
   );
 }
 
