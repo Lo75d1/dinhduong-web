@@ -14,17 +14,19 @@ import ClinicalSummary from "./ClinicalSummary";
 import MicronutrientComparison from "./MicronutrientComparison";
 import ExchangeUnits from "./ExchangeUnits";
 import ReportActions from "./ReportActions";
+import Modal from "./Modal";
 import type { ReportMeta } from "./ReportActions";
 import ServerRationActions from "./ServerRationActions";
 import type { RationMode, Row } from "./types";
 
 const round = (n: number) => Math.round(n * 10) / 10;
+const RESULT_GROUPS: [string, string][] = [["overview", "Tổng quan & khẩu phần"], ["clinical", "Khuyến nghị & vi chất"], ["exchange", "Quy đổi thực đơn"], ["charts", "10 biểu đồ phân tích"]];
 
 export default function Calculator() {
   const [rows, setRows] = useState<Row[]>([]);
   const [rationMode, setRationMode] = useState<RationMode>("recall24h");
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [visibleSections, setVisibleSections] = useState<string[]>(["overview"]);
+  const [resultModal, setResultModal] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
@@ -40,7 +42,6 @@ export default function Calculator() {
     }
   }
   const totalGrams = foodRows.reduce((sum, row) => sum + (row.grams || 0), 0);
-  const toggleSection = (key: string) => setVisibleSections((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
 
   return <div className="calculation-workspace flex flex-col gap-6">
     <section className="clinical-page-heading">
@@ -74,12 +75,20 @@ export default function Calculator() {
       {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-5 flex flex-col gap-5">
         <div className="clinical-card rounded-lg border-2 border-[#7f948d] bg-[#f7faf8] p-4" data-no-print>
           <div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="font-semibold text-neutral-950">Chọn nhóm kết quả cần xem</h3></div><div className="flex flex-wrap items-center justify-end gap-2"><ServerRationActions rows={rows} profile={profile} /><ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} /></div></div>
-          <div className="mt-3 flex flex-wrap gap-2">{[["overview", "Tổng quan & khẩu phần"], ["clinical", "Khuyến nghị & vi chất"], ["exchange", "Quy đổi thực đơn"], ["charts", "10 biểu đồ phân tích"]].map(([key, label]) => <label key={key} className={`cursor-pointer rounded-md border-2 px-3 py-2 text-sm font-semibold ${visibleSections.includes(key) ? "border-[#123c36] bg-emerald-50 text-[#123c36]" : "border-neutral-400 bg-white text-neutral-900"}`}><input type="checkbox" checked={visibleSections.includes(key)} onChange={() => toggleSection(key)} className="mr-2" />{label}</label>)}</div>
+          <div className="mt-3 flex flex-wrap gap-2">{RESULT_GROUPS.map(([key, label]) => <button key={key} type="button" onClick={() => setResultModal(key)} className="rounded-md border-2 border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-emerald-50">{label}</button>)}</div>
         </div>
-        {visibleSections.includes("overview") && <><ClinicalSummary rows={rows} totals={totals} profile={profile} /><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Tính trên 100 g phần ăn được (sống sạch); khối lượng mua xem ở bảng quy đổi.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /><RationDetail rows={rows} mode={rationMode} /></>}
-        {visibleSections.includes("clinical") && <>{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></>}
-        {visibleSections.includes("exchange") && <ExchangeUnits rows={rows} />}
-        {visibleSections.includes("charts") && <LegacyChartReport rows={rows} />}
+        <Modal printable open={resultModal === "overview"} onClose={() => setResultModal(null)} title="Tổng quan & khẩu phần" maxWidth="max-w-5xl">
+          <div className="flex flex-col gap-5"><ClinicalSummary rows={rows} totals={totals} profile={profile} /><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Tính trên 100 g phần ăn được (sống sạch); khối lượng mua xem ở bảng quy đổi.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /><RationDetail rows={rows} mode={rationMode} /></div>
+        </Modal>
+        <Modal printable open={resultModal === "clinical"} onClose={() => setResultModal(null)} title="Khuyến nghị & vi chất" maxWidth="max-w-5xl">
+          <div className="flex flex-col gap-5">{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></div>
+        </Modal>
+        <Modal printable open={resultModal === "exchange"} onClose={() => setResultModal(null)} title="Quy đổi thực đơn" maxWidth="max-w-5xl">
+          <ExchangeUnits rows={rows} />
+        </Modal>
+        <Modal printable open={resultModal === "charts"} onClose={() => setResultModal(null)} title="10 biểu đồ phân tích" maxWidth="max-w-5xl">
+          <LegacyChartReport rows={rows} />
+        </Modal>
       </div>}
     </section>
   </div>;

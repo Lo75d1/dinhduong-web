@@ -5,12 +5,15 @@ import { createPortal } from "react-dom";
 
 // Popup/modal dùng chung cho trang Tính khẩu phần: nền mờ, hộp trắng viền xanh
 // rêu, nút đóng, đóng khi bấm nền hoặc phím Esc, khóa cuộn nền khi mở.
-export default function Modal({ open, onClose, title, children, maxWidth = "max-w-2xl" }: {
+export default function Modal({ open, onClose, title, children, maxWidth = "max-w-2xl", printable = false }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: ReactNode;
   maxWidth?: string;
+  // printable=true: khi mở, popup này IN ĐƯỢC (không bị ẩn khi in) — dùng cho các
+  // nhóm Kết quả để "In PDF" ra đúng nhóm đang mở; header popup vẫn ẩn khi in.
+  printable?: boolean;
 }) {
   useEffect(() => {
     if (!open) return;
@@ -32,14 +35,14 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
       aria-modal="true"
       aria-label={title}
       onClick={onClose}
-      data-no-print
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:p-6"
+      {...(printable ? {} : { "data-no-print": true })}
+      className={`fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/50 p-4 sm:p-6 ${printable ? "modal-print-overlay" : ""}`}
     >
       <div
         onClick={(event) => event.stopPropagation()}
-        className={`my-4 w-full ${maxWidth} rounded-xl border-2 border-[#123c36] bg-white shadow-xl`}
+        className={`my-4 w-full ${maxWidth} rounded-xl border-2 border-[#123c36] bg-white shadow-xl ${printable ? "modal-print-box" : ""}`}
       >
-        <div className="flex items-center justify-between gap-3 rounded-t-xl border-b-2 border-[#123c36] bg-[#edf4f0] px-4 py-3">
+        <div data-no-print className="flex items-center justify-between gap-3 rounded-t-xl border-b-2 border-[#123c36] bg-[#edf4f0] px-4 py-3">
           <h2 className="text-lg font-semibold text-neutral-950">{title}</h2>
           <button
             type="button"

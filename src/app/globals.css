@@ -266,6 +266,28 @@ table th {
     max-width: 100% !important;
     height: auto !important;
   }
+
+  /* Popup Kết quả (printable): khi mở và bấm In, in nội dung trong luồng thay vì
+     lớp phủ cố định — nhờ đó "In PDF" ra đúng nhóm kết quả đang xem. */
+  .modal-print-overlay {
+    position: static !important;
+    display: block !important;
+    overflow: visible !important;
+    background: transparent !important;
+    padding: 0 !important;
+    z-index: auto !important;
+  }
+  .modal-print-box {
+    max-width: 100% !important;
+    margin: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .modal-print-box > div:last-child {
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
 }
 
 [data-print-header] {
