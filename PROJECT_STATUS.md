@@ -103,7 +103,11 @@ code UI, không sửa vì thuộc phạm vi Codex đang chỉnh song song.
 ## Trang đã xây (`src/app/...`)
 
 - `/` — trang chủ, thống kê
-- `/thuc-pham`, `/thuc-pham/[id]` — tra cứu thực phẩm (tìm không dấu, chi tiết ~170 chất)
+- `/thuc-pham`, `/thuc-pham/[id]` — tra cứu thực phẩm (tìm không dấu, chi tiết ~170 chất).
+  Có nút **Tải CSV** (2026-07-23) → API `/api/foods/export` xuất TOÀN BỘ kết quả đang
+  lọc (q/type/source/group) ra CSV có BOM (Excel đọc đúng tiếng Việt), chỉ đọc CSDL.
+- `/mon-an` cũng có nút **Tải CSV** (2026-07-23) → API `/api/dishes/export` xuất toàn bộ
+  công thức món ăn (bảng A) theo bộ lọc q/category/age/disease ra CSV có BOM, chỉ đọc CSDL.
 - `/mon-an`, `/mon-an/[id]` — tra cứu món ăn RNI (công thức nguyên liệu)
 - `/tinh-khau-phan` — trang chính, gồm (thứ tự render trong `Calculator.tsx`):
   1. `PersonalProfile.tsx` — hồ sơ cá nhân, BMI, Mifflin-St Jeor TDEE, biểu đồ

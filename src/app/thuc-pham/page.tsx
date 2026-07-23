@@ -52,6 +52,13 @@ export default async function ThucPhamPage({
     return `?${params.toString()}`;
   };
 
+  const exportParams = new URLSearchParams();
+  if (q) exportParams.set("q", q);
+  if (type) exportParams.set("type", type);
+  if (source) exportParams.set("source", source);
+  if (group) exportParams.set("group", group);
+  const exportHref = `/api/foods/export${exportParams.toString() ? `?${exportParams.toString()}` : ""}`;
+
   return (
     <div className="flex flex-col gap-5">
       <section className="border-b-2 border-[#123c36] pb-4">
@@ -83,7 +90,7 @@ export default async function ThucPhamPage({
       </form>
 
       <section className="overflow-x-auto rounded-lg border-2 border-[#123c36] bg-white">
-        <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#123c36] bg-[#edf4f0] px-4 py-3"><div><h2 className="text-xl font-semibold">Kết quả thực phẩm &amp; món ăn dinh dưỡng</h2><p className="text-sm text-neutral-900">Nhãn trong cột “Dạng dữ liệu” cho biết cách sử dụng bản ghi.</p></div><Link href="/mon-an" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-[#dcebe4]">Tra cứu công thức món ăn →</Link></div>
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#123c36] bg-[#edf4f0] px-4 py-3"><div><h2 className="text-xl font-semibold">Kết quả thực phẩm &amp; món ăn dinh dưỡng</h2><p className="text-sm text-neutral-900">Nhãn trong cột “Dạng dữ liệu” cho biết cách sử dụng bản ghi.</p></div><div className="flex flex-wrap items-center gap-2"><a href={exportHref} className="inline-flex items-center gap-1.5 rounded-md bg-[#123c36] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0d2e29]" title="Tải toàn bộ kết quả đang lọc ra tệp CSV, mở được bằng Excel">⬇ Tải CSV ({total.toLocaleString("vi-VN")} dòng)</a><Link href="/mon-an" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-[#dcebe4]">Tra cứu công thức món ăn →</Link></div></div>
         <table className="min-w-[950px] w-full text-sm"><thead className="text-left text-neutral-950"><tr><th className="px-4 py-3 font-semibold"></th><th className="px-4 py-3 font-semibold">Tên bản ghi</th><th className="px-4 py-3 font-semibold">Dạng dữ liệu / nguồn</th><th className="px-4 py-3 font-semibold">Nhóm phân loại</th><th className="px-4 py-3 text-right font-semibold">Kcal</th><th className="px-4 py-3 text-right font-semibold">Đạm (g)</th><th className="px-4 py-3 text-right font-semibold">Béo (g)</th><th className="px-4 py-3 text-right font-semibold">Bột đường (g)</th></tr></thead><tbody>{items.map((food) => { const isMeal = food.foodType === "MA"; return <tr key={food.id} className={isMeal ? "bg-[#fff8df] hover:bg-[#fff1bf]" : "bg-white hover:bg-[#f2f7f4]"}><td className="px-2 py-3">{food.imageUrl && <img src={food.imageUrl} alt="" className="h-14 w-14 rounded object-cover" loading="lazy" />}</td><td className="px-4 py-3"><Link href={`/thuc-pham/${food.id}`} className="font-semibold text-[#123c36] hover:text-black">{food.name}</Link>{isMeal && <p className="mt-1 text-xs font-semibold text-[#694d00]">Món ăn có số liệu dinh dưỡng; không mặc định có công thức nguyên liệu.</p>}</td><td className="px-4 py-3"><span className={`inline-flex rounded-sm border px-2 py-0.5 text-xs font-semibold ${isMeal ? "border-[#a77b10] bg-[#fff3c4] text-[#5d4300]" : "border-[#5c7d74] bg-[#edf4f0] text-[#123c36]"}`}>{TYPE_LABELS[food.foodType ?? ""] ?? "Chưa phân loại"}</span><p className="mt-1 text-xs text-neutral-900">Nguồn: {food.source}</p></td><td className="px-4 py-3">{food.foodGroup ?? "—"}</td><td className="px-4 py-3 text-right tabular-nums">{food.energyKcal ?? "—"}</td><td className="px-4 py-3 text-right tabular-nums">{food.proteinG ?? "—"}</td><td className="px-4 py-3 text-right tabular-nums">{food.lipidG ?? "—"}</td><td className="px-4 py-3 text-right tabular-nums">{food.glucidG ?? "—"}</td></tr>; })}{items.length === 0 && <tr><td colSpan={8} className="px-4 py-10 text-center text-neutral-900">Không tìm thấy bản ghi phù hợp với điều kiện tra cứu.</td></tr>}</tbody></table>
       </section>
 
