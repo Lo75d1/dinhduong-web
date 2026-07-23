@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import AiRationInput, { type AiRationItem } from "./AiRationInput";
@@ -61,7 +61,7 @@ function toInputNumber(value: string): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void }) {
+export default function MealInput({ onRowsChange, onModeChange, profileSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; profileSlot?: ReactNode }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [mode, setMode] = useState<RationMode>("recall24h");
   const [hydrated, setHydrated] = useState(false);
@@ -495,7 +495,8 @@ export default function MealInput({ onRowsChange, onModeChange }: { onRowsChange
 
       <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
 
-      <div>
+      <div className="flex flex-wrap items-center gap-2">
+        {profileSlot}
         <button type="button" onClick={() => setAiOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI: dán mô tả khẩu phần</button>
       </div>
       <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu">

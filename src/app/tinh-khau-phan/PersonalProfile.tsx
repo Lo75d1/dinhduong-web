@@ -148,13 +148,10 @@ export default function PersonalProfile({ onChange }: { onChange?: (p: Profile) 
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 text-left hover:bg-neutral-50"
+        title={summary}
+        className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]"
       >
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold text-neutral-700">Hồ sơ cá nhân</span>
-          <span className="mt-1 block text-xs text-neutral-500">{summary}</span>
-        </span>
-        <span className="shrink-0 rounded-md border-2 border-[#123c36] px-2.5 py-1 text-xs font-semibold text-[#123c36]">Mở ▸</span>
+        👤 Hồ sơ cá nhân{hasBasics ? " ✓" : ""}
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="Hồ sơ cá nhân">
         <div className="flex flex-col gap-3">
