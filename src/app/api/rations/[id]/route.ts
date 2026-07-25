@@ -17,6 +17,20 @@ export async function GET(_: Request, { params }: RouteContext) {
   }
 }
 
+export async function DELETE(_: Request, { params }: RouteContext) {
+  try {
+    const user = await requireSessionUser();
+    const { id } = await params;
+    const exists = await prisma.ration.findFirst({ where: { id, ownerId: user.id }, select: { id: true } });
+    if (!exists) return Response.json({ error: "Không tìm thấy khẩu phần." }, { status: 404 });
+    await prisma.ration.delete({ where: { id } });
+    return Response.json({ ok: true });
+  } catch (error) {
+    if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
+    return Response.json({ error: "Không thể xóa khẩu phần." }, { status: 500 });
+  }
+}
+
 export async function PUT(request: Request, { params }: RouteContext) {
   try {
     const user = await requireSessionUser();

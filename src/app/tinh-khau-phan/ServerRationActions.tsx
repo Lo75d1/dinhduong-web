@@ -143,6 +143,18 @@ export default function ServerRationActions({ rows, profile }: { rows: Row[]; pr
     }
   }
 
+  async function deleteRation(id: string, name: string) {
+    if (typeof window !== "undefined" && !window.confirm(`Xóa vĩnh viễn “${name}”? Không thể hoàn tác.`)) return;
+    setListBusy(true); setListError("");
+    try {
+      const response = await fetch(`/api/rations/${id}`, { method: "DELETE" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error ?? "Không thể xóa thực đơn.");
+      setSavedList((current) => (current ? current.filter((item) => item.id !== id) : current));
+    } catch (error) { setListError(error instanceof Error ? error.message : "Không thể xóa thực đơn."); }
+    finally { setListBusy(false); }
+  }
+
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setUser(null); setSavedList(null); setMessage("Đã đăng xuất.");
@@ -170,7 +182,7 @@ export default function ServerRationActions({ rows, profile }: { rows: Row[]; pr
       {!listBusy && savedList && savedList.length > 0 && <ul className="mt-4 max-h-[60vh] divide-y divide-neutral-200 overflow-y-auto">
         {savedList.map((item) => <li key={item.id} className="flex items-center justify-between gap-3 py-2">
           <div className="min-w-0"><p className="truncate font-semibold text-neutral-950">{item.title}</p><p className="text-xs text-neutral-700">{item._count.items} món · cập nhật {fmtDate(item.updatedAt)}{item.patient?.name ? ` · ${item.patient.name}` : ""}</p></div>
-          <button onClick={() => loadRation(item.id, item.title)} disabled={listBusy} className="shrink-0 rounded-md bg-[#123c36] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60">Mở</button>
+          <div className="flex shrink-0 items-center gap-2"><button onClick={() => loadRation(item.id, item.title)} disabled={listBusy} className="rounded-md bg-[#123c36] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60">Mở</button><button onClick={() => deleteRation(item.id, item.title)} disabled={listBusy} className="rounded-md border border-[#8a2323] px-3 py-1.5 text-sm font-semibold text-[#8a2323] hover:bg-[#fff5f5] disabled:opacity-60">Xóa</button></div>
         </li>)}
       </ul>}
     </div></div>}
