@@ -241,6 +241,29 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
     setWork({ meal, dish });
   }
 
+  // Di chuyển bữa lên/xuống: sắp lại thứ tự các nhóm row theo bữa (buildTree giữ
+  // nguyên thứ tự này khi các bữa cùng mức mealOrder — vd "Bữa 1/2/3").
+  function moveMeal(meal: string, direction: "up" | "down") {
+    const order = tree.map((item) => item.meal);
+    const idx = order.indexOf(meal);
+    const swap = direction === "up" ? idx - 1 : idx + 1;
+    if (idx < 0 || swap < 0 || swap >= order.length) return;
+    const nextOrder = [...order];
+    [nextOrder[idx], nextOrder[swap]] = [nextOrder[swap], nextOrder[idx]];
+    setRows((previous) => {
+      const groups = new Map<string, Row[]>();
+      for (const row of previous) {
+        const arr = groups.get(row.meal) ?? [];
+        arr.push(row);
+        groups.set(row.meal, arr);
+      }
+      const result: Row[] = [];
+      for (const name of nextOrder) result.push(...(groups.get(name) ?? []));
+      for (const [name, rows] of groups) if (!nextOrder.includes(name)) result.push(...rows);
+      return result;
+    });
+  }
+
   function renameMeal(oldName: string, newName: string) {
     if (!newName.trim() || newName === oldName) return;
     setRows((previous) => previous.map((row) => (row.meal === oldName ? { ...row, meal: newName } : row)));
@@ -529,10 +552,14 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">Chưa có bữa ăn nào. Bấm “+ Thêm bữa ăn” để bắt đầu.</div>
       ) : (
         <div className="flex flex-col gap-3">
-          {tree.map((meal) => (
+          {tree.map((meal, index) => (
             <MealBlock
               key={meal.meal}
               node={meal}
+              canMoveUp={index > 0}
+              canMoveDown={index < tree.length - 1}
+              onMoveUp={() => moveMeal(meal.meal, "up")}
+              onMoveDown={() => moveMeal(meal.meal, "down")}
               mode={mode}
               work={work}
               medications={medRows.filter((med) => med.meal === meal.meal)}
@@ -706,8 +733,8 @@ function EditableTitle({ value, onCommit, className, placeholder }: { value: str
   return <input value={text} placeholder={placeholder} onChange={(event) => setText(event.target.value)} onBlur={() => { if (text.trim()) onCommit(text.trim()); else setText(value); }} className={className} />;
 }
 
-function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
-  node: MealNode; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onUpdateMedication: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDeleteMedication: (uid: string) => void;
+function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
+  node: MealNode; canMoveUp: boolean; canMoveDown: boolean; onMoveUp: () => void; onMoveDown: () => void; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onUpdateMedication: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDeleteMedication: (uid: string) => void;
 }) {
   const beforeMeal = medications.filter((med) => med.timing === "before");
   const afterMeal = medications.filter((med) => med.timing === "after");
@@ -717,7 +744,7 @@ function MealBlock({ node, mode, work, medications, onSelectDish, onRenameMeal, 
     <div className="flex flex-wrap items-center gap-2 bg-[#0c5f4d] px-3 py-2 text-white sm:flex-nowrap sm:gap-3">
       <span className="text-xs font-semibold tracking-[0.12em] text-[#d5ebaf]">BỮA ĂN</span>
       <EditableTitle value={node.meal} onCommit={onRenameMeal} className="min-w-0 flex-1 rounded border border-white/30 bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#d5ebaf]" />
-      <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto"><button onClick={onAddMedication} className="rounded-md border border-violet-200 bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">💊 Thuốc</button><button onClick={onAddDish} className="rounded-md border border-[#d5ebaf] bg-[#15745e] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a846c]">＋ Món</button><button onClick={onDeleteMeal} className="rounded-md px-2 py-1.5 text-sm text-white hover:bg-[#0a4c3d]" title="Xóa bữa">✕</button></div>
+      <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto"><button onClick={onMoveUp} disabled={!canMoveUp} title="Chuyển bữa lên" aria-label="Chuyển bữa lên" className="rounded-md px-2 py-1.5 text-sm font-semibold text-white hover:bg-[#0a4c3d] disabled:opacity-30 disabled:hover:bg-transparent">↑</button><button onClick={onMoveDown} disabled={!canMoveDown} title="Chuyển bữa xuống" aria-label="Chuyển bữa xuống" className="rounded-md px-2 py-1.5 text-sm font-semibold text-white hover:bg-[#0a4c3d] disabled:opacity-30 disabled:hover:bg-transparent">↓</button><button onClick={onAddMedication} className="rounded-md border border-violet-200 bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">💊 Thuốc</button><button onClick={onAddDish} className="rounded-md border border-[#d5ebaf] bg-[#15745e] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a846c]">＋ Món</button><button onClick={onDeleteMeal} className="rounded-md px-2 py-1.5 text-sm text-white hover:bg-[#0a4c3d]" title="Xóa bữa">✕</button></div>
     </div>
     <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={beforeMeal} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} />
     {node.dishes.length === 0 ? <div className="px-4 py-4 text-sm text-neutral-900">Chưa có món. Bấm “＋ Món” để bắt đầu nhập.</div> : <div className="divide-y-2 divide-[#8ba39b]">{node.dishes.map((dish) => <DishBlock key={dish.dish} node={dish} mode={mode} isWork={work?.meal === node.meal && work.dish === dish.dish} onSelect={() => onSelectDish(dish.dish)} onRename={(name) => onRenameDish(dish.dish, name)} onDelete={() => onDeleteDish(dish.dish)} onDeleteFoodRow={onDeleteFoodRow} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</div>}
