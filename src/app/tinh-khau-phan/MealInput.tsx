@@ -218,7 +218,9 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
 
   function addMeal() {
     const name = `Bữa ${tree.length + 1}`;
-    const dishName = "Món 1";
+    // Không tạo sẵn "Món 1" trống: dùng bể "(Chưa phân món)" làm chỗ thêm nhanh.
+    // Thêm một món ăn qua ô tìm sẽ tự tạo dish riêng (và dọn bể rỗng này).
+    const dishName = UNASSIGNED_DISH;
     setRows((previous) => [...previous, makeRow(name, dishName, null, mode)]);
     setWork({ meal: name, dish: dishName });
   }
@@ -376,7 +378,11 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
       const row = makeRow(meal, dishName, { id: food.id, name: food.name, nutrients, classify, wastePercent }, mode);
       return { ...row, grams: cleanGrams, inputGrams: cleanGrams, inputBasis: "edible" as const, conversionFactor: 1, note: `Từ công thức: ${dish.name}` };
     });
-    setRows((previous) => insertRowsIntoDish(previous, meal, dishName, newRows));
+    setRows((previous) => {
+      const inserted = insertRowsIntoDish(previous, meal, dishName, newRows);
+      // Món ăn tạo dish riêng theo tên món → dọn bể "(Chưa phân món)" rỗng của bữa này.
+      return inserted.filter((row) => !(row.meal === meal && row.dish === UNASSIGNED_DISH && !row.foodId));
+    });
     setWork({ meal, dish: dishName });
     setQ(""); setDishResults([]);
     const skipped = dish.ingredients.length - eligible.length;
