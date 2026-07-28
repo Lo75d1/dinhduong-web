@@ -627,13 +627,13 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
               </label>
             </div>
           </div>}
-          <div className="flex items-center gap-1.5">
-            <div className="flex shrink-0 gap-1" role="tablist" aria-label="Nguồn thêm vào khẩu phần">
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+            <div className="flex shrink-0 flex-wrap gap-1" role="tablist" aria-label="Nguồn thêm vào khẩu phần">
               <button type="button" role="tab" aria-selected={searchKind === "food"} onClick={() => changeSearchKind("food")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "food" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Thực phẩm</button>
               <button type="button" role="tab" aria-selected={searchKind === "dish"} onClick={() => changeSearchKind("dish")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "dish" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Món ăn</button>
               <button type="button" role="tab" aria-selected={searchKind === "medication"} onClick={() => activateMedicationSearch()} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "medication" ? "bg-violet-700 text-white" : "border border-violet-300 bg-white text-violet-950"}`}>💊 Thuốc / TPBS</button>
             </div>
-            <div className="min-w-0 flex-1">
+            <div className="w-full min-w-0 sm:flex-1">
               <label className="sr-only" htmlFor="food-search">{searchKind === "food" ? "Tìm thực phẩm" : searchKind === "dish" ? "Tìm món ăn" : "Tìm thuốc hoặc thực phẩm bổ sung"}</label>
               <input id="food-search" disabled={!hydrated} type="text" value={q} onChange={(event) => updateSearch(event.target.value)} placeholder={searchKind === "food" ? "VD: cá chép, sữa chua; gõ không dấu được" : searchKind === "dish" ? "VD: bún riêu, cháo thịt; gõ không dấu được" : "VD: metformin, vitamin D; gõ không dấu được"} className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:cursor-wait disabled:bg-neutral-50" />
               {searchKind === "food" && q.trim().length >= 1 && (
