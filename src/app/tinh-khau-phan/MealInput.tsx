@@ -592,7 +592,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-3">
         <div className="pointer-events-auto relative w-full max-w-5xl rounded-2xl border border-neutral-300 bg-white px-3 py-2 shadow-xl">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
-            <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa."}</span>
+            <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : searchKind === "dish" ? (work ? <>Đang thêm món vào bữa: <b className="text-emerald-700">{work.meal}</b></> : "Chưa chọn bữa — món ăn sẽ thêm vào bữa đầu tiên (hoặc tạo bữa mới).") : (work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa.")}</span>
             <div className="flex items-center gap-2">
               <button type="button" onClick={addMeal} title="Thêm bữa ăn" className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800 lg:hidden">+ Bữa</button>
               {(foodType || sourceFilter || groupFilter || dishCategory || dishAge || dishDisease || q) && <button type="button" onClick={clearSearchFilters} className="font-semibold text-[#123c36] underline underline-offset-2">Xóa lọc</button>}
