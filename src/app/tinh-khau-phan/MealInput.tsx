@@ -522,6 +522,8 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   const selMeal = work?.meal ?? tree[0]?.meal ?? "";
   const selMealIndex = tree.findIndex((meal) => meal.meal === selMeal);
   const selMealNode = selMealIndex >= 0 ? tree[selMealIndex] : undefined;
+  const selDish = work?.dish ?? selMealNode?.dishes[0]?.dish ?? "";
+  const selDishNode = selMealNode?.dishes.find((dish) => dish.dish === selDish);
 
   return (
     <section className="flex min-h-screen flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
@@ -554,10 +556,19 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">Chưa có bữa ăn nào. Bấm “+ Thêm bữa ăn” để bắt đầu.</div>
       ) : (
         <div className="flex flex-col gap-2">
-          {tree.map((meal) => (
+          {tree.map((meal, index) => (
             <div key={meal.meal} className={`overflow-hidden rounded-lg border ${meal.meal === selMeal ? "border-[#123c36]" : "border-neutral-300"}`}>
-              <button type="button" onClick={() => { setWork({ meal: meal.meal, dish: meal.dishes[0]?.dish ?? UNASSIGNED_DISH }); setMobilePane("detail"); }} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold ${meal.meal === selMeal ? "bg-[#0c5f4d] text-white" : "bg-[#eef4f1] text-[#0c5f4d] hover:bg-[#e2eee8]"}`}><span>📁</span><span className="min-w-0 flex-1 truncate">{meal.meal}</span><span className="shrink-0 text-xs font-normal opacity-80">{meal.dishes.length} món</span></button>
-              {meal.dishes.length === 0 ? <p className="bg-white px-3 py-2 pl-8 text-xs text-neutral-500">Chưa có món — dùng thanh dưới hoặc “＋ Món”.</p> : <div className="divide-y divide-neutral-100 bg-white">{meal.dishes.map((dish) => { const active = work?.meal === meal.meal && work.dish === dish.dish; return <button key={dish.dish} type="button" onClick={() => { setWork({ meal: meal.meal, dish: dish.dish }); setMobilePane("detail"); }} className={`flex w-full items-center gap-2 px-3 py-1.5 pl-8 text-left text-sm ${active ? "bg-[#dceee1] font-semibold text-[#123c36]" : "text-neutral-800 hover:bg-neutral-50"}`}><span>📄</span><span className="min-w-0 flex-1 truncate">{dish.dish}</span><span className="shrink-0 text-xs text-neutral-500">{dish.rows.length} TP</span></button>; })}</div>}
+              <div className="flex items-center gap-0.5 bg-[#eef4f1] px-2 py-1.5 text-[#0c5f4d]">
+                <span className="shrink-0">📁</span>
+                <EditableTitle value={meal.meal} onCommit={(name) => renameMeal(meal.meal, name)} className="min-w-0 flex-1 rounded bg-transparent px-1 py-0.5 text-sm font-semibold text-[#0c5f4d] focus:bg-white focus:outline-none" />
+                <span className="shrink-0 px-1 text-[11px] opacity-70">{meal.dishes.length} món</span>
+                <button type="button" onClick={() => moveMeal(meal.meal, "up")} disabled={index === 0} title="Chuyển bữa lên" className="shrink-0 rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▲</button>
+                <button type="button" onClick={() => moveMeal(meal.meal, "down")} disabled={index === tree.length - 1} title="Chuyển bữa xuống" className="shrink-0 rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▼</button>
+                <button type="button" onClick={() => addDish(meal.meal)} title="Thêm món" className="shrink-0 rounded px-1 text-sm font-bold hover:bg-white/70">＋</button>
+                <button type="button" onClick={() => activateMedicationSearch(meal.meal)} title="Thuốc / TPBS" className="shrink-0 rounded px-1 text-sm hover:bg-white/70">💊</button>
+                <button type="button" onClick={() => deleteMeal(meal.meal)} title="Xóa bữa" className="shrink-0 rounded px-1 text-sm text-[#8a2323] hover:bg-white/70">✕</button>
+              </div>
+              {meal.dishes.length === 0 ? <p className="bg-white px-3 py-2 pl-8 text-xs text-neutral-500">Chưa có món — bấm ＋ hoặc dùng thanh dưới.</p> : <div className="divide-y divide-neutral-100 bg-white">{meal.dishes.map((dish) => { const active = work?.meal === meal.meal && work.dish === dish.dish; return <button key={dish.dish} type="button" onClick={() => { setWork({ meal: meal.meal, dish: dish.dish }); setMobilePane("detail"); }} className={`flex w-full items-center gap-2 px-3 py-1.5 pl-8 text-left text-sm ${active ? "bg-[#dceee1] font-semibold text-[#123c36]" : "text-neutral-800 hover:bg-neutral-50"}`}><span>📄</span><span className="min-w-0 flex-1 truncate">{dish.dish}</span><span className="shrink-0 text-xs text-neutral-500">{dish.rows.length} TP</span></button>; })}</div>}
             </div>
           ))}
         </div>
@@ -566,10 +577,19 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         </div>
         <div className={`min-w-0 ${mobilePane === "tree" ? "hidden" : "block"} lg:block`}>
           <button type="button" onClick={() => setMobilePane("tree")} className="mb-3 inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] lg:hidden">‹ Danh sách bữa / món</button>
-          {selMealNode ? (
-            <MealBlock node={selMealNode} canMoveUp={selMealIndex > 0} canMoveDown={selMealIndex < tree.length - 1} onMoveUp={() => moveMeal(selMealNode.meal, "up")} onMoveDown={() => moveMeal(selMealNode.meal, "down")} mode={mode} work={work} medications={medRows.filter((med) => med.meal === selMealNode.meal)} onSelectDish={(dish) => setWork({ meal: selMealNode.meal, dish })} onRenameMeal={(name) => renameMeal(selMealNode.meal, name)} onDeleteMeal={() => deleteMeal(selMealNode.meal)} onAddDish={() => addDish(selMealNode.meal)} onAddMedication={() => activateMedicationSearch(selMealNode.meal)} onRenameDish={(oldDish, name) => renameDish(selMealNode.meal, oldDish, name)} onDeleteDish={(dish) => deleteDish(selMealNode.meal, dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} onUpdateMedication={updateMedication} onDeleteMedication={deleteMedication} />
+          {selMealNode && selDishNode ? (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-neutral-600">📁 <b className="text-[#0c5f4d]">{selMealNode.meal}</b> › 📄 món đang mở</p>
+              <div className="overflow-hidden rounded-lg border-2 border-[#52786d] bg-white shadow-sm">
+                <DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />
+                <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "before")} onUpdate={updateMedication} onDelete={deleteMedication} />
+                <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "after")} onUpdate={updateMedication} onDelete={deleteMedication} />
+                <MedicationInMeal title="💊 Mốc thuốc / TPBS riêng — không kèm bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "standalone")} onUpdate={updateMedication} onDelete={deleteMedication} standalone />
+                <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "unspecified")} onUpdate={updateMedication} onDelete={deleteMedication} warning />
+              </div>
+            </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-10 text-center text-sm text-neutral-500">Chọn một bữa/món ở danh sách bên trái để xem và nhập thực phẩm.</div>
+            <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-10 text-center text-sm text-neutral-500">Chọn một món 📄 ở cây bên trái để mở và nhập thực phẩm.</div>
           )}
         </div>
       </div>
@@ -772,7 +792,6 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
   node: DishNode; mode: RationMode; isWork: boolean; onSelect: () => void; onRename: (name: string) => void; onDelete: () => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void;
 }) {
   const [open, setOpen] = useState(isWork);
-  useEffect(() => { if (isWork) setOpen(true); }, [isWork]);
   return <div>
     <div className={`flex items-center gap-2 border-l-4 border-[#52786d] px-3 py-2 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Thu gọn món" : "Mở món"} className="shrink-0 rounded px-1 text-sm font-bold text-[#0c5f4d] hover:bg-white/60">{open ? "▾" : "▸"}</button>
