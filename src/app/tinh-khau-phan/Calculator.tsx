@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import LegacyChartReport from "./LegacyChartReport";
@@ -30,6 +30,11 @@ export default function Calculator() {
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
+  // Focus mode (desktop): thu gọn header/tiêu đề để khu nhập chiếm gần trọn màn hình.
+  useEffect(() => {
+    document.body.classList.add("ration-focus");
+    return () => document.body.classList.remove("ration-focus");
+  }, []);
   const foodRows = rows.filter((r) => r.foodId);
 
   const totals: Record<string, number> = {};
@@ -59,13 +64,12 @@ export default function Calculator() {
       </button>
     </nav>
 
-    <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-6" : "hidden"}>
-      <div className="border-b-2 border-[#123c36] pb-4">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 1 · NHẬP LIỆU</p>
-        <h2 className="mt-1 text-2xl font-semibold text-neutral-950">Nhập dữ liệu khẩu phần</h2>
+    <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-6 lg:flex lg:h-[calc(100vh-10.5rem)] lg:flex-col lg:overflow-hidden lg:p-4" : "hidden"}>
+      <div className="shrink-0 border-b border-[#123c36] pb-2">
+        <h2 className="text-lg font-semibold text-neutral-950"><span className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 1 · </span>Nhập dữ liệu khẩu phần</h2>
       </div>
-      <div className="mt-5 flex flex-col gap-5"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
-      <div className="mt-6 flex justify-end border-t-2 border-[#7f948d] pt-4"><button onClick={() => setActiveView("analysis")} className="rounded-md bg-[#123c36] px-5 py-3 font-semibold text-white">Sang kết quả &amp; phân tích →</button></div>
+      <div className="mt-3 flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
+      <div className="mt-3 flex shrink-0 justify-end border-t-2 border-[#7f948d] pt-3"><button onClick={() => setActiveView("analysis")} className="rounded-md bg-[#123c36] px-5 py-2.5 font-semibold text-white">Sang kết quả &amp; phân tích →</button></div>
     </section>
 
     <section className={activeView === "analysis" ? "clinical-panel min-w-0 rounded-xl border-2 border-[#7f948d] bg-white p-6" : "hidden"}>

@@ -526,7 +526,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   const selDishNode = selMealNode?.dishes.find((dish) => dish.dish === selDish);
 
   return (
-    <section className="flex flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
+    <section className="flex flex-col gap-2 pb-36 lg:min-h-0 lg:flex-1 lg:pb-2" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
       <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
       <div className="flex flex-wrap items-center gap-2">
         {profileSlot}
@@ -544,7 +544,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
       </form>}
 
-      <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-4 lg:h-[calc(100vh-13rem)]">
+      <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-4 lg:min-h-0 lg:flex-1">
         <div className={`flex-col gap-2 ${mobilePane === "detail" ? "hidden" : "flex"} lg:flex lg:min-h-0 lg:overflow-y-auto lg:pr-1`}>
       <div ref={mealPlanRef} tabIndex={-1} className="scroll-mt-6 outline-none">
       {tree.length === 0 ? (

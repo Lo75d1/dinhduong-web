@@ -293,3 +293,16 @@ table th {
 [data-print-header] {
   display: none;
 }
+
+/* Focus mode cho trang tính khẩu phần (chỉ desktop): thu gọn chrome để 2 khung
+   nhập (cây bữa/món · chi tiết thực phẩm) chiếm gần trọn màn hình như VSCode. */
+@media (min-width: 1024px) {
+  body.ration-focus .site-topbar { display: none; }
+  body.ration-focus .hospital-main { padding-top: 0.5rem; padding-bottom: 0.25rem; max-width: none; }
+  body.ration-focus .calculation-workspace { gap: 0.5rem; }
+  body.ration-focus .clinical-page-heading { display: none; }
+  body.ration-focus .clinical-stepper { padding: 0.25rem; }
+  body.ration-focus .clinical-step { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+  body.ration-focus > footer,
+  body.ration-focus footer { display: none; }
+}
