@@ -42,14 +42,14 @@ export default function RootLayout({
         <VisitTracker />
         <header className="site-header border-b-4 border-[#123c36] bg-white shadow-[0_5px_20px_rgba(18,60,54,0.08)]">
           <div className="site-topbar bg-[#123c36] text-white">
-            <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-1.5 text-xs">
+            <div className="flex w-full items-center justify-between gap-3 px-5 py-1 text-[11px]">
               <span className="font-semibold tracking-[.08em]">
                 SÁNG KIẾN CẢI TIẾN · BỆNH VIỆN ĐA KHOA NAM LIÊN CHIỂU
               </span>
               <span className="hidden sm:inline">Sở Y tế thành phố Đà Nẵng</span>
             </div>
           </div>
-          <nav className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-3 px-5 py-4 sm:gap-x-6">
+          <nav className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-5 py-2 sm:gap-x-5">
             <Link
               href="/"
               className="order-1 flex min-w-0 items-center gap-2 leading-tight sm:min-w-52 sm:gap-3"
@@ -57,16 +57,16 @@ export default function RootLayout({
               <Image
                 src="/dinh-duong-2597-avatar.jpg"
                 alt="Biểu trưng Dinh dưỡng 2598"
-                width={48}
-                height={48}
-                className="h-12 w-12 rounded-full border border-[#8fa99e] bg-white object-cover"
+                width={40}
+                height={40}
+                className="h-10 w-10 rounded-full border border-[#8fa99e] bg-white object-cover"
                 priority
               />
               <span className="border-l-4 border-[#123c36] pl-3">
-                <span className="block text-base font-semibold tracking-wide text-[#123c36] sm:text-lg">
+                <span className="block text-base font-semibold tracking-wide text-[#123c36]">
                   DINH DƯỠNG 2598
                 </span>
-                <span className="mt-.5 hidden text-xs tracking-wide text-neutral-700 sm:block">
+                <span className="hidden text-[11px] tracking-wide text-neutral-700 sm:block">
                   CỔNG TRA CỨU &amp; PHÂN TÍCH KHẨU PHẦN
                 </span>
               </span>
@@ -74,25 +74,25 @@ export default function RootLayout({
             <div className="order-3 flex w-full flex-wrap items-center gap-2 text-sm font-semibold sm:order-2 sm:w-auto">
               <Link
                 href="/thuc-pham"
-                className="rounded-md border border-[#8fa99e] px-3 py-2 text-[#123c36]"
+                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
               >
                 Tra cứu
               </Link>
               <Link
                 href="/mon-an"
-                className="rounded-md border border-[#8fa99e] px-3 py-2 text-[#123c36]"
+                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
               >
                 Món ăn
               </Link>
               <Link
                 href="/tri-thuc-dinh-duong"
-                className="rounded-md border border-[#8fa99e] px-3 py-2 text-[#123c36]"
+                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
               >
                 Tri thức mới
               </Link>
               <Link
                 href="/tinh-khau-phan"
-                className="rounded-md bg-[#123c36] px-4 py-2 text-white"
+                className="rounded-md bg-[#123c36] px-4 py-1.5 text-white"
               >
                 Tính khẩu phần
               </Link>

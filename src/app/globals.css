@@ -141,6 +141,23 @@ a:active {
   border-radius: 0.4rem 0.4rem 0 0;
 }
 
+/* Bảng NHẬP thực phẩm (trong khu nhập khẩu phần) cần gọn theo chiều dọc hơn nhiều
+   so với bảng BÁO CÁO (vốn nới rộng để đọc/in). Chọn theo aria-label nên chỉ tác
+   động bảng nhập, ghi đè padding rộng ở trên nhờ độ ưu tiên cao hơn + đứng sau. */
+.calculation-workspace [aria-label="Nhập khẩu phần"] table thead th,
+.calculation-workspace [aria-label="Nhập khẩu phần"] table tbody td {
+  padding-top: 0.28rem !important;
+  padding-bottom: 0.28rem !important;
+}
+.calculation-workspace [aria-label="Nhập khẩu phần"] table th:first-child,
+.calculation-workspace [aria-label="Nhập khẩu phần"] table td:first-child {
+  padding-left: 0.5rem !important;
+}
+.calculation-workspace [aria-label="Nhập khẩu phần"] table th:last-child,
+.calculation-workspace [aria-label="Nhập khẩu phần"] table td:last-child {
+  padding-right: 0.5rem !important;
+}
+
 @keyframes clinical-enter {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

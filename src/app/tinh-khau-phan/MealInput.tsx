@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import AiRationInput, { type AiRationItem } from "./AiRationInput";
 import Modal from "./Modal";
@@ -61,6 +60,22 @@ function toInputNumber(value: string): number {
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
+// Calo là chỉ số người dùng cần nắm nhanh nhất — tính ngay trên cây bữa/món.
+function dishKcal(dish: DishNode): number {
+  return dish.rows.reduce((sum, row) => {
+    const e = row.nutrients?.energyKcal;
+    return sum + (typeof e === "number" && Number.isFinite(e) ? ((row.grams || 0) * e) / 100 : 0);
+  }, 0);
+}
+
+function mealKcal(meal: MealNode): number {
+  return meal.dishes.reduce((sum, dish) => sum + dishKcal(dish), 0);
+}
+
+function fmtKcal(value: number): string {
+  return `${Math.round(value)} kcal`;
+}
+
 export default function MealInput({ onRowsChange, onModeChange, profileSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; profileSlot?: ReactNode }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [mode, setMode] = useState<RationMode>("recall24h");
@@ -81,7 +96,6 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   const [dishResults, setDishResults] = useState<DishResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
   const [manualName, setManualName] = useState("");
   const [manualEnergy, setManualEnergy] = useState("");
@@ -111,7 +125,6 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
     setMode(loadRationMode());
     setMedRows(loadMedicationRows());
     setHydrated(true);
-    setPortalReady(true);
   }, []);
 
   useEffect(() => {
@@ -526,9 +539,9 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   const selDishNode = selMealNode?.dishes.find((dish) => dish.dish === selDish);
 
   return (
-    <section className="flex flex-col gap-2 pb-36 lg:min-h-0 lg:flex-1 lg:pb-2" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
-      <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
+    <section className="flex flex-col gap-2 pb-2 lg:min-h-0 lg:flex-1" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
       <div className="flex flex-wrap items-center gap-2">
+        <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
         {profileSlot}
         <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">{hydrated ? "+ Thêm bữa ăn" : "Đang tải..."}</button>
         <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
@@ -544,7 +557,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
       </form>}
 
-      <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-4 lg:min-h-0 lg:flex-1">
+      <div className="lg:grid lg:grid-cols-[360px_minmax(0,1fr)] lg:gap-3 lg:min-h-0 lg:flex-1">
         <div className={`flex-col gap-2 ${mobilePane === "detail" ? "hidden" : "flex"} lg:flex lg:min-h-0 lg:overflow-y-auto lg:pr-1`}>
       <div ref={mealPlanRef} tabIndex={-1} className="scroll-mt-6 outline-none">
       {tree.length === 0 ? (
@@ -553,17 +566,17 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         <div className="flex flex-col gap-2">
           {tree.map((meal, index) => (
             <div key={meal.meal} className={`overflow-hidden rounded-lg border ${meal.meal === selMeal ? "border-[#123c36]" : "border-neutral-300"}`}>
-              <div className="flex items-center gap-0.5 bg-[#eef4f1] px-2 py-1.5 text-[#0c5f4d]">
-                <span className="shrink-0">📁</span>
+              <div className="flex items-center gap-0.5 bg-[#eef4f1] px-1.5 py-1 text-[#0c5f4d]">
+                <span className="shrink-0 text-[13px]">📁</span>
                 <EditableTitle value={meal.meal} onCommit={(name) => renameMeal(meal.meal, name)} className="min-w-0 flex-1 rounded bg-transparent px-1 py-0.5 text-sm font-semibold text-[#0c5f4d] focus:bg-white focus:outline-none" />
-                <span className="shrink-0 px-1 text-[11px] opacity-70">{meal.dishes.length} món</span>
+                <span className="shrink-0 rounded bg-[#123c36] px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white" title="Tổng năng lượng của bữa">{fmtKcal(mealKcal(meal))}</span>
                 <button type="button" onClick={() => moveMeal(meal.meal, "up")} disabled={index === 0} title="Chuyển bữa lên" className="shrink-0 rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▲</button>
                 <button type="button" onClick={() => moveMeal(meal.meal, "down")} disabled={index === tree.length - 1} title="Chuyển bữa xuống" className="shrink-0 rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▼</button>
                 <button type="button" onClick={() => addDish(meal.meal)} title="Thêm món" className="shrink-0 rounded px-1 text-sm font-bold hover:bg-white/70">＋</button>
                 <button type="button" onClick={() => activateMedicationSearch(meal.meal)} title="Thuốc / TPBS" className="shrink-0 rounded px-1 text-sm hover:bg-white/70">💊</button>
                 <button type="button" onClick={() => deleteMeal(meal.meal)} title="Xóa bữa" className="shrink-0 rounded px-1 text-sm text-[#8a2323] hover:bg-white/70">✕</button>
               </div>
-              {meal.dishes.length === 0 ? <p className="bg-white px-3 py-2 pl-8 text-xs text-neutral-500">Chưa có món — bấm ＋ hoặc dùng thanh dưới.</p> : <div className="divide-y divide-neutral-100 bg-white">{meal.dishes.map((dish) => { const active = work?.meal === meal.meal && work.dish === dish.dish; return <button key={dish.dish} type="button" onClick={() => { setWork({ meal: meal.meal, dish: dish.dish }); setMobilePane("detail"); }} className={`flex w-full items-center gap-2 px-3 py-1.5 pl-8 text-left text-sm ${active ? "bg-[#dceee1] font-semibold text-[#123c36]" : "text-neutral-800 hover:bg-neutral-50"}`}><span>📄</span><span className="min-w-0 flex-1 truncate">{dish.dish}</span><span className="shrink-0 text-xs text-neutral-500">{dish.rows.length} TP</span></button>; })}</div>}
+              {meal.dishes.length === 0 ? <p className="bg-white px-2 py-1.5 pl-7 text-xs text-neutral-500">Chưa có món — bấm ＋ hoặc dùng thanh dưới.</p> : <div className="divide-y divide-neutral-100 bg-white">{meal.dishes.map((dish) => { const active = work?.meal === meal.meal && work.dish === dish.dish; return <button key={dish.dish} type="button" onClick={() => { setWork({ meal: meal.meal, dish: dish.dish }); setMobilePane("detail"); }} className={`flex w-full items-center gap-1.5 px-2 py-1 pl-7 text-left text-sm ${active ? "bg-[#dceee1] font-semibold text-[#123c36]" : "text-neutral-800 hover:bg-neutral-50"}`}><span className="shrink-0 text-[13px]">🍽️</span><span className="min-w-0 flex-1 truncate">{dish.dish}</span><span className="shrink-0 text-[11px] text-neutral-500">{dish.rows.length} TP</span><span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-900" title="Năng lượng của món">{Math.round(dishKcal(dish))}</span></button>; })}</div>}
             </div>
           ))}
         </div>
@@ -575,7 +588,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
           {selMealNode && selDishNode ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-neutral-600">📁 <b className="text-[#0c5f4d]">{selMealNode.meal}</b> › 📄 món đang mở</p>
-              <div className="overflow-hidden rounded-lg border-2 border-[#52786d] bg-white shadow-sm">
+              <div className="overflow-hidden rounded-lg border border-[#7f948d] bg-white shadow-sm">
                 <DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />
                 <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "before")} onUpdate={updateMedication} onDelete={deleteMedication} />
                 <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "after")} onUpdate={updateMedication} onDelete={deleteMedication} />
@@ -592,15 +605,12 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
       {/* Ô tìm kiếm ghim cố định dưới màn hình — theo yêu cầu người dùng, tránh
           phải cuộn lên xuống liên tục để thêm thực phẩm khi danh sách bữa/món
           đã dài. Bộ lọc gộp gọn, ẩn mặc định (bấm "Bộ lọc" mới hiện); danh sách
-          gợi ý mở NGƯỢC LÊN TRÊN (bottom-full) vì thanh này neo ở đáy màn hình.
-          Portal thẳng ra document.body: .clinical-panel (Calculator.tsx) có
-          animation kết thúc bằng transform: translateY(0) giữ nguyên
-          (animation-fill-mode: both) — dù là identity transform, nó vẫn tạo
-          containing block mới cho position:fixed, khiến thanh này bị "nhốt"
-          trong khung thay vì ghim theo viewport nếu không portal ra ngoài. */}
-      {portalReady && createPortal(
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-3">
-        <div className="pointer-events-auto relative w-full max-w-5xl rounded-2xl border border-neutral-300 bg-white px-3 py-2 shadow-xl">
+          gợi ý mở NGƯỢC LÊN TRÊN (bottom-full) để không che phần dưới. Thanh này
+          được GẮN TRONG LUỒNG ở đáy khu nhập (ngay trên nút "Sang kết quả") thay
+          vì cố định đè lên nội dung — nhờ vậy hai khung cây/chi tiết co lại vừa
+          đủ và không bao giờ bị thanh tìm kiếm che mất. */}
+      <div className="mt-1 shrink-0">
+        <div className="relative w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 shadow-md">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
             <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : searchKind === "dish" ? (dishTargetMeal ? <>Đang thêm món vào bữa: <b className="text-emerald-700">{dishTargetMeal}</b></> : "Món ăn sẽ được thêm vào một bữa mới.") : (work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa.")}</span>
             <div className="flex items-center gap-2">
@@ -718,27 +728,22 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
             </div>
           </div>
         </div>
-      </div>,
-      document.body)}
+      </div>
     </section>
   );
 }
 
 function ModeSelector({ mode, disabled, onChange }: { mode: RationMode; disabled: boolean; onChange: (mode: RationMode) => void }) {
   const isRecall = mode === "recall24h";
+  // Gọn thành segmented control 1 hàng để chừa tối đa chiều dọc cho 2 khung cây/chi tiết.
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-neutral-800">Chế độ nhập</h2>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <button disabled={disabled} onClick={() => onChange("recall24h")} aria-pressed={isRecall} className={`rounded-md border p-3 text-left text-sm disabled:cursor-wait disabled:opacity-60 ${isRecall ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-neutral-200 hover:border-emerald-300"}`}>
-          <span className="block font-semibold">Khẩu phần 24 giờ</span>
-          <span className="mt-1 block text-xs text-neutral-700">Nhập lượng đã ăn + hệ số đổi về sống sạch.</span>
-        </button>
-        <button disabled={disabled} onClick={() => onChange("menu")} aria-pressed={!isRecall} className={`rounded-md border p-3 text-left text-sm disabled:cursor-wait disabled:opacity-60 ${!isRecall ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-neutral-200 hover:border-emerald-300"}`}>
-          <span className="block font-semibold">Lập thực đơn</span>
-          <span className="mt-1 block text-xs text-neutral-700">Nhập trực tiếp lượng sống sạch.</span>
-        </button>
-      </div>
+    <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-neutral-300 bg-white p-0.5" role="group" aria-label="Chế độ nhập khẩu phần">
+      <button disabled={disabled} onClick={() => onChange("recall24h")} aria-pressed={isRecall} title="Khẩu phần 24 giờ: nhập lượng đã ăn + hệ số đổi về sống sạch" className={`rounded px-2.5 py-1.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-60 ${isRecall ? "bg-emerald-700 text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>
+        Khẩu phần 24h
+      </button>
+      <button disabled={disabled} onClick={() => onChange("menu")} aria-pressed={!isRecall} title="Lập thực đơn: nhập trực tiếp lượng sống sạch" className={`rounded px-2.5 py-1.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-60 ${!isRecall ? "bg-emerald-700 text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>
+        Lập thực đơn
+      </button>
     </div>
   );
 }
@@ -788,11 +793,11 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
 }) {
   const [open, setOpen] = useState(isWork);
   return <div>
-    <div className={`flex items-center gap-2 border-l-4 border-[#52786d] px-3 py-2 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
+    <div className={`flex items-center gap-1.5 border-l-4 border-[#52786d] px-2 py-1.5 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Thu gọn món" : "Mở món"} className="shrink-0 rounded px-1 text-sm font-bold text-[#0c5f4d] hover:bg-white/60">{open ? "▾" : "▸"}</button>
-      <span className="shrink-0 text-[11px] font-bold tracking-[0.12em] text-[#0c5f4d]">MÓN</span>
-      <button onClick={onSelect} className={`shrink-0 rounded px-2 py-1 text-xs font-semibold ${isWork ? "bg-[#123c36] text-white" : "border border-[#52786d] bg-white text-[#123c36]"}`}>{isWork ? "ĐANG NHẬP" : "CHỌN MÓN"}</button>
-      <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 flex-1 rounded border border-[#8ba39b] bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
+      <span className="shrink-0 text-base" aria-hidden="true">🍽️</span>
+      <button onClick={onSelect} className={`shrink-0 rounded px-2 py-0.5 text-[11px] font-semibold ${isWork ? "bg-[#123c36] text-white" : "border border-[#52786d] bg-white text-[#123c36]"}`}>{isWork ? "ĐANG NHẬP" : "CHỌN MÓN"}</button>
+      <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 flex-1 rounded border border-[#8ba39b] bg-white px-2 py-0.5 text-sm font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
       <button onClick={onDelete} className="shrink-0 rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>
     </div>
     {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía trên.</div> : open ? <div className="overflow-x-auto"><table className="w-full min-w-[920px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]"><colgroup><col className="w-[42%]"/><col className="w-[15%]"/><col className="w-[11%]"/><col className="w-[13%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-3 py-1.5 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-2 py-1.5 text-right font-semibold">Đã ăn</th><th className="px-2 py-1.5 text-right font-semibold">Hệ số về sống sạch</th><th className="px-2 py-1.5 text-right font-semibold">Sống sạch</th></> : <><th className="px-2 py-1.5 text-right font-semibold">Sống sạch</th><th className="px-2 py-1.5 text-right font-semibold">Mua / xuất kho</th><th className="px-2 py-1.5 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-1.5 font-semibold">Ghi chú</th><th className="px-2 py-1.5" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div> : <button type="button" onClick={() => setOpen(true)} className="w-full border-t border-[#8ba39b] px-4 py-2.5 text-left text-sm font-medium text-[#123c36] hover:bg-[#f0f6f2]">📂 {node.rows.length} thực phẩm — bấm để mở</button>}
