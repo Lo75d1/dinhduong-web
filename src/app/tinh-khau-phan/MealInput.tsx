@@ -74,6 +74,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   const [dishCategory, setDishCategory] = useState("");
   const [dishAge, setDishAge] = useState("");
   const [dishDisease, setDishDisease] = useState("");
+  const [dishTargetMeal, setDishTargetMeal] = useState("");
   const [filterOptions, setFilterOptions] = useState<{ sources: string[]; groups: string[] }>({ sources: [], groups: [] });
   const [dishFilterOptions, setDishFilterOptions] = useState<{ categories: string[]; ageGroups: string[]; diseaseGroups: string[] }>({ categories: [], ageGroups: [], diseaseGroups: [] });
   const [results, setResults] = useState<FoodResult[]>([]);
@@ -330,6 +331,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
     setQ("");
     setResults([]);
     setDishResults([]);
+    if (next === "dish") setDishTargetMeal(work?.meal ?? tree[0]?.meal ?? "");
   }
 
   function changeFoodType(nextType: FoodType) {
@@ -387,7 +389,9 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   }
 
   function pickDish(dish: DishResult) {
-    const meal = work?.meal ?? tree[0]?.meal ?? `Bữa ${tree.length + 1}`;
+    const meal = (dishTargetMeal && tree.some((item) => item.meal === dishTargetMeal))
+      ? dishTargetMeal
+      : (work?.meal ?? tree[0]?.meal ?? `Bữa ${tree.length + 1}`);
     const eligible = dish.ingredients.filter((ingredient) => ingredient.food);
     if (!eligible.length) { window.alert("Món này chưa liên kết được nguyên liệu nào với dữ liệu thực phẩm để tính dinh dưỡng."); return; }
     const dishName = dish.name;
@@ -592,13 +596,19 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-3">
         <div className="pointer-events-auto relative w-full max-w-5xl rounded-2xl border border-neutral-300 bg-white px-3 py-2 shadow-xl">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
-            <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : searchKind === "dish" ? (work ? <>Đang thêm món vào bữa: <b className="text-emerald-700">{work.meal}</b></> : "Chưa chọn bữa — món ăn sẽ thêm vào bữa đầu tiên (hoặc tạo bữa mới).") : (work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa.")}</span>
+            <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : searchKind === "dish" ? (dishTargetMeal ? <>Đang thêm món vào bữa: <b className="text-emerald-700">{dishTargetMeal}</b></> : "Món ăn sẽ được thêm vào một bữa mới.") : (work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa.")}</span>
             <div className="flex items-center gap-2">
               <button type="button" onClick={addMeal} title="Thêm bữa ăn" className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800 lg:hidden">+ Bữa</button>
               {(foodType || sourceFilter || groupFilter || dishCategory || dishAge || dishDisease || q) && <button type="button" onClick={clearSearchFilters} className="font-semibold text-[#123c36] underline underline-offset-2">Xóa lọc</button>}
               {searchKind !== "medication" && <button type="button" onClick={() => setFiltersOpen((current) => !current)} className="font-semibold text-[#123c36] underline underline-offset-2">{filtersOpen ? "Ẩn bộ lọc ▲" : "Bộ lọc ▾"}</button>}
             </div>
           </div>
+          {searchKind === "dish" && <div className="mb-2 flex items-center gap-2">
+            <span className="shrink-0 text-xs font-semibold text-neutral-700">Thêm món vào bữa:</span>
+            <select value={dishTargetMeal} onChange={(event) => setDishTargetMeal(event.target.value)} className="min-w-0 flex-1 rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm">
+              {tree.length === 0 ? <option value="">— Sẽ tạo bữa mới —</option> : tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}
+            </select>
+          </div>}
           {filtersOpen && <div className="mb-2 rounded-md border border-neutral-200 bg-neutral-50 p-2">
             {searchKind === "food" && <>
               <div className="flex flex-wrap items-center gap-1.5" aria-label="Lọc loại thực phẩm">
