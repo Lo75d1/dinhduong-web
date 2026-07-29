@@ -518,6 +518,10 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   }
 
   const [aiOpen, setAiOpen] = useState(false);
+  const [mobilePane, setMobilePane] = useState<"tree" | "detail">("tree");
+  const selMeal = work?.meal ?? tree[0]?.meal ?? "";
+  const selMealIndex = tree.findIndex((meal) => meal.meal === selMeal);
+  const selMealNode = selMealIndex >= 0 ? tree[selMealIndex] : undefined;
 
   return (
     <section className="flex min-h-screen flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
@@ -527,7 +531,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
       </div>
 
       <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-5">
-        <div className="flex flex-col gap-3 lg:sticky lg:top-4">
+        <div className={`flex-col gap-3 ${mobilePane === "detail" ? "hidden" : "flex"} lg:flex`}>
           <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
           {profileSlot}
           <div className="flex flex-col gap-2">
@@ -537,8 +541,6 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
             <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
           </div>
           <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
-        </div>
-        <div className="mt-4 min-w-0 lg:mt-0">
       {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
@@ -551,36 +553,25 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
       {tree.length === 0 ? (
         <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">Chưa có bữa ăn nào. Bấm “+ Thêm bữa ăn” để bắt đầu.</div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {tree.map((meal, index) => (
-            <MealBlock
-              key={meal.meal}
-              node={meal}
-              canMoveUp={index > 0}
-              canMoveDown={index < tree.length - 1}
-              onMoveUp={() => moveMeal(meal.meal, "up")}
-              onMoveDown={() => moveMeal(meal.meal, "down")}
-              mode={mode}
-              work={work}
-              medications={medRows.filter((med) => med.meal === meal.meal)}
-              onSelectDish={(dish) => setWork({ meal: meal.meal, dish })}
-              onRenameMeal={(name) => renameMeal(meal.meal, name)}
-              onDeleteMeal={() => deleteMeal(meal.meal)}
-              onAddDish={() => addDish(meal.meal)}
-              onAddMedication={() => activateMedicationSearch(meal.meal)}
-              onRenameDish={(oldDish, name) => renameDish(meal.meal, oldDish, name)}
-              onDeleteDish={(dish) => deleteDish(meal.meal, dish)}
-              onDeleteFoodRow={deleteFoodRow}
-              onUpdateQuantity={updateQuantity}
-              onUpdateNote={updateNote}
-              onUpdateMedication={updateMedication}
-              onDeleteMedication={deleteMedication}
-            />
+        <div className="flex flex-col gap-2">
+          {tree.map((meal) => (
+            <div key={meal.meal} className={`overflow-hidden rounded-lg border ${meal.meal === selMeal ? "border-[#123c36]" : "border-neutral-300"}`}>
+              <button type="button" onClick={() => { setWork({ meal: meal.meal, dish: meal.dishes[0]?.dish ?? UNASSIGNED_DISH }); setMobilePane("detail"); }} className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-semibold ${meal.meal === selMeal ? "bg-[#0c5f4d] text-white" : "bg-[#eef4f1] text-[#0c5f4d] hover:bg-[#e2eee8]"}`}><span>📁</span><span className="min-w-0 flex-1 truncate">{meal.meal}</span><span className="shrink-0 text-xs font-normal opacity-80">{meal.dishes.length} món</span></button>
+              {meal.dishes.length === 0 ? <p className="bg-white px-3 py-2 pl-8 text-xs text-neutral-500">Chưa có món — dùng thanh dưới hoặc “＋ Món”.</p> : <div className="divide-y divide-neutral-100 bg-white">{meal.dishes.map((dish) => { const active = work?.meal === meal.meal && work.dish === dish.dish; return <button key={dish.dish} type="button" onClick={() => { setWork({ meal: meal.meal, dish: dish.dish }); setMobilePane("detail"); }} className={`flex w-full items-center gap-2 px-3 py-1.5 pl-8 text-left text-sm ${active ? "bg-[#dceee1] font-semibold text-[#123c36]" : "text-neutral-800 hover:bg-neutral-50"}`}><span>📄</span><span className="min-w-0 flex-1 truncate">{dish.dish}</span><span className="shrink-0 text-xs text-neutral-500">{dish.rows.length} TP</span></button>; })}</div>}
+            </div>
           ))}
         </div>
       )}
       </div>
-      </div>
+        </div>
+        <div className={`min-w-0 ${mobilePane === "tree" ? "hidden" : "block"} lg:block`}>
+          <button type="button" onClick={() => setMobilePane("tree")} className="mb-3 inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] lg:hidden">‹ Danh sách bữa / món</button>
+          {selMealNode ? (
+            <MealBlock node={selMealNode} canMoveUp={selMealIndex > 0} canMoveDown={selMealIndex < tree.length - 1} onMoveUp={() => moveMeal(selMealNode.meal, "up")} onMoveDown={() => moveMeal(selMealNode.meal, "down")} mode={mode} work={work} medications={medRows.filter((med) => med.meal === selMealNode.meal)} onSelectDish={(dish) => setWork({ meal: selMealNode.meal, dish })} onRenameMeal={(name) => renameMeal(selMealNode.meal, name)} onDeleteMeal={() => deleteMeal(selMealNode.meal)} onAddDish={() => addDish(selMealNode.meal)} onAddMedication={() => activateMedicationSearch(selMealNode.meal)} onRenameDish={(oldDish, name) => renameDish(selMealNode.meal, oldDish, name)} onDeleteDish={(dish) => deleteDish(selMealNode.meal, dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} onUpdateMedication={updateMedication} onDeleteMedication={deleteMedication} />
+          ) : (
+            <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-10 text-center text-sm text-neutral-500">Chọn một bữa/món ở danh sách bên trái để xem và nhập thực phẩm.</div>
+          )}
+        </div>
       </div>
 
       {/* Ô tìm kiếm ghim cố định dưới màn hình — theo yêu cầu người dùng, tránh
@@ -781,6 +772,7 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
   node: DishNode; mode: RationMode; isWork: boolean; onSelect: () => void; onRename: (name: string) => void; onDelete: () => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void;
 }) {
   const [open, setOpen] = useState(isWork);
+  useEffect(() => { if (isWork) setOpen(true); }, [isWork]);
   return <div>
     <div className={`flex items-center gap-2 border-l-4 border-[#52786d] px-3 py-2 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Thu gọn món" : "Mở món"} className="shrink-0 rounded px-1 text-sm font-bold text-[#0c5f4d] hover:bg-white/60">{open ? "▾" : "▸"}</button>
