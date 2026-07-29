@@ -526,23 +526,16 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   const selDishNode = selMealNode?.dishes.find((dish) => dish.dish === selDish);
 
   return (
-    <section className="flex min-h-screen flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900">Nhập khẩu phần</h1>
-        <p className="mt-1 text-sm text-neutral-500">Lập bữa ăn, món ăn và thực phẩm trước khi phân tích.</p>
+    <section className="flex flex-col gap-2 pb-36" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
+      <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
+      <div className="flex flex-wrap items-center gap-2">
+        {profileSlot}
+        <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">{hydrated ? "+ Thêm bữa ăn" : "Đang tải..."}</button>
+        <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
+        <button type="button" onClick={() => setAiOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI: dán mô tả khẩu phần</button>
+        <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
       </div>
-
-      <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-5">
-        <div className={`flex-col gap-3 ${mobilePane === "detail" ? "hidden" : "flex"} lg:flex`}>
-          <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
-          {profileSlot}
-          <div className="flex flex-col gap-2">
-            <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">{hydrated ? "+ Thêm bữa ăn" : "Đang tải..."}</button>
-            <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
-            <button type="button" onClick={() => setAiOpen(true)} className="inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI: dán mô tả khẩu phần</button>
-            <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
-          </div>
-          <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
+      <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
       {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
@@ -551,6 +544,8 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
       </form>}
 
+      <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-4 lg:h-[calc(100vh-13rem)]">
+        <div className={`flex-col gap-2 ${mobilePane === "detail" ? "hidden" : "flex"} lg:flex lg:min-h-0 lg:overflow-y-auto lg:pr-1`}>
       <div ref={mealPlanRef} tabIndex={-1} className="scroll-mt-6 outline-none">
       {tree.length === 0 ? (
         <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">Chưa có bữa ăn nào. Bấm “+ Thêm bữa ăn” để bắt đầu.</div>
@@ -575,7 +570,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
       )}
       </div>
         </div>
-        <div className={`min-w-0 ${mobilePane === "tree" ? "hidden" : "block"} lg:block`}>
+        <div className={`min-w-0 ${mobilePane === "tree" ? "hidden" : "block"} lg:block lg:min-h-0 lg:overflow-y-auto`}>
           <button type="button" onClick={() => setMobilePane("tree")} className="mb-3 inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] lg:hidden">‹ Danh sách bữa / món</button>
           {selMealNode && selDishNode ? (
             <div className="flex flex-col gap-3">
