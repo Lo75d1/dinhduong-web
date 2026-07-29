@@ -522,23 +522,19 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         <p className="mt-1 text-sm text-neutral-500">Lập bữa ăn, món ăn và thực phẩm trước khi phân tích.</p>
       </div>
 
-      <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
-
-      <div className="flex flex-wrap items-center gap-2">
-        {profileSlot}
-        <button type="button" onClick={() => setAiOpen(true)} className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI: dán mô tả khẩu phần</button>
-      </div>
-      <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu">
-        <AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} />
-      </Modal>
-
-      <div className="flex flex-wrap gap-2">
-        <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">
-          {hydrated ? "+ Thêm bữa ăn" : "Đang tải..."}
-        </button>
-        <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
-        <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
-      </div>
+      <div className="lg:grid lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-5">
+        <div className="flex flex-col gap-3 lg:sticky lg:top-4">
+          <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
+          {profileSlot}
+          <div className="flex flex-col gap-2">
+            <button disabled={!hydrated} onClick={addMeal} className="rounded-md bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60">{hydrated ? "+ Thêm bữa ăn" : "Đang tải..."}</button>
+            <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
+            <button type="button" onClick={() => setAiOpen(true)} className="inline-flex items-center justify-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI: dán mô tả khẩu phần</button>
+            <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
+          </div>
+          <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
+        </div>
+        <div className="mt-4 min-w-0 lg:mt-0">
       {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
@@ -580,6 +576,8 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
         </div>
       )}
       </div>
+      </div>
+      </div>
 
       {/* Ô tìm kiếm ghim cố định dưới màn hình — theo yêu cầu người dùng, tránh
           phải cuộn lên xuống liên tục để thêm thực phẩm khi danh sách bữa/món
@@ -596,6 +594,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
             <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa."}</span>
             <div className="flex items-center gap-2">
+              <button type="button" onClick={addMeal} title="Thêm bữa ăn" className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800 lg:hidden">+ Bữa</button>
               {(foodType || sourceFilter || groupFilter || dishCategory || dishAge || dishDisease || q) && <button type="button" onClick={clearSearchFilters} className="font-semibold text-[#123c36] underline underline-offset-2">Xóa lọc</button>}
               {searchKind !== "medication" && <button type="button" onClick={() => setFiltersOpen((current) => !current)} className="font-semibold text-[#123c36] underline underline-offset-2">{filtersOpen ? "Ẩn bộ lọc ▲" : "Bộ lọc ▾"}</button>}
             </div>
@@ -772,7 +771,8 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
   node: DishNode; mode: RationMode; isWork: boolean; onSelect: () => void; onRename: (name: string) => void; onDelete: () => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void;
 }) {
   return <div>
-    <div className={`flex items-center gap-2 px-3 py-2 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
+    <div className={`flex items-center gap-2 border-l-4 border-[#52786d] px-3 py-2 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
+      <span className="shrink-0 text-[11px] font-bold tracking-[0.12em] text-[#0c5f4d]">MÓN</span>
       <button onClick={onSelect} className={`shrink-0 rounded px-2 py-1 text-xs font-semibold ${isWork ? "bg-[#123c36] text-white" : "border border-[#52786d] bg-white text-[#123c36]"}`}>{isWork ? "ĐANG NHẬP" : "CHỌN MÓN"}</button>
       <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 flex-1 rounded border border-[#8ba39b] bg-white px-2 py-1 text-base font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
       <button onClick={onDelete} className="shrink-0 rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>

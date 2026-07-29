@@ -83,7 +83,7 @@ function isPregnancy(physiology: Profile["physiology"]) {
 
 const round = (n: number) => Math.round(n * 10) / 10;
 
-export default function PersonalProfile({ onChange }: { onChange?: (p: Profile) => void }) {
+export default function PersonalProfile({ onChange, inline = false }: { onChange?: (p: Profile) => void; inline?: boolean }) {
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [open, setOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -143,17 +143,7 @@ export default function PersonalProfile({ onChange }: { onChange?: (p: Profile) 
   if (mifflin) summary = `✓ Ước tính cá nhân Mifflin ${mifflin.tdee} kcal/ngày · BMI ${round(bmi!)} (${bmiStatus(bmi!)})`;
   else if (isChild && hasBasics) summary = `✓ Trẻ em ${round(ageMonth)} tháng tuổi — xem biểu đồ tăng trưởng bên dưới`;
 
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title={summary}
-        className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]"
-      >
-        👤 Hồ sơ cá nhân{hasBasics ? " ✓" : ""}
-      </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Hồ sơ cá nhân">
+  const body = (
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Tuổi">
@@ -285,7 +275,29 @@ export default function PersonalProfile({ onChange }: { onChange?: (p: Profile) 
             </div>
           )}
         </div>
-      </Modal>
+  );
+
+  if (inline) {
+    return (
+      <div className="rounded-lg border-2 border-[#123c36] bg-white p-4 shadow-sm">
+        <p className="text-base font-semibold text-[#123c36]">👤 Hồ sơ cá nhân{hasBasics ? " ✓" : ""}</p>
+        <p className="mb-3 mt-0.5 text-xs text-neutral-600">{summary}</p>
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title={summary}
+        className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]"
+      >
+        👤 Hồ sơ cá nhân{hasBasics ? " ✓" : ""}
+      </button>
+      <Modal open={open} onClose={() => setOpen(false)} title="Hồ sơ cá nhân">{body}</Modal>
     </>
   );
 }
