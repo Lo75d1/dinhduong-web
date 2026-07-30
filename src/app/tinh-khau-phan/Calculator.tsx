@@ -64,11 +64,8 @@ export default function Calculator() {
       </button>
     </nav>
 
-    <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-6 lg:flex lg:h-[calc(100vh-10.5rem)] lg:flex-col lg:overflow-hidden lg:p-4" : "hidden"}>
-      <div className="shrink-0 border-b border-[#123c36] pb-2">
-        <h2 className="text-lg font-semibold text-neutral-950"><span className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 1 · </span>Nhập dữ liệu khẩu phần</h2>
-      </div>
-      <div className="mt-3 flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
+    <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-4 lg:flex lg:h-[calc(100vh-8.5rem)] lg:flex-col lg:overflow-hidden lg:p-3" : "hidden"}>
+      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
       <div className="mt-3 flex shrink-0 justify-end border-t-2 border-[#7f948d] pt-3"><button onClick={() => setActiveView("analysis")} className="rounded-md bg-[#123c36] px-5 py-2.5 font-semibold text-white">Sang kết quả &amp; phân tích →</button></div>
     </section>
 
