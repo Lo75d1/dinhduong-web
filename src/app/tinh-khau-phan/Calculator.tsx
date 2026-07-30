@@ -10,23 +10,22 @@ import RecommendationComparison from "./RecommendationComparison";
 import DietCodeComparison from "./DietCodeComparison";
 import RationDetail from "./RationDetail";
 import EnergyDistribution from "./EnergyDistribution";
-import ClinicalSummary from "./ClinicalSummary";
 import MicronutrientComparison from "./MicronutrientComparison";
 import ExchangeUnits from "./ExchangeUnits";
 import ReportActions from "./ReportActions";
 import Modal from "./Modal";
 import type { ReportMeta } from "./ReportActions";
 import ServerRationActions from "./ServerRationActions";
-import type { RationMode, Row } from "./types";
+import { mealOrder, type RationMode, type Row } from "./types";
 
 const round = (n: number) => Math.round(n * 10) / 10;
-const RESULT_GROUPS: [string, string][] = [["exchange", "Quy đổi thực đơn"], ["charts", "10 biểu đồ phân tích"]];
+const ADVANCED_GROUPS: [string, string][] = [["exchange", "Quy đổi thực đơn"], ["charts", "10 biểu đồ phân tích"]];
 
 export default function Calculator() {
   const [rows, setRows] = useState<Row[]>([]);
   const [rationMode, setRationMode] = useState<RationMode>("recall24h");
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [resultModal, setResultModal] = useState<string | null>(null);
+  const [openAdvanced, setOpenAdvanced] = useState<Record<string, boolean>>({});
   const [reviewOpen, setReviewOpen] = useState(false);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
@@ -85,20 +84,25 @@ export default function Calculator() {
       <NoteBox value={reportMeta.menuNote} onChange={setMenuNote} />
       {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-5 flex flex-col gap-5">
         <div className="clinical-card rounded-lg border-2 border-[#7f948d] bg-[#f7faf8] p-4" data-no-print>
-          <h3 className="font-semibold text-neutral-950">Xem thêm nhóm kết quả (mở popup)</h3>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">{RESULT_GROUPS.map(([key, label]) => <button key={key} type="button" onClick={() => setResultModal(key)} className="w-full rounded-md border-2 border-[#123c36] bg-white px-3 py-2.5 text-sm font-semibold text-[#123c36] hover:bg-emerald-50">{label}</button>)}</div>
-          <div className="mt-4 border-t-2 border-[#cdd9d3] pt-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#123c36]">Lưu phiếu &amp; xuất báo cáo</p>
-            <div className="mt-3 flex flex-col gap-3"><ServerRationActions rows={rows} profile={profile} /><ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} /></div>
-          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#123c36]">Lưu phiếu &amp; xuất báo cáo</p>
+          <div className="mt-3 flex flex-col gap-3"><ServerRationActions rows={rows} profile={profile} /><ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} /></div>
         </div>
-        <div className="flex flex-col gap-5"><section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-[#123c36]">Hồ sơ &amp; đối chiếu nhu cầu</h2><button type="button" data-no-print onClick={() => setActiveView("entry")} className="rounded-md border border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-white/70">✏️ Sửa hồ sơ</button></div><ProfileSummary profile={profile} /><div className="mt-4 flex flex-col gap-5">{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></div></section><ClinicalSummary rows={rows} totals={totals} profile={profile} /><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Tính trên 100 g phần ăn được (sống sạch); khối lượng mua xem ở bảng quy đổi.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /></div>
-        <Modal printable open={resultModal === "exchange"} onClose={() => setResultModal(null)} title="Quy đổi thực đơn" maxWidth="max-w-5xl">
-          <ExchangeUnits rows={rows} />
-        </Modal>
-        <Modal printable open={resultModal === "charts"} onClose={() => setResultModal(null)} title="10 biểu đồ phân tích" maxWidth="max-w-5xl">
-          <LegacyChartReport rows={rows} />
-        </Modal>
+        <div className="flex flex-col gap-5"><section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-[#123c36]">Hồ sơ &amp; đối chiếu nhu cầu</h2><button type="button" data-no-print onClick={() => setActiveView("entry")} className="rounded-md border border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-white/70">✏️ Sửa hồ sơ</button></div><ProfileSummary profile={profile} /><div className="mt-4 flex flex-col gap-5">{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></div></section><section className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><h2 className="mb-3 text-lg font-semibold text-neutral-950">Tổng dinh dưỡng theo từng bữa</h2><MealNutritionCards rows={rows} totalKcal={totals.energyKcal} /></section><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Tính trên 100 g phần ăn được (sống sạch); khối lượng mua xem ở bảng quy đổi.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /></div>
+        <div className="flex flex-col gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">Phân tích chuyên sâu (bấm để xem khi cần)</p>
+          {ADVANCED_GROUPS.map(([key, label]) => {
+            const isOpen = !!openAdvanced[key];
+            return (
+              <div key={key} className="overflow-hidden rounded-lg border-2 border-[#7f948d] bg-white">
+                <button type="button" data-no-print onClick={() => setOpenAdvanced((s) => ({ ...s, [key]: !s[key] }))} className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-[#123c36] hover:bg-emerald-50">
+                  <span>{label} <span className="ml-1 text-xs font-normal text-neutral-500">— chuyên sâu</span></span>
+                  <span className="shrink-0 text-base">{isOpen ? "▾" : "▸"}</span>
+                </button>
+                {isOpen && <div className="border-t-2 border-[#cdd9d3] p-4">{key === "exchange" ? <ExchangeUnits rows={rows} /> : <LegacyChartReport rows={rows} />}</div>}
+              </div>
+            );
+          })}
+        </div>
       </div>}
     </section>
   </div>;
@@ -109,6 +113,56 @@ export default function Calculator() {
 // dùng ở cả bước 1 và bước 2 nên luôn đồng bộ; bản in/Excel lấy từ state này.
 // Tóm tắt hồ sơ cá nhân (chỉ đọc) hiển thị ở đầu khu Kết quả — dữ liệu nhập/sửa
 // vẫn ở bước 1; ở đây chỉ trình bày lại cho dễ đối chiếu với khuyến nghị.
+// Tổng dinh dưỡng theo TỪNG bữa — thẻ gọn, nổi bật calo + thanh tỷ lệ P:L:G.
+const MEAL_MACROS: { key: string; label: string; color: string }[] = [
+  { key: "proteinG", label: "Đạm", color: "#2563eb" },
+  { key: "lipidG", label: "Béo", color: "#d97706" },
+  { key: "glucidG", label: "Bột đường", color: "#16a34a" },
+];
+
+function MealNutritionCards({ rows, totalKcal }: { rows: Row[]; totalKcal: number }) {
+  const order: string[] = [];
+  const map = new Map<string, Record<string, number>>();
+  for (const r of rows) {
+    if (!r.foodId) continue;
+    if (!map.has(r.meal)) { map.set(r.meal, {}); order.push(r.meal); }
+    const t = map.get(r.meal)!;
+    const f = r.grams / 100;
+    for (const k of ["energyKcal", "proteinG", "lipidG", "glucidG", "fiberG", "sodiumMg"]) {
+      const v = r.nutrients[k];
+      if (typeof v === "number" && Number.isFinite(v)) t[k] = (t[k] || 0) + v * f;
+    }
+  }
+  const meals = order.sort((a, b) => mealOrder(a) - mealOrder(b)).map((m) => ({ meal: m, t: map.get(m)! }));
+  if (meals.length === 0) return <p className="text-sm text-neutral-600">Chưa có bữa nào có thực phẩm.</p>;
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {meals.map(({ meal, t }) => {
+        const kcal = t.energyKcal || 0;
+        const energies = [(t.proteinG || 0) * 4, (t.lipidG || 0) * 9, (t.glucidG || 0) * 4];
+        const sumE = energies[0] + energies[1] + energies[2] || 1;
+        const dayPct = totalKcal > 0 ? Math.round((kcal / totalKcal) * 100) : 0;
+        return (
+          <div key={meal} className="rounded-xl border border-[#cdd9d3] bg-[#f9fdfb] p-3 shadow-sm">
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="min-w-0 truncate text-base font-bold text-[#123c36]">🍱 {meal}</h3>
+              <div className="shrink-0 text-right"><span className="text-2xl font-extrabold text-[#0c5f4d]">{round(kcal)}</span> <span className="text-xs text-neutral-600">kcal · {dayPct}%</span></div>
+            </div>
+            <div className="mt-2 flex h-2.5 overflow-hidden rounded-full bg-neutral-200" title="Tỷ lệ năng lượng Đạm : Béo : Bột đường">
+              {MEAL_MACROS.map((mm, i) => <div key={mm.key} style={{ width: `${(energies[i] / sumE) * 100}%`, background: mm.color }} />)}
+            </div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-800">
+              {MEAL_MACROS.map((mm) => <span key={mm.key} className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full" style={{ background: mm.color }} />{mm.label} <b className="text-neutral-950">{round(t[mm.key] || 0)}g</b></span>)}
+              {(t.fiberG || 0) > 0 && <span className="text-neutral-600">· Xơ {round(t.fiberG)}g</span>}
+              {(t.sodiumMg || 0) > 0 && <span className="text-neutral-600">· Natri {round(t.sodiumMg)}mg</span>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function ProfileSummary({ profile }: { profile: Profile | null }) {
   if (!profile) return <p className="mt-3 text-sm text-neutral-800">Chưa nhập hồ sơ cá nhân — bấm “✏️ Sửa hồ sơ” để nhập tuổi, giới, chiều cao, cân nặng (cần cho đối chiếu nhu cầu).</p>;
   const h = Number(profile.height), w = Number(profile.weight);
