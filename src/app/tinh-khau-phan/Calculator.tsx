@@ -27,6 +27,7 @@ export default function Calculator() {
   const [rationMode, setRationMode] = useState<RationMode>("recall24h");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [resultModal, setResultModal] = useState<string | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
@@ -65,8 +66,17 @@ export default function Calculator() {
     </nav>
 
     <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-4 lg:flex lg:h-[calc(100vh-8.5rem)] lg:flex-col lg:overflow-hidden lg:p-3" : "hidden"}>
-      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
-      <div className="mt-3 flex shrink-0 justify-end border-t-2 border-[#7f948d] pt-3"><button onClick={() => setActiveView("analysis")} className="rounded-md bg-[#123c36] px-5 py-2.5 font-semibold text-white">Sang kết quả &amp; phân tích →</button></div>
+      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} analysisSlot={<button onClick={() => (foodRows.length ? setReviewOpen(true) : setActiveView("analysis"))} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
+      <Modal open={reviewOpen} onClose={() => setReviewOpen(false)} title="Xem lại khẩu phần trước khi phân tích" maxWidth="max-w-4xl">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-neutral-700">Kiểm tra sơ đồ cây <b>Bữa → Món → Thực phẩm</b> kèm khối lượng. Nếu đúng, bấm xác nhận để sang bước phân tích.</p>
+          <RationDetail rows={rows} mode={rationMode} />
+          <div className="flex flex-wrap justify-end gap-2 border-t-2 border-[#7f948d] pt-3">
+            <button onClick={() => setReviewOpen(false)} className="rounded-md border border-[#123c36] bg-white px-4 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]">← Quay lại chỉnh</button>
+            <button onClick={() => { setReviewOpen(false); setActiveView("analysis"); }} className="rounded-md bg-[#123c36] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Xác nhận &amp; phân tích →</button>
+          </div>
+        </div>
+      </Modal>
     </section>
 
     <section className={activeView === "analysis" ? "clinical-panel min-w-0 rounded-xl border-2 border-[#7f948d] bg-white p-6" : "hidden"}>
@@ -82,7 +92,7 @@ export default function Calculator() {
             <div className="mt-3 flex flex-col gap-3"><ServerRationActions rows={rows} profile={profile} /><ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} /></div>
           </div>
         </div>
-        <div className="flex flex-col gap-5"><section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-[#123c36]">Hồ sơ &amp; đối chiếu nhu cầu</h2><button type="button" data-no-print onClick={() => setActiveView("entry")} className="rounded-md border border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-white/70">✏️ Sửa hồ sơ</button></div><ProfileSummary profile={profile} /><div className="mt-4 flex flex-col gap-5">{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></div></section><ClinicalSummary rows={rows} totals={totals} profile={profile} /><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Tính trên 100 g phần ăn được (sống sạch); khối lượng mua xem ở bảng quy đổi.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /><RationDetail rows={rows} mode={rationMode} /></div>
+        <div className="flex flex-col gap-5"><section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-4"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-[#123c36]">Hồ sơ &amp; đối chiếu nhu cầu</h2><button type="button" data-no-print onClick={() => setActiveView("entry")} className="rounded-md border border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-white/70">✏️ Sửa hồ sơ</button></div><ProfileSummary profile={profile} /><div className="mt-4 flex flex-col gap-5">{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></div></section><ClinicalSummary rows={rows} totals={totals} profile={profile} /><div className="rounded-lg border-2 border-[#7f948d] bg-white p-4"><div className="mb-3 flex items-baseline justify-between"><h2 className="text-lg font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h2><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div><p className="mt-3 text-sm text-neutral-800">Tính trên 100 g phần ăn được (sống sạch); khối lượng mua xem ở bảng quy đổi.</p></div><EnergyDistribution rows={rows} totals={totals} profile={profile} /></div>
         <Modal printable open={resultModal === "exchange"} onClose={() => setResultModal(null)} title="Quy đổi thực đơn" maxWidth="max-w-5xl">
           <ExchangeUnits rows={rows} />
         </Modal>

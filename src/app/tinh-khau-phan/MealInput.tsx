@@ -76,7 +76,7 @@ function fmtKcal(value: number): string {
   return `${Math.round(value)} kcal`;
 }
 
-export default function MealInput({ onRowsChange, onModeChange, profileSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; profileSlot?: ReactNode }) {
+export default function MealInput({ onRowsChange, onModeChange, profileSlot, analysisSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [mode, setMode] = useState<RationMode>("recall24h");
   const [hydrated, setHydrated] = useState(false);
@@ -113,6 +113,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
   const [medDose, setMedDose] = useState("");
   const [medDoseUnit, setMedDoseUnit] = useState("viên");
   const [medNote, setMedNote] = useState("");
+  const [medModalOpen, setMedModalOpen] = useState(false);
   const [dbMedRefs, setDbMedRefs] = useState<{ id: string; name: string; category: string | null; imageUrl?: string | null }[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mealPlanRef = useRef<HTMLDivElement | null>(null);
@@ -502,24 +503,21 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
     return searchable.includes(normalizedMedicationQuery);
   }).slice(0, 20);
 
+  // Thuốc/TPBS giờ có popup riêng (kiểu 2 khung như bữa/món/thực phẩm): chọn thuốc
+  // ở bên trái, thả/bấm vào vị trí (trước · riêng · sau) của từng bữa ở bên phải.
   function activateMedicationSearch(meal = "") {
     setMedTargetMeal(meal || work?.meal || tree[0]?.meal || "");
-    setMedTiming("after");
-    setMedDose("");
-    setMedDoseUnit("viên");
-    setMedNote("");
-    changeSearchKind("medication");
+    setMedModalOpen(true);
+  }
+
+  function placeMedication(meal: string, timing: MedicationTiming, name: string, dose: string, doseUnit: string, note: string) {
+    setMedRows((previous) => [...previous, makeMedicationRow(meal, name, timing, dose.trim(), doseUnit.trim(), note.trim())]);
   }
 
   function pickMedication(ref: { id: string; name: string; category: string | null }) {
-    if (!medTargetMeal) {
-      window.alert("Hãy chọn một bữa để đặt mốc thuốc/TPBS.");
-      return;
-    }
+    if (!medTargetMeal) { window.alert("Hãy chọn một bữa để đặt mốc thuốc/TPBS."); return; }
     setMedRows((previous) => [...previous, makeMedicationRow(medTargetMeal, ref.name, medTiming, medDose.trim(), medDoseUnit.trim(), medNote.trim())]);
-    setQ("");
-    setMedDose("");
-    setMedNote("");
+    setQ(""); setMedDose(""); setMedNote("");
   }
 
   function deleteMedication(uid: string) {
@@ -615,7 +613,6 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
             <div className="flex items-center gap-2">
               <button type="button" onClick={addMeal} title="Thêm bữa ăn" className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800 lg:hidden">+ Bữa</button>
               {(foodType || sourceFilter || groupFilter || dishCategory || dishAge || dishDisease || q) && <button type="button" onClick={clearSearchFilters} className="font-semibold text-[#123c36] underline underline-offset-2">Xóa lọc</button>}
-              {searchKind !== "medication" && <button type="button" onClick={() => setFiltersOpen((current) => !current)} className="font-semibold text-[#123c36] underline underline-offset-2">{filtersOpen ? "Ẩn bộ lọc ▲" : "Bộ lọc ▾"}</button>}
             </div>
           </div>
           {searchKind === "dish" && <div className="mb-2 flex items-center gap-2">
@@ -685,10 +682,10 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
             </div>
           </div>}
           <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center">
+            <button type="button" onClick={() => setFiltersOpen((current) => !current)} title="Bộ lọc tìm kiếm" className={`shrink-0 rounded-md border px-2.5 py-2 text-xs font-semibold ${filtersOpen ? "border-[#123c36] bg-[#123c36] text-white" : "border-neutral-300 bg-white text-[#123c36]"}`}>⚙ Bộ lọc</button>
             <div className="flex shrink-0 flex-wrap gap-1" role="tablist" aria-label="Nguồn thêm vào khẩu phần">
               <button type="button" role="tab" aria-selected={searchKind === "food"} onClick={() => changeSearchKind("food")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "food" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Thực phẩm</button>
               <button type="button" role="tab" aria-selected={searchKind === "dish"} onClick={() => changeSearchKind("dish")} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "dish" ? "bg-[#123c36] text-white" : "border border-neutral-300 bg-white text-neutral-900"}`}>Món ăn</button>
-              <button type="button" role="tab" aria-selected={searchKind === "medication"} onClick={() => activateMedicationSearch()} className={`rounded-md px-2.5 py-2 text-xs font-semibold ${searchKind === "medication" ? "bg-violet-700 text-white" : "border border-violet-300 bg-white text-violet-950"}`}>💊 Thuốc / TPBS</button>
             </div>
             <div className="w-full min-w-0 sm:flex-1">
               <label className="sr-only" htmlFor="food-search">{searchKind === "food" ? "Tìm thực phẩm" : searchKind === "dish" ? "Tìm món ăn" : "Tìm thuốc hoặc thực phẩm bổ sung"}</label>
@@ -725,10 +722,13 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot }: {
                 {filteredDbMedRefs.length === 20 && <p className="border-t border-violet-100 px-3 py-2 text-xs text-violet-900">20 kết quả đầu — gõ thêm để thu hẹp.</p>}
               </div>}
             </div>
+            <button type="button" onClick={() => activateMedicationSearch()} title="Thêm thuốc / TPBS theo bữa (mở bảng riêng)" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border-2 border-violet-500 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-100">💊 Thuốc</button>
             <button type="button" onClick={() => setAiOpen(true)} title="AI: dán mô tả khẩu phần để tự tách bữa / món / thực phẩm" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-xs font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI</button>
+            {analysisSlot}
           </div>
         </div>
       </div>
+      <MedicationModal open={medModalOpen} onClose={() => setMedModalOpen(false)} meals={tree.map((m) => m.meal)} initialMeal={medTargetMeal} medRefs={dbMedRefs} placed={medRows} onPlace={placeMedication} onDelete={deleteMedication} />
     </section>
   );
 }
@@ -772,6 +772,101 @@ function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, w
     <MedicationInMeal title="💊 Mốc thuốc / TPBS riêng — không kèm bữa" medications={standalone} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} standalone />
     <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={unspecified} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} warning />
   </section>;
+}
+
+function normalizeText(value: string) {
+  return value.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d");
+}
+
+// Popup Thuốc/TPBS — bố cục 2 khung như bữa/món/thực phẩm: bên trái chọn thuốc,
+// bên phải kéo-thả (hoặc bấm) vào đúng vị trí trước · riêng · sau của từng bữa.
+const MED_SLOTS: { timing: MedicationTiming; label: string; hint: string }[] = [
+  { timing: "before", label: "Trước bữa", hint: "uống trước khi ăn" },
+  { timing: "standalone", label: "Mốc riêng", hint: "cố định, không kèm bữa" },
+  { timing: "after", label: "Sau bữa", hint: "uống sau khi ăn" },
+];
+
+function MedicationModal({ open, onClose, meals, initialMeal, medRefs, placed, onPlace, onDelete }: {
+  open: boolean; onClose: () => void; meals: string[]; initialMeal: string;
+  medRefs: { id: string; name: string; category: string | null; imageUrl?: string | null }[];
+  placed: MedicationRow[];
+  onPlace: (meal: string, timing: MedicationTiming, name: string, dose: string, doseUnit: string, note: string) => void;
+  onDelete: (uid: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [held, setHeld] = useState<string | null>(null);
+  const [dose, setDose] = useState("");
+  const [doseUnit, setDoseUnit] = useState("viên");
+  const [note, setNote] = useState("");
+
+  const nq = normalizeText(q.trim());
+  const results = nq ? medRefs.filter((m) => normalizeText(m.name).includes(nq)).slice(0, 25) : medRefs.slice(0, 25);
+
+  function place(meal: string, timing: MedicationTiming) {
+    if (!held) { window.alert("Hãy chọn một thuốc / TPBS ở khung bên trái trước."); return; }
+    onPlace(meal, timing, held, dose, doseUnit, note);
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="💊 Thuốc / TPBS theo bữa ăn" maxWidth="max-w-5xl">
+      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
+        {/* KHUNG TRÁI: chọn thuốc + liều */}
+        <div className="flex flex-col gap-2 rounded-lg border border-violet-300 bg-violet-50/40 p-3">
+          <p className="text-sm font-semibold text-violet-900">1 · Chọn thuốc / TPBS</p>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm: metformin, vitamin D… (gõ không dấu được)" className="w-full rounded-md border border-violet-300 bg-white px-2 py-1.5 text-sm" />
+          <div className="max-h-48 overflow-auto rounded-md border border-violet-200 bg-white">
+            {results.length === 0 ? <p className="px-3 py-3 text-sm text-neutral-600">Không có thuốc / TPBS phù hợp trong danh mục.</p> : results.map((m) => (
+              <button key={m.id} type="button" onClick={() => setHeld(m.name)} className={`flex w-full items-center gap-2 border-b border-violet-100 px-3 py-1.5 text-left text-sm last:border-0 ${held === m.name ? "bg-violet-200 font-semibold text-violet-950" : "hover:bg-violet-50"}`}>
+                <span aria-hidden="true">💊</span><span className="min-w-0 flex-1 truncate">{m.name}</span>{m.category && <span className="shrink-0 text-xs text-violet-700">{m.category}</span>}
+              </button>
+            ))}
+          </div>
+          {held ? (
+            <div draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", held)} className="cursor-grab rounded-md border-2 border-violet-500 bg-white px-2 py-1.5 text-sm font-semibold text-violet-900 active:cursor-grabbing" title="Kéo thả sang vị trí bữa bên phải">
+              🖐️ Đang cầm: {held} <span className="font-normal text-neutral-600">— kéo sang phải hoặc bấm ô vị trí</span>
+            </div>
+          ) : <p className="text-xs text-neutral-600">Bấm chọn một thuốc để bắt đầu.</p>}
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs font-semibold text-violet-950">Liều<input value={dose} onChange={(e) => setDose(e.target.value)} placeholder="VD: 1; 500" className="mt-0.5 w-full rounded border border-violet-300 bg-white px-2 py-1 text-sm" /></label>
+            <label className="text-xs font-semibold text-violet-950">Đơn vị<input value={doseUnit} onChange={(e) => setDoseUnit(e.target.value)} placeholder="viên, ml…" className="mt-0.5 w-full rounded border border-violet-300 bg-white px-2 py-1 text-sm" /></label>
+          </div>
+          <label className="text-xs font-semibold text-violet-950">Ghi chú<input value={note} onChange={(e) => setNote(e.target.value)} placeholder="giờ dùng, cách dùng…" className="mt-0.5 w-full rounded border border-violet-300 bg-white px-2 py-1 text-sm" /></label>
+        </div>
+
+        {/* KHUNG PHẢI: các bữa + 3 vị trí */}
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold text-violet-900">2 · Kéo thả (hoặc bấm) vào vị trí của bữa</p>
+          {meals.length === 0 ? <p className="rounded-md border border-dashed border-neutral-300 px-3 py-6 text-center text-sm text-neutral-500">Chưa có bữa ăn nào. Thêm bữa trước rồi mở lại bảng này.</p> : (
+            <div className="flex flex-col gap-2">
+              {meals.map((meal) => (
+                <div key={meal} className={`rounded-lg border p-2 ${meal === initialMeal ? "border-violet-500 bg-violet-50/50" : "border-neutral-300 bg-white"}`}>
+                  <p className="mb-1 text-sm font-semibold text-[#123c36]">🍱 {meal}</p>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {MED_SLOTS.map((slot) => {
+                      const here = placed.filter((p) => p.meal === meal && p.timing === slot.timing);
+                      return (
+                        <div key={slot.timing} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); place(meal, slot.timing); }} onClick={() => place(meal, slot.timing)} className="cursor-pointer rounded-md border-2 border-dashed border-violet-300 bg-violet-50/40 p-2 hover:border-violet-500 hover:bg-violet-50">
+                          <p className="text-xs font-bold text-violet-900">{slot.label}</p>
+                          <p className="text-[11px] text-neutral-600">{slot.hint}</p>
+                          {here.map((med) => (
+                            <div key={med.uid} className="mt-1 flex items-center gap-1 rounded bg-white px-1.5 py-0.5 text-xs">
+                              <span className="min-w-0 flex-1 truncate font-semibold text-violet-950">💊 {med.name}{med.dose ? ` · ${med.dose}${med.doseUnit || ""}` : ""}</span>
+                              <button type="button" onClick={(e) => { e.stopPropagation(); onDelete(med.uid); }} className="shrink-0 text-violet-700 hover:text-violet-900" title="Xóa">✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-neutral-600">Thuốc / TPBS chỉ để theo dõi trình tự dùng theo bữa — không tính vào dinh dưỡng khẩu phần.</p>
+        </div>
+      </div>
+    </Modal>
+  );
 }
 
 function MedicationInMeal({ title, medications, onUpdate, onDelete, warning = false, standalone = false }: { title: string; medications: MedicationRow[]; onUpdate: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDelete: (uid: string) => void; warning?: boolean; standalone?: boolean }) {

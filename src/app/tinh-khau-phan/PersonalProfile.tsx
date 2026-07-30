@@ -230,6 +230,12 @@ export default function PersonalProfile({ onChange, inline = false }: { onChange
             </Field>
           </div>
 
+          <div className="rounded-md border border-[#123c36]/30 bg-[#f4f8f5] p-3">
+            <p className="text-sm font-semibold text-[#123c36]">🩺 Mã chế độ ăn bệnh lý (nếu có)</p>
+            <p className="mb-2 mt-0.5 text-xs text-neutral-600">Chọn để phần Kết quả đối chiếu khẩu phần với ngưỡng của chế độ ăn bệnh lý tương ứng.</p>
+            <DietCodePicker />
+          </div>
+
           {hasBasics && (
             <div className={isChild ? "" : "rounded-md bg-neutral-50 p-3 text-sm"}>
               {isChild ? (
@@ -280,7 +286,7 @@ export default function PersonalProfile({ onChange, inline = false }: { onChange
   if (inline) {
     return (
       <div className="rounded-lg border-2 border-[#123c36] bg-white p-4 shadow-sm">
-        <p className="text-base font-semibold text-[#123c36]">👤 Hồ sơ cá nhân{hasBasics ? " ✓" : ""}</p>
+        <p className="text-base font-semibold text-[#123c36]">📋 Thông tin để khuyến nghị{hasBasics ? " ✓" : ""}</p>
         <p className="mb-3 mt-0.5 text-xs text-neutral-600">{summary}</p>
         {body}
       </div>
@@ -293,11 +299,11 @@ export default function PersonalProfile({ onChange, inline = false }: { onChange
         type="button"
         onClick={() => setOpen(true)}
         title={summary}
-        className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]"
+        className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]"
       >
-        👤 Hồ sơ cá nhân{hasBasics ? " ✓" : ""}
+        📋 Thông tin để khuyến nghị{hasBasics ? " ✓" : ""}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Hồ sơ cá nhân">{body}</Modal>
+      <Modal open={open} onClose={() => setOpen(false)} title="Nhập thông tin để khuyến nghị">{body}</Modal>
     </>
   );
 }
@@ -307,6 +313,54 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <label className="mb-1 block text-xs text-neutral-500">{label}</label>
       {children}
+    </div>
+  );
+}
+
+// Chọn mã chế độ ăn bệnh lý ngay trong phần "Thông tin để khuyến nghị". Lưu vào
+// cùng localStorage key mà DietCodeComparison (ở bước Kết quả) đọc để đối chiếu.
+const DIET_LS_KEY = "khauphan_dietcode_v1";
+type DietCodeLite = { id: string; code: string; targetGroup: string; diseaseGroup: string; name: string };
+
+function DietCodePicker() {
+  const [codes, setCodes] = useState<DietCodeLite[]>([]);
+  const [target, setTarget] = useState("");
+  const [disease, setDisease] = useState("");
+  const [selectedId, setSelectedId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    try { return window.localStorage.getItem(DIET_LS_KEY) ?? ""; } catch { return ""; }
+  });
+
+  useEffect(() => {
+    fetch("/api/diet-codes").then((r) => r.json()).then((d) => setCodes(d.items ?? [])).catch(() => setCodes([]));
+  }, []);
+
+  useEffect(() => {
+    try { window.localStorage.setItem(DIET_LS_KEY, selectedId); } catch { /* localStorage bị chặn */ }
+  }, [selectedId]);
+
+  const targetLabel: Record<string, string> = { TreEm: "Trẻ em", NguoiLon: "Người lớn" };
+  const diseaseGroups = Array.from(new Set(codes.filter((c) => !target || c.targetGroup === target).map((c) => c.diseaseGroup))).sort();
+  const filtered = codes.filter((c) => (!target || c.targetGroup === target) && (!disease || c.diseaseGroup === disease));
+  const selected = codes.find((c) => c.id === selectedId);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-2 gap-2">
+        <select value={target} onChange={(e) => { setTarget(e.target.value); setDisease(""); }} className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm">
+          <option value="">Đối tượng: tất cả</option>
+          {Array.from(new Set(codes.map((c) => c.targetGroup))).map((t) => <option key={t} value={t}>{targetLabel[t] ?? t}</option>)}
+        </select>
+        <select value={disease} onChange={(e) => setDisease(e.target.value)} className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm">
+          <option value="">Nhóm bệnh: tất cả</option>
+          {diseaseGroups.map((d) => <option key={d} value={d}>{d}</option>)}
+        </select>
+      </div>
+      <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)} className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm">
+        <option value="">— Không chọn mã chế độ ăn —</option>
+        {filtered.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
+      </select>
+      {selected && <p className="text-xs text-neutral-700">Đã chọn: <b className="text-[#123c36]">{selected.code}</b> — {selected.name} ({targetLabel[selected.targetGroup] ?? selected.targetGroup} · {selected.diseaseGroup})</p>}
     </div>
   );
 }
