@@ -155,11 +155,6 @@ export default function ServerRationActions({ rows, profile }: { rows: Row[]; pr
     finally { setListBusy(false); }
   }
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null); setSavedList(null); setMessage("Đã đăng xuất.");
-  }
-
   const fmtDate = (value: string) => {
     try { return new Date(value).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
     catch { return value; }
@@ -171,7 +166,6 @@ export default function ServerRationActions({ rows, profile }: { rows: Row[]; pr
       <div className="flex flex-wrap items-center gap-2">
         <button onClick={save} disabled={busy || !rows.some((row) => row.foodId)} className="rounded-md bg-[#123c36] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">{busy ? "Đang xử lý..." : "Lưu lên server"}</button>
         <button onClick={openList} className="rounded-md border border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36]">📂 Đã lưu</button>
-        <span className="ml-auto flex items-center gap-2 text-sm text-neutral-800 sm:ml-1"><span className="max-w-[9rem] truncate font-semibold">👤 {user.displayName}</span><button onClick={logout} className="rounded-md border border-neutral-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-neutral-900">Đăng xuất</button></span>
       </div>
     </div> : <button onClick={() => { setMessage(""); setOpen(true); }} className="self-start rounded-md border border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36]">Đăng nhập để lưu phiếu lên server</button>}
     {message && <p className="text-sm font-medium text-neutral-900">{message}</p>}

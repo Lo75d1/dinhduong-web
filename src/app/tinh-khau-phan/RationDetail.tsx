@@ -114,10 +114,10 @@ export default function RationDetail({ rows, mode }: { rows: Row[]; mode: Ration
           </details>
         </div>
         <div className="mt-3 overflow-x-auto">
-          <table className="min-w-[1020px] w-full table-fixed text-sm">
+          <table className="min-w-[840px] w-full table-fixed text-sm">
             <thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-500">
               <tr>
-                <th className="w-[9%] px-2 py-2 font-medium">Bữa</th><th className="w-[16%] px-2 py-2 font-medium">Món</th><th className="w-[30%] px-2 py-2 font-medium">Thực phẩm</th>
+                <th className="w-[7%] px-2 py-2 font-medium">Bữa</th><th className="w-[12%] px-2 py-2 font-medium">Món</th><th className="w-[22%] px-2 py-2 font-medium">Thực phẩm</th>
                 <th className="px-2 py-2 text-right font-medium">{massLabel}</th><th className="px-2 py-2 text-right font-medium">Kcal</th>
                 {fields.map((field) => <th key={field.key} className="px-2 py-2 text-right font-medium">{field.label} ({field.unit})</th>)}
               </tr>
@@ -130,8 +130,8 @@ export default function RationDetail({ rows, mode }: { rows: Row[]; mode: Ration
                 const mealSpan = mergedCells.mealSpans.get(line.key);
                 const dishSpan = mergedCells.dishSpans.get(line.key);
                 return <tr key={line.key} className={style}>
-                  {mealSpan && <td rowSpan={mealSpan} className="align-top bg-[#edf4f0] px-2 py-3 font-semibold text-[#123c36]">{line.meal}</td>}
-                  {dishSpan && <td rowSpan={dishSpan} className="align-top bg-[#f8f4e8] px-2 py-3 font-semibold text-neutral-950">{line.dish || "(Chưa đặt món)"}</td>}
+                  {mealSpan && <td rowSpan={mealSpan} className="align-top break-words bg-[#edf4f0] px-2 py-1.5 font-semibold text-[#123c36]">{line.meal}</td>}
+                  {dishSpan && <td rowSpan={dishSpan} className="align-top break-words bg-[#f8f4e8] px-2 py-1.5 font-semibold text-neutral-950">{line.dish || "(Chưa đặt món)"}</td>}
                   <td className="px-2 py-2 font-medium">{line.foodName}</td>
                   <td className="px-2 py-2 text-right tabular-nums">{displayMass(line)}</td>
                   <td className="px-2 py-2 text-right tabular-nums">{formatValue(line.values.energyKcal, "kcal")}</td>
