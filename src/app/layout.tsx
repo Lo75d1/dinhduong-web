@@ -97,6 +97,8 @@ export default function RootLayout({
                 Tính khẩu phần
               </Link>
             </div>
+            {/* Chỗ để trang tự chèn thanh riêng (vd bước 1/2 của Tính khẩu phần) — ẩn khi rỗng. */}
+            <div id="header-page-slot" className="header-page-slot order-3 flex w-full min-w-0 justify-center sm:order-2 sm:w-auto sm:flex-1"></div>
             <div className="order-2 ml-auto sm:order-3">
               <AccountMenu />
             </div>

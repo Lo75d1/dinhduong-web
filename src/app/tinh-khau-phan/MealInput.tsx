@@ -76,7 +76,7 @@ function fmtKcal(value: number): string {
   return `${Math.round(value)} kcal`;
 }
 
-export default function MealInput({ onRowsChange, onModeChange, profileSlot, analysisSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode }) {
+export default function MealInput({ onRowsChange, onModeChange, profileSlot, analysisSlot, savedMenuSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode; savedMenuSlot?: ReactNode }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [mode, setMode] = useState<RationMode>("recall24h");
   const [hydrated, setHydrated] = useState(false);
@@ -541,6 +541,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot, ana
       <div className="flex flex-wrap items-center gap-2">
         <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
         {profileSlot}
+        {savedMenuSlot}
         <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
         <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
       </div>

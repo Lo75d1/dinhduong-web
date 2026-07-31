@@ -316,6 +316,7 @@ table th {
 /* Trang tính khẩu phần: ẩn cụm nút điều hướng (Tra cứu/Món ăn/Tri thức/Tính khẩu
    phần) để bước 1/2 làm thanh dẫn chính; các nút này vẫn còn ở trang chủ. */
 body.ration-focus .site-nav-links { display: none; }
+.header-page-slot:empty { display: none; }
 
 @media (min-width: 1024px) {
   body.ration-focus .site-topbar { display: none; }

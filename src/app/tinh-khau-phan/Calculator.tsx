@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ChangeEvent } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import LegacyChartReport from "./LegacyChartReport";
@@ -35,12 +36,16 @@ export default function Calculator() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [openAdvanced, setOpenAdvanced] = useState<Record<string, boolean>>({});
   const [profileOpen, setProfileOpen] = useState(false);
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
   // Focus mode (desktop): thu gọn header/tiêu đề để khu nhập chiếm gần trọn màn hình.
   useEffect(() => {
     document.body.classList.add("ration-focus");
+    // Đọc nút slot có sẵn trong header (do layout render) để portal thanh bước 1/2 vào.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHeaderSlot(document.getElementById("header-page-slot"));
     return () => document.body.classList.remove("ration-focus");
   }, []);
   const foodRows = rows.filter((r) => r.foodId);
@@ -63,17 +68,20 @@ export default function Calculator() {
       <div className="mt-2 flex flex-wrap items-center gap-3"><Link href="/huong-dan" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]">? Xem hướng dẫn</Link></div>
     </section>
 
-    <nav className="clinical-stepper flex w-full rounded-xl border-2 border-[#7f948d] bg-white p-1.5" aria-label="Các bước tính khẩu phần">
-      <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-lg px-4 py-3 text-left font-semibold ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-900 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
-        <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-current text-sm">1</span>Nhập khẩu phần <span className="ml-2 hidden text-sm font-normal sm:inline">Hồ sơ, bữa ăn, món và thực phẩm</span>
-      </button>
-      <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-lg px-4 py-3 text-left font-semibold ${activeView === "analysis" ? "bg-[#123c36] text-white" : "text-neutral-900 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
-        <span className="mr-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-current text-sm">2</span>Kết quả &amp; phân tích <span className="ml-2 hidden text-sm font-normal sm:inline">{foodRows.length ? `${foodRows.length} thực phẩm đã nhập` : "Chưa có dữ liệu"}</span>
-      </button>
-    </nav>
+    {headerSlot && createPortal(
+      <nav className="clinical-stepper flex items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-0.5" aria-label="Các bước tính khẩu phần">
+        <button onClick={() => setActiveView("entry")} className={`clinical-step rounded-md px-3 py-1.5 text-sm font-semibold ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
+          <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập khẩu phần
+        </button>
+        <button onClick={() => setActiveView("analysis")} className={`clinical-step rounded-md px-3 py-1.5 text-sm font-semibold ${activeView === "analysis" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
+          <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-current text-xs">2</span>Kết quả{foodRows.length ? ` · ${foodRows.length} TP` : ""}
+        </button>
+      </nav>,
+      headerSlot
+    )}
 
-    <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-4 lg:flex lg:h-[calc(100vh-8.5rem)] lg:flex-col lg:overflow-hidden lg:p-3" : "hidden"}>
-      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
+    <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-4 lg:flex lg:h-[calc(100vh-6rem)] lg:flex-col lg:overflow-hidden lg:p-3" : "hidden"}>
+      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
     </section>
 
     <section className={activeView === "analysis" ? "clinical-panel min-w-0 rounded-xl border-2 border-[#7f948d] bg-white p-6" : "hidden"}>

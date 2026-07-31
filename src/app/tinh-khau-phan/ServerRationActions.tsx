@@ -41,7 +41,7 @@ const num = (value: unknown, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-export default function ServerRationActions({ rows, profile }: { rows: Row[]; profile: Profile | null }) {
+export default function ServerRationActions({ rows, profile, variant = "full" }: { rows: Row[]; profile: Profile | null; variant?: "full" | "load" }) {
   const [user, setUser] = useState<User | null>(null);
   const [open, setOpen] = useState(false);
   const [creatingFirstAccount, setCreatingFirstAccount] = useState(false);
@@ -160,15 +160,19 @@ export default function ServerRationActions({ rows, profile }: { rows: Row[]; pr
     catch { return value; }
   };
 
-  return <div className="flex flex-col gap-2">
-    {user ? <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
-      <label className="min-w-0 flex-1 text-sm font-semibold text-neutral-900 sm:max-w-xs">Tên phiếu<input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} className="mt-1 w-full rounded-md border border-neutral-400 px-3 py-2 text-sm font-normal" /></label>
-      <div className="flex flex-wrap items-center gap-2">
-        <button onClick={save} disabled={busy || !rows.some((row) => row.foodId)} className="rounded-md bg-[#123c36] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">{busy ? "Đang xử lý..." : "Lưu lên server"}</button>
-        <button onClick={openList} className="rounded-md border border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36]">📂 Đã lưu</button>
-      </div>
-    </div> : <button onClick={() => { setMessage(""); setOpen(true); }} className="self-start rounded-md border border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36]">Đăng nhập để lưu phiếu lên server</button>}
-    {message && <p className="text-sm font-medium text-neutral-900">{message}</p>}
+  return <div className={variant === "load" ? "contents" : "flex flex-col gap-2"}>
+    {user ? (
+      variant === "load"
+        ? <button onClick={openList} className="rounded-md border border-emerald-700 bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">📂 Thực đơn đã lưu</button>
+        : <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+            <label className="min-w-0 flex-1 text-sm font-semibold text-neutral-900 sm:max-w-xs">Tên phiếu<input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} className="mt-1 w-full rounded-md border border-neutral-400 px-3 py-2 text-sm font-normal" /></label>
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={save} disabled={busy || !rows.some((row) => row.foodId)} className="rounded-md bg-[#123c36] px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">{busy ? "Đang xử lý..." : "Lưu lên server"}</button>
+              <button onClick={openList} className="rounded-md border border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36]">📂 Đã lưu</button>
+            </div>
+          </div>
+    ) : <button onClick={() => { setMessage(""); setOpen(true); }} className={variant === "load" ? "rounded-md border border-emerald-700 bg-white px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50" : "self-start rounded-md border border-[#123c36] bg-white px-3 py-2 text-sm font-semibold text-[#123c36]"}>{variant === "load" ? "📂 Mở thực đơn đã lưu" : "Đăng nhập để lưu phiếu lên server"}</button>}
+    {message && variant !== "load" && <p className="text-sm font-medium text-neutral-900">{message}</p>}
 
     {open && <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><form onSubmit={submitAuth} className="w-full max-w-md rounded-xl border-2 border-[#123c36] bg-white p-5 shadow-xl"><div className="flex items-center justify-between gap-3"><h2 className="text-xl font-semibold text-neutral-950">{creatingFirstAccount ? "Tạo tài khoản quản trị đầu tiên" : "Đăng nhập"}</h2><button type="button" onClick={() => setOpen(false)} className="text-lg text-neutral-900" aria-label="Đóng">×</button></div><p className="mt-2 text-sm text-neutral-800">Mỗi bác sĩ chỉ thấy các khẩu phần do chính mình lưu.</p>{creatingFirstAccount && <label className="mt-3 block text-sm font-semibold text-neutral-900">Họ tên<input required value={displayName} onChange={(e) => setDisplayName(e.target.value)} className="mt-1 w-full rounded-md border border-neutral-500 px-3 py-2" /></label>}<label className="mt-3 block text-sm font-semibold text-neutral-900">Email<input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-md border border-neutral-500 px-3 py-2" /></label><label className="mt-3 block text-sm font-semibold text-neutral-900">Mật khẩu<input required type="password" minLength={10} value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full rounded-md border border-neutral-500 px-3 py-2" /></label>{message && <p className="mt-3 text-sm font-medium text-red-800">{message}</p>}<button disabled={busy} className="mt-4 w-full rounded-md bg-[#123c36] px-3 py-2 font-semibold text-white disabled:opacity-60">{busy ? "Đang xử lý..." : creatingFirstAccount ? "Tạo tài khoản" : "Đăng nhập"}</button><button type="button" onClick={() => { setCreatingFirstAccount((value) => !value); setMessage(""); }} className="mt-3 w-full text-sm font-semibold text-[#123c36]">{creatingFirstAccount ? "Đã có tài khoản? Đăng nhập" : "Lần đầu sử dụng? Tạo tài khoản quản trị"}</button></form></div>}
 
