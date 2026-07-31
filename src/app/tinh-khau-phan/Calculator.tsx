@@ -20,11 +20,21 @@ import { buildTree, mealOrder, type DishNode, type RationMode, type Row } from "
 const round = (n: number) => Math.round(n * 10) / 10;
 const ADVANCED_GROUPS: [string, string][] = [["charts", "10 biểu đồ phân tích"]];
 
+// Nhóm khuyến nghị suy ra từ hồ sơ: mang thai/cho bú > trẻ em (≤18 tuổi) > người lớn.
+function profileGroup(profile: Profile | null): "adult" | "child" | "special" | "" {
+  if (!profile) return "";
+  if (profile.physiology && profile.physiology !== "normal") return "special";
+  const ageMonth = profile.ageUnit === "thang" ? Number(profile.age) : Number(profile.age) * 12;
+  if (ageMonth > 0 && ageMonth <= 228) return "child";
+  return "adult";
+}
+
 export default function Calculator() {
   const [rows, setRows] = useState<Row[]>([]);
   const [rationMode, setRationMode] = useState<RationMode>("recall24h");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [openAdvanced, setOpenAdvanced] = useState<Record<string, boolean>>({});
+  const [profileOpen, setProfileOpen] = useState(false);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
@@ -76,10 +86,22 @@ export default function Calculator() {
         </div>
         {/* 1 · Hồ sơ ↔ Khuyến nghị — 2 khung, ghim hồ sơ bên trái */}
         <section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-4">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-[#123c36]">1 · Hồ sơ &amp; khuyến nghị dinh dưỡng</h2><button type="button" data-no-print onClick={() => setActiveView("entry")} className="rounded-md border border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-white/70">✏️ Sửa hồ sơ</button></div>
+          <h2 className="mb-3 text-lg font-semibold text-[#123c36]">1 · Hồ sơ &amp; khuyến nghị dinh dưỡng</h2>
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
-            <div className="flex flex-col gap-4 lg:sticky lg:top-2">
-              <div className="rounded-lg border border-[#123c36]/30 bg-white p-3"><h3 className="mb-1 text-sm font-bold text-[#123c36]">Hồ sơ người dùng</h3><ProfileSummary profile={profile} /></div>
+            <div className="flex flex-col gap-4 lg:sticky lg:top-2" data-no-print>
+              <div className="rounded-lg border border-[#123c36]/30 bg-white p-3">
+                <h3 className="mb-2 text-sm font-bold text-[#123c36]">Nhóm để nhận khuyến nghị</h3>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([["adult", "🧑 Người lớn"], ["child", "🧒 Trẻ em"], ["special", "🤰 Mang thai / cho bú"]] as const).map(([key, label]) => (
+                    <button key={key} type="button" onClick={() => setProfileOpen(true)} aria-pressed={profileGroup(profile) === key} className={`rounded-md border px-2 py-1.5 text-center text-xs font-semibold ${profileGroup(profile) === key ? "border-[#0c5f4d] bg-[#0c5f4d] text-white" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"}`}>{label}</button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[11px] text-neutral-500">Bấm để nhập/sửa thông tin — hệ thống tự đối chiếu khuyến nghị theo nhóm.</p>
+              </div>
+              <div className="rounded-lg border border-[#123c36]/30 bg-white p-3">
+                <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-[#123c36]">Hồ sơ người dùng</h3><PersonalProfile onChange={setProfile} open={profileOpen} onOpenChange={setProfileOpen} /></div>
+                <ProfileSummary profile={profile} />
+              </div>
               <DietCodeComparison totals={totals} />
             </div>
             <div className="mt-4 flex flex-col gap-5 lg:mt-0">

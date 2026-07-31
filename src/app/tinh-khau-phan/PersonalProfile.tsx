@@ -83,9 +83,11 @@ function isPregnancy(physiology: Profile["physiology"]) {
 
 const round = (n: number) => Math.round(n * 10) / 10;
 
-export default function PersonalProfile({ onChange, inline = false }: { onChange?: (p: Profile) => void; inline?: boolean }) {
+export default function PersonalProfile({ onChange, inline = false, open: openProp, onOpenChange }: { onChange?: (p: Profile) => void; inline?: boolean; open?: boolean; onOpenChange?: (value: boolean) => void }) {
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChange ?? setOpenState;
   const [hydrated, setHydrated] = useState(false);
   const [growthEntries, setGrowthEntries] = useState<WhoGrowthEntry[]>([]);
 
@@ -111,8 +113,19 @@ export default function PersonalProfile({ onChange, inline = false }: { onChange
       // đầy/khóa localStorage — không chặn UI
     }
     onChange?.(profile);
+    // Đồng bộ giữa các instance hồ sơ (bước 1 và bước 2) trong cùng tab.
+    window.dispatchEvent(new CustomEvent("khauphan:profile", { detail: profile }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, hydrated]);
+
+  useEffect(() => {
+    function onExternal(event: Event) {
+      const detail = (event as CustomEvent).detail as Profile;
+      setProfile((current) => (JSON.stringify(current) === JSON.stringify(detail) ? current : { ...DEFAULT_PROFILE, ...detail }));
+    }
+    window.addEventListener("khauphan:profile", onExternal);
+    return () => window.removeEventListener("khauphan:profile", onExternal);
+  }, []);
 
   useEffect(() => {
     // DB lưu giới tính không dấu ("Nu"), profile lưu có dấu ("Nữ") — quy đổi khi gọi API

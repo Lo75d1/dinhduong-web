@@ -71,7 +71,7 @@ export default function RootLayout({
                 </span>
               </span>
             </Link>
-            <div className="order-3 flex w-full flex-wrap items-center gap-2 text-sm font-semibold sm:order-2 sm:w-auto">
+            <div className="site-nav-links order-3 flex w-full flex-wrap items-center gap-2 text-sm font-semibold sm:order-2 sm:w-auto">
               <Link
                 href="/thuc-pham"
                 className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"

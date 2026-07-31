@@ -313,6 +313,10 @@ table th {
 
 /* Focus mode cho trang tính khẩu phần (chỉ desktop): thu gọn chrome để 2 khung
    nhập (cây bữa/món · chi tiết thực phẩm) chiếm gần trọn màn hình như VSCode. */
+/* Trang tính khẩu phần: ẩn cụm nút điều hướng (Tra cứu/Món ăn/Tri thức/Tính khẩu
+   phần) để bước 1/2 làm thanh dẫn chính; các nút này vẫn còn ở trang chủ. */
+body.ration-focus .site-nav-links { display: none; }
+
 @media (min-width: 1024px) {
   body.ration-focus .site-topbar { display: none; }
   body.ration-focus .hospital-main { padding-top: 0.5rem; padding-bottom: 0.25rem; max-width: none; }
