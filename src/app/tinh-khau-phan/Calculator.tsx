@@ -18,7 +18,7 @@ import ServerRationActions from "./ServerRationActions";
 import { buildTree, mealOrder, type DishNode, type RationMode, type Row } from "./types";
 
 const round = (n: number) => Math.round(n * 10) / 10;
-const ADVANCED_GROUPS: [string, string][] = [["exchange", "Quy đổi thực đơn"], ["charts", "10 biểu đồ phân tích"]];
+const ADVANCED_GROUPS: [string, string][] = [["charts", "10 biểu đồ phân tích"]];
 
 export default function Calculator() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -77,29 +77,35 @@ export default function Calculator() {
         {/* 1 · Hồ sơ ↔ Khuyến nghị — 2 khung, ghim hồ sơ bên trái */}
         <section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-[#123c36]">1 · Hồ sơ &amp; khuyến nghị dinh dưỡng</h2><button type="button" data-no-print onClick={() => setActiveView("entry")} className="rounded-md border border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-white/70">✏️ Sửa hồ sơ</button></div>
-          <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start lg:gap-4">
-            <div className="lg:sticky lg:top-2"><div className="rounded-lg border border-[#123c36]/30 bg-white p-3"><h3 className="mb-1 text-sm font-bold text-[#123c36]">Hồ sơ người dùng</h3><ProfileSummary profile={profile} /></div></div>
-            <div className="mt-4 flex flex-col gap-5 lg:mt-0">{profile && <RecommendationComparison profile={profile} totals={totals} />}<MicronutrientComparison rows={rows} profile={profile} /><DietCodeComparison totals={totals} /></div>
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
+            <div className="flex flex-col gap-4 lg:sticky lg:top-2">
+              <div className="rounded-lg border border-[#123c36]/30 bg-white p-3"><h3 className="mb-1 text-sm font-bold text-[#123c36]">Hồ sơ người dùng</h3><ProfileSummary profile={profile} /></div>
+              <DietCodeComparison totals={totals} />
+            </div>
+            <div className="mt-4 flex flex-col gap-5 lg:mt-0">
+              <DayTotalCard totals={totals} foodCount={foodRows.length} totalGrams={totalGrams} />
+              {profile && <RecommendationComparison profile={profile} totals={totals} />}
+              <MicronutrientComparison rows={rows} profile={profile} />
+            </div>
           </div>
         </section>
 
         {/* 2 · Khẩu phần ↔ Biểu đồ/bảng — 2 khung, ghim bữa+ghi chú bên trái */}
         <section className="rounded-lg border-2 border-[#7f948d] bg-white p-4">
           <h2 className="mb-3 text-lg font-semibold text-neutral-950">2 · Khẩu phần &amp; phân tích</h2>
-          <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start lg:gap-4">
+          <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
             <div className="flex flex-col gap-3 lg:sticky lg:top-2"><MealDishOverview rows={rows} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
             <div className="mt-4 flex flex-col gap-5 lg:mt-0">
               <div><h3 className="mb-2 text-base font-semibold text-neutral-950">Tổng dinh dưỡng theo từng bữa</h3><MealNutritionCards rows={rows} totalKcal={totals.energyKcal} /></div>
-              <div className="rounded-lg border border-[#cdd9d3] bg-white p-4"><div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-base font-semibold text-neutral-950">Tổng dinh dưỡng (tất cả bữa)</h3><span className="text-sm text-neutral-800">{foodRows.length} thực phẩm · {round(totalGrams)} g sống sạch</span></div><div className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2 text-sm"><span className="text-neutral-800">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div></div>
               <EnergyDistribution rows={rows} totals={totals} profile={profile} />
+              <div className="rounded-lg border border-[#7f948d] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">Quy đổi thực đơn <span className="text-sm font-normal text-neutral-600">(sống sạch → mua / xuất kho)</span></h3><ExchangeUnits rows={rows} /></div>
               <div className="flex flex-col gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">Biểu đồ &amp; bảng chuyên sâu (bấm để xem)</p>
                 {ADVANCED_GROUPS.map(([key, label]) => {
                   const isOpen = !!openAdvanced[key];
                   return (
                     <div key={key} className="overflow-hidden rounded-lg border border-[#7f948d] bg-white">
-                      <button type="button" data-no-print onClick={() => setOpenAdvanced((s) => ({ ...s, [key]: !s[key] }))} className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-semibold text-[#123c36] hover:bg-emerald-50"><span>{label}</span><span className="shrink-0 text-base">{isOpen ? "▾" : "▸"}</span></button>
-                      {isOpen && <div className="border-t border-[#cdd9d3] p-4">{key === "exchange" ? <ExchangeUnits rows={rows} /> : <LegacyChartReport rows={rows} />}</div>}
+                      <button type="button" data-no-print onClick={() => setOpenAdvanced((s) => ({ ...s, [key]: !s[key] }))} className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-semibold text-[#123c36] hover:bg-emerald-50"><span>{label} <span className="ml-1 text-xs font-normal text-neutral-500">— chuyên sâu</span></span><span className="shrink-0 text-base">{isOpen ? "▾" : "▸"}</span></button>
+                      {isOpen && <div className="border-t border-[#cdd9d3] p-4"><LegacyChartReport rows={rows} /></div>}
                     </div>
                   );
                 })}
@@ -159,6 +165,32 @@ const MEAL_MACROS: { key: string; label: string; color: string }[] = [
   { key: "lipidG", label: "Béo", color: "#d97706" },
   { key: "glucidG", label: "Bột đường", color: "#16a34a" },
 ];
+
+// "Đã ăn cả ngày" — đặt ngay trên bảng khuyến nghị để kẹp so sánh (ăn vào ↔ nhu cầu).
+function DayTotalCard({ totals, foodCount, totalGrams }: { totals: Record<string, number>; foodCount: number; totalGrams: number }) {
+  const kcal = totals.energyKcal || 0;
+  const energies = [(totals.proteinG || 0) * 4, (totals.lipidG || 0) * 9, (totals.glucidG || 0) * 4];
+  const sumE = energies[0] + energies[1] + energies[2] || 1;
+  return (
+    <div className="rounded-lg border-2 border-[#0c5f4d] bg-[#f4fbf7] p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-base font-bold text-[#123c36]">🍽️ Đã ăn cả ngày</h3>
+        <span className="text-xs text-neutral-700">{foodCount} thực phẩm · {round(totalGrams)} g sống sạch</span>
+      </div>
+      <div className="mt-1 flex items-end gap-2"><span className="text-3xl font-extrabold leading-none text-[#0c5f4d]">{round(kcal)}</span><span className="pb-0.5 text-sm text-neutral-600">kcal / ngày</span></div>
+      <div className="mt-2 flex h-2.5 overflow-hidden rounded-full bg-neutral-200" title="Tỷ lệ năng lượng Đạm : Béo : Bột đường">
+        {MEAL_MACROS.map((mm, i) => <div key={mm.key} style={{ width: `${(energies[i] / sumE) * 100}%`, background: mm.color }} />)}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-800">
+        {MEAL_MACROS.map((mm) => <span key={mm.key} className="inline-flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full" style={{ background: mm.color }} />{mm.label} <b className="text-neutral-950">{round(totals[mm.key] || 0)}g</b></span>)}
+      </div>
+      <details className="mt-3 border-t border-[#cdd9d3] pt-2">
+        <summary className="cursor-pointer text-sm font-semibold text-[#123c36]">Xem tất cả {CORE_CALC_FIELDS.length} chất</summary>
+        <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2"><span className="text-neutral-700">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div>
+      </details>
+    </div>
+  );
+}
 
 function MealNutritionCards({ rows, totalKcal }: { rows: Row[]; totalKcal: number }) {
   const order: string[] = [];
