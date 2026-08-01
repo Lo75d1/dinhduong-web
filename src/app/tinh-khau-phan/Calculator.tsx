@@ -6,7 +6,7 @@ import Link from "next/link";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import LegacyChartReport from "./LegacyChartReport";
 import MealInput from "./MealInput";
-import PersonalProfile, { type Profile } from "./PersonalProfile";
+import PersonalProfile, { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
 import RecommendationComparison from "./RecommendationComparison";
 import DietCodeComparison from "./DietCodeComparison";
 import RationDetail from "./RationDetail";
@@ -56,6 +56,25 @@ export default function Calculator() {
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
+  // Bấm nút nhóm (Người lớn/Trẻ em/Mang thai) sẽ đặt SẴN đúng tình trạng vào hồ sơ
+  // rồi mới mở modal — để "🤰 Mang thai / cho bú" hiện ngay ô tuần thai + badge +kcal.
+  function applyProfileMode(mode: "adult" | "child" | "special") {
+    const base = profile ?? DEFAULT_PROFILE;
+    let next: Profile = base;
+    if (mode === "special") {
+      const alreadySpecial = base.physiology.startsWith("pregnant_") || base.physiology.startsWith("lactating_");
+      next = { ...base, gender: "Nữ", physiology: alreadySpecial ? base.physiology : "pregnant_1" };
+    } else if (mode === "adult") {
+      next = { ...base, physiology: "normal" };
+    }
+    if (next !== base) {
+      try { localStorage.setItem("khauphan_profile_v1", JSON.stringify(next)); } catch { /* localStorage bị chặn */ }
+      // Đồng bộ tới cả 2 instance PersonalProfile (bước 1 & bước 2) + Calculator.
+      window.dispatchEvent(new CustomEvent("khauphan:profile", { detail: next }));
+      setProfile(next);
+    }
+    setProfileOpen(true);
+  }
   // Focus mode (desktop): thu gọn header/tiêu đề để khu nhập chiếm gần trọn màn hình.
   useEffect(() => {
     document.body.classList.add("ration-focus");
@@ -117,7 +136,7 @@ export default function Calculator() {
                 <h3 className="mb-2 text-sm font-bold text-[#123c36]">Nhóm để nhận khuyến nghị</h3>
                 <div className="grid grid-cols-3 gap-1.5">
                   {([["adult", "🧑 Người lớn"], ["child", "🧒 Trẻ em"], ["special", "🤰 Mang thai / cho bú"]] as const).map(([key, label]) => (
-                    <button key={key} type="button" onClick={() => setProfileOpen(true)} aria-pressed={profileGroup(profile) === key} className={`rounded-md border px-2 py-1.5 text-center text-xs font-semibold ${profileGroup(profile) === key ? "border-[#0c5f4d] bg-[#0c5f4d] text-white" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"}`}>{label}</button>
+                    <button key={key} type="button" onClick={() => applyProfileMode(key)} aria-pressed={profileGroup(profile) === key} className={`rounded-md border px-2 py-1.5 text-center text-xs font-semibold ${profileGroup(profile) === key ? "border-[#0c5f4d] bg-[#0c5f4d] text-white" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"}`}>{label}</button>
                   ))}
                 </div>
                 <p className="mt-1.5 text-[11px] text-neutral-500">Bấm để nhập/sửa thông tin — hệ thống tự đối chiếu khuyến nghị theo nhóm.</p>

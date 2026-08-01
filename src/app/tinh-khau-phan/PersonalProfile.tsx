@@ -18,7 +18,7 @@ export type Profile = {
   pregnancyNote: string;
 };
 
-const DEFAULT_PROFILE: Profile = {
+export const DEFAULT_PROFILE: Profile = {
   age: "",
   ageUnit: "tuoi",
   gender: "Nam",
