@@ -574,6 +574,7 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot, ana
                 <button type="button" onClick={() => deleteMeal(meal.meal)} title="Xóa bữa" className="shrink-0 rounded px-1 text-sm text-[#8a2323] hover:bg-white/70">✕</button>
               </div>
               {meal.dishes.length === 0 ? <p className="bg-white px-2 py-1.5 pl-8 text-xs text-neutral-500">Chưa có món — bấm ＋ hoặc dùng thanh dưới.</p> : <div className="bg-white">{meal.dishes.map((dish) => { const active = work?.meal === meal.meal && work.dish === dish.dish; return <button key={dish.dish} type="button" onClick={() => { setWork({ meal: meal.meal, dish: dish.dish }); setMobilePane("detail"); }} className={`flex w-full items-center gap-1.5 border-t border-neutral-200 px-2 py-1.5 pl-8 text-left text-sm ${active ? "bg-[#dceee1] font-semibold text-[#123c36] ring-1 ring-inset ring-[#123c36]/30" : "text-neutral-800 hover:bg-neutral-50"}`}><span className="shrink-0 text-[14px]" aria-hidden="true">🍽️</span><span className="min-w-0 flex-1 truncate">{dish.dish}</span><span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-900" title="Năng lượng của món">{Math.round(dishKcal(dish))} kcal</span></button>; })}</div>}
+              <MealMedications meds={medRows.filter((med) => med.meal === meal.meal)} onUpdate={updateMedication} onDelete={deleteMedication} />
             </div>
           ))}
         </div>
@@ -588,11 +589,8 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot, ana
               <p className="text-sm text-neutral-600">🍱 <b className="text-[#0c5f4d]">{selMealNode.meal}</b> › 🍽️ <b className="text-[#123c36]">{selDishNode.dish}</b></p>
               <div className="overflow-hidden rounded-lg border border-[#7f948d] bg-white shadow-sm">
                 <DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />
-                <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "before")} onUpdate={updateMedication} onDelete={deleteMedication} />
-                <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "after")} onUpdate={updateMedication} onDelete={deleteMedication} />
-                <MedicationInMeal title="💊 Mốc thuốc / TPBS riêng — không kèm bữa" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "standalone")} onUpdate={updateMedication} onDelete={deleteMedication} standalone />
-                <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={medRows.filter((med) => med.meal === selMealNode.meal && med.timing === "unspecified")} onUpdate={updateMedication} onDelete={deleteMedication} warning />
               </div>
+              {medRows.some((med) => med.meal === selMealNode.meal) && <p className="text-xs text-neutral-500">💊 Thuốc / TPBS của bữa <b>{selMealNode.meal}</b> hiển thị ở cây bên trái (mức bữa).</p>}
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-10 text-center text-sm text-neutral-500">Chọn một món 🍽️ ở cây bên trái để mở và nhập thực phẩm.</div>
@@ -868,6 +866,39 @@ function MedicationModal({ open, onClose, meals, initialMeal, medRefs, placed, o
       </div>
     </Modal>
   );
+}
+
+// Thuốc/TPBS hiển thị ngay ở MỨC BỮA trong cây (không phải trong món): nhóm theo
+// vị trí Trước · Mốc riêng (độc lập, có chấm nhấp nháy) · Sau · Cần xác định.
+const MED_GROUPS: { timing: MedicationTiming; label: string; icon: string; cls: string; standalone?: boolean; warn?: boolean }[] = [
+  { timing: "before", label: "Trước bữa", icon: "↑", cls: "border-violet-300 bg-violet-50 text-violet-950" },
+  { timing: "standalone", label: "Mốc riêng · độc lập", icon: "◆", cls: "border-dashed border-violet-400 bg-white text-violet-950", standalone: true },
+  { timing: "after", label: "Sau bữa", icon: "↓", cls: "border-violet-300 bg-violet-50 text-violet-950" },
+  { timing: "unspecified", label: "Cần xác định vị trí", icon: "?", cls: "border-amber-400 bg-amber-50 text-amber-950", warn: true },
+];
+
+function MealMedications({ meds, onUpdate, onDelete }: { meds: MedicationRow[]; onUpdate: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDelete: (uid: string) => void }) {
+  if (!meds.length) return null;
+  return <div className="border-t border-violet-200 bg-[#faf8ff] px-2 py-1.5">
+    {MED_GROUPS.map((group) => {
+      const list = meds.filter((med) => med.timing === group.timing);
+      if (!list.length) return null;
+      return <div key={group.timing} className="mb-1.5 last:mb-0">
+        <div className={`mb-0.5 flex items-center gap-1 text-[11px] font-bold ${group.warn ? "text-amber-800" : "text-violet-800"}`}>
+          {group.standalone && <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-violet-500" aria-hidden="true" />}
+          <span>💊 {group.icon} {group.label}</span>
+        </div>
+        <div className="flex flex-col gap-1">
+          {list.map((med) => <div key={med.uid} className={`flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs ${group.cls}`}>
+            <span className="min-w-0 flex-1 truncate font-semibold">{med.name}</span>
+            <input value={med.dose} onChange={(event) => onUpdate(med.uid, { dose: event.target.value })} placeholder="liều" aria-label={`Liều ${med.name}`} className="w-11 shrink-0 rounded border border-violet-200 bg-white px-1 text-right text-[11px] text-neutral-900" />
+            {med.doseUnit && <span className="shrink-0 text-[10px] opacity-80">{med.doseUnit}</span>}
+            <button type="button" onClick={() => onDelete(med.uid)} className="shrink-0 px-0.5 hover:opacity-70" title="Xóa thuốc">✕</button>
+          </div>)}
+        </div>
+      </div>;
+    })}
+  </div>;
 }
 
 function MedicationInMeal({ title, medications, onUpdate, onDelete, warning = false, standalone = false }: { title: string; medications: MedicationRow[]; onUpdate: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDelete: (uid: string) => void; warning?: boolean; standalone?: boolean }) {

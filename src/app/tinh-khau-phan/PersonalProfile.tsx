@@ -203,6 +203,14 @@ export default function PersonalProfile({ onChange, inline = false, open: openPr
                   </option>
                 ))}
               </select>
+              {(() => {
+                const bonus = PHYSIOLOGY_OPTIONS.find((o) => o.value === profile.physiology)?.bonus ?? 0;
+                return bonus > 0 ? (
+                  <p className="mt-1 rounded bg-[#fff8df] px-2 py-1 text-xs font-semibold text-[#7a5b00]">
+                    ⚡ Giai đoạn này cần thêm <b>+{bonus} kcal/ngày</b> (đã cộng vào ước tính năng lượng bên dưới).
+                  </p>
+                ) : null;
+              })()}
             </Field>
           </div>
 
