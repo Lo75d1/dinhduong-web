@@ -69,31 +69,31 @@ export default function Calculator() {
     </section>
 
     {headerSlot && createPortal(
-      <nav className="clinical-stepper flex items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-0.5" aria-label="Các bước tính khẩu phần">
-        <button onClick={() => setActiveView("entry")} className={`clinical-step rounded-md px-3 py-1.5 text-sm font-semibold ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
-          <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập khẩu phần
+      <nav className="clinical-stepper flex w-full items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước tính khẩu phần">
+        <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-4 py-2 text-center text-sm font-semibold sm:text-base ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
+          <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập khẩu phần
         </button>
-        <button onClick={() => setActiveView("analysis")} className={`clinical-step rounded-md px-3 py-1.5 text-sm font-semibold ${activeView === "analysis" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
-          <span className="mr-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-current text-xs">2</span>Kết quả{foodRows.length ? ` · ${foodRows.length} TP` : ""}
+        <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-4 py-2 text-center text-sm font-semibold sm:text-base ${activeView === "analysis" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
+          <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>Kết quả{foodRows.length ? ` · ${foodRows.length} TP` : ""}
         </button>
       </nav>,
       headerSlot
     )}
 
-    <section className={activeView === "entry" ? "clinical-panel rounded-xl border-2 border-[#7f948d] bg-[#f4f8f5] p-4 lg:flex lg:h-[calc(100vh-6rem)] lg:flex-col lg:overflow-hidden lg:p-3" : "hidden"}>
+    <section className={activeView === "entry" ? "clinical-panel lg:flex lg:h-[calc(100vh-5.25rem)] lg:flex-col lg:overflow-hidden" : "hidden"}>
       <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
     </section>
 
-    <section className={activeView === "analysis" ? "clinical-panel min-w-0 rounded-xl border-2 border-[#7f948d] bg-white p-6" : "hidden"}>
+    <section className={activeView === "analysis" ? "clinical-panel min-w-0" : "hidden"}>
       <section data-print-header><p className="text-center text-sm font-semibold tracking-[0.16em] text-[#123c36]">BÁO CÁO PHÂN TÍCH KHẨU PHẦN</p><h1 className="mt-2 text-center text-2xl font-semibold">Phiếu đánh giá dinh dưỡng</h1><div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 border-y-2 border-[#123c36] py-3 text-sm"><p><b>Người được đánh giá:</b> {reportMeta.subjectName || "Chưa ghi"}</p><p><b>Ngày lập:</b> {reportMeta.reportDate || "Chưa ghi"}</p><p><b>Nhóm / mục tiêu:</b> {reportMeta.subjectGroup || "Chưa ghi"}</p><p><b>Người lập:</b> {reportMeta.authorName || "Chưa ghi"} ({reportMeta.authorRole})</p><p className="col-span-2"><b>Đơn vị / cơ sở:</b> {reportMeta.authorOrganization || "Chưa ghi"}</p><p className="col-span-2"><b>Hồ sơ:</b> {profile ? `${profile.gender}, ${profile.age || "—"} ${profile.ageUnit}, ${profile.weight || "—"} kg, ${profile.height || "—"} cm${profile.physiology.startsWith("pregnant_") ? ` · Thai kỳ: ${profile.pregnancyWeek ? `tuần ${profile.pregnancyWeek}` : "chưa ghi tuần"}${profile.prePregnancyWeight ? ` · trước thai ${profile.prePregnancyWeight} kg` : ""}` : ""}` : "Chưa nhập"}</p>{profile?.pregnancyNote && <p className="col-span-2"><b>Ghi chú thai kỳ:</b> {profile.pregnancyNote}</p>}{reportMeta.menuNote && <p className="col-span-2"><b>Ghi chú thực đơn / khẩu phần:</b> {reportMeta.menuNote}</p>}{reportMeta.clinicalCourse && <p className="col-span-2"><b>Diễn biến bệnh lý / theo dõi:</b> {reportMeta.clinicalCourse}</p>}</div></section>
       <div className="border-b-2 border-[#123c36] pb-3"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 2 · KẾT QUẢ</p><h2 className="mt-1 text-2xl font-semibold text-neutral-950">Kết quả &amp; phân tích</h2></div>
-      {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-5 flex flex-col gap-5">
+      {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-4 flex flex-col gap-3">
         <div className="clinical-card flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-lg border-2 border-[#7f948d] bg-[#f7faf8] px-4 py-2.5" data-no-print>
           <ServerRationActions rows={rows} profile={profile} />
           <ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} />
         </div>
         {/* 1 · Hồ sơ ↔ Khuyến nghị — 2 khung, ghim hồ sơ bên trái */}
-        <section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-4">
+        <section className="rounded-lg border-2 border-[#123c36] bg-[#eaf3ee] p-3">
           <h2 className="mb-3 text-lg font-semibold text-[#123c36]">1 · Hồ sơ &amp; khuyến nghị dinh dưỡng</h2>
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
             <div className="flex flex-col gap-4 lg:sticky lg:top-2" data-no-print>
@@ -112,7 +112,7 @@ export default function Calculator() {
               </div>
               <DietCodeComparison totals={totals} />
             </div>
-            <div className="mt-4 flex flex-col gap-5 lg:mt-0">
+            <div className="mt-4 flex flex-col gap-4 lg:mt-0">
               <DayTotalCard totals={totals} foodCount={foodRows.length} totalGrams={totalGrams} />
               {profile && <RecommendationComparison profile={profile} totals={totals} />}
               <MicronutrientComparison rows={rows} profile={profile} />
@@ -121,11 +121,11 @@ export default function Calculator() {
         </section>
 
         {/* 2 · Khẩu phần ↔ Biểu đồ/bảng — 2 khung, ghim bữa+ghi chú bên trái */}
-        <section className="rounded-lg border-2 border-[#7f948d] bg-white p-4">
+        <section className="rounded-lg border-2 border-[#7f948d] bg-white p-3">
           <h2 className="mb-3 text-lg font-semibold text-neutral-950">2 · Khẩu phần &amp; phân tích</h2>
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
             <div className="flex flex-col gap-3 lg:sticky lg:top-2"><MealDishOverview rows={rows} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
-            <div className="mt-4 flex flex-col gap-5 lg:mt-0">
+            <div className="mt-4 flex flex-col gap-4 lg:mt-0">
               <div><h3 className="mb-2 text-base font-semibold text-neutral-950">Tổng dinh dưỡng theo từng bữa</h3><MealNutritionCards rows={rows} totalKcal={totals.energyKcal} /></div>
               <EnergyDistribution rows={rows} totals={totals} profile={profile} />
               <div className="rounded-lg border border-[#7f948d] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">Quy đổi thực đơn <span className="text-sm font-normal text-neutral-600">(sống sạch → mua / xuất kho)</span></h3><ExchangeUnits rows={rows} /></div>
@@ -145,7 +145,7 @@ export default function Calculator() {
         </section>
 
         {/* 3 · Dinh dưỡng khẩu phần chi tiết — chuyên sâu, dưới cùng */}
-        <section className="rounded-lg border-2 border-[#7f948d] bg-white p-4">
+        <section className="rounded-lg border-2 border-[#7f948d] bg-white p-3">
           <h2 className="text-lg font-semibold text-neutral-950">3 · Dinh dưỡng khẩu phần chi tiết <span className="text-sm font-normal text-neutral-600">— chuyên sâu, dành cho dinh dưỡng viên</span></h2>
           <p className="mb-3 mt-1 text-sm text-neutral-700">Bảng theo Bữa → Món → Thực phẩm, có tổng từng món/bữa/ngày và nút “⚙ Chọn chất”.</p>
           <RationDetail rows={rows} mode={rationMode} />

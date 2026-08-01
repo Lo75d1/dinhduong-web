@@ -316,7 +316,7 @@ export default function PersonalProfile({ onChange, inline = false, open: openPr
       >
         📋 Thông tin để khuyến nghị{hasBasics ? " ✓" : ""}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Nhập thông tin để khuyến nghị">{body}</Modal>
+      <Modal open={open} onClose={() => setOpen(false)} title="Nhập thông tin để khuyến nghị">{body}<div className="mt-4 flex items-center justify-between gap-2 border-t border-neutral-200 pt-3"><span className="text-xs text-neutral-500">Thông tin được lưu tự động khi nhập.</span><button type="button" onClick={() => setOpen(false)} className="rounded-md bg-[#123c36] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">✓ Lưu &amp; đóng</button></div></Modal>
     </>
   );
 }
