@@ -12,6 +12,8 @@ import DietCodeComparison from "./DietCodeComparison";
 import RationDetail from "./RationDetail";
 import EnergyDistribution from "./EnergyDistribution";
 import MicronutrientComparison from "./MicronutrientComparison";
+import WhoGrowthAssessment from "./WhoGrowthAssessment";
+import { WHO_GROWTH_ENTRIES } from "@/lib/who-growth";
 import ExchangeUnits from "./ExchangeUnits";
 import ReportActions from "./ReportActions";
 import type { ReportMeta } from "./ReportActions";
@@ -20,6 +22,20 @@ import { buildTree, mealOrder, type DishNode, type RationMode, type Row } from "
 
 const round = (n: number) => Math.round(n * 10) / 10;
 const ADVANCED_GROUPS: [string, string][] = [["charts", "10 biểu đồ phân tích"]];
+
+// Biểu đồ tăng trưởng WHO cho trẻ em, hiện ngay ở khu Kết quả (không cần DB — dữ
+// liệu LMS bundle sẵn trong WHO_GROWTH_ENTRIES). Chỉ hiện khi hồ sơ là trẻ em đủ
+// cân nặng + chiều cao.
+function GrowthAssessmentPanel({ profile }: { profile: Profile | null }) {
+  if (!profile) return null;
+  const ageMonth = profile.ageUnit === "thang" ? Number(profile.age) : Number(profile.age) * 12;
+  const w = Number(profile.weight);
+  const h = Number(profile.height);
+  if (!(ageMonth > 0) || ageMonth > 228 || !(w > 0) || !(h > 0)) return null;
+  const sex = profile.gender === "Nữ" ? "Nu" : "Nam";
+  const entries = WHO_GROWTH_ENTRIES.filter((entry) => entry.sex === sex);
+  return <WhoGrowthAssessment entries={entries} ageMonths={ageMonth} weightKg={w} heightCm={h} />;
+}
 
 // Nhóm khuyến nghị suy ra từ hồ sơ: mang thai/cho bú > trẻ em (≤18 tuổi) > người lớn.
 function profileGroup(profile: Profile | null): "adult" | "child" | "special" | "" {
@@ -116,6 +132,7 @@ export default function Calculator() {
               <DayTotalCard totals={totals} foodCount={foodRows.length} totalGrams={totalGrams} />
               {profile && <RecommendationComparison profile={profile} totals={totals} />}
               <MicronutrientComparison rows={rows} profile={profile} />
+              <GrowthAssessmentPanel profile={profile} />
             </div>
           </div>
         </section>
