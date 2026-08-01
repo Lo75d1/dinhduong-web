@@ -397,7 +397,17 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot, ana
         },
         mode
       );
-    setRows((previous) => insertRowsIntoDish(previous, meal!, dish!, [nextRow]));
+    // Thêm nhanh: nếu thực phẩm này đã có trong đúng bữa/món thì CỘNG DỒN thêm một
+    // phần nữa (mặc định +100 g nhập) thay vì tạo dòng trùng — vd bấm "cơm" 2 lần = 2 chén.
+    setRows((previous) => {
+      const existing = previous.find((row) => row.meal === meal && row.dish === dish && row.foodId === food.id);
+      if (existing) {
+        const nextInput = existing.inputGrams + nextRow.inputGrams;
+        const quantity = calculateQuantity({ grams: nextInput, basis: existing.inputBasis, conversionFactor: existing.conversionFactor, wastePercent: existing.wastePercent });
+        return previous.map((row) => (row.uid === existing.uid ? { ...row, inputGrams: nextInput, grams: quantity.edibleGrams ?? row.grams } : row));
+      }
+      return insertRowsIntoDish(previous, meal!, dish!, [nextRow]);
+    });
     setQ("");
     setResults([]);
   }
