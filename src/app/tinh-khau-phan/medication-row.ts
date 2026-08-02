@@ -4,10 +4,16 @@ import { genId } from "./types";
 
 export type MedicationTiming = "before" | "after" | "standalone" | "unspecified";
 
+// Phân biệt THUỐC (cần xác nhận của bác sĩ + dược sĩ theo khoảng trống pháp lý trong
+// đề cương) và TPBS/thực phẩm bổ sung (được thêm tự do).
+export type MedicationKind = "drug" | "supplement";
+
 export type MedicationRow = {
   uid: string;
   meal: string;
   name: string;
+  kind: MedicationKind;
+  confirmed: boolean; // với thuốc: đã có xác nhận của bác sĩ điều trị và dược sĩ
   timing: MedicationTiming;
   dose: string;
   doseUnit: string;
@@ -47,6 +53,8 @@ export function loadMedicationRows(): MedicationRow[] {
         uid: index === 0 && typeof item.uid === "string" && item.uid ? item.uid : genId(),
         meal,
         name: typeof item.name === "string" ? item.name : "",
+        kind: item.kind === "drug" ? "drug" as const : "supplement" as const,
+        confirmed: item.confirmed !== false, // dòng cũ coi như đã ok để không chặn
         timing,
         dose: typeof item.dose === "string" ? item.dose : "",
         doseUnit: typeof item.doseUnit === "string" ? item.doseUnit : "",
@@ -67,6 +75,6 @@ export function saveMedicationRows(rows: MedicationRow[]) {
   }
 }
 
-export function makeMedicationRow(meal: string, name: string, timing: MedicationTiming, dose: string, doseUnit: string, note: string): MedicationRow {
-  return { uid: genId(), meal, name, timing, dose, doseUnit, note };
+export function makeMedicationRow(meal: string, name: string, timing: MedicationTiming, dose: string, doseUnit: string, note: string, kind: MedicationKind = "supplement", confirmed = false): MedicationRow {
+  return { uid: genId(), meal, name, kind, confirmed, timing, dose, doseUnit, note };
 }

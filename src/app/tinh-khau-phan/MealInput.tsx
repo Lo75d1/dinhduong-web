@@ -8,6 +8,7 @@ import {
   loadMedicationRows,
   makeMedicationRow,
   saveMedicationRows,
+  type MedicationKind,
   type MedicationRow,
   type MedicationTiming,
 } from "./medication-row";
@@ -520,8 +521,8 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot, ana
     setMedModalOpen(true);
   }
 
-  function placeMedication(meal: string, timing: MedicationTiming, name: string, dose: string, doseUnit: string, note: string) {
-    setMedRows((previous) => [...previous, makeMedicationRow(meal, name, timing, dose.trim(), doseUnit.trim(), note.trim())]);
+  function placeMedication(meal: string, timing: MedicationTiming, name: string, dose: string, doseUnit: string, note: string, kind: MedicationKind, confirmed: boolean) {
+    setMedRows((previous) => [...previous, makeMedicationRow(meal, name, timing, dose.trim(), doseUnit.trim(), note.trim(), kind, confirmed)]);
   }
 
   function pickMedication(ref: { id: string; name: string; category: string | null }) {
@@ -799,11 +800,13 @@ function MedicationModal({ open, onClose, meals, initialMeal, medRefs, placed, o
   open: boolean; onClose: () => void; meals: string[]; initialMeal: string;
   medRefs: { id: string; name: string; category: string | null; imageUrl?: string | null }[];
   placed: MedicationRow[];
-  onPlace: (meal: string, timing: MedicationTiming, name: string, dose: string, doseUnit: string, note: string) => void;
+  onPlace: (meal: string, timing: MedicationTiming, name: string, dose: string, doseUnit: string, note: string, kind: MedicationKind, confirmed: boolean) => void;
   onDelete: (uid: string) => void;
 }) {
   const [q, setQ] = useState("");
   const [held, setHeld] = useState<string | null>(null);
+  const [kind, setKind] = useState<MedicationKind>("supplement");
+  const [confirmed, setConfirmed] = useState(false);
   const [dose, setDose] = useState("");
   const [doseUnit, setDoseUnit] = useState("viên");
   const [note, setNote] = useState("");
@@ -813,7 +816,8 @@ function MedicationModal({ open, onClose, meals, initialMeal, medRefs, placed, o
 
   function place(meal: string, timing: MedicationTiming) {
     if (!held) { window.alert("Hãy chọn một thuốc / TPBS ở khung bên trái trước."); return; }
-    onPlace(meal, timing, held, dose, doseUnit, note);
+    if (kind === "drug" && !confirmed) { window.alert("Thuốc chỉ được thêm khi đã có xác nhận của bác sĩ điều trị và dược sĩ. Hãy tích ô xác nhận, hoặc chuyển loại sang TPBS."); return; }
+    onPlace(meal, timing, held, dose, doseUnit, note, kind, confirmed);
   }
 
   return (
@@ -835,6 +839,19 @@ function MedicationModal({ open, onClose, meals, initialMeal, medRefs, placed, o
               🖐️ Đang cầm: {held} <span className="font-normal text-neutral-600">— kéo sang phải hoặc bấm ô vị trí</span>
             </div>
           ) : <p className="text-xs text-neutral-600">Bấm chọn một thuốc để bắt đầu.</p>}
+          <div className="rounded-md border border-violet-200 bg-white p-2">
+            <p className="mb-1 text-xs font-semibold text-violet-900">Loại</p>
+            <div className="grid grid-cols-2 gap-1">
+              <button type="button" onClick={() => setKind("supplement")} aria-pressed={kind === "supplement"} className={`rounded-md border px-2 py-1 text-xs font-semibold ${kind === "supplement" ? "border-emerald-600 bg-emerald-600 text-white" : "border-neutral-300 bg-white text-neutral-700"}`}>🌿 TPBS</button>
+              <button type="button" onClick={() => setKind("drug")} aria-pressed={kind === "drug"} className={`rounded-md border px-2 py-1 text-xs font-semibold ${kind === "drug" ? "border-violet-700 bg-violet-700 text-white" : "border-neutral-300 bg-white text-neutral-700"}`}>💊 Thuốc</button>
+            </div>
+            {kind === "drug" ? (
+              <label className="mt-2 flex items-start gap-1.5 rounded bg-amber-50 p-1.5 text-[11px] leading-snug text-amber-900">
+                <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-0.5 shrink-0" />
+                <span>Đã có <b>xác nhận của bác sĩ điều trị và dược sĩ</b> cho việc sắp thuốc theo bữa ăn (bắt buộc với thuốc).</span>
+              </label>
+            ) : <p className="mt-1 text-[11px] text-neutral-600">TPBS (thực phẩm bổ sung) được thêm tự do, không cần xác nhận.</p>}
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <label className="text-xs font-semibold text-violet-950">Liều<input value={dose} onChange={(e) => setDose(e.target.value)} placeholder="VD: 1; 500" className="mt-0.5 w-full rounded border border-violet-300 bg-white px-2 py-1 text-sm" /></label>
             <label className="text-xs font-semibold text-violet-950">Đơn vị<input value={doseUnit} onChange={(e) => setDoseUnit(e.target.value)} placeholder="viên, ml…" className="mt-0.5 w-full rounded border border-violet-300 bg-white px-2 py-1 text-sm" /></label>
@@ -900,6 +917,7 @@ function MealMedications({ meds, onUpdate, onDelete }: { meds: MedicationRow[]; 
         </div>
         <div className="flex flex-col gap-1">
           {list.map((med) => <div key={med.uid} className={`flex items-center gap-1 rounded border px-1.5 py-0.5 text-xs ${group.cls}`}>
+            <span className={`shrink-0 rounded px-1 text-[9px] font-bold ${med.kind === "drug" ? "bg-violet-700 text-white" : "bg-emerald-600 text-white"}`} title={med.kind === "drug" ? "Thuốc — đã xác nhận bác sĩ + dược sĩ" : "Thực phẩm bổ sung"}>{med.kind === "drug" ? "THUỐC ✓BS+DS" : "TPBS"}</span>
             <span className="min-w-0 flex-1 truncate font-semibold">{med.name}</span>
             <input value={med.dose} onChange={(event) => onUpdate(med.uid, { dose: event.target.value })} placeholder="liều" aria-label={`Liều ${med.name}`} className="w-11 shrink-0 rounded border border-violet-200 bg-white px-1 text-right text-[11px] text-neutral-900" />
             {med.doseUnit && <span className="shrink-0 text-[10px] opacity-80">{med.doseUnit}</span>}
