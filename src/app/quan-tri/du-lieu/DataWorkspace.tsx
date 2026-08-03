@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import BulkClassifyEditor from "./BulkClassifyEditor";
 import DataManager from "./DataManager";
 import ImageSourceSync from "./ImageSourceSync";
@@ -16,7 +17,7 @@ export default function DataWorkspace() {
               <h1 className="text-3xl font-semibold tracking-tight text-[#102f2b]">Không gian dữ liệu hợp nhất</h1>
               <p className="mt-1 max-w-4xl text-sm leading-6 text-[#405b55]">Quản lý thực phẩm, món ăn, ảnh tham chiếu, thuốc và thực phẩm bổ sung tại cùng một trang. Mỗi bản ghi vẫn giữ nhãn nguồn để đối chiếu và mọi lần lưu đều có lý do, nhật ký thay đổi.</p>
             </div>
-            <span className="rounded-full border border-[#8db3a6] bg-white px-3 py-1.5 text-xs font-semibold text-[#0d5448]">Có kiểm soát thay đổi</span>
+            <span className="flex flex-wrap items-center gap-2"><Link href="/quan-tri/phan-loai" className="rounded-full border-2 border-[#0c5f4d] bg-[#0c5f4d] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#0b5549]">📱 Phân loại nhanh (điện thoại)</Link><span className="rounded-full border border-[#8db3a6] bg-white px-3 py-1.5 text-xs font-semibold text-[#0d5448]">Có kiểm soát thay đổi</span></span>
           </div>
         </div>
         <div className="grid border-t border-[#d7e3de] bg-[#f7fbf9] text-sm sm:grid-cols-3">

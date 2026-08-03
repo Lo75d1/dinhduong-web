@@ -43,7 +43,14 @@ function GrowthCurveChart({ entries, spec, ageMonths }: { entries: WhoGrowthEntr
   const plotHeight = height - margin.top - margin.bottom;
   const x = (value: number) => margin.left + ((value - xMin) / (xMax - xMin)) * plotWidth;
   const y = (value: number) => margin.top + (1 - (value - yMin) / (yMax - yMin)) * plotHeight;
-  const xTicks = Array.from(new Set([xMin, Math.round((xMin + xMax) / 2), xMax]));
+  // Trục hoành theo NĂM tuổi (không phải tháng) để trẻ lớn không phải kéo ngang.
+  const yearMin = xMin / 12;
+  const yearMax = xMax / 12;
+  const yearSpan = yearMax - yearMin;
+  const yearStep = yearSpan <= 2 ? 0.5 : yearSpan <= 5 ? 1 : yearSpan <= 11 ? 2 : 3;
+  const xTicks: number[] = [];
+  for (let yr = Math.ceil(yearMin / yearStep) * yearStep; yr <= yearMax + 1e-6; yr += yearStep) xTicks.push(Math.round(yr * 100) / 100);
+  const formatYear = (yr: number) => (Number.isInteger(yr) ? String(yr) : yr.toFixed(1).replace(".", ","));
   const yTicks = Array.from({ length: 5 }, (_, index) => yMin + ((yMax - yMin) * index) / 4);
   const observedStandard = nearestStandard(standards, ageMonths);
   const showObserved = ageMonths >= xMin && ageMonths <= xMax && observedStandard !== null;
@@ -51,18 +58,18 @@ function GrowthCurveChart({ entries, spec, ageMonths }: { entries: WhoGrowthEntr
   return <article className="rounded-md border border-[#9fb9b1] bg-[#fcfffd] p-3">
     <div className="flex flex-wrap items-baseline justify-between gap-2">
       <h3 className="font-semibold text-neutral-950">{spec.title}</h3>
-      <p className="text-xs text-neutral-800">Điểm hiện tại: <b>{round(spec.value)} {spec.unit}</b> · {round(ageMonths)} tháng</p>
+      <p className="text-xs text-neutral-800">Điểm hiện tại: <b>{round(spec.value)} {spec.unit}</b> · {ageMonths < 24 ? `${round(ageMonths)} tháng` : `${round(ageMonths / 12, 1).toString().replace(".", ",")} tuổi`}</p>
     </div>
     <div className="mt-2 overflow-x-auto">
-      <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[570px] w-full" role="img" aria-label={`Biểu đồ ${spec.title} theo chuẩn WHO LMS`}>
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label={`Biểu đồ ${spec.title} theo chuẩn WHO LMS`}>
         <rect x={margin.left} y={margin.top} width={plotWidth} height={plotHeight} fill="#ffffff" stroke="#9fb9b1" />
         {yTicks.map((tick) => <g key={tick}>
           <line x1={margin.left} x2={width - margin.right} y1={y(tick)} y2={y(tick)} stroke="#d7e2de" strokeDasharray="3 3" />
           <text x={margin.left - 7} y={y(tick) + 4} textAnchor="end" fontSize="11" fill="#243a35">{formatAxis(tick)}</text>
         </g>)}
         {xTicks.map((tick) => <g key={tick}>
-          <line x1={x(tick)} x2={x(tick)} y1={margin.top} y2={height - margin.bottom} stroke="#e5ece9" />
-          <text x={x(tick)} y={height - margin.bottom + 18} textAnchor="middle" fontSize="11" fill="#243a35">{tick}</text>
+          <line x1={x(tick * 12)} x2={x(tick * 12)} y1={margin.top} y2={height - margin.bottom} stroke="#e5ece9" />
+          <text x={x(tick * 12)} y={height - margin.bottom + 18} textAnchor="middle" fontSize="11" fill="#243a35">{formatYear(tick)}</text>
         </g>)}
         {curveZ.map((z, index) => {
           const points = standards.map((entry) => {
@@ -76,7 +83,7 @@ function GrowthCurveChart({ entries, spec, ageMonths }: { entries: WhoGrowthEntr
           <circle cx={x(ageMonths)} cy={y(spec.value)} r="5" fill="#14532d" stroke="#ffffff" strokeWidth="2" />
         </g>}
         <text x={margin.left} y="13" fontSize="11" fill="#243a35">{spec.unit}</text>
-        <text x={margin.left + plotWidth / 2} y={height - 8} textAnchor="middle" fontSize="11" fill="#243a35">Tuổi (tháng)</text>
+        <text x={margin.left + plotWidth / 2} y={height - 8} textAnchor="middle" fontSize="11" fill="#243a35">Tuổi (năm)</text>
       </svg>
     </div>
     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-800">

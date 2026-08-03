@@ -77,7 +77,7 @@ function fmtKcal(value: number): string {
   return `${Math.round(value)} kcal`;
 }
 
-export default function MealInput({ onRowsChange, onModeChange, profileSlot, analysisSlot, savedMenuSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode; savedMenuSlot?: ReactNode }) {
+export default function MealInput({ onRowsChange, onModeChange, onMedsChange, profileSlot, analysisSlot, savedMenuSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; onMedsChange?: (meds: MedicationRow[]) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode; savedMenuSlot?: ReactNode }) {
   const [rows, setRows] = useState<Row[]>([]);
   const [mode, setMode] = useState<RationMode>("recall24h");
   const [hydrated, setHydrated] = useState(false);
@@ -173,7 +173,10 @@ export default function MealInput({ onRowsChange, onModeChange, profileSlot, ana
   }, [mode, hydrated, onModeChange]);
 
   useEffect(() => {
-    if (hydrated) saveMedicationRows(medRows);
+    if (!hydrated) return;
+    saveMedicationRows(medRows);
+    onMedsChange?.(medRows);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [medRows, hydrated]);
 
   useEffect(() => {

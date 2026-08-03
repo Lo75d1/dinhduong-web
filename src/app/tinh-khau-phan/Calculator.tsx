@@ -19,6 +19,7 @@ import ReportActions from "./ReportActions";
 import type { ReportMeta } from "./ReportActions";
 import ServerRationActions from "./ServerRationActions";
 import { buildTree, mealOrder, type DishNode, type RationMode, type Row } from "./types";
+import { type MedicationRow, type MedicationTiming } from "./medication-row";
 
 const round = (n: number) => Math.round(n * 10) / 10;
 const ADVANCED_GROUPS: [string, string][] = [["charts", "10 biểu đồ phân tích"]];
@@ -48,6 +49,7 @@ function profileGroup(profile: Profile | null): "adult" | "child" | "special" | 
 
 export default function Calculator() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [meds, setMeds] = useState<MedicationRow[]>([]);
   const [rationMode, setRationMode] = useState<RationMode>("recall24h");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [openAdvanced, setOpenAdvanced] = useState<Record<string, boolean>>({});
@@ -116,7 +118,7 @@ export default function Calculator() {
     )}
 
     <section className={activeView === "entry" ? "clinical-panel lg:flex lg:h-[calc(100vh-5.25rem)] lg:flex-col lg:overflow-hidden" : "hidden"}>
-      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
+      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} onMedsChange={setMeds} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
     </section>
 
     <section className={activeView === "analysis" ? "clinical-panel min-w-0" : "hidden"}>
@@ -160,7 +162,7 @@ export default function Calculator() {
         <section className="rounded-lg border-2 border-[#7f948d] bg-white p-3">
           <h2 className="mb-3 text-lg font-semibold text-neutral-950">2 · Khẩu phần &amp; phân tích</h2>
           <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
-            <div className="flex flex-col gap-3 lg:sticky lg:top-2"><MealDishOverview rows={rows} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
+            <div className="flex flex-col gap-3 lg:sticky lg:top-2"><MealDishOverview rows={rows} meds={meds} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div>
             <div className="mt-4 flex flex-col gap-4 lg:mt-0">
               <div><h3 className="mb-2 text-base font-semibold text-neutral-950">Tổng dinh dưỡng theo từng bữa</h3><MealNutritionCards rows={rows} totalKcal={totals.energyKcal} /></div>
               <EnergyDistribution rows={rows} totals={totals} profile={profile} />
@@ -204,19 +206,57 @@ function dishKcalOf(dish: DishNode): number {
   }, 0);
 }
 
-function MealDishOverview({ rows }: { rows: Row[] }) {
+// Thuốc/TPBS gắn theo bữa — hiển thị chỉ đọc ở khu Kết quả (nhóm theo thời điểm),
+// phân biệt THUỐC (cần bác sĩ + dược sĩ) với TPBS. Không tham gia phép tính dinh dưỡng.
+const MED_TIMING_ORDER: { timing: MedicationTiming; label: string }[] = [
+  { timing: "before", label: "Trước bữa" },
+  { timing: "after", label: "Sau bữa" },
+  { timing: "standalone", label: "Mốc riêng" },
+  { timing: "unspecified", label: "Chưa định vị trí" },
+];
+
+function MedChip({ med }: { med: MedicationRow }) {
+  const isDrug = med.kind === "drug";
+  const dose = [med.dose, med.doseUnit].filter(Boolean).join(" ");
+  return (
+    <li className={`flex items-start gap-1.5 px-2 py-1 pl-4 text-sm ${isDrug ? "text-rose-900" : "text-emerald-900"}`}>
+      <span className={`mt-0.5 shrink-0 rounded px-1 text-[10px] font-bold ${isDrug ? "bg-rose-100 text-rose-800" : "bg-emerald-100 text-emerald-800"}`}>{isDrug ? "💊 Thuốc" : "🌿 TPBS"}</span>
+      <span className="min-w-0">
+        <span className="font-medium">{med.name || "(chưa đặt tên)"}</span>
+        {dose && <span className="text-neutral-600"> · {dose}</span>}
+        {isDrug && !med.confirmed && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] font-semibold text-amber-800">chưa xác nhận BS+DS</span>}
+      </span>
+    </li>
+  );
+}
+
+function MealDishOverview({ rows, meds = [] }: { rows: Row[]; meds?: MedicationRow[] }) {
   const tree = buildTree(rows);
-  if (tree.length === 0) return <div className="rounded-lg border border-[#cdd9d3] bg-white p-3 text-sm text-neutral-600">Chưa có bữa ăn.</div>;
+  const mealsWithMeds = new Set(meds.map((m) => m.meal));
+  const orderedMeals = [...tree.map((m) => m.meal), ...[...mealsWithMeds].filter((m) => !tree.some((t) => t.meal === m))];
+  if (orderedMeals.length === 0) return <div className="rounded-lg border border-[#cdd9d3] bg-white p-3 text-sm text-neutral-600">Chưa có bữa ăn.</div>;
   return (
     <div className="rounded-lg border border-[#cdd9d3] bg-[#f9fdfb] p-3">
-      <h3 className="mb-2 text-sm font-bold text-[#123c36]">🍱 Bữa ăn &amp; món ăn</h3>
+      <h3 className="mb-2 text-sm font-bold text-[#123c36]">🍱 Bữa ăn · món ăn · thuốc</h3>
       <div className="flex flex-col gap-2">
-        {tree.map((meal) => {
-          const mealKcal = meal.dishes.reduce((s, d) => s + dishKcalOf(d), 0);
+        {orderedMeals.map((mealName) => {
+          const meal = tree.find((m) => m.meal === mealName);
+          const mealKcal = meal ? meal.dishes.reduce((s, d) => s + dishKcalOf(d), 0) : 0;
+          const mealMeds = meds.filter((m) => m.meal === mealName);
           return (
-            <div key={meal.meal} className="overflow-hidden rounded-md border border-neutral-200 bg-white">
-              <div className="flex items-center justify-between gap-2 bg-[#eef4f1] px-2 py-1 text-sm font-semibold text-[#0c5f4d]"><span className="min-w-0 truncate">{meal.meal}</span><span className="shrink-0 rounded bg-[#123c36] px-1.5 text-xs font-bold text-white">{Math.round(mealKcal)} kcal</span></div>
-              {meal.dishes.length > 0 && <ul className="divide-y divide-neutral-100">{meal.dishes.map((dish) => <li key={dish.dish} className="flex items-center justify-between gap-2 px-2 py-1 pl-4 text-sm"><span className="min-w-0 truncate text-neutral-800">🍽️ {dish.dish}</span><span className="shrink-0 rounded bg-amber-100 px-1.5 text-xs font-semibold text-amber-900">{Math.round(dishKcalOf(dish))}</span></li>)}</ul>}
+            <div key={mealName} className="overflow-hidden rounded-md border border-neutral-200 bg-white">
+              <div className="flex items-center justify-between gap-2 bg-[#eef4f1] px-2 py-1 text-sm font-semibold text-[#0c5f4d]"><span className="min-w-0 truncate">{mealName}</span><span className="shrink-0 rounded bg-[#123c36] px-1.5 text-xs font-bold text-white">{Math.round(mealKcal)} kcal</span></div>
+              {meal && meal.dishes.length > 0 && <ul className="divide-y divide-neutral-100">{meal.dishes.map((dish) => <li key={dish.dish} className="flex items-center justify-between gap-2 px-2 py-1 pl-4 text-sm"><span className="min-w-0 truncate text-neutral-800">🍽️ {dish.dish}</span><span className="shrink-0 rounded bg-amber-100 px-1.5 text-xs font-semibold text-amber-900">{Math.round(dishKcalOf(dish))}</span></li>)}</ul>}
+              {mealMeds.length > 0 && <div className="border-t border-dashed border-violet-200 bg-[#faf9ff]">
+                {MED_TIMING_ORDER.map(({ timing, label }) => {
+                  const list = mealMeds.filter((m) => m.timing === timing);
+                  if (list.length === 0) return null;
+                  return <div key={timing}>
+                    <div className="px-2 pt-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700">{label}</div>
+                    <ul>{list.map((med) => <MedChip key={med.uid} med={med} />)}</ul>
+                  </div>;
+                })}
+              </div>}
             </div>
           );
         })}

@@ -104,53 +104,55 @@ export default function RecommendationComparison({
 
   return (
     <div className="rounded-lg border border-neutral-200 bg-white p-4">
-      <h2 className="text-sm font-semibold text-neutral-700">Đối chiếu khuyến nghị</h2>
-      <p className="mt-0.5 text-xs text-neutral-400">
+      <h2 className="text-base font-semibold text-neutral-900">Đối chiếu khuyến nghị</h2>
+      <p className="mt-0.5 text-xs text-neutral-500">
         Nhóm: {rec.ageGroup} · {rec.gender}
         {rec.physicalActivity ? ` · Mức lao động: ${rec.physicalActivity}` : ""}
         {isPhysiologicalGroup && baseRec?.energyKcal ? ` · Nền ${baseRec.energyKcal} kcal + ${rec.energyKcal ?? 0} kcal theo tình trạng sinh lý` : ""}
       </p>
 
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="rounded-md bg-neutral-50 p-3 text-center">
-          <div className="text-xs text-neutral-500">Năng lượng</div>
-          <div className="mt-1 text-sm font-medium">
-            {round(actualEnergy)} / {targetEnergy ? round(targetEnergy) : "–"} kcal
-          </div>
-          {pctEnergy !== null && (
-            <div className="mt-0.5 text-xs text-neutral-400">{round(pctEnergy)}% mục tiêu</div>
-          )}
-        </div>
-      </div>
-
-      <table className="mt-3 w-full text-sm">
-        <thead className="text-left text-xs text-neutral-400">
+      <table className="mt-3 w-full text-base">
+        <thead className="text-left text-sm text-neutral-600">
           <tr>
-            <th className="py-1 font-medium">Chất sinh năng lượng</th>
-            <th className="py-1 text-right font-medium">Thực tế (%NL)</th>
-            <th className="py-1 text-right font-medium">Khuyến nghị</th>
-            <th className="py-1 text-right font-medium">Đánh giá</th>
+            <th className="py-1.5 font-semibold">Chỉ tiêu</th>
+            <th className="py-1.5 text-right font-semibold">Thực tế</th>
+            <th className="py-1.5 text-right font-semibold">Khuyến nghị</th>
+            <th className="py-1.5 text-right font-semibold">Đánh giá</th>
           </tr>
         </thead>
         <tbody>
+          <tr className="border-t border-neutral-200 bg-[#f4fbf7]">
+            <td className="py-2 font-semibold text-neutral-900">Năng lượng</td>
+            <td className="py-2 text-right font-semibold tabular-nums">{round(actualEnergy)} kcal</td>
+            <td className="py-2 text-right tabular-nums text-neutral-700">{targetEnergy ? round(targetEnergy) : "–"} kcal</td>
+            <td className="py-2 text-right">
+              {pctEnergy === null ? (
+                "–"
+              ) : pctEnergy >= 90 && pctEnergy <= 110 ? (
+                <span className="font-semibold text-emerald-700">● {round(pctEnergy)}%</span>
+              ) : (
+                <span className="font-semibold text-amber-600">▲ {round(pctEnergy)}% {pctEnergy < 90 ? "Thấp" : "Cao"}</span>
+              )}
+            </td>
+          </tr>
           {macroRows.map((r) => {
             const min = r.min !== null ? r.min * 100 : null;
             const max = r.max !== null ? r.max * 100 : null;
             const inRange = min !== null && max !== null ? r.pct >= min && r.pct <= max : null;
             return (
               <tr key={r.label} className="border-t border-neutral-100">
-                <td className="py-1.5">{r.label}</td>
-                <td className="py-1.5 text-right tabular-nums">{round(r.pct)}%</td>
-                <td className="py-1.5 text-right tabular-nums text-neutral-400">
+                <td className="py-2 text-neutral-900">{r.label} <span className="text-xs text-neutral-500">(%NL)</span></td>
+                <td className="py-2 text-right tabular-nums">{round(r.pct)}%</td>
+                <td className="py-2 text-right tabular-nums text-neutral-700">
                   {min !== null && max !== null ? `${round(min)}–${round(max)}%` : "–"}
                 </td>
-                <td className="py-1.5 text-right">
+                <td className="py-2 text-right">
                   {inRange === null ? (
                     "–"
                   ) : inRange ? (
-                    <span className="text-xs font-medium text-emerald-700">● Cân đối</span>
+                    <span className="font-semibold text-emerald-700">● Cân đối</span>
                   ) : (
-                    <span className="text-xs font-medium text-amber-600">
+                    <span className="font-semibold text-amber-600">
                       ▲ {r.pct < (min ?? 0) ? "Thấp" : "Cao"}
                     </span>
                   )}
@@ -167,14 +169,15 @@ export default function RecommendationComparison({
         </p>
       )}
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs text-neutral-400">
+      <p className="mt-4 mb-1 text-sm font-semibold text-neutral-800">Vi chất &amp; khoáng chất</p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-base">
+          <thead className="text-left text-sm text-neutral-600">
             <tr>
-              <th className="py-1 font-medium">Vi chất</th>
-              <th className="py-1 text-right font-medium">Thực tế</th>
-              <th className="py-1 text-right font-medium">Khuyến nghị</th>
-              <th className="py-1 text-right font-medium">Đáp ứng</th>
+              <th className="py-1.5 font-semibold">Vi chất</th>
+              <th className="py-1.5 text-right font-semibold">Thực tế</th>
+              <th className="py-1.5 text-right font-semibold">Khuyến nghị</th>
+              <th className="py-1.5 text-right font-semibold">Đáp ứng</th>
             </tr>
           </thead>
           <tbody>
@@ -185,14 +188,14 @@ export default function RecommendationComparison({
               const pct = target ? (actual / target) * 100 : null;
               return (
                 <tr key={m.key} className="border-t border-neutral-100">
-                  <td className="py-1.5">{m.label}</td>
-                  <td className="py-1.5 text-right tabular-nums">
+                  <td className="py-2">{m.label}</td>
+                  <td className="py-2 text-right tabular-nums">
                     {round(actual)} {m.unit}
                   </td>
-                  <td className="py-1.5 text-right tabular-nums text-neutral-400" title={targetInfo.isDelta ? `Nền ${targetInfo.baseValue ?? "–"} + tăng thêm ${targetInfo.deltaValue ?? "–"}` : targetInfo.type ?? undefined}>
+                  <td className="py-2 text-right tabular-nums text-neutral-700" title={targetInfo.isDelta ? `Nền ${targetInfo.baseValue ?? "–"} + tăng thêm ${targetInfo.deltaValue ?? "–"}` : targetInfo.type ?? undefined}>
                     {target !== null && target !== undefined ? `${round(target)} ${m.unit}` : "–"}
                   </td>
-                  <td className="py-1.5 text-right tabular-nums">
+                  <td className="py-2 text-right tabular-nums">
                     {pct !== null ? `${round(pct)}%` : "–"}
                   </td>
                 </tr>
