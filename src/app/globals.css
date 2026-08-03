@@ -328,3 +328,10 @@ body.ration-focus .site-nav-links { display: none; }
   body.ration-focus > footer,
   body.ration-focus footer { display: none; }
 }
+
+/* App full màn (vd "Phân loại nhanh" trên điện thoại): bỏ chrome site để không phải kéo trang. */
+body.app-fullscreen .site-header { display: none; }
+body.app-fullscreen > footer,
+body.app-fullscreen footer { display: none; }
+body.app-fullscreen .hospital-main { max-width: none; padding: 0; }
+body.app-fullscreen .hospital-main::before { display: none; }
