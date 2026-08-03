@@ -12,7 +12,9 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#f4f0e7",
     theme_color: "#123c36",
     icons: [
-      { src: "/dinh-duong-2597-avatar.jpg", sizes: "any", type: "image/jpeg", purpose: "any" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }

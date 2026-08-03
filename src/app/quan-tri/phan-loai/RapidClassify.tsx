@@ -45,6 +45,12 @@ export default function RapidClassify() {
   const [history, setHistory] = useState<{ id: string; field: FieldKey; prev: string }[]>([]);
   const [custom, setCustom] = useState("");
   const [touchX, setTouchX] = useState<number | null>(null);
+  // Hiệu ứng lưu: idle → saving (spinner) → saved (✓) rồi mới trượt qua thẻ kế.
+  const [phase, setPhase] = useState<"idle" | "saving" | "saved">("idle");
+  const [savedLabel, setSavedLabel] = useState("");
+  const [pending, setPending] = useState<string | null>(null);
+  const [installEvt, setInstallEvt] = useState<{ prompt: () => void; userChoice: Promise<unknown> } | null>(null);
+  const [standalone, setStandalone] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -58,6 +64,23 @@ export default function RapidClassify() {
       setLoading(false);
     })();
   }, []);
+
+  // Bắt sự kiện cài PWA của Chrome/Android để hiện nút "Cài ứng dụng" ngay trên trang.
+  useEffect(() => {
+    const onBip = (e: Event) => { e.preventDefault(); setInstallEvt(e as unknown as { prompt: () => void; userChoice: Promise<unknown> }); };
+    const onInstalled = () => setInstallEvt(null);
+    window.addEventListener("beforeinstallprompt", onBip);
+    window.addEventListener("appinstalled", onInstalled);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setStandalone(window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true);
+    return () => { window.removeEventListener("beforeinstallprompt", onBip); window.removeEventListener("appinstalled", onInstalled); };
+  }, []);
+
+  function installApp() {
+    if (!installEvt) return;
+    installEvt.prompt();
+    void installEvt.userChoice.finally(() => setInstallEvt(null));
+  }
 
   const byId = useMemo(() => new Map(items.map((it) => [it.id, it])), [items]);
   const sources = useMemo(() => [...new Set(items.map((it) => it.source).filter(Boolean))].sort(), [items]);
@@ -94,20 +117,22 @@ export default function RapidClassify() {
   async function apply(value: string | null) {
     if (!current || busy) return;
     const prev = currentOf(current, field);
-    setBusy(true);
+    const id = current.id;
+    setBusy(true); setPhase("saving"); setPending(value);
     try {
       const res = await fetch("/api/admin/data/bulk-classify", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ids: [current.id], field, value, reason: `Phân loại nhanh (mobile): ${FIELD_LABEL[field]}` }),
+        body: JSON.stringify({ ids: [id], field, value, reason: `Phân loại nhanh (mobile): ${FIELD_LABEL[field]}` }),
       });
-      const data = await res.json();
-      if (!res.ok) { setMessage(data.error ?? "Chưa lưu được."); setBusy(false); return; }
-      setItems((prevItems) => prevItems.map((it) => (it.id === current.id ? { ...it, [field]: value } : it)));
-      setHistory((h) => [...h, { id: current.id, field, prev }]);
-      setPos((p) => p + 1);
-      setCustom("");
-    } catch { setMessage("Mất kết nối khi lưu."); }
-    setBusy(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setMessage(data.error ?? "Chưa lưu được."); setBusy(false); setPhase("idle"); setPending(null); return; }
+      setItems((prevItems) => prevItems.map((it) => (it.id === id ? { ...it, [field]: value } : it)));
+      setHistory((h) => [...h, { id, field, prev }]);
+      setSavedLabel(value === null ? "Đã xóa" : "Đã lưu");
+      setPhase("saved");
+      // Giữ ✓ một nhịp để người dùng kịp thấy rồi mới trượt qua thẻ kế.
+      window.setTimeout(() => { setPos((p) => p + 1); setCustom(""); setPhase("idle"); setPending(null); setBusy(false); }, 430);
+    } catch { setMessage("Mất kết nối khi lưu."); setBusy(false); setPhase("idle"); setPending(null); }
   }
 
   function skip() { setPos((p) => p + 1); }
@@ -132,9 +157,21 @@ export default function RapidClassify() {
 
   return (
     <div className="mx-auto flex min-h-[100svh] max-w-md flex-col gap-3 px-3 pb-6 pt-3">
+      <style>{`
+        @keyframes plIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+        @keyframes plSpin{to{transform:rotate(360deg)}}
+        @keyframes plShim{100%{background-position:-200% 0}}
+        .pl-cardin{animation:plIn .28s cubic-bezier(.2,.7,.3,1)}
+        .pl-spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;display:inline-block;animation:plSpin .6s linear infinite}
+        .pl-skel{background:linear-gradient(90deg,#eef3f1 25%,#e0eae6 37%,#eef3f1 63%);background-size:200% 100%;animation:plShim 1.2s ease-in-out infinite}
+      `}</style>
       <header className="rounded-2xl border-2 border-[#123c36] bg-[#eef6f1] p-3">
         <p className="text-[11px] font-bold tracking-[.16em] text-[#0f5a4e]">PHÂN LOẠI NHANH</p>
         <h1 className="text-lg font-semibold text-[#102f2b]">Lướt thẻ · bấm 1 phát</h1>
+        {!standalone && (installEvt
+          ? <button type="button" onClick={installApp} className="mt-2 w-full rounded-lg border-2 border-[#0c5f4d] bg-white px-3 py-2 text-sm font-bold text-[#0c5f4d] active:scale-[.99]">📲 Cài ứng dụng ra màn hình chính</button>
+          : <p className="mt-2 rounded-lg bg-white/70 px-3 py-1.5 text-[11px] text-[#4b655e]">Cài như app: menu Chrome ⋮ → “Thêm vào màn hình chính”.</p>
+        )}
         <div className="mt-2 grid grid-cols-2 gap-2">
           <label className="text-xs font-semibold text-[#24483f]">Trường phân loại
             <select value={field} onChange={(e) => setField(e.target.value as FieldKey)} className="mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-2 py-2 text-sm">
@@ -157,6 +194,15 @@ export default function RapidClassify() {
         </button>
       </header>
 
+      {loading && !queue.length && (
+        <div className="rounded-2xl border-2 border-[#cdddd6] bg-white p-4">
+          <div className="pl-skel h-4 w-16 rounded" />
+          <div className="pl-skel mt-3 h-6 w-2/3 rounded" />
+          <div className="pl-skel mt-4 h-3 w-1/2 rounded" />
+          <div className="mt-4 grid grid-cols-2 gap-2">{[0, 1, 2, 3].map((i) => <div key={i} className="pl-skel h-12 rounded-xl" />)}</div>
+        </div>
+      )}
+
       {message && <p className="rounded-lg border-2 border-[#9bb9ad] bg-[#f7faf8] px-3 py-2 text-sm text-[#193e35]">{message}</p>}
 
       {queue.length > 0 && !done && current && (
@@ -168,10 +214,12 @@ export default function RapidClassify() {
           <div className="h-1.5 overflow-hidden rounded-full bg-[#dbe7e1]"><div className="h-full bg-[#0c5f4d]" style={{ width: `${(pos / queue.length) * 100}%` }} /></div>
 
           <article
+            key={current.id}
             onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
             onTouchEnd={(e) => { if (touchX !== null && e.changedTouches[0].clientX - touchX < -70) skip(); setTouchX(null); }}
-            className="rounded-2xl border-2 border-[#123c36] bg-white p-4 shadow-[0_8px_20px_rgba(18,60,54,.08)]"
+            className="pl-cardin relative rounded-2xl border-2 border-[#123c36] bg-white p-4 shadow-[0_8px_20px_rgba(18,60,54,.08)]"
           >
+            {phase !== "idle" && <div className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow ${phase === "saving" ? "bg-[#123c36]" : "bg-[#0c5f4d]"}`}>{phase === "saving" ? <><span className="pl-spin" />Đang lưu…</> : <>✓ {savedLabel}</>}</div>}
             <div className="flex items-center gap-2">
               <span className="rounded-full bg-[#eef4f1] px-2 py-0.5 text-xs font-bold text-[#0c5f4d]">{current.source || "—"}</span>
               {currentOf(current, field) && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Hiện: {currentOf(current, field)}</span>}
@@ -184,7 +232,7 @@ export default function RapidClassify() {
             <p className="mt-4 text-xs font-bold uppercase tracking-wide text-[#0f5a4e]">Chọn {FIELD_LABEL[field]}</p>
             <div className="mt-2 grid grid-cols-2 gap-2">
               {valueOptions.map((opt) => {
-                const active = currentOf(current, field) === opt.value;
+                const active = pending === opt.value || currentOf(current, field) === opt.value;
                 return (
                   <button key={opt.value} type="button" disabled={busy} onClick={() => void apply(opt.value)}
                     className={`rounded-xl border-2 px-3 py-3 text-left text-sm font-semibold transition active:scale-[.98] ${active ? "border-[#0c5f4d] bg-[#0c5f4d] text-white" : "border-[#8fa99e] bg-white text-[#183d35] hover:bg-[#f0f7f3]"}`}>
