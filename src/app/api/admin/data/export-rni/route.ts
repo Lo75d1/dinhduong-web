@@ -64,19 +64,27 @@ export async function GET(request: NextRequest) {
       return fileResponse(toCsv(foods, cols), "text/csv", `foods-full_${stamp}.csv`);
     }
 
+    if (format === "medications") {
+      const meds = (await prisma.medicationRef.findMany({ orderBy: { name: "asc" } })) as unknown as Record<string, unknown>[];
+      const cols = ["id", "name", "category", "imageUrl", "sourceUrl", "sourceLabel", "createdByLabel", "createdAt"];
+      return fileResponse(toCsv(meds, cols), "text/csv", `thuoc-tpbs_${stamp}.csv`);
+    }
+
     // JSON gộp đầy đủ (mặc định) — dùng cho app offline
-    const [foods, dishes] = await Promise.all([
+    const [foods, dishes, medications] = await Promise.all([
       prisma.food.findMany({ orderBy: { name: "asc" } }),
       prisma.dish.findMany({ orderBy: { name: "asc" }, include: { ingredients: { orderBy: { sortOrder: "asc" } } } }),
+      prisma.medicationRef.findMany({ orderBy: { name: "asc" } }),
     ]);
     const payload = {
       exportedAt: new Date().toISOString(),
-      note: "Foods gồm cả VDD lẫn RNI để nguyên liệu trong công thức tra được thành phần. Dishes (món ăn) đều là nguồn RNI, kèm nguyên liệu.",
-      counts: { foods: foods.length, dishes: dishes.length, ingredients: dishes.reduce((s, d) => s + d.ingredients.length, 0) },
+      note: "Foods gồm cả VDD lẫn RNI để nguyên liệu trong công thức tra được thành phần. Dishes (món ăn) đều là nguồn RNI, kèm nguyên liệu. Medications = thuốc/TPBS tham khảo (Long Châu).",
+      counts: { foods: foods.length, dishes: dishes.length, ingredients: dishes.reduce((s, d) => s + d.ingredients.length, 0), medications: medications.length },
       foods,
       dishes,
+      medications,
     };
-    return fileResponse(JSON.stringify(payload), "application/json", `rni-offline-full_${stamp}.json`);
+    return fileResponse(JSON.stringify(payload), "application/json", `dinhduong-offline-full_${stamp}.json`);
   } catch (error) {
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
     return Response.json({ error: "Không có quyền xuất dữ liệu." }, { status: 403 });
