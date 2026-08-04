@@ -31,6 +31,67 @@ function currentOf(item: FoodRow, field: FieldKey): string {
   return v === null || v === undefined || v === "" ? "" : String(v);
 }
 
+// Bảng màu (dịu, dễ phân biệt) + emoji để nhận diện nhanh từng giá trị phân loại.
+type Swatch = { bg: string; border: string; text: string; solid: string };
+const SW = {
+  red: { bg: "#fdecec", border: "#e59a9a", text: "#8f2d2d", solid: "#c0392b" },
+  green: { bg: "#e9f6ee", border: "#8cce9d", text: "#1e5b34", solid: "#2e8b57" },
+  blue: { bg: "#eaf1fb", border: "#9cb8e6", text: "#1e3a6b", solid: "#3b6fc4" },
+  amber: { bg: "#fbf3e2", border: "#dfbf78", text: "#6b4e12", solid: "#c9922e" },
+  orange: { bg: "#fdefe4", border: "#eeb184", text: "#8a4415", solid: "#d9772e" },
+  yellow: { bg: "#fbf7de", border: "#d6c65e", text: "#5f560f", solid: "#b8a417" },
+  purple: { bg: "#f2ecf9", border: "#c0a6e0", text: "#4a2c6b", solid: "#7e4fb0" },
+  pink: { bg: "#fdecf3", border: "#eaa0c0", text: "#8f2d5c", solid: "#c94f86" },
+  cyan: { bg: "#e6f5f6", border: "#8ccdd2", text: "#154d52", solid: "#2e8b93" },
+  teal: { bg: "#e4f4f0", border: "#84ccbb", text: "#14503f", solid: "#2e9c7e" },
+  brown: { bg: "#f2ece6", border: "#c9a888", text: "#5c3f22", solid: "#8a5a34" },
+  rose: { bg: "#fdeef1", border: "#eaa6b4", text: "#8f2740", solid: "#c94f6a" },
+  slate: { bg: "#eef1f3", border: "#a7b6bf", text: "#33454f", solid: "#5a7180" },
+} satisfies Record<string, Swatch>;
+type SwKey = keyof typeof SW;
+const PALETTE_ORDER: SwKey[] = ["red", "green", "blue", "amber", "orange", "yellow", "purple", "pink", "cyan", "teal", "brown", "rose", "slate"];
+
+const GROUP_RULES: { kw: string[]; sw: SwKey; icon: string }[] = [
+  { kw: ["thit", "ca", "hai san"], sw: "red", icon: "🥩" },
+  { kw: ["rau", "cu", "qua"], sw: "green", icon: "🥬" },
+  { kw: ["sua"], sw: "blue", icon: "🥛" },
+  { kw: ["trung"], sw: "amber", icon: "🥚" },
+  { kw: ["luong thuc", "ngu coc", "gao"], sw: "brown", icon: "🍚" },
+  { kw: ["hat"], sw: "orange", icon: "🥜" },
+  { kw: ["dau", "mo"], sw: "yellow", icon: "🧈" },
+  { kw: ["banh keo", "ngot"], sw: "pink", icon: "🍬" },
+  { kw: ["nuoc giai khat", "do uong"], sw: "cyan", icon: "🥤" },
+  { kw: ["gia vi"], sw: "purple", icon: "🧂" },
+  { kw: ["hon hop"], sw: "slate", icon: "🍲" },
+  { kw: ["y te"], sw: "teal", icon: "💊" },
+  { kw: ["the thao"], sw: "rose", icon: "🏋️" },
+];
+const PROTEIN_RULES: { kw: string[]; sw: SwKey; icon: string }[] = [
+  { kw: ["thit do"], sw: "red", icon: "🥩" },
+  { kw: ["thit trang", "ga", "gia cam"], sw: "orange", icon: "🍗" },
+  { kw: ["trung sua", "trung", "sua"], sw: "blue", icon: "🥚" },
+  { kw: ["thuc vat", "dau", "hat"], sw: "green", icon: "🌿" },
+  { kw: ["che bien"], sw: "slate", icon: "🥫" },
+  { kw: ["hon hop"], sw: "purple", icon: "🍲" },
+];
+const FOODTYPE_SW: Record<string, { sw: SwKey; icon: string }> = {
+  TS: { sw: "green", icon: "🌿" }, CB: { sw: "amber", icon: "🍳" }, MA: { sw: "orange", icon: "🍲" }, SP: { sw: "blue", icon: "📦" },
+};
+const LEVEL_SW: SwKey[] = ["green", "yellow", "orange", "red"];
+
+function hashPick(s: string): SwKey {
+  let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return PALETTE_ORDER[h % PALETTE_ORDER.length];
+}
+function optStyle(field: FieldKey, value: string): { sw: Swatch; icon: string } {
+  if (LEVEL_FIELDS.has(field)) { const i = Math.max(0, Math.min(3, Number(value) || 0)); return { sw: SW[LEVEL_SW[i]], icon: "●" }; }
+  if (field === "foodType") { const m = FOODTYPE_SW[value]; return m ? { sw: SW[m.sw], icon: m.icon } : { sw: SW.slate, icon: "🏷️" }; }
+  const norm = value.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase();
+  const rules = field === "proteinOrigin" ? PROTEIN_RULES : GROUP_RULES;
+  for (const r of rules) if (r.kw.some((k) => norm.includes(k))) return { sw: SW[r.sw], icon: r.icon };
+  return { sw: SW[hashPick(norm)], icon: "🏷️" };
+}
+
 export default function RapidClassify() {
   const [items, setItems] = useState<FoodRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,10 +319,13 @@ export default function RapidClassify() {
             <div className="grid grid-cols-2 gap-2">
               {valueOptions.map((opt) => {
                 const active = pending === opt.value || currentOf(current, field) === opt.value;
+                const { sw, icon } = optStyle(field, opt.value);
                 return (
                   <button key={opt.value} type="button" disabled={busy} onClick={() => void apply(opt.value)}
-                    className={`rounded-xl border-2 px-3 py-2.5 text-left text-sm font-semibold transition active:scale-[.98] ${active ? "border-[#0c5f4d] bg-[#0c5f4d] text-white" : "border-[#8fa99e] bg-white text-[#183d35] hover:bg-[#f0f7f3]"}`}>
-                    {opt.label}
+                    style={active ? { background: sw.solid, borderColor: sw.solid, color: "#fff" } : { background: sw.bg, borderColor: sw.border, color: sw.text }}
+                    className="flex items-center gap-2 rounded-xl border-2 px-2.5 py-2.5 text-left text-sm font-semibold transition active:scale-[.98]">
+                    <span className="shrink-0 text-base leading-none">{icon}</span>
+                    <span className="min-w-0">{opt.label}</span>
                   </button>
                 );
               })}
