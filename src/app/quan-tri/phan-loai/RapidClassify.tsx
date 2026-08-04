@@ -83,12 +83,18 @@ function hashPick(s: string): SwKey {
   let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return PALETTE_ORDER[h % PALETTE_ORDER.length];
 }
+// Khớp NGUYÊN TỪ để tránh "các"/"món"/"khát" khớp nhầm "ca"/"mo"/"hat".
+// Cụm có dấu cách coi như cụm liền; từ đơn phải đứng thành từ riêng.
+function matchNorm(norm: string, kw: string): boolean {
+  if (kw.includes(" ")) return norm.includes(kw);
+  return new RegExp(`(^|[^a-z])${kw}([^a-z]|$)`).test(norm);
+}
 function optStyle(field: FieldKey, value: string): { sw: Swatch; icon: string } {
   if (LEVEL_FIELDS.has(field)) { const i = Math.max(0, Math.min(3, Number(value) || 0)); return { sw: SW[LEVEL_SW[i]], icon: "●" }; }
   if (field === "foodType") { const m = FOODTYPE_SW[value]; return m ? { sw: SW[m.sw], icon: m.icon } : { sw: SW.slate, icon: "🏷️" }; }
   const norm = value.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").toLowerCase();
   const rules = field === "proteinOrigin" ? PROTEIN_RULES : GROUP_RULES;
-  for (const r of rules) if (r.kw.some((k) => norm.includes(k))) return { sw: SW[r.sw], icon: r.icon };
+  for (const r of rules) if (r.kw.some((k) => matchNorm(norm, k))) return { sw: SW[r.sw], icon: r.icon };
   return { sw: SW[hashPick(norm)], icon: "🏷️" };
 }
 
