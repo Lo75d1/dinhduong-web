@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 type FoodRow = {
-  id: string; name: string; source: string;
+  id: string; name: string; source: string; imageUrl: string | null;
   foodType: string | null; foodGroup: string | null; proteinOrigin: string | null;
   giLevel: number | null; purinLevel: number | null; cholesterolLevel: number | null;
 };
@@ -235,14 +235,22 @@ export default function RapidClassify() {
         >
           {phase !== "idle" && <div className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow ${phase === "saving" ? "bg-[#123c36]" : "bg-[#0c5f4d]"}`}>{phase === "saving" ? <><span className="pl-spin" />Đang lưu…</> : <>✓ {savedLabel}</>}</div>}
           <div className="shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-[#eef4f1] px-2 py-0.5 text-xs font-bold text-[#0c5f4d]">{current.source || "—"}</span>
-              {currentOf(current, field) && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Hiện: {currentOf(current, field)}</span>}
+            <div className="flex gap-3">
+              {current.imageUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={current.imageUrl} alt={current.name} loading="lazy" onError={(e) => { e.currentTarget.style.display = "none"; }} className="h-20 w-20 shrink-0 rounded-lg border border-[#cdddd6] bg-[#f5f8f6] object-cover" />
+                : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-[#cdddd6] bg-[#f5f8f6] text-3xl text-[#9fb7ae]">🍽️</div>}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-full bg-[#eef4f1] px-2 py-0.5 text-xs font-bold text-[#0c5f4d]">{current.source || "—"}</span>
+                  {currentOf(current, field) && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Hiện: {currentOf(current, field)}</span>}
+                </div>
+                <h2 className="mt-1 text-lg font-bold leading-6 text-[#122f2a]">{current.name}</h2>
+                <p className="mt-0.5 text-[11px] text-[#637a73]">
+                  {current.foodType ? `Loại ${current.foodType}` : "chưa loại"} · {current.foodGroup ?? "chưa nhóm"} · {current.proteinOrigin ?? "chưa nguồn đạm"}
+                </p>
+              </div>
             </div>
-            <h2 className="mt-1.5 text-xl font-bold leading-6 text-[#122f2a]">{current.name}</h2>
-            <p className="mt-0.5 text-[11px] text-[#637a73]">
-              {current.foodType ? `Loại ${current.foodType}` : "chưa loại"} · {current.foodGroup ?? "chưa nhóm"} · {current.proteinOrigin ?? "chưa nguồn đạm"}
-            </p>
             <p className="mt-2 text-xs font-bold uppercase tracking-wide text-[#0f5a4e]">Chọn {FIELD_LABEL[field]}</p>
           </div>
 

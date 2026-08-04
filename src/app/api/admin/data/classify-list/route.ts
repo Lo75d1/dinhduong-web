@@ -6,7 +6,7 @@ import { unauthorizedResponse } from "@/lib/auth";
 // quy mô với ImageSourceSync đã tải 6192 dòng RNI client-side), lọc/chọn ở
 // trình duyệt để không cần thao tác từng dòng một như DataManager cũ.
 const select = {
-  id: true, name: true, source: true, foodType: true, foodGroup: true,
+  id: true, name: true, source: true, imageUrl: true, foodType: true, foodGroup: true,
   proteinOrigin: true, giLevel: true, purinLevel: true, cholesterolLevel: true,
 };
 
