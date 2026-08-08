@@ -1,9 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import MenuFoodSearch from "./MenuFoodSearch";
 import { basisForMode, calculateQuantity } from "./quantity";
 import { loadRows, type Row } from "./types";
 import {
+  addDishRecipe,
+  addEmptyDish,
+  addEmptyMeal,
+  addFoodToDish,
   dayKcal,
   dayMeals,
   duplicateDay,
@@ -15,6 +20,8 @@ import {
   rowKcal,
   saveMenuDays,
   type MenuDay,
+  type MenuDishIngredient,
+  type MenuFoodResult,
 } from "./multi-day";
 
 // Tông xanh dương của chế độ nhiều ngày (khác xanh rêu của chế độ một ngày).
@@ -121,6 +128,32 @@ export default function MultiDayBoard() {
     patchDayRows(dayId, (rows) => rows.filter((r) => r.uid !== uid));
   }
 
+  function addMealToDay(dayId: string) {
+    const day = days.find((d) => d.id === dayId);
+    const count = day ? new Set(day.rows.map((r) => r.meal)).size : 0;
+    patchDayRows(dayId, (rows) => addEmptyMeal(rows, `Bữa ${count + 1}`));
+  }
+
+  function addDishToMeal(dayId: string, meal: string, name: string) {
+    if (!name.trim()) return;
+    patchDayRows(dayId, (rows) => addEmptyDish(rows, meal, name.trim()));
+  }
+
+  function addFood(dayId: string, meal: string, dish: string, food: MenuFoodResult) {
+    patchDayRows(dayId, (rows) => addFoodToDish(rows, meal, dish, food, "menu"));
+  }
+
+  function addRecipe(dayId: string, meal: string, dishName: string, ingredients: MenuDishIngredient[]) {
+    let msg = "";
+    patchDayRows(dayId, (rows) => {
+      const result = addDishRecipe(rows, meal, dishName, ingredients, "menu");
+      if (result.added === 0) msg = "Món này chưa liên kết được nguyên liệu nào để tính dinh dưỡng.";
+      else if (result.skipped > 0) msg = `Đã thêm ${result.added} nguyên liệu có dữ liệu; ${result.skipped} nguyên liệu chưa liên kết dữ liệu nên bỏ qua.`;
+      return result.rows;
+    });
+    if (msg) window.setTimeout(() => window.alert(msg), 0);
+  }
+
   const totalKcalAll = days.reduce((s, d) => s + dayKcal(d), 0);
   const maxDayKcal = Math.max(1, ...days.map(dayKcal));
 
@@ -171,6 +204,10 @@ export default function MultiDayBoard() {
               onDeleteMeal={(meal) => onDeleteMeal(day.id, meal)}
               onUpdateGrams={(uid, g) => updateRowGrams(day.id, uid, g)}
               onDeleteRow={(uid) => deleteRow(day.id, uid)}
+              onAddMeal={() => addMealToDay(day.id)}
+              onAddDish={(meal, name) => addDishToMeal(day.id, meal, name)}
+              onAddFood={(meal, dish, food) => addFood(day.id, meal, dish, food)}
+              onAddRecipe={(meal, dishName, ingredients) => addRecipe(day.id, meal, dishName, ingredients)}
             />
           ))}
         </div>
@@ -227,6 +264,10 @@ function DayCard({
   onDeleteMeal,
   onUpdateGrams,
   onDeleteRow,
+  onAddMeal,
+  onAddDish,
+  onAddFood,
+  onAddRecipe,
 }: {
   day: MenuDay;
   index: number;
@@ -244,6 +285,10 @@ function DayCard({
   onDeleteMeal: (meal: string) => void;
   onUpdateGrams: (uid: string, grams: number) => void;
   onDeleteRow: (uid: string) => void;
+  onAddMeal: () => void;
+  onAddDish: (meal: string, name: string) => void;
+  onAddFood: (meal: string, dish: string, food: MenuFoodResult) => void;
+  onAddRecipe: (meal: string, dishName: string, ingredients: MenuDishIngredient[]) => void;
 }) {
   const meals = dayMeals(day);
   const kcal = dayKcal(day);
@@ -271,39 +316,45 @@ function DayCard({
       </div>
 
       {/* Dải các bữa (khối ngang) */}
-      {meals.length === 0 ? (
-        <p className="px-3 py-3 text-xs" style={{ color: "#7d8ea3" }}>
-          Ngày trống. Bấm “⧉” để nhân đôi từ ngày khác, hoặc nhập khẩu phần hiện tại. (Thêm bữa/món trực tiếp sẽ có ở bước sau.)
-        </p>
-      ) : (
-        <div className="flex gap-2 overflow-x-auto p-2.5">
-          {meals.map((meal) => {
-            const active = expandedMeal === meal.meal;
-            const dishNames = meal.dishes.map((d) => d.dish).join(" · ");
-            return (
-              <button
-                key={meal.meal}
-                type="button"
-                onClick={() => onToggleMeal(meal.meal)}
-                className="shrink-0 rounded-lg border px-2.5 py-1.5 text-left transition-colors"
-                style={{
-                  minWidth: 138,
-                  maxWidth: 220,
-                  borderColor: active ? ACCENT : "#d5e3f2",
-                  borderWidth: active ? 1.5 : 1,
-                  background: active ? "#E6F1FB" : "#fff",
-                }}
-              >
-                <div className="flex items-center justify-between gap-1">
-                  <span className="truncate text-[13px] font-semibold" style={{ color: INK }}>{meal.meal}</span>
-                  <span className="shrink-0 text-[11px]" style={{ color: ACCENT }}>{active ? "▾" : "▸"}</span>
-                </div>
-                <div className="truncate text-[11px]" style={{ color: "#7d8ea3" }}>{dishNames || "—"} · {Math.round(mealNodeKcal(meal))}</div>
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div className="flex items-stretch gap-2 overflow-x-auto p-2.5">
+        {meals.length === 0 && (
+          <span className="self-center text-xs" style={{ color: "#7d8ea3" }}>Ngày trống — thêm bữa, hoặc nhân đôi/nhập từ ngày khác.</span>
+        )}
+        {meals.map((meal) => {
+          const active = expandedMeal === meal.meal;
+          const dishNames = meal.dishes.map((d) => d.dish).join(" · ");
+          return (
+            <button
+              key={meal.meal}
+              type="button"
+              onClick={() => onToggleMeal(meal.meal)}
+              className="shrink-0 rounded-lg border px-2.5 py-1.5 text-left transition-colors"
+              style={{
+                minWidth: 138,
+                maxWidth: 220,
+                borderColor: active ? ACCENT : "#d5e3f2",
+                borderWidth: active ? 1.5 : 1,
+                background: active ? "#E6F1FB" : "#fff",
+              }}
+            >
+              <div className="flex items-center justify-between gap-1">
+                <span className="truncate text-[13px] font-semibold" style={{ color: INK }}>{meal.meal}</span>
+                <span className="shrink-0 text-[11px]" style={{ color: ACCENT }}>{active ? "▾" : "▸"}</span>
+              </div>
+              <div className="truncate text-[11px]" style={{ color: "#7d8ea3" }}>{dishNames || "—"} · {Math.round(mealNodeKcal(meal))}</div>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={onAddMeal}
+          className="flex shrink-0 items-center justify-center rounded-lg border border-dashed px-3 text-sm font-semibold"
+          style={{ minWidth: 64, borderColor: ACCENT, color: INK, background: "#F4F9FE" }}
+          title="Thêm bữa vào ngày này"
+        >
+          ＋ bữa
+        </button>
+      </div>
 
       {/* Panel sổ ra cho riêng bữa được chọn */}
       {expandedMeal && meals.some((m) => m.meal === expandedMeal) && (
@@ -314,6 +365,9 @@ function DayCard({
           onDelete={() => onDeleteMeal(expandedMeal)}
           onUpdateGrams={onUpdateGrams}
           onDeleteRow={onDeleteRow}
+          onAddDish={(name) => onAddDish(expandedMeal, name)}
+          onAddFood={(dish, food) => onAddFood(expandedMeal, dish, food)}
+          onAddRecipe={(dishName, ingredients) => onAddRecipe(expandedMeal, dishName, ingredients)}
         />
       )}
     </div>
@@ -327,6 +381,9 @@ function MealPanel({
   onDelete,
   onUpdateGrams,
   onDeleteRow,
+  onAddDish,
+  onAddFood,
+  onAddRecipe,
 }: {
   meal: ReturnType<typeof dayMeals>[number];
   onRename: (newName: string) => void;
@@ -334,7 +391,15 @@ function MealPanel({
   onDelete: () => void;
   onUpdateGrams: (uid: string, grams: number) => void;
   onDeleteRow: (uid: string) => void;
+  onAddDish: (name: string) => void;
+  onAddFood: (dish: string, food: MenuFoodResult) => void;
+  onAddRecipe: (dishName: string, ingredients: MenuDishIngredient[]) => void;
 }) {
+  const [openDish, setOpenDish] = useState<string | null>(null);
+  function addEmptyDishPrompt() {
+    const name = window.prompt("Tên món mới", `Món ${meal.dishes.length + 1}`)?.trim();
+    if (name) { onAddDish(name); setOpenDish(name); }
+  }
   return (
     <div className="menu-drop border-t px-3 py-3" style={{ borderColor: ACCENT, background: "#F4F9FE" }}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -346,53 +411,63 @@ function MealPanel({
         </div>
       </div>
 
+      {/* Thêm MÓN vào bữa — ngữ cảnh mức bữa (ô tìm chọn món) */}
+      <div className="mb-2 flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold" style={{ color: INK }}>Thêm món vào bữa</span>
+          <button type="button" onClick={addEmptyDishPrompt} className="rounded border px-1.5 py-0.5 text-[11px] font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>＋ Món trống</button>
+        </div>
+        <MenuFoodSearch kind="dish" onPickDish={(dish) => onAddRecipe(dish.name, dish.ingredients)} />
+      </div>
+
       {meal.dishes.length === 0 ? (
-        <p className="text-xs" style={{ color: "#7d8ea3" }}>Bữa này chưa có món.</p>
+        <p className="text-xs" style={{ color: "#7d8ea3" }}>Bữa này chưa có món — thêm bằng ô trên.</p>
       ) : (
         <div className="flex flex-col gap-2">
-          {meal.dishes.map((dish) => (
-            <div key={dish.dish} className="rounded-lg border bg-white p-2" style={{ borderColor: "#e0e9f4" }}>
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-[13px] font-semibold" style={{ color: INK }}>🍽️ {dish.dish}</span>
-                <span className="rounded px-1.5 text-[11px] font-bold tabular-nums" style={{ background: "#E6F1FB", color: INK }}>
-                  {Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0))} kcal
-                </span>
+          {meal.dishes.map((dish) => {
+            const open = openDish === dish.dish;
+            const dKcal = Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0));
+            return (
+              <div key={dish.dish} className="rounded-lg border bg-white" style={{ borderColor: open ? ACCENT : "#e0e9f4" }}>
+                {/* Mở món ra = "cửa sổ TP": trong đây mới chọn thực phẩm */}
+                <button type="button" onClick={() => setOpenDish(open ? null : dish.dish)} className="flex w-full items-center justify-between gap-2 px-2 py-1.5 text-left">
+                  <span className="min-w-0 truncate text-[13px] font-semibold" style={{ color: INK }}>🍽️ {dish.dish} <span className="text-[10px]" style={{ color: ACCENT }}>{open ? "▾ cửa sổ TP" : "▸"}</span></span>
+                  <span className="shrink-0 text-[11px]" style={{ color: "#7d8ea3" }}>{dish.rows.length} TP · {dKcal} kcal</span>
+                </button>
+                {open && (
+                  <div className="border-t px-2 py-2" style={{ borderColor: "#eef3f9" }}>
+                    {dish.rows.length === 0 ? (
+                      <p className="pb-2 pl-1 text-[11px]" style={{ color: "#7d8ea3" }}>Món trống — tìm thực phẩm bên dưới để thêm.</p>
+                    ) : (
+                      <table className="mb-2 w-full text-[12px]">
+                        <thead>
+                          <tr style={{ color: "#7d8ea3" }}>
+                            <th className="py-0.5 text-left font-medium">Thực phẩm</th>
+                            <th className="py-0.5 text-right font-medium">Sống sạch (g)</th>
+                            <th className="py-0.5 text-right font-medium">kcal</th>
+                            <th className="py-0.5" />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dish.rows.map((row) => (
+                            <tr key={row.uid} className="border-t" style={{ borderColor: "#eef3f9" }}>
+                              <td className="py-1 pr-2">{row.foodName || "(chưa đặt tên)"}</td>
+                              <td className="py-1 text-right"><GramInput value={row.inputGrams} onCommit={(g) => onUpdateGrams(row.uid, g)} /></td>
+                              <td className="py-1 text-right tabular-nums" style={{ color: "#5a708c" }}>{Math.round(rowKcal(row))}</td>
+                              <td className="py-1 pl-1 text-right"><button type="button" onClick={() => onDeleteRow(row.uid)} title="Xóa" className="rounded px-1 text-xs" style={{ color: "#8a2323" }}>✕</button></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                    <MenuFoodSearch kind="food" onPickFood={(food) => onAddFood(dish.dish, food)} />
+                  </div>
+                )}
               </div>
-              {dish.rows.length === 0 ? (
-                <p className="pl-2 text-[11px]" style={{ color: "#7d8ea3" }}>Món trống.</p>
-              ) : (
-                <table className="w-full text-[12px]">
-                  <thead>
-                    <tr style={{ color: "#7d8ea3" }}>
-                      <th className="py-0.5 text-left font-medium">Thực phẩm</th>
-                      <th className="py-0.5 text-right font-medium">Sống sạch (g)</th>
-                      <th className="py-0.5 text-right font-medium">kcal</th>
-                      <th className="py-0.5" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dish.rows.map((row) => (
-                      <tr key={row.uid} className="border-t" style={{ borderColor: "#eef3f9" }}>
-                        <td className="py-1 pr-2">{row.foodName || "(chưa đặt tên)"}</td>
-                        <td className="py-1 text-right">
-                          <GramInput value={row.inputGrams} onCommit={(g) => onUpdateGrams(row.uid, g)} />
-                        </td>
-                        <td className="py-1 text-right tabular-nums" style={{ color: "#5a708c" }}>{Math.round(rowKcal(row))}</td>
-                        <td className="py-1 pl-1 text-right">
-                          <button type="button" onClick={() => onDeleteRow(row.uid)} title="Xóa" className="rounded px-1 text-xs" style={{ color: "#8a2323" }}>✕</button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
-      <p className="mt-2 text-[11px]" style={{ color: "#7d8ea3" }}>
-        Thêm món / tìm thực phẩm mới trực tiếp vào bữa sẽ có ở bước sau. Hiện chỉnh được khối lượng và xóa bớt.
-      </p>
     </div>
   );
 }

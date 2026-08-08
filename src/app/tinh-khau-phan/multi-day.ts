@@ -4,7 +4,8 @@
 // server để sau (CSDL đang kẹt drift, xem PROJECT_STATUS.md).
 
 import { EMPTY_CLASSIFY } from "@/lib/food-classify";
-import { buildTree, genId, mealOrder, type MealNode, type Row } from "./types";
+import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
+import { buildTree, genId, makeRow, mealOrder, type MealNode, type RationMode, type Row } from "./types";
 
 export type MenuDay = {
   id: string;
@@ -116,6 +117,118 @@ export function mealNodeKcal(meal: MealNode): number {
 // Cây bữa → món của một ngày, đã sắp theo thứ tự lâm sàng (dùng lại buildTree).
 export function dayMeals(day: MenuDay): MealNode[] {
   return buildTree(day.rows);
+}
+
+// ---- Thêm bữa / món / thực phẩm trực tiếp lên board (Phase 2) ----
+
+export const UNASSIGNED_DISH = "(Chưa phân món)";
+
+export type MenuFoodResult = { id: string; name: string; wastePercent?: number | null } & Record<
+  string,
+  number | null | string
+>;
+export type MenuDishIngredient = { quantityG: number | null; food: MenuFoodResult | null };
+
+function extractNutrients(food: MenuFoodResult): Record<string, number | null> {
+  const n: Record<string, number | null> = {};
+  for (const field of CORE_CALC_FIELDS) {
+    const v = food[field.key];
+    n[field.key] = typeof v === "number" ? v : null;
+  }
+  return n;
+}
+
+function extractClassify(food: MenuFoodResult) {
+  return {
+    foodGroup: typeof food.foodGroup === "string" ? food.foodGroup : null,
+    proteinOrigin: typeof food.proteinOrigin === "string" ? food.proteinOrigin : null,
+    giLevel: typeof food.giLevel === "number" ? food.giLevel : null,
+    purinLevel: typeof food.purinLevel === "number" ? food.purinLevel : null,
+    cholesterolLevel: typeof food.cholesterolLevel === "number" ? food.cholesterolLevel : null,
+  };
+}
+
+// Chèn dòng ngay sau nhóm meal+dish hiện có (giữ dòng cùng món liền nhau).
+function insertIntoDish(rows: Row[], meal: string, dish: string, newRows: Row[]): Row[] {
+  let lastIndex = -1;
+  for (let i = rows.length - 1; i >= 0; i--) {
+    if (rows[i].meal === meal && rows[i].dish === dish) { lastIndex = i; break; }
+  }
+  if (lastIndex < 0) return [...rows, ...newRows];
+  return [...rows.slice(0, lastIndex + 1), ...newRows, ...rows.slice(lastIndex + 1)];
+}
+
+// Thêm một bữa trống (dòng giữ chỗ, chưa có thực phẩm).
+export function addEmptyMeal(rows: Row[], label: string): Row[] {
+  return [...rows, makeRow(label, UNASSIGNED_DISH, null, "menu")];
+}
+
+// Thêm một món trống vào bữa (dòng giữ chỗ).
+export function addEmptyDish(rows: Row[], meal: string, dishName: string): Row[] {
+  return [...rows, makeRow(meal, dishName, null, "menu")];
+}
+
+// Thêm một thực phẩm vào đúng bữa/món; cộng dồn nếu đã có cùng thực phẩm.
+export function addFoodToDish(
+  rows: Row[],
+  meal: string,
+  dish: string,
+  food: MenuFoodResult,
+  mode: RationMode = "menu"
+): Row[] {
+  const existing = rows.find((r) => r.meal === meal && r.dish === dish && r.foodId === food.id);
+  if (existing) {
+    const nextInput = (existing.inputGrams || 0) + 100;
+    return rows.map((r) => (r.uid === existing.uid ? { ...r, inputGrams: nextInput, grams: nextInput } : r));
+  }
+  const row = makeRow(
+    meal,
+    dish,
+    {
+      id: food.id,
+      name: food.name,
+      nutrients: extractNutrients(food),
+      classify: extractClassify(food),
+      wastePercent: typeof food.wastePercent === "number" ? food.wastePercent : null,
+    },
+    mode
+  );
+  const inserted = insertIntoDish(rows, meal, dish, [row]);
+  // Dọn dòng giữ chỗ rỗng của đúng món này.
+  return inserted.filter((r) => !(r.meal === meal && r.dish === dish && !r.foodId));
+}
+
+// Thêm cả một món (công thức RNI) vào bữa: bung các nguyên liệu có dữ liệu thành dòng.
+export function addDishRecipe(
+  rows: Row[],
+  meal: string,
+  dishName: string,
+  ingredients: MenuDishIngredient[],
+  mode: RationMode = "menu"
+): { rows: Row[]; added: number; skipped: number } {
+  const eligible = ingredients.filter((ing) => ing.food);
+  if (!eligible.length) return { rows, added: 0, skipped: ingredients.length };
+  const newRows = eligible.map((ing) => {
+    const food = ing.food!;
+    const cleanGrams = typeof ing.quantityG === "number" && ing.quantityG > 0 ? ing.quantityG : 100;
+    const row = makeRow(
+      meal,
+      dishName,
+      {
+        id: food.id,
+        name: food.name,
+        nutrients: extractNutrients(food),
+        classify: extractClassify(food),
+        wastePercent: typeof food.wastePercent === "number" ? food.wastePercent : null,
+      },
+      mode
+    );
+    return { ...row, grams: cleanGrams, inputGrams: cleanGrams, inputBasis: "edible" as const, conversionFactor: 1, note: `Từ công thức: ${dishName}` };
+  });
+  const inserted = insertIntoDish(rows, meal, dishName, newRows).filter(
+    (r) => !(r.meal === meal && r.dish === UNASSIGNED_DISH && !r.foodId)
+  );
+  return { rows: inserted, added: eligible.length, skipped: ingredients.length - eligible.length };
 }
 
 export { mealOrder };
