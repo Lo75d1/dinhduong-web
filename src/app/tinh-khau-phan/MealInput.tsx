@@ -946,18 +946,36 @@ function MedicationInMeal({ title, medications, onUpdate, onDelete, warning = fa
   </div>;
 }
 
+function DishTotalInput({ total, onScale }: { total: number; onScale: (t: number) => void }) {
+  const [text, setText] = useState(String(Math.round(total)));
+  const [focused, setFocused] = useState(false);
+  useEffect(() => { if (!focused) setText(String(Math.round(total))); }, [total, focused]);
+  return <input type="number" min={0} value={text} aria-label="Tổng khối lượng món (sống sạch) — sửa để chia lại các nguyên liệu theo tỉ lệ" onFocus={() => setFocused(true)} onChange={(e) => setText(e.target.value)} onBlur={() => { setFocused(false); const v = Number(String(text).replace(",", ".")); if (Number.isFinite(v) && v > 0) onScale(v); }} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} className="w-16 rounded border border-[#0c5f4d] bg-white px-1 py-0.5 text-right text-xs font-bold tabular-nums text-[#0c5f4d] focus:outline-none focus:ring-2 focus:ring-[#123c36]" />;
+}
+
 function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteFoodRow, onUpdateQuantity, onUpdateNote }: {
   node: DishNode; mode: RationMode; isWork: boolean; onSelect: () => void; onRename: (name: string) => void; onDelete: () => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void;
 }) {
   const [open, setOpen] = useState(isWork);
+  const [flash, setFlash] = useState(false);
+  const dishTotal = node.rows.reduce((sum, r) => sum + (r.inputGrams || 0), 0);
+  function scaleDishRows(newTotal: number) {
+    const oldTotal = node.rows.reduce((sum, r) => sum + (r.inputGrams || 0), 0);
+    if (oldTotal <= 0 || newTotal <= 0 || Math.abs(newTotal - oldTotal) < 0.05) return;
+    const ratio = newTotal / oldTotal;
+    node.rows.forEach((r) => onUpdateQuantity(r.uid, "inputGrams", Math.round((r.inputGrams || 0) * ratio * 10) / 10));
+    setFlash(true);
+    window.setTimeout(() => setFlash(false), 650);
+  }
   return <div>
     <div className={`flex items-center gap-1.5 border-l-4 border-[#52786d] px-2 py-1.5 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
       <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Thu gọn món" : "Mở món"} className="shrink-0 rounded px-1 text-sm font-bold text-[#0c5f4d] hover:bg-white/60">{open ? "▾" : "▸"}</button>
       <span className="shrink-0 text-base" aria-hidden="true">🍽️</span>
       <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 flex-1 rounded border border-[#8ba39b] bg-white px-2 py-0.5 text-sm font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
+      {node.rows.length > 0 && <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-[#0c5f4d] sm:flex" title="Tổng khối lượng món (sống sạch) — sửa số này để tự chia lại các nguyên liệu theo tỉ lệ"><span aria-hidden="true">∑ món</span><DishTotalInput total={dishTotal} onScale={scaleDishRows} /><span aria-hidden="true">g</span></span>}
       <button onClick={onDelete} className="shrink-0 rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>
     </div>
-    {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía dưới.</div> : open ? <div className="overflow-x-auto"><table className="w-full min-w-[560px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]"><colgroup><col className="w-[44%]"/><col className="w-[13%]"/><col className="w-[12%]"/><col className="w-[12%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-2 py-1 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-1 py-1 text-right font-semibold">Đã ăn</th><th className="px-1 py-1 text-right font-semibold">Hệ số</th><th className="px-1 py-1 text-right font-semibold">Sống sạch</th></> : <><th className="px-1 py-1 text-right font-semibold">Sống sạch</th><th className="px-1 py-1 text-right font-semibold">Mua/kho</th><th className="px-1 py-1 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-1 font-semibold">Ghi chú</th><th className="px-1 py-1" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div> : <button type="button" onClick={() => { setOpen(true); onSelect(); }} className="w-full border-t border-[#8ba39b] px-4 py-2.5 text-left text-sm font-medium text-[#123c36] hover:bg-[#f0f6f2]">🍽️ {node.rows.length} thực phẩm — bấm để mở</button>}
+    {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía dưới.</div> : open ? <div className={`overflow-x-auto transition-colors duration-500 ${flash ? "bg-amber-100" : "bg-transparent"}`}><table className="w-full min-w-[560px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]"><colgroup><col className="w-[44%]"/><col className="w-[13%]"/><col className="w-[12%]"/><col className="w-[12%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-2 py-1 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-1 py-1 text-right font-semibold">Đã ăn</th><th className="px-1 py-1 text-right font-semibold">Hệ số</th><th className="px-1 py-1 text-right font-semibold">Sống sạch</th></> : <><th className="px-1 py-1 text-right font-semibold">Sống sạch</th><th className="px-1 py-1 text-right font-semibold">Mua/kho</th><th className="px-1 py-1 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-1 font-semibold">Ghi chú</th><th className="px-1 py-1" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div> : <button type="button" onClick={() => { setOpen(true); onSelect(); }} className="w-full border-t border-[#8ba39b] px-4 py-2.5 text-left text-sm font-medium text-[#123c36] hover:bg-[#f0f6f2]">🍽️ {node.rows.length} thực phẩm — bấm để mở</button>}
   </div>;
 }
 
