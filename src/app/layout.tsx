@@ -85,12 +85,6 @@ export default function RootLayout({
                 Món ăn
               </Link>
               <Link
-                href="/tri-thuc-dinh-duong"
-                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
-              >
-                Tri thức mới
-              </Link>
-              <Link
                 href="/huong-dan"
                 className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
               >
