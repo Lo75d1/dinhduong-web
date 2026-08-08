@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     const [settings, totalVisits] = await Promise.all([
-      prisma.siteSetting.findUnique({ where: { id: "public" }, select: { id: true, contactName: true, organization: true, phone: true, email: true, address: true, zaloUrl: true, thankYouTitle: true, thankYouBody: true, updatedAt: true } }),
+      prisma.siteSetting.findUnique({ where: { id: "public" }, select: { id: true, contactName: true, organization: true, phone: true, email: true, address: true, zaloUrl: true, offlineDownloadUrl: true, thankYouTitle: true, thankYouBody: true, updatedAt: true } }),
       // Chỉ tổng số lượt xem (không có thông tin cá nhân) — hiển thị công khai ở footer.
       prisma.pageVisit.count().catch(() => null),
     ]);

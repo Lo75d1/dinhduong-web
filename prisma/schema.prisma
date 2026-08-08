@@ -614,6 +614,7 @@ model SiteSetting {
   geminiKeyEncrypted String? @db.Text
   geminiModel        String? @default("gemini-2.5-flash")
   geminiEnabled      Boolean @default(false)
+  offlineDownloadUrl String? @db.Text
   updatedAt    DateTime @updatedAt
 
   @@map("site_settings")

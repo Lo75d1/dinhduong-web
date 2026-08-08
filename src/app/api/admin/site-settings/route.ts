@@ -35,9 +35,11 @@ export async function PATCH(request: Request) {
       zaloUrl: cleanPublicText(body?.zaloUrl, 500) || null,
       thankYouTitle: cleanPublicText(body?.thankYouTitle, 160) || "Lời cảm ơn",
       thankYouBody: cleanPublicText(body?.thankYouBody, 4_000) || null,
+      offlineDownloadUrl: cleanPublicText(body?.offlineDownloadUrl, 500) || null,
     };
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) return Response.json({ error: "Email chưa đúng định dạng." }, { status: 400 });
     if (data.zaloUrl && !/^https:\/\/zalo\.me\//.test(data.zaloUrl)) return Response.json({ error: "Link hỗ trợ phải là link Zalo hợp lệ." }, { status: 400 });
+    if (data.offlineDownloadUrl && !/^https?:\/\//.test(data.offlineDownloadUrl)) return Response.json({ error: "Link tải bản offline phải bắt đầu bằng http:// hoặc https://" }, { status: 400 });
     const settings = await prisma.siteSetting.upsert({ where: { id: "public" }, create: { id: "public", ...data }, update: data });
     return Response.json(settings);
   } catch (error) {
