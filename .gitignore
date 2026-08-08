@@ -1,5 +1,11 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# local agent config, dev logs, generated test outputs
+.claude/
+/outputs/
+devserver*.log
+devguide.log
+
 # dependencies
 /node_modules
 /.pnp

@@ -1,7 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import MenuFoodSearch from "./MenuFoodSearch";
+import MultiDayAnalysis from "./MultiDayAnalysis";
+import { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
+import type { RecommendationRow } from "./matchRecommendation";
 import { basisForMode, calculateQuantity } from "./quantity";
 import { loadRows, type Row } from "./types";
 import {
@@ -10,12 +34,13 @@ import {
   addEmptyMeal,
   addFoodToDish,
   dayKcal,
-  dayMeals,
+  dayMealsOrdered,
   duplicateDay,
   duplicateMealInRows,
   loadMenuDays,
   makeEmptyDay,
   mealNodeKcal,
+  reorderMealsInRows,
   renameMealInRows,
   rowKcal,
   saveMenuDays,
@@ -30,15 +55,48 @@ const ACCENT = "#185FA5";
 
 const round = (n: number) => Math.round(n * 10) / 10;
 
+function useMenuSensors() {
+  return useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+}
+
 export default function MultiDayBoard() {
   const [days, setDays] = useState<MenuDay[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [expanded, setExpanded] = useState<{ dayId: string; meal: string } | null>(null);
+  const [activeDayId, setActiveDayId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [recommendations, setRecommendations] = useState<RecommendationRow[]>([]);
+  const daySensors = useMenuSensors();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDays(loadMenuDays());
+    try {
+      const rawProfile = window.localStorage.getItem("khauphan_profile_v1");
+      if (rawProfile) setProfile({ ...DEFAULT_PROFILE, ...JSON.parse(rawProfile) });
+    } catch {
+      setProfile(null);
+    }
     setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    function onProfile(event: Event) {
+      setProfile({ ...DEFAULT_PROFILE, ...(event as CustomEvent<Profile>).detail });
+    }
+    window.addEventListener("khauphan:profile", onProfile);
+    return () => window.removeEventListener("khauphan:profile", onProfile);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/nutrition-recommendations")
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data) => setRecommendations(Array.isArray(data.items) ? data.items : []))
+      .catch(() => setRecommendations([]));
   }, []);
 
   useEffect(() => {
@@ -88,6 +146,17 @@ export default function MultiDayBoard() {
     });
   }
 
+  function onDayDragEnd(event: DragEndEvent) {
+    const overId = event.over?.id;
+    setActiveDayId(null);
+    if (!overId || event.active.id === overId) return;
+    setDays((current) => {
+      const from = current.findIndex((day) => day.id === event.active.id);
+      const to = current.findIndex((day) => day.id === overId);
+      return from >= 0 && to >= 0 ? arrayMove(current, from, to) : current;
+    });
+  }
+
   function patchDay(id: string, patch: Partial<MenuDay>) {
     setDays((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)));
   }
@@ -111,6 +180,10 @@ export default function MultiDayBoard() {
     if (!window.confirm(`Xóa bữa "${meal}" khỏi ngày này?`)) return;
     patchDayRows(dayId, (rows) => rows.filter((r) => r.meal !== meal));
     setExpanded((cur) => (cur?.dayId === dayId && cur.meal === meal ? null : cur));
+  }
+
+  function onReorderMeal(dayId: string, activeMeal: string, overMeal: string) {
+    patchDayRows(dayId, (rows) => reorderMealsInRows(rows, activeMeal, overMeal));
   }
 
   function updateRowGrams(dayId: string, uid: string, inputGrams: number) {
@@ -155,7 +228,6 @@ export default function MultiDayBoard() {
   }
 
   const totalKcalAll = days.reduce((s, d) => s + dayKcal(d), 0);
-  const maxDayKcal = Math.max(1, ...days.map(dayKcal));
 
   return (
     <section className="flex flex-col gap-3" aria-label="Thực đơn nhiều ngày">
@@ -182,35 +254,49 @@ export default function MultiDayBoard() {
           <p className="mt-2 text-xs">Bấm vào một bữa để mở riêng bữa đó (chỉnh khối lượng, xóa) — bếp can thiệp từng bữa.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2.5">
-          {days.map((day, index) => (
-            <DayCard
-              key={day.id}
-              day={day}
-              index={index}
-              isFirst={index === 0}
-              isLast={index === days.length - 1}
-              expandedMeal={expanded?.dayId === day.id ? expanded.meal : null}
-              onToggleMeal={(meal) =>
-                setExpanded((cur) => (cur?.dayId === day.id && cur.meal === meal ? null : { dayId: day.id, meal }))
-              }
-              onRename={(label) => patchDay(day.id, { label })}
-              onSetDate={(date) => patchDay(day.id, { date })}
-              onDuplicate={() => onDuplicateDay(index)}
-              onDelete={() => onDeleteDay(day.id)}
-              onMove={(dir) => moveDay(index, dir)}
-              onRenameMeal={(oldName, newName) => onRenameMeal(day.id, oldName, newName)}
-              onDuplicateMeal={(meal) => onDuplicateMeal(day.id, meal)}
-              onDeleteMeal={(meal) => onDeleteMeal(day.id, meal)}
-              onUpdateGrams={(uid, g) => updateRowGrams(day.id, uid, g)}
-              onDeleteRow={(uid) => deleteRow(day.id, uid)}
-              onAddMeal={() => addMealToDay(day.id)}
-              onAddDish={(meal, name) => addDishToMeal(day.id, meal, name)}
-              onAddFood={(meal, dish, food) => addFood(day.id, meal, dish, food)}
-              onAddRecipe={(meal, dishName, ingredients) => addRecipe(day.id, meal, dishName, ingredients)}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={daySensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis]}
+          onDragStart={(event) => setActiveDayId(String(event.active.id))}
+          onDragCancel={() => setActiveDayId(null)}
+          onDragEnd={onDayDragEnd}
+        >
+          <SortableContext items={days.map((day) => day.id)} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-2.5">
+              {days.map((day, index) => (
+                <SortableDayCard
+                  key={day.id}
+                  day={day}
+                  isFirst={index === 0}
+                  isLast={index === days.length - 1}
+                  expandedMeal={expanded?.dayId === day.id ? expanded.meal : null}
+                  onToggleMeal={(meal) =>
+                    setExpanded((cur) => (cur?.dayId === day.id && cur.meal === meal ? null : { dayId: day.id, meal }))
+                  }
+                  onRename={(label) => patchDay(day.id, { label })}
+                  onSetDate={(date) => patchDay(day.id, { date })}
+                  onDuplicate={() => onDuplicateDay(index)}
+                  onDelete={() => onDeleteDay(day.id)}
+                  onMove={(dir) => moveDay(index, dir)}
+                  onRenameMeal={(oldName, newName) => onRenameMeal(day.id, oldName, newName)}
+                  onDuplicateMeal={(meal) => onDuplicateMeal(day.id, meal)}
+                  onDeleteMeal={(meal) => onDeleteMeal(day.id, meal)}
+                  onReorderMeal={(activeMeal, overMeal) => onReorderMeal(day.id, activeMeal, overMeal)}
+                  onUpdateGrams={(uid, g) => updateRowGrams(day.id, uid, g)}
+                  onDeleteRow={(uid) => deleteRow(day.id, uid)}
+                  onAddMeal={() => addMealToDay(day.id)}
+                  onAddDish={(meal, name) => addDishToMeal(day.id, meal, name)}
+                  onAddFood={(meal, dish, food) => addFood(day.id, meal, dish, food)}
+                  onAddRecipe={(meal, dishName, ingredients) => addRecipe(day.id, meal, dishName, ingredients)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+          <DragOverlay>
+            {activeDayId ? <div className="rounded-xl border-2 bg-white px-4 py-3 text-sm font-bold shadow-xl" style={{ borderColor: ACCENT, color: INK }}>{days.find((day) => day.id === activeDayId)?.label ?? "Ngày"}</div> : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {/* Nút thêm ngày cuối bảng */}
@@ -220,60 +306,17 @@ export default function MultiDayBoard() {
         </button>
       )}
 
-      {/* Phân tích nhiều ngày — tách theo ngày (bản đầy đủ theo bữa sẽ làm ở phase sau) */}
-      {days.length > 0 && (
-        <div className="mt-2 rounded-lg border p-3" style={{ borderColor: "#cdd9e6" }}>
-          <h3 className="mb-3 text-sm font-semibold" style={{ color: INK }}>📊 Năng lượng theo ngày (phân tích cả đợt)</h3>
-          <div className="flex items-end gap-3 overflow-x-auto pb-1" style={{ minHeight: 92 }}>
-            {days.map((day) => {
-              const kcal = dayKcal(day);
-              const h = Math.round((kcal / maxDayKcal) * 70);
-              return (
-                <div key={day.id} className="flex shrink-0 flex-col items-center gap-1" style={{ width: 54 }}>
-                  <span className="text-[10px] tabular-nums" style={{ color: "#5a708c" }}>{Math.round(kcal)}</span>
-                  <div className="w-6 rounded-t" style={{ height: Math.max(4, h), background: kcal >= maxDayKcal ? ACCENT : "#85B7EB" }} />
-                  <span className="max-w-full truncate text-[11px]" style={{ color: "#5a708c" }}>{day.label}</span>
-                </div>
-              );
-            })}
-          </div>
-          <p className="mt-1 text-[11px]" style={{ color: "#7d8ea3" }}>
-            Trung bình {round(totalKcalAll / days.length)} kcal/ngày. Phân tích chi tiết theo bữa (đạt/thiếu, đa dạng
-            món) sẽ bổ sung ở bước sau.
-          </p>
-        </div>
-      )}
+      {days.length > 0 && <MultiDayAnalysis days={days} profile={profile} recommendations={recommendations} />}
     </section>
   );
 }
 
-function DayCard({
-  day,
-  index,
-  isFirst,
-  isLast,
-  expandedMeal,
-  onToggleMeal,
-  onRename,
-  onSetDate,
-  onDuplicate,
-  onDelete,
-  onMove,
-  onRenameMeal,
-  onDuplicateMeal,
-  onDeleteMeal,
-  onUpdateGrams,
-  onDeleteRow,
-  onAddMeal,
-  onAddDish,
-  onAddFood,
-  onAddRecipe,
-}: {
+type DayCardProps = {
   day: MenuDay;
-  index: number;
   isFirst: boolean;
   isLast: boolean;
   expandedMeal: string | null;
+  dragHandle?: ReactNode;
   onToggleMeal: (meal: string) => void;
   onRename: (label: string) => void;
   onSetDate: (date: string) => void;
@@ -283,20 +326,63 @@ function DayCard({
   onRenameMeal: (oldName: string, newName: string) => void;
   onDuplicateMeal: (meal: string) => void;
   onDeleteMeal: (meal: string) => void;
+  onReorderMeal: (activeMeal: string, overMeal: string) => void;
   onUpdateGrams: (uid: string, grams: number) => void;
   onDeleteRow: (uid: string) => void;
   onAddMeal: () => void;
   onAddDish: (meal: string, name: string) => void;
   onAddFood: (meal: string, dish: string, food: MenuFoodResult) => void;
   onAddRecipe: (meal: string, dishName: string, ingredients: MenuDishIngredient[]) => void;
-}) {
-  const meals = dayMeals(day);
+};
+
+function SortableDayCard(props: DayCardProps) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: props.day.id });
+  return <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.35 : 1, zIndex: isDragging ? 5 : undefined }}>
+    <DayCard
+      {...props}
+      dragHandle={<button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp ${props.day.label}`} title="Giữ và kéo để sắp xếp ngày" className="cursor-grab touch-none select-none rounded px-1 py-0.5 text-sm active:cursor-grabbing" style={{ color: ACCENT }}>⋮⋮</button>}
+    />
+  </div>;
+}
+
+function DayCard({
+  day,
+  isFirst,
+  isLast,
+  expandedMeal,
+  dragHandle,
+  onToggleMeal,
+  onRename,
+  onSetDate,
+  onDuplicate,
+  onDelete,
+  onMove,
+  onRenameMeal,
+  onDuplicateMeal,
+  onDeleteMeal,
+  onReorderMeal,
+  onUpdateGrams,
+  onDeleteRow,
+  onAddMeal,
+  onAddDish,
+  onAddFood,
+  onAddRecipe,
+}: DayCardProps) {
+  const meals = dayMealsOrdered(day);
   const kcal = dayKcal(day);
+  const mealSensors = useMenuSensors();
+  const [activeMeal, setActiveMeal] = useState<string | null>(null);
+  function onMealDragEnd(event: DragEndEvent) {
+    const overMeal = event.over?.id ? String(event.over.id) : null;
+    const active = String(event.active.id);
+    setActiveMeal(null);
+    if (overMeal && active !== overMeal) onReorderMeal(active, overMeal);
+  }
   return (
     <div className="menu-day-enter overflow-hidden rounded-xl border" style={{ borderColor: "#B5D4F4", background: "#fff" }}>
       {/* Đầu ngày */}
       <div className="flex flex-wrap items-center gap-2 px-2.5 py-1.5" style={{ background: "#E6F1FB" }}>
-        <span className="cursor-grab select-none text-sm" style={{ color: ACCENT }} title="Kéo để sắp xếp (sẽ bật ở bước sau)">⋮⋮</span>
+        {dragHandle}
         <EditableText value={day.label} onCommit={onRename} className="rounded bg-transparent px-1 py-0.5 text-sm font-semibold focus:bg-white" style={{ color: INK, minWidth: 70 }} />
         <input
           type="date"
@@ -316,45 +402,33 @@ function DayCard({
       </div>
 
       {/* Dải các bữa (khối ngang) */}
-      <div className="flex items-stretch gap-2 overflow-x-auto p-2.5">
-        {meals.length === 0 && (
-          <span className="self-center text-xs" style={{ color: "#7d8ea3" }}>Ngày trống — thêm bữa, hoặc nhân đôi/nhập từ ngày khác.</span>
-        )}
-        {meals.map((meal) => {
-          const active = expandedMeal === meal.meal;
-          const dishNames = meal.dishes.map((d) => d.dish).join(" · ");
-          return (
+      <DndContext
+        sensors={mealSensors}
+        collisionDetection={closestCenter}
+        modifiers={[restrictToHorizontalAxis]}
+        onDragStart={(event) => setActiveMeal(String(event.active.id))}
+        onDragCancel={() => setActiveMeal(null)}
+        onDragEnd={onMealDragEnd}
+      >
+        <SortableContext items={meals.map((meal) => meal.meal)} strategy={horizontalListSortingStrategy}>
+          <div className="flex items-stretch gap-2 overflow-x-auto p-2.5">
+            {meals.length === 0 && (
+              <span className="self-center text-xs" style={{ color: "#7d8ea3" }}>Ngày trống — thêm bữa, hoặc nhân đôi/nhập từ ngày khác.</span>
+            )}
+            {meals.map((meal) => <SortableMealCard key={meal.meal} meal={meal} active={expandedMeal === meal.meal} onToggle={() => onToggleMeal(meal.meal)} />)}
             <button
-              key={meal.meal}
               type="button"
-              onClick={() => onToggleMeal(meal.meal)}
-              className="shrink-0 rounded-lg border px-2.5 py-1.5 text-left transition-colors"
-              style={{
-                minWidth: 138,
-                maxWidth: 220,
-                borderColor: active ? ACCENT : "#d5e3f2",
-                borderWidth: active ? 1.5 : 1,
-                background: active ? "#E6F1FB" : "#fff",
-              }}
+              onClick={onAddMeal}
+              className="flex shrink-0 items-center justify-center rounded-lg border border-dashed px-3 text-sm font-semibold"
+              style={{ minWidth: 64, borderColor: ACCENT, color: INK, background: "#F4F9FE" }}
+              title="Thêm bữa vào ngày này"
             >
-              <div className="flex items-center justify-between gap-1">
-                <span className="truncate text-[13px] font-semibold" style={{ color: INK }}>{meal.meal}</span>
-                <span className="shrink-0 text-[11px]" style={{ color: ACCENT }}>{active ? "▾" : "▸"}</span>
-              </div>
-              <div className="truncate text-[11px]" style={{ color: "#7d8ea3" }}>{dishNames || "—"} · {Math.round(mealNodeKcal(meal))}</div>
+              ＋ bữa
             </button>
-          );
-        })}
-        <button
-          type="button"
-          onClick={onAddMeal}
-          className="flex shrink-0 items-center justify-center rounded-lg border border-dashed px-3 text-sm font-semibold"
-          style={{ minWidth: 64, borderColor: ACCENT, color: INK, background: "#F4F9FE" }}
-          title="Thêm bữa vào ngày này"
-        >
-          ＋ bữa
-        </button>
-      </div>
+          </div>
+        </SortableContext>
+        <DragOverlay>{activeMeal ? <div className="rounded-lg border-2 bg-white px-3 py-2 text-sm font-bold shadow-xl" style={{ borderColor: ACCENT, color: INK }}>{activeMeal}</div> : null}</DragOverlay>
+      </DndContext>
 
       {/* Panel sổ ra cho riêng bữa được chọn */}
       {expandedMeal && meals.some((m) => m.meal === expandedMeal) && (
@@ -374,6 +448,18 @@ function DayCard({
   );
 }
 
+function SortableMealCard({ meal, active, onToggle }: { meal: ReturnType<typeof dayMealsOrdered>[number]; active: boolean; onToggle: () => void }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: meal.meal });
+  const dishNames = meal.dishes.map((dish) => dish.dish).join(" · ");
+  return <div ref={setNodeRef} className="flex shrink-0 overflow-hidden rounded-lg border" style={{ minWidth: 150, maxWidth: 230, transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1, borderColor: active ? ACCENT : "#d5e3f2", borderWidth: active ? 1.5 : 1, background: active ? "#E6F1FB" : "#fff" }}>
+    <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp bữa ${meal.meal}`} title="Giữ và kéo để sắp xếp bữa" className="cursor-grab touch-none select-none border-r px-2 text-sm active:cursor-grabbing" style={{ borderColor: "#D7E6F5", color: ACCENT }}>⠿</button>
+    <button type="button" onClick={onToggle} className="min-w-0 flex-1 px-2.5 py-1.5 text-left">
+      <div className="flex items-center justify-between gap-1"><span className="truncate text-[13px] font-semibold" style={{ color: INK }}>{meal.meal}</span><span className="shrink-0 text-[11px]" style={{ color: ACCENT }}>{active ? "▾" : "▸"}</span></div>
+      <div className="truncate text-[11px]" style={{ color: "#7d8ea3" }}>{dishNames || "—"} · {Math.round(mealNodeKcal(meal))} kcal</div>
+    </button>
+  </div>;
+}
+
 function MealPanel({
   meal,
   onRename,
@@ -385,7 +471,7 @@ function MealPanel({
   onAddFood,
   onAddRecipe,
 }: {
-  meal: ReturnType<typeof dayMeals>[number];
+  meal: ReturnType<typeof dayMealsOrdered>[number];
   onRename: (newName: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -475,6 +561,7 @@ function MealPanel({
 // Ô nhập gram: cập nhật khi rời ô hoặc Enter (không ghi state mỗi phím để tránh giật).
 function GramInput({ value, onCommit }: { value: number; onCommit: (grams: number) => void }) {
   const [text, setText] = useState(String(value));
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setText(String(value)), [value]);
   function commit() {
     const n = Number(text);
@@ -511,6 +598,7 @@ function EditableText({
 }) {
   const [text, setText] = useState(value);
   const ref = useRef<HTMLInputElement | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setText(value), [value]);
   return (
     <input

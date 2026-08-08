@@ -87,7 +87,6 @@ export default function Calculator() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHeaderSlot(document.getElementById("header-page-slot"));
     try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (localStorage.getItem("khauphan_pagemode_v1") === "multi") setPageMode("multi");
     } catch { /* localStorage bị chặn */ }
     return () => document.body.classList.remove("ration-focus");
@@ -116,12 +115,13 @@ export default function Calculator() {
       <h1 className="mt-1 text-3xl font-semibold text-neutral-950">Phân tích khẩu phần</h1>
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <Link href="/huong-dan" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]">? Xem hướng dẫn</Link>
-        <div className="inline-flex items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" role="group" aria-label="Chế độ lập khẩu phần">
-          <button type="button" onClick={() => changePageMode("single")} aria-pressed={pageMode === "single"} className={`rounded-md px-3 py-1 text-sm font-semibold ${pageMode === "single" ? "bg-[#123c36] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>📋 Một ngày</button>
-          <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1 text-sm font-semibold ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>🗓️ Nhiều ngày</button>
-        </div>
       </div>
     </section>
+
+    <div data-no-print className="inline-flex w-fit items-center gap-1 rounded-lg border-2 border-[#7f948d] bg-white p-1 shadow-sm" role="group" aria-label="Chế độ lập khẩu phần">
+      <button type="button" onClick={() => changePageMode("single")} aria-pressed={pageMode === "single"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "single" ? "bg-[#123c36] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>📋 Một ngày</button>
+      <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>🗓️ Nhiều ngày</button>
+    </div>
 
     {pageMode === "multi" && <section className="clinical-panel min-w-0"><MultiDayBoard /></section>}
 

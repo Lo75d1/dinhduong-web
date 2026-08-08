@@ -119,6 +119,43 @@ export function dayMeals(day: MenuDay): MealNode[] {
   return buildTree(day.rows);
 }
 
+// Board nhiều ngày phải giữ đúng thứ tự người dùng đã xếp. buildTree() cố ý
+// sắp theo thứ tự lâm sàng cho chế độ một ngày nên không dùng nó ở sortable board.
+export function dayMealsOrdered(day: MenuDay): MealNode[] {
+  const order: string[] = [];
+  const map = new Map<string, MealNode>();
+  for (const row of day.rows) {
+    if (!map.has(row.meal)) {
+      map.set(row.meal, { meal: row.meal, dishes: [] });
+      order.push(row.meal);
+    }
+    const meal = map.get(row.meal)!;
+    let dish = meal.dishes.find((item) => item.dish === row.dish);
+    if (!dish) {
+      dish = { dish: row.dish, rows: [] };
+      meal.dishes.push(dish);
+    }
+    if (row.foodId) dish.rows.push(row);
+  }
+  return order.map((meal) => map.get(meal)!);
+}
+
+// Di chuyển nguyên một nhóm bữa trong rows, giữ nguyên thứ tự món/thực phẩm bên
+// trong. Đây là nguồn thứ tự duy nhất nên sau khi lưu localStorage kéo-thả vẫn dính.
+export function reorderMealsInRows(rows: Row[], activeMeal: string, overMeal: string): Row[] {
+  if (activeMeal === overMeal) return rows;
+  const order = dayMealsOrdered({ id: "", label: "", date: "", rows }).map((item) => item.meal);
+  const from = order.indexOf(activeMeal);
+  const to = order.indexOf(overMeal);
+  if (from < 0 || to < 0) return rows;
+  const nextOrder = [...order];
+  const [moved] = nextOrder.splice(from, 1);
+  nextOrder.splice(to, 0, moved);
+  const groups = new Map<string, Row[]>();
+  for (const row of rows) groups.set(row.meal, [...(groups.get(row.meal) ?? []), row]);
+  return nextOrder.flatMap((meal) => groups.get(meal) ?? []);
+}
+
 // ---- Thêm bữa / món / thực phẩm trực tiếp lên board (Phase 2) ----
 
 export const UNASSIGNED_DISH = "(Chưa phân món)";
