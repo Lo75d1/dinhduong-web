@@ -168,6 +168,18 @@ a:active {
   to { transform: scaleX(1); }
 }
 
+/* Chế độ Thực đơn nhiều ngày — tông xanh dương, phân biệt với chế độ một ngày. */
+@keyframes menu-day-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes menu-drop {
+  from { opacity: 0; transform: translateY(-6px); max-height: 0; }
+  to { opacity: 1; transform: translateY(0); max-height: 1200px; }
+}
+.menu-day-enter { animation: menu-day-enter 320ms ease both; }
+.menu-drop { animation: menu-drop 260ms ease both; overflow: hidden; }
+
 ::selection {
   background: #cfe6da;
   color: #111827;

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import LegacyChartReport from "./LegacyChartReport";
 import MealInput from "./MealInput";
+import MultiDayBoard from "./MultiDayBoard";
 import PersonalProfile, { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
 import RecommendationComparison from "./RecommendationComparison";
 import DietCodeComparison from "./DietCodeComparison";
@@ -56,6 +57,8 @@ export default function Calculator() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
+  // Chế độ cấp trang: một ngày (mặc định) ↔ thực đơn nhiều ngày (board riêng).
+  const [pageMode, setPageMode] = useState<"single" | "multi">("single");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
   // Bấm nút nhóm (Người lớn/Trẻ em/Mang thai) sẽ đặt SẴN đúng tình trạng vào hồ sơ
@@ -83,8 +86,17 @@ export default function Calculator() {
     // Đọc nút slot có sẵn trong header (do layout render) để portal thanh bước 1/2 vào.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHeaderSlot(document.getElementById("header-page-slot"));
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (localStorage.getItem("khauphan_pagemode_v1") === "multi") setPageMode("multi");
+    } catch { /* localStorage bị chặn */ }
     return () => document.body.classList.remove("ration-focus");
   }, []);
+
+  function changePageMode(next: "single" | "multi") {
+    setPageMode(next);
+    try { localStorage.setItem("khauphan_pagemode_v1", next); } catch { /* localStorage bị chặn */ }
+  }
   const foodRows = rows.filter((r) => r.foodId);
 
   const totals: Record<string, number> = {};
@@ -102,10 +114,18 @@ export default function Calculator() {
     <section className="clinical-page-heading">
       <p className="text-xs font-semibold tracking-[0.16em] text-[#123c36]">PHIẾU PHÂN TÍCH DINH DƯỠNG</p>
       <h1 className="mt-1 text-3xl font-semibold text-neutral-950">Phân tích khẩu phần</h1>
-      <div className="mt-2 flex flex-wrap items-center gap-3"><Link href="/huong-dan" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]">? Xem hướng dẫn</Link></div>
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        <Link href="/huong-dan" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]">? Xem hướng dẫn</Link>
+        <div className="inline-flex items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" role="group" aria-label="Chế độ lập khẩu phần">
+          <button type="button" onClick={() => changePageMode("single")} aria-pressed={pageMode === "single"} className={`rounded-md px-3 py-1 text-sm font-semibold ${pageMode === "single" ? "bg-[#123c36] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>📋 Một ngày</button>
+          <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1 text-sm font-semibold ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>🗓️ Nhiều ngày</button>
+        </div>
+      </div>
     </section>
 
-    {headerSlot && createPortal(
+    {pageMode === "multi" && <section className="clinical-panel min-w-0"><MultiDayBoard /></section>}
+
+    {pageMode === "single" && headerSlot && createPortal(
       <nav className="clinical-stepper flex w-full items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước tính khẩu phần">
         <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-4 py-2 text-center text-sm font-semibold sm:text-base ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
           <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập khẩu phần
@@ -117,11 +137,11 @@ export default function Calculator() {
       headerSlot
     )}
 
-    <section className={activeView === "entry" ? "clinical-panel lg:flex lg:h-[calc(100vh-5.25rem)] lg:flex-col lg:overflow-hidden" : "hidden"}>
+    <section className={pageMode === "single" && activeView === "entry" ? "clinical-panel lg:flex lg:h-[calc(100vh-5.25rem)] lg:flex-col lg:overflow-hidden" : "hidden"}>
       <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} onMedsChange={setMeds} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
     </section>
 
-    <section className={activeView === "analysis" ? "clinical-panel min-w-0" : "hidden"}>
+    <section className={pageMode === "single" && activeView === "analysis" ? "clinical-panel min-w-0" : "hidden"}>
       <section data-print-header><p className="text-center text-sm font-semibold tracking-[0.16em] text-[#123c36]">BÁO CÁO PHÂN TÍCH KHẨU PHẦN</p><h1 className="mt-2 text-center text-2xl font-semibold">Phiếu đánh giá dinh dưỡng</h1><div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 border-y-2 border-[#123c36] py-3 text-sm"><p><b>Người được đánh giá:</b> {reportMeta.subjectName || "Chưa ghi"}</p><p><b>Ngày lập:</b> {reportMeta.reportDate || "Chưa ghi"}</p><p><b>Nhóm / mục tiêu:</b> {reportMeta.subjectGroup || "Chưa ghi"}</p><p><b>Người lập:</b> {reportMeta.authorName || "Chưa ghi"} ({reportMeta.authorRole})</p><p className="col-span-2"><b>Đơn vị / cơ sở:</b> {reportMeta.authorOrganization || "Chưa ghi"}</p><p className="col-span-2"><b>Hồ sơ:</b> {profile ? `${profile.gender}, ${profile.age || "—"} ${profile.ageUnit}, ${profile.weight || "—"} kg, ${profile.height || "—"} cm${profile.physiology.startsWith("pregnant_") ? ` · Thai kỳ: ${profile.pregnancyWeek ? `tuần ${profile.pregnancyWeek}` : "chưa ghi tuần"}${profile.prePregnancyWeight ? ` · trước thai ${profile.prePregnancyWeight} kg` : ""}` : ""}` : "Chưa nhập"}</p>{profile?.pregnancyNote && <p className="col-span-2"><b>Ghi chú thai kỳ:</b> {profile.pregnancyNote}</p>}{reportMeta.menuNote && <p className="col-span-2"><b>Ghi chú thực đơn / khẩu phần:</b> {reportMeta.menuNote}</p>}{reportMeta.clinicalCourse && <p className="col-span-2"><b>Diễn biến bệnh lý / theo dõi:</b> {reportMeta.clinicalCourse}</p>}</div></section>
       <div className="border-b-2 border-[#123c36] pb-3"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 2 · KẾT QUẢ</p><h2 className="mt-1 text-2xl font-semibold text-neutral-950">Kết quả &amp; phân tích</h2></div>
       {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-4 flex flex-col gap-3">
