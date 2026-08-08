@@ -40,7 +40,7 @@ export default function RootLayout({
     <html lang="vi" className="h-full">
       <body className="min-h-full flex flex-col bg-[#f1f6f4] text-neutral-900">
         <VisitTracker />
-        <header className="site-header border-b-4 border-[#123c36] bg-white shadow-[0_5px_20px_rgba(18,60,54,0.08)]">
+        <header className="site-header sticky top-0 z-40 border-b-4 border-[#123c36] bg-white shadow-[0_5px_20px_rgba(18,60,54,0.08)]">
           <div className="site-topbar bg-[#123c36] text-white">
             <div className="flex w-full items-center justify-between gap-3 px-5 py-1 text-[11px]">
               <span className="font-semibold tracking-[.08em]">
@@ -89,6 +89,12 @@ export default function RootLayout({
                 className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
               >
                 Tri thức mới
+              </Link>
+              <Link
+                href="/huong-dan"
+                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
+              >
+                Hướng dẫn
               </Link>
               <Link
                 href="/tinh-khau-phan"
