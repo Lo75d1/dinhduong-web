@@ -16,6 +16,7 @@ import MicronutrientComparison from "./MicronutrientComparison";
 import WhoGrowthAssessment from "./WhoGrowthAssessment";
 import { WHO_GROWTH_ENTRIES } from "@/lib/who-growth";
 import ExchangeUnits from "./ExchangeUnits";
+import ShoppingList from "./ShoppingList";
 import ReportActions from "./ReportActions";
 import type { ReportMeta } from "./ReportActions";
 import ServerRationActions from "./ServerRationActions";
@@ -202,6 +203,7 @@ export default function Calculator() {
               <div><h3 className="mb-2 text-base font-semibold text-neutral-950">Tổng dinh dưỡng theo từng bữa</h3><MealNutritionCards rows={rows} totalKcal={totals.energyKcal} /></div>
               <EnergyDistribution rows={rows} totals={totals} profile={profile} />
               <div className="rounded-lg border border-[#7f948d] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">Quy đổi thực đơn <span className="text-sm font-normal text-neutral-600">(sống sạch → mua / xuất kho)</span></h3><ExchangeUnits rows={rows} /></div>
+              <div className="rounded-lg border border-[#7f948d] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">🛒 Danh sách đi chợ / xuất kho <span className="text-sm font-normal text-neutral-600">(gộp toàn bộ thực phẩm)</span></h3><ShoppingList rows={foodRows} /></div>
               <div className="flex flex-col gap-3">
                 {ADVANCED_GROUPS.map(([key, label]) => {
                   const isOpen = !!openAdvanced[key];
