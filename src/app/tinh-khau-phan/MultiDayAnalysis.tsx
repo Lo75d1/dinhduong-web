@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import ExchangeUnits from "./ExchangeUnits";
 import RationDetail from "./RationDetail";
+import RecommendationComparison from "./RecommendationComparison";
 import ShoppingList from "./ShoppingList";
 import type { Profile } from "./PersonalProfile";
 import type { RecommendationRow } from "./matchRecommendation";
@@ -126,6 +128,19 @@ export default function MultiDayAnalysis({
   const coreNutrients = useMemo(() => analysis.nutrients.filter((n) => CORE_MICRO.has(n.key)), [analysis.nutrients]);
   const otherNutrients = useMemo(() => analysis.nutrients.filter((n) => !CORE_MICRO.has(n.key)), [analysis.nutrients]);
   const allRows = useMemo(() => days.flatMap((d) => d.rows), [days]);
+  // Trung bình mỗi ngày (trên các ngày có thực phẩm) — để đối chiếu nhu cầu như 1 ngày.
+  const avgTotals = useMemo(() => {
+    const t: Record<string, number> = {};
+    for (const f of CORE_CALC_FIELDS) t[f.key] = 0;
+    for (const r of allRows) {
+      if (!r.foodId) continue;
+      const factor = (r.grams || 0) / 100;
+      for (const f of CORE_CALC_FIELDS) { const v = r.nutrients[f.key]; if (typeof v === "number") t[f.key] += v * factor; }
+    }
+    const dd = analysis.dataDayCount || 1;
+    for (const f of CORE_CALC_FIELDS) t[f.key] /= dd;
+    return t;
+  }, [allRows, analysis.dataDayCount]);
   const periodName = analysis.calendarDayCount === 7 ? "TỔNG CẢ TUẦN" : `TỔNG ${analysis.calendarDayCount} NGÀY`;
 
   function splitEvenly() {
@@ -174,6 +189,12 @@ export default function MultiDayAnalysis({
       </div>
 
       <MacroPerKgRow macros={analysis.macros} profile={profile} kcalPerDay={analysis.averageEnergyKcal} />
+
+      {profile && (
+        <AnalysisSection eyebrow="HỒ SƠ · KHUYẾN NGHỊ" title="Đối chiếu nhu cầu — trung bình mỗi ngày" note="So trung bình mỗi ngày (trên các ngày có thực phẩm) với nhu cầu theo tuổi/giới/sinh lý — như báo cáo một ngày.">
+          <RecommendationComparison profile={profile} totals={avgTotals} />
+        </AnalysisSection>
+      )}
 
       {(analysis.emptyDayCount > 0 || analysis.totalEnergy.incomplete) && <div className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
         <b>Độ đầy đủ:</b> {analysis.emptyDayCount ? `${analysis.emptyDayCount} ngày đang trống. ` : ""}{analysis.totalEnergy.incomplete ? "Có thực phẩm thiếu năng lượng nên tổng kỳ được giữ “—”." : "Các phép tính tổng chỉ dùng ngày có thực phẩm."}
