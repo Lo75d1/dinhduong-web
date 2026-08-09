@@ -74,6 +74,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
   const [expanded, setExpanded] = useState<{ dayId: string; meal: string } | null>(null);
   const [activeDayId, setActiveDayId] = useState<string | null>(null);
   const [activeDish, setActiveDish] = useState<{ label: string } | null>(null);
+  const [moveNotice, setMoveNotice] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationRow[]>([]);
   const daySensors = useMenuSensors();
@@ -109,6 +110,12 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
     if (!hydrated) return;
     saveMenuDays(days);
   }, [days, hydrated]);
+
+  useEffect(() => {
+    if (!moveNotice) return;
+    const t = window.setTimeout(() => setMoveNotice(null), 4500);
+    return () => window.clearTimeout(t);
+  }, [moveNotice]);
 
   function importCurrentDay() {
     const rows = loadRows().map((row) => ({ ...row }));
@@ -182,8 +189,11 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
       const dish = parts.slice(3).join("::");
       const targetDayId = resolveDayIdFromOver(overId);
       if (targetDayId && targetDayId !== srcDayId) {
+        const srcLabel = days.find((d) => d.id === srcDayId)?.label ?? "?";
+        const dstLabel = days.find((d) => d.id === targetDayId)?.label ?? "?";
         setDays((cur) => moveDishToDay(cur, srcDayId, meal, dish, targetDayId));
         setExpanded(null);
+        setMoveNotice(`Đã chuyển món “${dish}” (bữa ${meal}) từ ${srcLabel} → ${dstLabel}`);
       }
       return;
     }
@@ -278,6 +288,13 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
           {days.length} ngày · tổng <b style={{ color: INK }}>{round(totalKcalAll)}</b> kcal
         </span>
       </div>
+
+      {moveNotice && (
+        <div className="menu-day-enter flex items-center gap-2 rounded-lg border px-3 py-2 text-sm" style={{ borderColor: ACCENT, background: "#E6F1FB", color: INK }}>
+          <span>↔ {moveNotice}</span>
+          <button type="button" onClick={() => setMoveNotice(null)} className="ml-auto text-xs font-semibold" style={{ color: ACCENT }}>✕</button>
+        </div>
+      )}
 
       {days.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed px-5 py-10 text-center" style={{ borderColor: "#B5D4F4", color: "#5a708c" }}>
