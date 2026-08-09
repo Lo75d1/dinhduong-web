@@ -29,7 +29,8 @@ function formatNumber(value: number | null, unit = "") {
 }
 
 function formatMetric(metric: StrictMetric | undefined, unit = "") {
-  return metric?.value == null ? "—" : `${round(metric.value).toLocaleString("vi-VN")} ${unit}`.trim();
+  if (!metric || metric.value == null) return "—";
+  return `${metric.incomplete ? "≥ " : ""}${round(metric.value).toLocaleString("vi-VN")} ${unit}`.trim();
 }
 
 function formatSigned(value: number | null, unit = "kcal") {

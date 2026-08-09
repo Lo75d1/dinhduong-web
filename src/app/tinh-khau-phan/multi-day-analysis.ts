@@ -251,7 +251,8 @@ export function strictNutrientTotal(rows: Row[], key: string): StrictMetric {
     }
     total += (raw * (row.grams || 0)) / 100;
   }
-  return { value: incomplete ? null : total, incomplete };
+  // Vẫn TÍNH phần có dữ liệu; giữ cờ incomplete để UI đánh dấu (≥) thay vì "—".
+  return { value: total, incomplete };
 }
 
 export function energyTargetForProfile(

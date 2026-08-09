@@ -536,7 +536,7 @@ function DayCard({
 
 function SortableMealCard({ meal, active, onToggle }: { meal: ReturnType<typeof dayMealsOrdered>[number]; active: boolean; onToggle: () => void }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: meal.meal });
-  return <div ref={setNodeRef} className="flex shrink-0 overflow-hidden rounded-lg border" style={{ minWidth: 175, maxWidth: 265, transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1, borderColor: active ? ACCENT : "#d5e3f2", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff" }}>
+  return <div ref={setNodeRef} className="flex flex-1 overflow-hidden rounded-lg border" style={{ minWidth: 190, transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1, borderColor: active ? ACCENT : "#d5e3f2", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff" }}>
     <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp bữa ${meal.meal}`} title="Giữ và kéo để sắp xếp bữa" className="cursor-grab touch-none select-none border-r px-2 text-lg active:cursor-grabbing" style={{ borderColor: "#D7E6F5", color: ACCENT }}>⠿</button>
     <button type="button" onClick={onToggle} className="min-w-0 flex-1 px-2.5 py-2 text-left">
       <div className="flex items-center justify-between gap-1">
@@ -549,9 +549,9 @@ function SortableMealCard({ meal, active, onToggle }: { meal: ReturnType<typeof 
       ) : (
         <ul className="mt-1 flex flex-col gap-0.5">
           {meal.dishes.map((dish) => (
-            <li key={dish.dish} className="flex items-center justify-between gap-2 text-sm" style={{ color: "#5a708c" }}>
+            <li key={dish.dish} className="flex items-center justify-between gap-2 text-sm font-medium" style={{ color: "#1f2937" }}>
               <span className="min-w-0 truncate">🍽️ {dish.dish}</span>
-              <span className="shrink-0 tabular-nums">{Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0))}</span>
+              <span className="shrink-0 tabular-nums" style={{ color: "#475569" }}>{Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0))}</span>
             </li>
           ))}
         </ul>
