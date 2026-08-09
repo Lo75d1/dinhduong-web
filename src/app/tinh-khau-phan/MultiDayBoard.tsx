@@ -271,27 +271,19 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
   return (
     <section className="flex flex-col gap-3" aria-label="Thực đơn nhiều ngày">
       {view === "entry" && <>
-      {/* Thanh công cụ */}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border p-2" style={{ borderColor: "#B5D4F4", background: "#F4F9FE" }}>
-        <span className="mr-1 text-sm font-semibold" style={{ color: INK }}>🍽️ Thực đơn nhiều ngày</span>
-        <button type="button" onClick={importCurrentDay} className="rounded-md px-3 py-1.5 text-sm font-semibold text-white" style={{ background: ACCENT }}>
-          ↧ Nhập ngày hiện tại
-        </button>
-        <button type="button" onClick={addEmptyDay} className="rounded-md border px-3 py-1.5 text-sm font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>
-          ＋ Thêm ngày trống
-        </button>
-        <span className="ml-auto text-xs" style={{ color: "#5a708c" }}>
-          {days.length} ngày · tổng {round(totalKcalAll)} kcal
+      {/* Thanh công cụ — gọn: chỉ tiêu đề + tổng. Thêm/nhân đôi ngày dùng nút dưới + góc ngày. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border p-2.5" style={{ borderColor: "#B5D4F4", background: "#F4F9FE" }}>
+        <span className="text-base font-semibold" style={{ color: INK }}>🍽️ Thực đơn nhiều ngày</span>
+        <span className="ml-auto text-sm" style={{ color: "#5a708c" }}>
+          {days.length} ngày · tổng <b style={{ color: INK }}>{round(totalKcalAll)}</b> kcal
         </span>
       </div>
 
       {days.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed px-5 py-10 text-center" style={{ borderColor: "#B5D4F4", color: "#5a708c" }}>
-          <p className="text-sm">
-            Chưa có ngày nào. Dựng một khẩu phần ở tab <b>Một ngày</b> rồi bấm <b>“↧ Nhập ngày hiện tại”</b>, hoặc thêm
-            ngày trống rồi nhân đôi.
-          </p>
-          <p className="mt-2 text-xs">Bấm vào một bữa để mở riêng bữa đó (chỉnh khối lượng, xóa) — bếp can thiệp từng bữa.</p>
+          <p className="text-base">Chưa có ngày nào. Bấm <b>“＋ Thêm ngày”</b> để bắt đầu dựng thực đơn — mỗi ngày thêm bữa, món và thực phẩm.</p>
+          <button type="button" onClick={addEmptyDay} className="mt-4 rounded-md px-4 py-2 text-sm font-semibold text-white" style={{ background: ACCENT }}>＋ Thêm ngày</button>
+          <p className="mt-3 text-xs">Hoặc dựng ở tab <b>Một ngày</b> rồi <button type="button" onClick={importCurrentDay} className="underline" style={{ color: ACCENT }}>nhập ngày đang mở</button>.</p>
         </div>
       ) : (
         <DndContext
@@ -341,11 +333,12 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
         </DndContext>
       )}
 
-      {/* Nút thêm ngày cuối bảng */}
+      {/* Nút thêm ngày cuối bảng — thêm ngày trống là chính; nhập ngày đang mở là phụ */}
       {days.length > 0 && (
-        <button type="button" onClick={importCurrentDay} className="rounded-lg border border-dashed px-3 py-2.5 text-sm font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#F4F9FE" }}>
-          ＋ Thêm ngày (nhập khẩu phần hiện tại)
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={addEmptyDay} className="flex-1 rounded-lg border-2 border-dashed px-3 py-3 text-base font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#F4F9FE" }}>＋ Thêm ngày</button>
+          <button type="button" onClick={importCurrentDay} className="rounded-lg border px-3 py-3 text-sm font-semibold" style={{ borderColor: "#B5D4F4", color: "#5a708c" }} title="Lấy khẩu phần đang mở ở tab Một ngày">↧ nhập ngày đang mở</button>
+        </div>
       )}
       </>}
 
@@ -392,7 +385,7 @@ function SortableDayCard(props: DayCardProps) {
   return <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.35 : 1, zIndex: isDragging ? 5 : undefined }}>
     <DayCard
       {...props}
-      dragHandle={<button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp ${props.day.label}`} title="Giữ và kéo để sắp xếp ngày" className="cursor-grab touch-none select-none rounded px-1 py-0.5 text-sm active:cursor-grabbing" style={{ color: ACCENT }}>⋮⋮</button>}
+      dragHandle={<button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp ${props.day.label}`} title="Giữ và kéo để sắp xếp ngày" className="cursor-grab touch-none select-none rounded px-1 py-0.5 text-lg active:cursor-grabbing" style={{ color: ACCENT }}>⋮⋮</button>}
     />
   </div>;
 }
@@ -446,7 +439,7 @@ function DayCard({
           style={{ borderColor: "#B5D4F4", color: "#5a708c" }}
           title="Gán ngày cụ thể (không bắt buộc)"
         />
-        <span className="rounded px-2 py-0.5 text-[11px] font-bold tabular-nums" style={{ background: "#B5D4F4", color: INK }}>{Math.round(kcal)} kcal</span>
+        <span className="rounded px-2 py-0.5 text-xs font-bold tabular-nums" style={{ background: "#B5D4F4", color: INK }}>{Math.round(kcal)} kcal</span>
         <div className="ml-auto flex items-center gap-0.5" style={{ color: ACCENT }}>
           <button type="button" onClick={() => onMove("up")} disabled={isFirst} title="Lên" className="rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▲</button>
           <button type="button" onClick={() => onMove("down")} disabled={isLast} title="Xuống" className="rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▼</button>
@@ -505,12 +498,26 @@ function DayCard({
 
 function SortableMealCard({ meal, active, onToggle }: { meal: ReturnType<typeof dayMealsOrdered>[number]; active: boolean; onToggle: () => void }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: meal.meal });
-  const dishNames = meal.dishes.map((dish) => dish.dish).join(" · ");
-  return <div ref={setNodeRef} className="flex shrink-0 overflow-hidden rounded-lg border" style={{ minWidth: 150, maxWidth: 230, transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1, borderColor: active ? ACCENT : "#d5e3f2", borderWidth: active ? 1.5 : 1, background: active ? "#E6F1FB" : "#fff" }}>
-    <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp bữa ${meal.meal}`} title="Giữ và kéo để sắp xếp bữa" className="cursor-grab touch-none select-none border-r px-2 text-sm active:cursor-grabbing" style={{ borderColor: "#D7E6F5", color: ACCENT }}>⠿</button>
-    <button type="button" onClick={onToggle} className="min-w-0 flex-1 px-2.5 py-1.5 text-left">
-      <div className="flex items-center justify-between gap-1"><span className="truncate text-[13px] font-semibold" style={{ color: INK }}>{meal.meal}</span><span className="shrink-0 text-[11px]" style={{ color: ACCENT }}>{active ? "▾" : "▸"}</span></div>
-      <div className="truncate text-[11px]" style={{ color: "#7d8ea3" }}>{dishNames || "—"} · {Math.round(mealNodeKcal(meal))} kcal</div>
+  return <div ref={setNodeRef} className="flex shrink-0 overflow-hidden rounded-lg border" style={{ minWidth: 175, maxWidth: 265, transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1, borderColor: active ? ACCENT : "#d5e3f2", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff" }}>
+    <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp bữa ${meal.meal}`} title="Giữ và kéo để sắp xếp bữa" className="cursor-grab touch-none select-none border-r px-2 text-lg active:cursor-grabbing" style={{ borderColor: "#D7E6F5", color: ACCENT }}>⠿</button>
+    <button type="button" onClick={onToggle} className="min-w-0 flex-1 px-2.5 py-2 text-left">
+      <div className="flex items-center justify-between gap-1">
+        <span className="truncate text-base font-semibold" style={{ color: INK }}>{meal.meal}</span>
+        <span className="shrink-0 text-sm font-bold tabular-nums" style={{ color: ACCENT }}>{Math.round(mealNodeKcal(meal))} kcal {active ? "▾" : "▸"}</span>
+      </div>
+      {/* Món hiện sẵn kèm calo — kiểm soát ăn gì nhanh mà không cần bấm */}
+      {meal.dishes.length === 0 ? (
+        <div className="mt-1 text-sm" style={{ color: "#7d8ea3" }}>— chưa có món</div>
+      ) : (
+        <ul className="mt-1 flex flex-col gap-0.5">
+          {meal.dishes.map((dish) => (
+            <li key={dish.dish} className="flex items-center justify-between gap-2 text-sm" style={{ color: "#5a708c" }}>
+              <span className="min-w-0 truncate">🍽️ {dish.dish}</span>
+              <span className="shrink-0 tabular-nums">{Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0))}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </button>
   </div>;
 }
@@ -547,7 +554,7 @@ function MealPanel({
     <div className="menu-drop border-t px-3 py-3" style={{ borderColor: ACCENT, background: "#F4F9FE" }}>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <EditableText value={meal.meal} onCommit={onRename} className="rounded border bg-white px-1.5 py-0.5 text-sm font-semibold" style={{ color: INK, borderColor: "#B5D4F4" }} />
-        <span className="text-[11px]" style={{ color: "#7d8ea3" }}>đang mở riêng bữa này · {Math.round(mealNodeKcal(meal))} kcal</span>
+        <span className="text-xs" style={{ color: "#7d8ea3" }}>đang mở riêng bữa này · {Math.round(mealNodeKcal(meal))} kcal</span>
         <div className="ml-auto flex items-center gap-1" style={{ color: ACCENT }}>
           <button type="button" onClick={onDuplicate} title="Nhân đôi bữa" className="rounded px-1.5 py-0.5 text-xs font-semibold hover:bg-white">⧉ Nhân đôi</button>
           <button type="button" onClick={onDelete} title="Xóa bữa" className="rounded px-1.5 py-0.5 text-xs font-semibold hover:bg-white" style={{ color: "#8a2323" }}>✕ Xóa bữa</button>
@@ -557,8 +564,8 @@ function MealPanel({
       {/* Thêm MÓN vào bữa — ngữ cảnh mức bữa (ô tìm chọn món) */}
       <div className="mb-2 flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-semibold" style={{ color: INK }}>Thêm món vào bữa</span>
-          <button type="button" onClick={addEmptyDishPrompt} className="rounded border px-1.5 py-0.5 text-[11px] font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>＋ Món trống</button>
+          <span className="text-xs font-semibold" style={{ color: INK }}>Thêm món vào bữa</span>
+          <button type="button" onClick={addEmptyDishPrompt} className="rounded border px-1.5 py-0.5 text-xs font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>＋ Món trống</button>
         </div>
         <MenuFoodSearch kind="dish" onPickDish={(dish) => onAddRecipe(dish.name, dish.ingredients)} />
       </div>
@@ -611,18 +618,18 @@ function DishBlock({
   return (
     <div ref={setNodeRef} className="rounded-lg border bg-white" style={{ borderColor: open ? ACCENT : "#e0e9f4", opacity: isDragging ? 0.4 : 1 }}>
       <div className="flex items-center gap-1 pl-1">
-        <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo món ${dish.dish} sang ngày khác`} title="Giữ và kéo món sang ngày khác" className="cursor-grab touch-none select-none px-1 py-1.5 text-sm active:cursor-grabbing" style={{ color: ACCENT }}>⠿</button>
+        <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo món ${dish.dish} sang ngày khác`} title="Giữ và kéo món sang ngày khác" className="cursor-grab touch-none select-none px-1 py-1.5 text-lg active:cursor-grabbing" style={{ color: ACCENT }}>⠿</button>
         <button type="button" onClick={onToggle} className="flex min-w-0 flex-1 items-center justify-between gap-2 py-1.5 pr-2 text-left">
-          <span className="min-w-0 truncate text-[13px] font-semibold" style={{ color: INK }}>🍽️ {dish.dish} <span className="text-[10px]" style={{ color: ACCENT }}>{open ? "▾ cửa sổ TP" : "▸"}</span></span>
-          <span className="shrink-0 text-[11px]" style={{ color: "#7d8ea3" }}>{dish.rows.length} TP · {dKcal} kcal</span>
+          <span className="min-w-0 truncate text-sm font-semibold" style={{ color: INK }}>🍽️ {dish.dish} <span className="text-xs" style={{ color: ACCENT }}>{open ? "▾ cửa sổ TP" : "▸"}</span></span>
+          <span className="shrink-0 text-xs" style={{ color: "#7d8ea3" }}>{dish.rows.length} TP · {dKcal} kcal</span>
         </button>
       </div>
       {open && (
         <div className="border-t px-2 py-2" style={{ borderColor: "#eef3f9" }}>
           {dish.rows.length === 0 ? (
-            <p className="pb-2 pl-1 text-[11px]" style={{ color: "#7d8ea3" }}>Món trống — tìm thực phẩm bên dưới để thêm.</p>
+            <p className="pb-2 pl-1 text-xs" style={{ color: "#7d8ea3" }}>Món trống — tìm thực phẩm bên dưới để thêm.</p>
           ) : (
-            <table className="mb-2 w-full text-[12px]">
+            <table className="mb-2 w-full text-sm">
               <thead>
                 <tr style={{ color: "#7d8ea3" }}>
                   <th className="py-0.5 text-left font-medium">Thực phẩm</th>
