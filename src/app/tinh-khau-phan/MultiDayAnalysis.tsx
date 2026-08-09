@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import ExchangeUnits from "./ExchangeUnits";
+import RationDetail from "./RationDetail";
 import ShoppingList from "./ShoppingList";
 import type { Profile } from "./PersonalProfile";
 import type { RecommendationRow } from "./matchRecommendation";
-import { dayMealsOrdered, type MenuDay } from "./multi-day";
+import { dayKcal, dayMealsOrdered, type MenuDay } from "./multi-day";
 import {
   analyzeMenuPeriod,
   buildPeriodShoppingList,
@@ -276,13 +277,31 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
-      <AnalysisSection eyebrow="07 · CHI TIẾT NGÀY → BỮA" title="Mở rộng từng ngày như báo cáo một ngày" note="Giữ cấu trúc Ngày → Bữa → tổng năng lượng, P/L/G, món và nhóm thực phẩm.">
+      <AnalysisSection eyebrow="07 · CHI TIẾT TỪNG NGÀY" title="Chi tiết dinh dưỡng từng ngày — như báo cáo một ngày" note="Mỗi ngày là một bảng chi tiết ĐẦY ĐỦ: Bữa → Món → Thực phẩm, có ⚙ Chọn chất, tổng món/bữa/ngày và quy đổi đi chợ. Bấm để mở từng ngày.">
         <div className="flex flex-col gap-2">
-          {analysis.days.map((day) => <DayDetail key={day.dayId} day={day} />)}
+          {days.map((day, index) => <DayRationBlock key={day.id} day={day} defaultOpen={index === 0} />)}
         </div>
       </AnalysisSection>
 
     </section>
+  );
+}
+
+// Chi tiết TỪNG NGÀY = bê nguyên RationDetail (bảng chọn-chất Bữa→Món→TP + quy đổi),
+// gập lại; chỉ render khi mở để tránh gọi API + dựng bảng cho mọi ngày một lúc.
+function DayRationBlock({ day, defaultOpen }: { day: MenuDay; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  const foodCount = day.rows.filter((r) => r.foodId).length;
+  return (
+    <div className="overflow-hidden rounded-lg border border-[#B5D4F4]">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-2 bg-[#E6F1FB] px-3 py-2 text-left">
+        <span className="text-base font-bold text-[#0C447C]">📅 {day.label}</span>
+        <span className="text-sm text-[#5a708c]">{Math.round(dayKcal(day))} kcal · {foodCount} TP · {open ? "▾ đang mở" : "▸ mở chi tiết"}</span>
+      </button>
+      {open && (foodCount === 0
+        ? <p className="border-t border-[#D7E6F5] px-3 py-3 text-sm text-[#7d8ea3]">Ngày này chưa có thực phẩm.</p>
+        : <div className="border-t border-[#D7E6F5] p-2"><RationDetail rows={day.rows} mode="menu" /></div>)}
+    </div>
   );
 }
 
@@ -360,6 +379,3 @@ function NutrientRow({ nutrient }: { nutrient: NutrientPeriodSummary }) {
   return <tr className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-bold text-[#0C447C]">{nutrient.label}</td><td className="px-3 py-2 text-right">{formatMetric(nutrient.total, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.averagePerDay, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPerDay, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPeriod, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.percentOfTarget, "%")}</td><td className="px-3 py-2 text-right">{nutrient.comparableDays ? `${nutrient.achievedDays}/${nutrient.comparableDays}` : "—"}</td><td className="px-3 py-2 text-center"><StatusBadge status={nutrient.status} /></td><td className="px-3 py-2 text-xs text-neutral-600">{nutrient.total.incomplete ? "Thiếu dữ liệu ở một số thực phẩm" : nutrient.targetPerDay == null ? "Chưa có mốc RNI phù hợp" : nutrient.isUpperLimit ? "Đối chiếu giới hạn trên" : nutrient.targetType || "Đủ dữ liệu"}</td></tr>;
 }
 
-function DayDetail({ day }: { day: DayPeriodAnalysis }) {
-  return <details className="rounded-lg border border-[#B5D4F4] bg-[#F8FBFF]" open={day.hasData}><summary className="cursor-pointer px-3 py-2"><span className="font-black text-[#0C447C]">{day.label}</span><span className="ml-2 text-sm text-neutral-600">{formatNumber(day.energy.value, "kcal")} · {day.dishCount} món · {day.foodGroupCount ?? "—"} nhóm TP</span></summary><div className="overflow-x-auto border-t border-[#D7E6F5]"><table className="w-full min-w-[820px] text-sm"><thead className="bg-[#E6F1FB]"><tr><th className="px-3 py-2 text-left">Bữa</th><th className="px-3 py-2 text-right">Kcal</th><th className="px-3 py-2 text-right">Mục tiêu</th><th className="px-3 py-2 text-right">P (g)</th><th className="px-3 py-2 text-right">L (g)</th><th className="px-3 py-2 text-right">G (g)</th><th className="px-3 py-2 text-center">Đánh giá</th></tr></thead><tbody>{day.meals.map((meal) => <tr key={meal.meal} className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-bold">{meal.meal}</td><td className="px-3 py-2 text-right">{formatMetric(meal.energy)}</td><td className="px-3 py-2 text-right">{formatNumber(meal.targetKcal)}</td><td className="px-3 py-2 text-right">{formatMetric(meal.nutrients.proteinG)}</td><td className="px-3 py-2 text-right">{formatMetric(meal.nutrients.lipidG)}</td><td className="px-3 py-2 text-right">{formatMetric(meal.nutrients.glucidG)}</td><td className="px-3 py-2 text-center"><StatusBadge status={meal.status} /></td></tr>)}</tbody></table></div></details>;
-}
