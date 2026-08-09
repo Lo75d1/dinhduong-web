@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import ExchangeUnits from "./ExchangeUnits";
+import MultiDayDietCode from "./MultiDayDietCode";
 import RationDetail from "./RationDetail";
 import RecommendationComparison from "./RecommendationComparison";
 import ShoppingList from "./ShoppingList";
@@ -197,6 +198,9 @@ export default function MultiDayAnalysis({
         </AnalysisSection>
       )}
 
+      {/* Mã chế độ ăn bệnh lý — nằm ngay khu khuyến nghị (không đẩy xuống cuối) */}
+      <MultiDayDietCode days={days} />
+
       {(analysis.emptyDayCount > 0 || analysis.totalEnergy.incomplete) && <div className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
         <b>Độ đầy đủ:</b> {analysis.emptyDayCount ? `${analysis.emptyDayCount} ngày đang trống. ` : ""}{analysis.totalEnergy.incomplete ? "Có thực phẩm thiếu năng lượng nên tổng kỳ được giữ “—”." : "Các phép tính tổng chỉ dùng ngày có thực phẩm."}
       </div>}
@@ -245,7 +249,7 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
-      <AnalysisSection eyebrow="04 · MÓN ĂN" title="Món đóng góp nhiều nhất trong kỳ" note={`${analysis.uniqueDishCount} món khác nhau · ${analysis.uniqueFoodCount} thực phẩm khác nhau. Bấm tên món để xem ngày và bữa xuất hiện.`}>
+      <AnalysisSection defaultOpen={false} eyebrow="04 · MÓN ĂN" title="Món đóng góp nhiều nhất trong kỳ" note={`${analysis.uniqueDishCount} món khác nhau · ${analysis.uniqueFoodCount} thực phẩm khác nhau. Bấm tên món để xem ngày và bữa xuất hiện.`}>
         <div className="overflow-x-auto rounded-lg border border-[#B5D4F4]">
           <table className="w-full min-w-[920px] text-sm">
             <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Món</th><th className="px-3 py-2 text-right">Lần xuất hiện</th><th className="px-3 py-2 text-right">Thực phẩm</th><th className="px-3 py-2 text-right">Kcal</th><th className="px-3 py-2 text-right">% toàn kỳ</th><th className="px-3 py-2 text-right">P (g)</th><th className="px-3 py-2 text-right">L (g)</th><th className="px-3 py-2 text-right">G (g)</th><th className="px-3 py-2 text-right">Natri (mg)</th></tr></thead>
@@ -254,7 +258,7 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
-      <AnalysisSection eyebrow="05 · VI CHẤT & KHOÁNG CHẤT" title="Tổng kỳ, trung bình ngày và mức đáp ứng" note="Vẫn tính mọi chất; chỗ thiếu dữ liệu nguồn được đánh dấu ở cột ghi chú. Với natri, mục tiêu là giới hạn trên; các chất còn lại đánh giá mức đáp ứng tối thiểu.">
+      <AnalysisSection defaultOpen={false} eyebrow="05 · VI CHẤT & KHOÁNG CHẤT" title="Tổng kỳ, trung bình ngày và mức đáp ứng" note="Vẫn tính mọi chất; chỗ thiếu dữ liệu nguồn được đánh dấu ở cột ghi chú. Với natri, mục tiêu là giới hạn trên; các chất còn lại đánh giá mức đáp ứng tối thiểu.">
         <div className="overflow-x-auto rounded-lg border border-[#B5D4F4]">
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Chất</th><th className="px-3 py-2 text-right">Tổng kỳ</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">Khuyến nghị/ngày</th><th className="px-3 py-2 text-right">Nhu cầu kỳ</th><th className="px-3 py-2 text-right">Đáp ứng</th><th className="px-3 py-2 text-right">Ngày đạt</th><th className="px-3 py-2 text-center">Đánh giá</th><th className="px-3 py-2 text-left">Ghi chú dữ liệu</th></tr></thead>
@@ -274,7 +278,7 @@ export default function MultiDayAnalysis({
         )}
       </AnalysisSection>
 
-      <AnalysisSection eyebrow="06 · ĐA DẠNG THỰC PHẨM" title="Nhóm thực phẩm trong toàn kỳ" note={`${formatNumber(analysis.averageFoodGroups, "nhóm/ngày")} · ${analysis.missingFoodGroupRows} dòng chưa có phân loại nhóm.`}>
+      <AnalysisSection defaultOpen={false} eyebrow="06 · ĐA DẠNG THỰC PHẨM" title="Nhóm thực phẩm trong toàn kỳ" note={`${formatNumber(analysis.averageFoodGroups, "nhóm/ngày")} · ${analysis.missingFoodGroupRows} dòng chưa có phân loại nhóm.`}>
         <div className="grid gap-3 lg:grid-cols-[1fr_2fr]">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
             <SmallMetric title="Nhóm thực phẩm" value={`${analysis.foodGroups.length}`} />
@@ -288,7 +292,7 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
-      <AnalysisSection eyebrow="06B · ĐƠN VỊ ĂN / ĐI CHỢ" title="Quy đổi đơn vị ăn và danh sách đi chợ toàn kỳ" note="Bê từ chế độ một ngày, gộp toàn bộ thực phẩm của cả kỳ (mọi ngày).">
+      <AnalysisSection defaultOpen={false} eyebrow="06B · ĐƠN VỊ ĂN / ĐI CHỢ" title="Quy đổi đơn vị ăn và danh sách đi chợ toàn kỳ" note="Bê từ chế độ một ngày, gộp toàn bộ thực phẩm của cả kỳ (mọi ngày).">
         <div className="rounded-lg border border-[#B5D4F4] bg-white p-3">
           <h4 className="mb-2 text-sm font-bold text-[#0C447C]">Quy đổi đơn vị ăn / nhóm thực phẩm</h4>
           <ExchangeUnits rows={allRows} />
@@ -299,7 +303,7 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
-      <AnalysisSection eyebrow="07 · CHI TIẾT TỪNG NGÀY" title="Chi tiết dinh dưỡng từng ngày — như báo cáo một ngày" note="Mỗi ngày là một bảng chi tiết ĐẦY ĐỦ: Bữa → Món → Thực phẩm, có ⚙ Chọn chất, tổng món/bữa/ngày và quy đổi đi chợ. Bấm để mở từng ngày.">
+      <AnalysisSection defaultOpen={false} eyebrow="07 · CHI TIẾT TỪNG NGÀY" title="Chi tiết dinh dưỡng từng ngày — như báo cáo một ngày" note="Mỗi ngày là một bảng chi tiết ĐẦY ĐỦ: Bữa → Món → Thực phẩm, có ⚙ Chọn chất, tổng món/bữa/ngày và quy đổi đi chợ. Bấm để mở từng ngày.">
         <div className="flex flex-col gap-2">
           {days.map((day, index) => <DayRationBlock key={day.id} day={day} defaultOpen={index === 0} />)}
         </div>
@@ -355,8 +359,19 @@ function MacroPerKgRow({ macros, profile, kcalPerDay }: { macros: { key: string;
   );
 }
 
-function AnalysisSection({ eyebrow, title, note, children }: { eyebrow: string; title: string; note: string; children: React.ReactNode }) {
-  return <section className="rounded-xl border border-[#B5D4F4] bg-white p-3 sm:p-4"><div className="mb-3 border-b-2 border-[#185FA5] pb-2"><p className="text-[11px] font-black tracking-[0.13em] text-[#185FA5]">{eyebrow}</p><h3 className="mt-0.5 text-lg font-black text-[#0C447C] sm:text-xl">{title}</h3><p className="mt-1 text-xs text-neutral-600 sm:text-sm">{note}</p></div>{children}</section>;
+function AnalysisSection({ eyebrow, title, note, children, defaultOpen = true }: { eyebrow: string; title: string; note: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return <section className="rounded-xl border border-[#B5D4F4] bg-white p-3 sm:p-4">
+    <button type="button" onClick={() => setOpen((o) => !o)} className={`flex w-full items-start justify-between gap-2 border-[#185FA5] text-left ${open ? "mb-3 border-b-2 pb-2" : ""}`}>
+      <div>
+        <p className="text-[11px] font-black tracking-[0.13em] text-[#185FA5]">{eyebrow}</p>
+        <h3 className="mt-0.5 text-lg font-black text-[#0C447C] sm:text-xl">{title}</h3>
+        {open && <p className="mt-1 text-xs text-neutral-600 sm:text-sm">{note}</p>}
+      </div>
+      <span className="shrink-0 text-2xl font-black text-[#185FA5]">{open ? "▾" : "▸"}</span>
+    </button>
+    {open && children}
+  </section>;
 }
 
 function BigMetric({ title, value, note, status }: { title: string; value: string; note: string; status?: EnergyStatus }) {

@@ -27,7 +27,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import MenuFoodSearch from "./MenuFoodSearch";
 import MultiDayAnalysis from "./MultiDayAnalysis";
-import MultiDayDietCode from "./MultiDayDietCode";
 import PersonalProfile, { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
 import type { RecommendationRow } from "./matchRecommendation";
 import { basisForMode, calculateQuantity } from "./quantity";
@@ -380,7 +379,6 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
       ) : (
         <>
           <MultiDayAnalysis days={days} profile={profile} recommendations={recommendations} />
-          <MultiDayDietCode days={days} />
         </>
       ))}
     </section>
