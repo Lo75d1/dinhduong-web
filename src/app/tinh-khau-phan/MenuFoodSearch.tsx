@@ -44,7 +44,22 @@ export default function MenuFoodSearch({
   const [foodOpts, setFoodOpts] = useState<{ sources: string[]; groups: string[] }>({ sources: [], groups: [] });
   const [dishOpts, setDishOpts] = useState<{ categories: string[]; ageGroups: string[]; diseaseGroups: string[] }>({ categories: [], ageGroups: [], diseaseGroups: [] });
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [manualOpen, setManualOpen] = useState(false);
+  const [mName, setMName] = useState("");
+  const [mType, setMType] = useState<"TS" | "CB" | "MA">("CB");
+  const [mKcal, setMKcal] = useState("");
+  const [mP, setMP] = useState("");
+  const [mL, setML] = useState("");
+  const [mG, setMG] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function submitManual() {
+    const name = mName.trim();
+    if (!name) return;
+    const num = (s: string) => { const n = Number(s); return Number.isFinite(n) && n >= 0 ? n : 0; };
+    onPickFood?.({ id: `local-${Date.now()}`, name, source: "Tự nhập", foodType: mType, energyKcal: num(mKcal), proteinG: num(mP), lipidG: num(mL), glucidG: num(mG), wastePercent: 0 });
+    setMName(""); setMKcal(""); setMP(""); setML(""); setMG(""); setManualOpen(false);
+  }
 
   useEffect(() => {
     if (kind === "food") fetch("/api/foods/filter-options").then((r) => r.json()).then((d) => setFoodOpts({ sources: d.sources ?? [], groups: d.groups ?? [] })).catch(() => {});
@@ -96,7 +111,21 @@ export default function MenuFoodSearch({
           style={{ borderColor: "#cdd9e6" }}
         />
         <button type="button" onClick={() => setFiltersOpen((o) => !o)} className="shrink-0 rounded border px-2 py-1.5 text-xs font-semibold" style={{ borderColor: ACCENT, color: INK, background: filtersOpen ? "#E6F1FB" : "#fff" }}>Bộ lọc {filtersOpen ? "▾" : "▸"}</button>
+        {kind === "food" && <button type="button" onClick={() => setManualOpen((o) => !o)} className="shrink-0 rounded border px-2 py-1.5 text-xs font-semibold" style={{ borderColor: "#0c5f4d", color: "#0c5f4d", background: manualOpen ? "#eafaf2" : "#fff" }}>＋ TP mới</button>}
       </div>
+      {manualOpen && kind === "food" && (
+        <div className="mt-1.5 rounded-md border p-2" style={{ borderColor: "#0c5f4d", background: "#f4fbf7" }}>
+          <div className="grid grid-cols-2 gap-1.5">
+            <input value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Tên thực phẩm *" className="col-span-2 rounded border px-2 py-1 text-sm" style={{ borderColor: "#cdd9e6" }} />
+            <select value={mType} onChange={(e) => setMType(e.target.value as "TS" | "CB" | "MA")} className="rounded border px-1.5 py-1 text-xs" style={{ borderColor: "#cdd9e6" }}><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select>
+            <input value={mKcal} onChange={(e) => setMKcal(e.target.value)} inputMode="decimal" placeholder="Kcal/100g" className="rounded border px-2 py-1 text-xs" style={{ borderColor: "#cdd9e6" }} />
+            <input value={mP} onChange={(e) => setMP(e.target.value)} inputMode="decimal" placeholder="Đạm g/100g" className="rounded border px-2 py-1 text-xs" style={{ borderColor: "#cdd9e6" }} />
+            <input value={mL} onChange={(e) => setML(e.target.value)} inputMode="decimal" placeholder="Béo g/100g" className="rounded border px-2 py-1 text-xs" style={{ borderColor: "#cdd9e6" }} />
+            <input value={mG} onChange={(e) => setMG(e.target.value)} inputMode="decimal" placeholder="Bột đường g/100g" className="rounded border px-2 py-1 text-xs" style={{ borderColor: "#cdd9e6" }} />
+          </div>
+          <button type="button" onClick={submitManual} className="mt-1.5 rounded-md px-3 py-1.5 text-sm font-semibold text-white" style={{ background: "#0c5f4d" }}>Thêm vào món (chỉ trong thực đơn này)</button>
+        </div>
+      )}
       {filtersOpen && (
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           {kind === "food" ? (
