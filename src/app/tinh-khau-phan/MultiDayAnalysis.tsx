@@ -80,6 +80,9 @@ export default function MultiDayAnalysis({
   }, [days]);
   const [shareText, setShareText] = useState<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
+  const [kitchenMode, setKitchenMode] = useState(false);
+  useEffect(() => { try { setKitchenMode(window.localStorage.getItem("khauphan_menu_kitchen_v1") === "1"); } catch { /* localStorage bị chặn */ } }, []);
+  function changeKitchen(v: boolean) { setKitchenMode(v); try { window.localStorage.setItem("khauphan_menu_kitchen_v1", v ? "1" : "0"); } catch { /* localStorage bị chặn */ } }
 
   useEffect(() => {
     try {
@@ -140,9 +143,23 @@ export default function MultiDayAnalysis({
         </div>
       </header>
 
+      {/* C · Loại thực đơn: cá nhân đủ ngày / bếp tập thể theo bữa */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#B5D4F4] bg-[#F4F9FE] px-3 py-2">
+        <span className="text-sm font-semibold text-[#0C447C]">Loại thực đơn:</span>
+        <div className="inline-flex items-center gap-1 rounded-md border border-[#B5D4F4] bg-white p-0.5">
+          <button type="button" onClick={() => changeKitchen(false)} aria-pressed={!kitchenMode} className={`rounded px-2.5 py-1 text-sm font-semibold ${!kitchenMode ? "bg-[#185FA5] text-white" : "text-[#5a708c]"}`}>🧑 Cá nhân — đủ ngày</button>
+          <button type="button" onClick={() => changeKitchen(true)} aria-pressed={kitchenMode} className={`rounded px-2.5 py-1 text-sm font-semibold ${kitchenMode ? "bg-[#185FA5] text-white" : "text-[#5a708c]"}`}>🍲 Bếp tập thể — theo bữa</button>
+        </div>
+      </div>
+      {kitchenMode && (
+        <div className="rounded-lg border-l-4 border-[#185FA5] bg-[#EAF3FE] px-3 py-2 text-sm text-[#0C447C]">
+          <b>Bếp tập thể:</b> thực đơn thường chỉ gồm vài bữa (không phải cả ngày) — nên số so với <b>nhu cầu cả ngày</b> chỉ để tham khảo (% đạt, trung bình), <b>không phải thiếu hụt thật</b>. Tập trung cân đối P:L:G, natri, đa dạng món và bảng đi chợ. Cờ “thiếu/đạt/vượt” theo cả ngày đã ẩn ở phần tổng.
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <BigMetric title="Năng lượng toàn kỳ" value={formatNumber(analysis.totalEnergy.value, "kcal")} note={`Mục tiêu ${formatNumber(analysis.targetPeriodKcal, "kcal")}`} status={analysis.periodEnergyStatus} />
-        <BigMetric title="Thâm hụt / tăng" value={formatSigned(analysis.periodGapKcal)} note={`Bình quân ${formatSigned(analysis.averageGapKcal, "kcal/ngày")}`} status={analysis.periodEnergyStatus} />
+        <BigMetric title="Năng lượng toàn kỳ" value={formatNumber(analysis.totalEnergy.value, "kcal")} note={`Mục tiêu ${formatNumber(analysis.targetPeriodKcal, "kcal")}`} status={kitchenMode ? undefined : analysis.periodEnergyStatus} />
+        <BigMetric title="Thâm hụt / tăng" value={formatSigned(analysis.periodGapKcal)} note={`Bình quân ${formatSigned(analysis.averageGapKcal, "kcal/ngày")}`} status={kitchenMode ? undefined : analysis.periodEnergyStatus} />
         <BigMetric title="Trung bình mỗi ngày" value={formatNumber(analysis.averageEnergyKcal, "kcal")} note={`Nhu cầu ${formatNumber(analysis.target.value, "kcal/ngày")} · ${analysis.target.source ?? "chưa có RNI"}`} />
         <BigMetric title="Ngày đạt / thiếu / vượt" value={`${analysis.achievedDays} / ${analysis.lowDays} / ${analysis.highDays}`} note={`${analysis.completeEnergyDayCount}/${analysis.dataDayCount} ngày đủ dữ liệu năng lượng`} />
       </div>
