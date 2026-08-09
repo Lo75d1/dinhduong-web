@@ -28,7 +28,7 @@ import { restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modif
 import MenuFoodSearch from "./MenuFoodSearch";
 import MultiDayAnalysis from "./MultiDayAnalysis";
 import MultiDayDietCode from "./MultiDayDietCode";
-import { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
+import PersonalProfile, { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
 import type { RecommendationRow } from "./matchRecommendation";
 import { basisForMode, calculateQuantity } from "./quantity";
 import { loadRows, type Row } from "./types";
@@ -284,6 +284,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
       {/* Thanh công cụ — gọn: chỉ tiêu đề + tổng. Thêm/nhân đôi ngày dùng nút dưới + góc ngày. */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border p-2.5" style={{ borderColor: "#B5D4F4", background: "#F4F9FE" }}>
         <span className="text-base font-semibold" style={{ color: INK }}>🍽️ Thực đơn nhiều ngày</span>
+        <PersonalProfile onChange={setProfile} />
         <span className="ml-auto text-sm" style={{ color: "#5a708c" }}>
           {days.length} ngày · tổng <b style={{ color: INK }}>{round(totalKcalAll)}</b> kcal
         </span>
