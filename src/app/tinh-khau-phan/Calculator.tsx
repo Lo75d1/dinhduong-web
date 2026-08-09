@@ -185,6 +185,7 @@ export default function Calculator() {
             </div>
             <div className="mt-4 flex flex-col gap-4 lg:mt-0">
               <DayTotalCard totals={totals} foodCount={foodRows.length} totalGrams={totalGrams} />
+              <MacroPerKgCard totals={totals} profile={profile} />
               {profile && <RecommendationComparison profile={profile} totals={totals} />}
               <MicronutrientComparison rows={rows} profile={profile} />
               <GrowthAssessmentPanel profile={profile} />
@@ -328,6 +329,37 @@ function DayTotalCard({ totals, foodCount, totalGrams }: { totals: Record<string
         <summary className="cursor-pointer text-sm font-semibold text-[#123c36]">Xem tất cả {CORE_CALC_FIELDS.length} chất</summary>
         <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-3">{CORE_CALC_FIELDS.map((field) => <div key={field.key} className="flex items-baseline justify-between gap-2"><span className="text-neutral-700">{field.label}</span><span className="font-semibold text-neutral-950">{round(totals[field.key])} {field.unit}</span></div>)}</div>
       </details>
+    </div>
+  );
+}
+
+// Chỉ số lâm sàng: g đạm/béo/bột đường trên kg cân nặng (theo hồ sơ).
+function MacroPerKgCard({ totals, profile }: { totals: Record<string, number>; profile: Profile | null }) {
+  const w = Number(profile?.weight);
+  if (!(w > 0)) return (
+    <div className="rounded-lg border-2 border-[#0c5f4d] bg-[#f4fbf7] p-4 text-sm text-neutral-700">⚖️ <b className="text-[#123c36]">Trên cân nặng (g/kg)</b> — nhập cân nặng ở hồ sơ để hiện chỉ số này.</div>
+  );
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  const items = [
+    { label: "Đạm", g: totals.proteinG || 0, color: "#2563eb" },
+    { label: "Béo", g: totals.lipidG || 0, color: "#d97706" },
+    { label: "Bột đường", g: totals.glucidG || 0, color: "#16a34a" },
+  ];
+  return (
+    <div className="rounded-lg border-2 border-[#0c5f4d] bg-[#f4fbf7] p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-base font-bold text-[#123c36]">⚖️ Trên cân nặng (g/kg)</h3>
+        <span className="text-xs text-neutral-600">{w} kg · {round((totals.energyKcal || 0) / w)} kcal/kg</span>
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        {items.map((it) => (
+          <div key={it.label} className="rounded-md border border-[#cdd9d3] bg-white p-2 text-center">
+            <div className="text-xl font-extrabold" style={{ color: it.color }}>{r2(it.g / w)}</div>
+            <div className="text-xs text-neutral-600">{it.label} g/kg</div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-neutral-500">Tính trên cân nặng hồ sơ. Tham khảo: đạm thường ~1–1,5 g/kg (bệnh lý gan/thận… có ngưỡng riêng — đối chiếu chỉ định).</p>
     </div>
   );
 }

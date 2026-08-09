@@ -147,6 +147,8 @@ export default function MultiDayAnalysis({
         <BigMetric title="Ngày đạt / thiếu / vượt" value={`${analysis.achievedDays} / ${analysis.lowDays} / ${analysis.highDays}`} note={`${analysis.completeEnergyDayCount}/${analysis.dataDayCount} ngày đủ dữ liệu năng lượng`} />
       </div>
 
+      <MacroPerKgRow macros={analysis.macros} profile={profile} kcalPerDay={analysis.averageEnergyKcal} />
+
       {(analysis.emptyDayCount > 0 || analysis.totalEnergy.incomplete) && <div className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
         <b>Độ đầy đủ:</b> {analysis.emptyDayCount ? `${analysis.emptyDayCount} ngày đang trống. ` : ""}{analysis.totalEnergy.incomplete ? "Có thực phẩm thiếu năng lượng nên tổng kỳ được giữ “—”." : "Các phép tính tổng chỉ dùng ngày có thực phẩm."}
       </div>}
@@ -247,6 +249,34 @@ export default function MultiDayAnalysis({
         </div>
       </details>
     </section>
+  );
+}
+
+// Chỉ số lâm sàng: g đạm/béo/bột đường trên kg cân nặng — trung bình mỗi ngày.
+function MacroPerKgRow({ macros, profile, kcalPerDay }: { macros: { key: string; averageGramsPerDay: number | null }[]; profile: Profile | null; kcalPerDay: number | null }) {
+  const w = Number(profile?.weight);
+  const META: Record<string, { label: string; color: string }> = { proteinG: { label: "Đạm", color: "#2563eb" }, lipidG: { label: "Béo", color: "#d97706" }, glucidG: { label: "Bột đường", color: "#16a34a" } };
+  if (!(w > 0)) return <div className="rounded-lg border-2 border-[#185FA5] bg-white p-3 text-sm text-[#5a708c]">⚖️ <b className="text-[#0C447C]">Trên cân nặng (g/kg/ngày)</b> — nhập cân nặng ở hồ sơ để hiện chỉ số này.</div>;
+  const r2 = (n: number) => Math.round(n * 100) / 100;
+  return (
+    <div className="rounded-lg border-2 border-[#185FA5] bg-white p-3">
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-base font-bold text-[#0C447C]">⚖️ Trên cân nặng — trung bình/ngày (g/kg)</h3>
+        <span className="text-xs text-[#5a708c]">{w} kg · {kcalPerDay != null ? Math.round((kcalPerDay / w) * 10) / 10 : "—"} kcal/kg</span>
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-2">
+        {(["proteinG", "lipidG", "glucidG"] as const).map((key) => {
+          const m = macros.find((x) => x.key === key);
+          const perKg = m && m.averageGramsPerDay != null ? r2(m.averageGramsPerDay / w) : null;
+          const meta = META[key];
+          return <div key={key} className="rounded-md border border-[#B5D4F4] bg-[#F4F9FE] p-2 text-center">
+            <div className="text-xl font-extrabold" style={{ color: meta.color }}>{perKg != null ? perKg : "—"}</div>
+            <div className="text-xs text-[#5a708c]">{meta.label} g/kg</div>
+          </div>;
+        })}
+      </div>
+      <p className="mt-2 text-[11px] text-[#7d8ea3]">Trung bình mỗi ngày trên cân nặng hồ sơ. Tham khảo: đạm ~1–1,5 g/kg (bệnh lý gan/thận… có ngưỡng riêng — đối chiếu chỉ định).</p>
+    </div>
   );
 }
 
