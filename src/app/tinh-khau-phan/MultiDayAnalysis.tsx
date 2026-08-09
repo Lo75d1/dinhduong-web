@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ExchangeUnits from "./ExchangeUnits";
+import ShoppingList from "./ShoppingList";
 import type { Profile } from "./PersonalProfile";
 import type { RecommendationRow } from "./matchRecommendation";
 import { dayMealsOrdered, type MenuDay } from "./multi-day";
@@ -122,6 +124,7 @@ export default function MultiDayAnalysis({
   // CHÍNH (hiện luôn) và nhóm PHỤ (gập lại) để không thành một rừng "—".
   const coreNutrients = useMemo(() => analysis.nutrients.filter((n) => CORE_MICRO.has(n.key)), [analysis.nutrients]);
   const otherNutrients = useMemo(() => analysis.nutrients.filter((n) => !CORE_MICRO.has(n.key)), [analysis.nutrients]);
+  const allRows = useMemo(() => days.flatMap((d) => d.rows), [days]);
   const periodName = analysis.calendarDayCount === 7 ? "TỔNG CẢ TUẦN" : `TỔNG ${analysis.calendarDayCount} NGÀY`;
 
   function splitEvenly() {
@@ -262,18 +265,23 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
+      <AnalysisSection eyebrow="06B · ĐƠN VỊ ĂN / ĐI CHỢ" title="Quy đổi đơn vị ăn và danh sách đi chợ toàn kỳ" note="Bê từ chế độ một ngày, gộp toàn bộ thực phẩm của cả kỳ (mọi ngày).">
+        <div className="rounded-lg border border-[#B5D4F4] bg-white p-3">
+          <h4 className="mb-2 text-sm font-bold text-[#0C447C]">Quy đổi đơn vị ăn / nhóm thực phẩm</h4>
+          <ExchangeUnits rows={allRows} />
+        </div>
+        <div className="mt-3 rounded-lg border border-[#B5D4F4] bg-white p-3">
+          <h4 className="mb-2 text-sm font-bold text-[#0C447C]">🛒 Danh sách đi chợ / xuất kho toàn kỳ</h4>
+          <ShoppingList rows={allRows} />
+        </div>
+      </AnalysisSection>
+
       <AnalysisSection eyebrow="07 · CHI TIẾT NGÀY → BỮA" title="Mở rộng từng ngày như báo cáo một ngày" note="Giữ cấu trúc Ngày → Bữa → tổng năng lượng, P/L/G, món và nhóm thực phẩm.">
         <div className="flex flex-col gap-2">
           {analysis.days.map((day) => <DayDetail key={day.dayId} day={day} />)}
         </div>
       </AnalysisSection>
 
-      <details className="rounded-xl border border-[#B5D4F4] bg-white">
-        <summary className="cursor-pointer px-4 py-3 text-base font-black text-[#0C447C]">🛒 Bảng đi chợ gộp toàn kỳ ({shopping.length} thực phẩm)</summary>
-        <div className="overflow-x-auto border-t border-[#D7E6F5]">
-          <table className="w-full min-w-[760px] text-sm"><thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Thực phẩm</th><th className="px-3 py-2 text-right">Sống sạch</th><th className="px-3 py-2 text-right">Mua/xuất kho</th><th className="px-3 py-2 text-right">Thải bỏ</th><th className="px-3 py-2 text-left">Dùng trong ngày</th></tr></thead><tbody>{shopping.map((item) => <tr key={item.key} className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-medium">{item.foodName}</td><td className="px-3 py-2 text-right">{formatNumber(item.edibleGrams, "g")}</td><td className="px-3 py-2 text-right">{formatNumber(item.rawGrams, "g")}</td><td className="px-3 py-2 text-right">{formatNumber(item.wastePercent, "%")}</td><td className="px-3 py-2 text-xs">{item.days.join(", ")}</td></tr>)}</tbody></table>
-        </div>
-      </details>
     </section>
   );
 }
