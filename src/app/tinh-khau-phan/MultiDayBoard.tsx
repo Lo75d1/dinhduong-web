@@ -64,7 +64,7 @@ function useMenuSensors() {
   );
 }
 
-export default function MultiDayBoard() {
+export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "analysis" }) {
   const [days, setDays] = useState<MenuDay[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [expanded, setExpanded] = useState<{ dayId: string; meal: string } | null>(null);
@@ -232,6 +232,7 @@ export default function MultiDayBoard() {
 
   return (
     <section className="flex flex-col gap-3" aria-label="Thực đơn nhiều ngày">
+      {view === "entry" && <>
       {/* Thanh công cụ */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border p-2" style={{ borderColor: "#B5D4F4", background: "#F4F9FE" }}>
         <span className="mr-1 text-sm font-semibold" style={{ color: INK }}>🍽️ Thực đơn nhiều ngày</span>
@@ -306,9 +307,18 @@ export default function MultiDayBoard() {
           ＋ Thêm ngày (nhập khẩu phần hiện tại)
         </button>
       )}
+      </>}
 
-      {days.length > 0 && <MultiDayAnalysis days={days} profile={profile} recommendations={recommendations} />}
-      {days.length > 0 && <MultiDayDietCode days={days} />}
+      {view === "analysis" && (days.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed px-5 py-10 text-center" style={{ borderColor: "#B5D4F4", color: "#5a708c" }}>
+          <p className="text-sm">Chưa có ngày nào để phân tích. Sang bước <b>Nhập</b> để dựng thực đơn nhiều ngày.</p>
+        </div>
+      ) : (
+        <>
+          <MultiDayAnalysis days={days} profile={profile} recommendations={recommendations} />
+          <MultiDayDietCode days={days} />
+        </>
+      ))}
     </section>
   );
 }

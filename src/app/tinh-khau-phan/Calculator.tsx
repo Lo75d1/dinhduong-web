@@ -118,24 +118,38 @@ export default function Calculator() {
       </div>
     </section>
 
-    <div data-no-print className="inline-flex w-fit items-center gap-1 rounded-lg border-2 border-[#7f948d] bg-white p-1 shadow-sm" role="group" aria-label="Chế độ lập khẩu phần">
-      <button type="button" onClick={() => changePageMode("single")} aria-pressed={pageMode === "single"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "single" ? "bg-[#123c36] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>📋 Một ngày</button>
-      <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>🗓️ Nhiều ngày</button>
-    </div>
-
-    {pageMode === "multi" && <section className="clinical-panel min-w-0"><MultiDayBoard /></section>}
-
-    {pageMode === "single" && headerSlot && createPortal(
-      <nav className="clinical-stepper flex w-full items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước tính khẩu phần">
-        <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-4 py-2 text-center text-sm font-semibold sm:text-base ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
-          <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập khẩu phần
-        </button>
-        <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-4 py-2 text-center text-sm font-semibold sm:text-base ${activeView === "analysis" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
-          <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>Kết quả{foodRows.length ? ` · ${foodRows.length} TP` : ""}
-        </button>
-      </nav>,
+    {headerSlot && createPortal(
+      <div data-no-print className="flex w-full flex-wrap items-center justify-center gap-2 sm:flex-nowrap">
+        {/* Chế độ lập khẩu phần: 1 ngày / nhiều ngày — cùng thanh header với bước 1/2 */}
+        <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" role="group" aria-label="Chế độ lập khẩu phần">
+          <button type="button" onClick={() => changePageMode("single")} aria-pressed={pageMode === "single"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "single" ? "bg-[#123c36] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>📋 Một ngày</button>
+          <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>🗓️ Nhiều ngày</button>
+        </div>
+        {pageMode === "single" && (
+          <nav className="clinical-stepper flex flex-1 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước tính khẩu phần">
+            <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
+              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập khẩu phần
+            </button>
+            <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "analysis" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
+              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>Kết quả{foodRows.length ? ` · ${foodRows.length} TP` : ""}
+            </button>
+          </nav>
+        )}
+        {pageMode === "multi" && (
+          <nav className="clinical-stepper flex flex-1 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước thực đơn nhiều ngày">
+            <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "entry" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
+              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập thực đơn
+            </button>
+            <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "analysis" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
+              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>Phân tích
+            </button>
+          </nav>
+        )}
+      </div>,
       headerSlot
     )}
+
+    {pageMode === "multi" && <section className="clinical-panel min-w-0"><MultiDayBoard view={activeView} /></section>}
 
     <section className={pageMode === "single" && activeView === "entry" ? "clinical-panel lg:flex lg:h-[calc(100vh-5.25rem)] lg:flex-col lg:overflow-hidden" : "hidden"}>
       <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} onMedsChange={setMeds} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
