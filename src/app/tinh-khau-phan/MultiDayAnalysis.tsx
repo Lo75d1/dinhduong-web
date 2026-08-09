@@ -110,6 +110,10 @@ export default function MultiDayAnalysis({
     [days, profile, recommendations, shares, sharesValid],
   );
   const shopping = useMemo(() => buildPeriodShoppingList(days), [days]);
+  // #5: chỉ đối chiếu vi chất có dữ liệu nguồn; gom phần thiếu thành ghi chú thay
+  // vì một loạt "—" vô nghĩa.
+  const nutrientsWithData = useMemo(() => analysis.nutrients.filter((n) => n.averagePerDay != null), [analysis.nutrients]);
+  const nutrientsMissing = useMemo(() => analysis.nutrients.filter((n) => n.averagePerDay == null), [analysis.nutrients]);
   const periodName = analysis.calendarDayCount === 7 ? "TỔNG CẢ TUẦN" : `TỔNG ${analysis.calendarDayCount} NGÀY`;
 
   function splitEvenly() {
@@ -202,13 +206,20 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
-      <AnalysisSection eyebrow="05 · VI CHẤT & KHOÁNG CHẤT" title="Tổng kỳ, trung bình ngày và mức đáp ứng" note="“—” nghĩa là chưa đủ dữ liệu nguồn. Với natri, mục tiêu được xem là giới hạn trên; các chất còn lại đánh giá mức đáp ứng tối thiểu.">
-        <div className="overflow-x-auto rounded-lg border border-[#B8CFC7]">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead className="bg-[#E2F0EB] text-[#123C36]"><tr><th className="px-3 py-2 text-left">Chất</th><th className="px-3 py-2 text-right">Tổng kỳ</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">Khuyến nghị/ngày</th><th className="px-3 py-2 text-right">Nhu cầu kỳ</th><th className="px-3 py-2 text-right">Đáp ứng</th><th className="px-3 py-2 text-right">Ngày đạt</th><th className="px-3 py-2 text-center">Đánh giá</th><th className="px-3 py-2 text-left">Ghi chú dữ liệu</th></tr></thead>
-            <tbody>{analysis.nutrients.map((nutrient) => <NutrientRow key={nutrient.key} nutrient={nutrient} />)}</tbody>
-          </table>
-        </div>
+      <AnalysisSection eyebrow="05 · VI CHẤT & KHOÁNG CHẤT" title="Tổng kỳ, trung bình ngày và mức đáp ứng" note="Chỉ hiển thị chất đủ dữ liệu nguồn. Với natri, mục tiêu là giới hạn trên; các chất còn lại đánh giá mức đáp ứng tối thiểu.">
+        {nutrientsWithData.length === 0 ? (
+          <p className="text-sm text-neutral-600">Chưa có vi chất/khoáng chất nào đủ dữ liệu để đối chiếu — dữ liệu nguồn của các thực phẩm trong kỳ đang thiếu các trường này.</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-[#B8CFC7]">
+            <table className="w-full min-w-[980px] text-sm">
+              <thead className="bg-[#E2F0EB] text-[#123C36]"><tr><th className="px-3 py-2 text-left">Chất</th><th className="px-3 py-2 text-right">Tổng kỳ</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">Khuyến nghị/ngày</th><th className="px-3 py-2 text-right">Nhu cầu kỳ</th><th className="px-3 py-2 text-right">Đáp ứng</th><th className="px-3 py-2 text-right">Ngày đạt</th><th className="px-3 py-2 text-center">Đánh giá</th><th className="px-3 py-2 text-left">Ghi chú dữ liệu</th></tr></thead>
+              <tbody>{nutrientsWithData.map((nutrient) => <NutrientRow key={nutrient.key} nutrient={nutrient} />)}</tbody>
+            </table>
+          </div>
+        )}
+        {nutrientsMissing.length > 0 && (
+          <p className="mt-2 rounded border-l-2 border-amber-400 bg-amber-50 px-3 py-2 text-xs text-amber-800">Chưa đủ dữ liệu nguồn để đối chiếu {nutrientsMissing.length} chất: {nutrientsMissing.map((n) => n.label).join(", ")}. (Ẩn để tránh một loạt “—” gây nhiễu.)</p>
+        )}
       </AnalysisSection>
 
       <AnalysisSection eyebrow="06 · ĐA DẠNG THỰC PHẨM" title="Nhóm thực phẩm trong toàn kỳ" note={`${formatNumber(analysis.averageFoodGroups, "nhóm/ngày")} · ${analysis.missingFoodGroupRows} dòng chưa có phân loại nhóm.`}>
