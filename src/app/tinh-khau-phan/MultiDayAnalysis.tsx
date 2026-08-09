@@ -193,7 +193,7 @@ export default function MultiDayAnalysis({
       <MacroPerKgRow macros={analysis.macros} profile={profile} kcalPerDay={analysis.averageEnergyKcal} />
 
       {profile && (
-        <AnalysisSection eyebrow="HỒ SƠ · KHUYẾN NGHỊ" title="Đối chiếu nhu cầu — trung bình mỗi ngày" note="So trung bình mỗi ngày (trên các ngày có thực phẩm) với nhu cầu theo tuổi/giới/sinh lý — như báo cáo một ngày.">
+        <AnalysisSection eyebrow="HỒ SƠ · KHUYẾN NGHỊ" title="Đối chiếu nhu cầu — TRUNG BÌNH mỗi ngày" note="Cột “Thực tế” là TRUNG BÌNH MỖI NGÀY (tổng cả kỳ ÷ số ngày có thực phẩm), KHÔNG phải tổng cả kỳ — để so trực tiếp với nhu cầu 1 ngày theo tuổi/giới. P/L/G hiển thị theo %NL (% năng lượng khẩu phần) — cách chuẩn để đánh giá cân đối chất sinh năng lượng.">
           <RecommendationComparison profile={profile} totals={avgTotals} />
         </AnalysisSection>
       )}
