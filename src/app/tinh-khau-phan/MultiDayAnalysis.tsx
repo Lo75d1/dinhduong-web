@@ -326,7 +326,7 @@ function DayRationBlock({ day, defaultOpen }: { day: MenuDay; defaultOpen: boole
       </button>
       {open && (foodCount === 0
         ? <p className="border-t border-[#D7E6F5] px-3 py-3 text-sm text-[#7d8ea3]">Ngày này chưa có thực phẩm.</p>
-        : <div className="border-t border-[#D7E6F5] p-2"><RationDetail rows={day.rows} mode="menu" /></div>)}
+        : <div className="border-t border-[#D7E6F5] p-2"><RationDetail rows={day.rows} mode="menu" compact /></div>)}
     </div>
   );
 }

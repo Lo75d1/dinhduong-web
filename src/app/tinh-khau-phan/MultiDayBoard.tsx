@@ -295,6 +295,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
       <div className="flex flex-wrap items-center gap-2 rounded-lg border p-2.5" style={{ borderColor: "#B5D4F4", background: "#F4F9FE" }}>
         <span className="text-base font-semibold" style={{ color: INK }}>🍽️ Thực đơn nhiều ngày</span>
         <PersonalProfile onChange={setProfile} />
+        <span className="rounded-full bg-[#e6f7ef] px-2 py-0.5 text-xs font-semibold text-[#0c5f4d]" title="Thực đơn được tự động lưu vào trình duyệt máy này (chưa đăng nhập/lưu server)">✓ Tự lưu trên máy này</span>
         <span className="ml-auto text-sm" style={{ color: "#5a708c" }}>
           {days.length} ngày · tổng <b style={{ color: INK }}>{round(totalKcalAll)}</b> kcal
         </span>

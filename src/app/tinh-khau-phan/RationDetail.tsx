@@ -14,7 +14,7 @@ function formatValue(value: { total: number; incomplete: boolean } | undefined, 
   return `${value.incomplete ? "≥ " : ""}${round(value.total)} ${unit}`;
 }
 
-export default function RationDetail({ rows, mode }: { rows: Row[]; mode: RationMode }) {
+export default function RationDetail({ rows, mode, compact = false }: { rows: Row[]; mode: RationMode; compact?: boolean }) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>(DEFAULT_FIELDS);
   const [reportValues, setReportValues] = useState<FoodReportValues>({});
   const foodRows = rows.filter((row) => row.foodId);
@@ -143,6 +143,7 @@ export default function RationDetail({ rows, mode }: { rows: Row[]; mode: Ration
         </div>
       </div>
 
+      {!compact && <>
       <div className="rounded-lg border border-neutral-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-neutral-800">Quy đổi sống sạch → mua / xuất kho</h2>
         <p className="mt-1 text-xs text-neutral-700">Gộp mọi lần dùng cùng thực phẩm. Nếu chưa có tỷ lệ thải bỏ, hệ thống tạm quy đổi 1:1 và ghi rõ để người dùng kiểm tra lại.</p>
@@ -154,6 +155,7 @@ export default function RationDetail({ rows, mode }: { rows: Row[]; mode: Ration
         <p className="mt-2 text-xs text-neutral-700">Bảng này là số liệu thô từ CSDL VDD/RNI. Kết quả khẩu phần = giá trị /100 g sống sạch × g sống sạch quy đổi /100.</p>
         <div className="mt-3 overflow-x-auto"><table className="min-w-[760px] w-full text-sm"><thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-500"><tr><th className="px-2 py-2 font-medium">Thực phẩm</th><th className="px-2 py-2 font-medium">Nguồn</th><th className="px-2 py-2 text-right font-medium">Thải bỏ</th><th className="px-2 py-2 text-right font-medium">Năng lượng (kcal)</th>{fields.map((field) => <th key={field.key} className="px-2 py-2 text-right font-medium">{field.label} ({field.unit})</th>)}</tr></thead><tbody>{foodRows.map((row) => <tr key={row.uid} className="border-b border-neutral-100"><td className="px-2 py-2 font-medium">{row.foodName}</td><td className="px-2 py-2">{reportValues[row.foodId]?.source ?? "CSDL"}</td><td className="px-2 py-2 text-right">{row.wastePercent === null ? "—" : `${row.wastePercent}%`}</td><td className="px-2 py-2 text-right tabular-nums">{row.nutrients.energyKcal ?? "—"}</td>{fields.map((field) => <td key={field.key} className="px-2 py-2 text-right tabular-nums">{reportValues[row.foodId]?.values[field.key] ?? row.nutrients[field.key] ?? "—"}</td>)}</tr>)}</tbody></table></div>
       </details>
+      </>}
     </section>
   );
 }
