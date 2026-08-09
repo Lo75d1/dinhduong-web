@@ -480,6 +480,7 @@ function DayCard({
       {/* Panel sổ ra cho riêng bữa được chọn */}
       {expandedMeal && meals.some((m) => m.meal === expandedMeal) && (
         <MealPanel
+          key={expandedMeal}
           dayId={day.id}
           meal={meals.find((m) => m.meal === expandedMeal)!}
           onRename={(newName) => onRenameMeal(expandedMeal, newName)}
@@ -545,114 +546,119 @@ function MealPanel({
   onAddFood: (dish: string, food: MenuFoodResult) => void;
   onAddRecipe: (dishName: string, ingredients: MenuDishIngredient[]) => void;
 }) {
-  const [openDish, setOpenDish] = useState<string | null>(null);
+  const [selectedDish, setSelectedDish] = useState<string | null>(meal.dishes[0]?.dish ?? null);
+  const selected = meal.dishes.find((d) => d.dish === selectedDish) ?? null;
   function addEmptyDishPrompt() {
     const name = window.prompt("Tên món mới", `Món ${meal.dishes.length + 1}`)?.trim();
-    if (name) { onAddDish(name); setOpenDish(name); }
+    if (name) { onAddDish(name); setSelectedDish(name); }
   }
   return (
-    <div className="menu-drop border-t px-3 py-3" style={{ borderColor: ACCENT, background: "#F4F9FE" }}>
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <EditableText value={meal.meal} onCommit={onRename} className="rounded border bg-white px-1.5 py-0.5 text-sm font-semibold" style={{ color: INK, borderColor: "#B5D4F4" }} />
-        <span className="text-xs" style={{ color: "#7d8ea3" }}>đang mở riêng bữa này · {Math.round(mealNodeKcal(meal))} kcal</span>
+    <div className="menu-drop border-t-2 px-3 py-3" style={{ borderColor: ACCENT, background: "#EAF3FE" }}>
+      {/* Đầu bữa */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <EditableText value={meal.meal} onCommit={onRename} className="rounded border bg-white px-2 py-1 text-base font-semibold" style={{ color: INK, borderColor: "#B5D4F4" }} />
+        <span className="text-sm" style={{ color: "#5a708c" }}>đang mở bữa này · {Math.round(mealNodeKcal(meal))} kcal</span>
         <div className="ml-auto flex items-center gap-1" style={{ color: ACCENT }}>
-          <button type="button" onClick={onDuplicate} title="Nhân đôi bữa" className="rounded px-1.5 py-0.5 text-xs font-semibold hover:bg-white">⧉ Nhân đôi</button>
-          <button type="button" onClick={onDelete} title="Xóa bữa" className="rounded px-1.5 py-0.5 text-xs font-semibold hover:bg-white" style={{ color: "#8a2323" }}>✕ Xóa bữa</button>
+          <button type="button" onClick={onDuplicate} title="Nhân đôi bữa" className="rounded px-2 py-1 text-sm font-semibold hover:bg-white">⧉ Nhân đôi</button>
+          <button type="button" onClick={onDelete} title="Xóa bữa" className="rounded px-2 py-1 text-sm font-semibold hover:bg-white" style={{ color: "#8a2323" }}>✕ Xóa bữa</button>
         </div>
       </div>
 
-      {/* Thêm MÓN vào bữa — ngữ cảnh mức bữa (ô tìm chọn món) */}
-      <div className="mb-2 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold" style={{ color: INK }}>Thêm món vào bữa</span>
-          <button type="button" onClick={addEmptyDishPrompt} className="rounded border px-1.5 py-0.5 text-xs font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>＋ Món trống</button>
+      {/* 2-pane: trái = bữa + các món · phải = chi tiết món + nhập thực phẩm */}
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+        {/* TRÁI */}
+        <div className="flex flex-col gap-2 rounded-lg border bg-white p-2.5" style={{ borderColor: "#D7E6F5" }}>
+          <div className="text-sm font-semibold" style={{ color: INK }}>Món trong bữa</div>
+          {meal.dishes.length === 0 ? (
+            <p className="text-sm" style={{ color: "#7d8ea3" }}>Chưa có món — thêm ở dưới.</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {meal.dishes.map((dish) => (
+                <DishRow key={dish.dish} dayId={dayId} meal={meal.meal} dish={dish} active={selectedDish === dish.dish} onSelect={() => setSelectedDish(dish.dish)} />
+              ))}
+            </div>
+          )}
+          <div className="mt-1 flex flex-col gap-1.5 border-t pt-2" style={{ borderColor: "#eef3f9" }}>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold" style={{ color: INK }}>Thêm món</span>
+              <button type="button" onClick={addEmptyDishPrompt} className="rounded border px-2 py-1 text-sm font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>＋ Món trống</button>
+            </div>
+            <MenuFoodSearch kind="dish" onPickDish={(dish) => { onAddRecipe(dish.name, dish.ingredients); setSelectedDish(dish.name); }} />
+          </div>
         </div>
-        <MenuFoodSearch kind="dish" onPickDish={(dish) => onAddRecipe(dish.name, dish.ingredients)} />
-      </div>
 
-      {meal.dishes.length === 0 ? (
-        <p className="text-xs" style={{ color: "#7d8ea3" }}>Bữa này chưa có món — thêm bằng ô trên.</p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {meal.dishes.map((dish) => (
-            <DishBlock
-              key={dish.dish}
-              dayId={dayId}
-              meal={meal.meal}
-              dish={dish}
-              open={openDish === dish.dish}
-              onToggle={() => setOpenDish(openDish === dish.dish ? null : dish.dish)}
-              onUpdateGrams={onUpdateGrams}
-              onDeleteRow={onDeleteRow}
-              onAddFood={onAddFood}
-            />
-          ))}
+        {/* PHẢI — tự nhảy sang chi tiết + nhập thực phẩm (remount theo món để có hoạt ảnh) */}
+        <div className="rounded-lg border-2 bg-white p-2.5" style={{ borderColor: ACCENT }}>
+          {!selected ? (
+            <p className="text-sm" style={{ color: "#7d8ea3" }}>Chọn một món bên trái để xem thành phần và thêm thực phẩm.</p>
+          ) : (
+            <DishEditor key={selected.dish} dish={selected} onUpdateGrams={onUpdateGrams} onDeleteRow={onDeleteRow} onAddFood={onAddFood} />
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
-// Khối MÓN: có tay nắm kéo (kéo sang ngày khác) + bấm để mở "cửa sổ TP" chỉnh sửa.
-function DishBlock({
-  dayId,
-  meal,
-  dish,
-  open,
-  onToggle,
-  onUpdateGrams,
-  onDeleteRow,
-  onAddFood,
-}: {
+// Món ở cột trái: tay nắm kéo (sang ngày khác) + bấm để chọn xem chi tiết bên phải.
+function DishRow({ dayId, meal, dish, active, onSelect }: {
   dayId: string;
   meal: string;
   dish: ReturnType<typeof dayMealsOrdered>[number]["dishes"][number];
-  open: boolean;
-  onToggle: () => void;
-  onUpdateGrams: (uid: string, grams: number) => void;
-  onDeleteRow: (uid: string) => void;
-  onAddFood: (dish: string, food: MenuFoodResult) => void;
+  active: boolean;
+  onSelect: () => void;
 }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({ id: `dish::${dayId}::${meal}::${dish.dish}` });
   const dKcal = Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0));
   return (
-    <div ref={setNodeRef} className="rounded-lg border bg-white" style={{ borderColor: open ? ACCENT : "#e0e9f4", opacity: isDragging ? 0.4 : 1 }}>
-      <div className="flex items-center gap-1 pl-1">
-        <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo món ${dish.dish} sang ngày khác`} title="Giữ và kéo món sang ngày khác" className="cursor-grab touch-none select-none px-1 py-1.5 text-lg active:cursor-grabbing" style={{ color: ACCENT }}>⠿</button>
-        <button type="button" onClick={onToggle} className="flex min-w-0 flex-1 items-center justify-between gap-2 py-1.5 pr-2 text-left">
-          <span className="min-w-0 truncate text-sm font-semibold" style={{ color: INK }}>🍽️ {dish.dish} <span className="text-xs" style={{ color: ACCENT }}>{open ? "▾ cửa sổ TP" : "▸"}</span></span>
-          <span className="shrink-0 text-xs" style={{ color: "#7d8ea3" }}>{dish.rows.length} TP · {dKcal} kcal</span>
-        </button>
+    <div ref={setNodeRef} className="flex items-center gap-1 rounded-lg border transition-colors" style={{ borderColor: active ? ACCENT : "#e0e9f4", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff", opacity: isDragging ? 0.4 : 1 }}>
+      <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo món ${dish.dish} sang ngày khác`} title="Giữ và kéo món sang ngày khác" className="cursor-grab touch-none select-none px-1.5 py-2 text-lg active:cursor-grabbing" style={{ color: ACCENT }}>⠿</button>
+      <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center justify-between gap-2 py-2 pr-2 text-left">
+        <span className="min-w-0 truncate text-sm font-semibold" style={{ color: INK }}>🍽️ {dish.dish}</span>
+        <span className="shrink-0 text-xs" style={{ color: active ? ACCENT : "#7d8ea3" }}>{dish.rows.length} TP · {dKcal} kcal {active ? "▸" : ""}</span>
+      </button>
+    </div>
+  );
+}
+
+// Cột phải: chi tiết món — bảng thực phẩm + ô tìm thực phẩm (ghim đáy).
+function DishEditor({ dish, onUpdateGrams, onDeleteRow, onAddFood }: {
+  dish: ReturnType<typeof dayMealsOrdered>[number]["dishes"][number];
+  onUpdateGrams: (uid: string, grams: number) => void;
+  onDeleteRow: (uid: string) => void;
+  onAddFood: (dish: string, food: MenuFoodResult) => void;
+}) {
+  return (
+    <div className="menu-day-enter flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-base font-semibold" style={{ color: INK }}>🍽️ {dish.dish}</span>
+        <span className="text-xs" style={{ color: "#7d8ea3" }}>{dish.rows.length} thực phẩm · {Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0))} kcal</span>
       </div>
-      {open && (
-        <div className="border-t px-2 py-2" style={{ borderColor: "#eef3f9" }}>
-          {dish.rows.length === 0 ? (
-            <p className="pb-2 pl-1 text-xs" style={{ color: "#7d8ea3" }}>Món trống — tìm thực phẩm bên dưới để thêm.</p>
-          ) : (
-            <table className="mb-2 w-full text-sm">
-              <thead>
-                <tr style={{ color: "#7d8ea3" }}>
-                  <th className="py-0.5 text-left font-medium">Thực phẩm</th>
-                  <th className="py-0.5 text-right font-medium">Sống sạch (g)</th>
-                  <th className="py-0.5 text-right font-medium">kcal</th>
-                  <th className="py-0.5" />
-                </tr>
-              </thead>
-              <tbody>
-                {dish.rows.map((row) => (
-                  <tr key={row.uid} className="border-t" style={{ borderColor: "#eef3f9" }}>
-                    <td className="py-1 pr-2">{row.foodName || "(chưa đặt tên)"}</td>
-                    <td className="py-1 text-right"><GramInput value={row.inputGrams} onCommit={(g) => onUpdateGrams(row.uid, g)} /></td>
-                    <td className="py-1 text-right tabular-nums" style={{ color: "#5a708c" }}>{Math.round(rowKcal(row))}</td>
-                    <td className="py-1 pl-1 text-right"><button type="button" onClick={() => onDeleteRow(row.uid)} title="Xóa" className="rounded px-1 text-xs" style={{ color: "#8a2323" }}>✕</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <MenuFoodSearch kind="food" onPickFood={(food) => onAddFood(dish.dish, food)} />
-        </div>
+      {dish.rows.length === 0 ? (
+        <p className="text-sm" style={{ color: "#7d8ea3" }}>Món trống — tìm thực phẩm bên dưới để thêm.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr style={{ color: "#7d8ea3" }}>
+              <th className="py-0.5 text-left font-medium">Thực phẩm</th>
+              <th className="py-0.5 text-right font-medium">Sống sạch (g)</th>
+              <th className="py-0.5 text-right font-medium">kcal</th>
+              <th className="py-0.5" />
+            </tr>
+          </thead>
+          <tbody>
+            {dish.rows.map((row) => (
+              <tr key={row.uid} className="border-t" style={{ borderColor: "#eef3f9" }}>
+                <td className="py-1 pr-2">{row.foodName || "(chưa đặt tên)"}</td>
+                <td className="py-1 text-right"><GramInput value={row.inputGrams} onCommit={(g) => onUpdateGrams(row.uid, g)} /></td>
+                <td className="py-1 text-right tabular-nums" style={{ color: "#5a708c" }}>{Math.round(rowKcal(row))}</td>
+                <td className="py-1 pl-1 text-right"><button type="button" onClick={() => onDeleteRow(row.uid)} title="Xóa" className="rounded px-1 text-xs" style={{ color: "#8a2323" }}>✕</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
+      <MenuFoodSearch kind="food" onPickFood={(food) => onAddFood(dish.dish, food)} />
     </div>
   );
 }
