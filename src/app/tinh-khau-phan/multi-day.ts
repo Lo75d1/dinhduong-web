@@ -96,6 +96,25 @@ export function duplicateMealInRows(rows: Row[], meal: string): Row[] {
   return [...rows, ...copies];
 }
 
+// Xóa một món (mọi dòng của meal+dish) trong ngày.
+export function deleteDishInRows(rows: Row[], meal: string, dish: string): Row[] {
+  return rows.filter((r) => !(r.meal === meal && r.dish === dish));
+}
+
+// Nhân đôi một món trong bữa: sao chép mọi dòng sang tên món mới (cấp uid mới).
+export function duplicateDishInRows(rows: Row[], meal: string, dish: string): Row[] {
+  const dishRows = rows.filter((r) => r.meal === meal && r.dish === dish);
+  if (!dishRows.length) return rows;
+  const existing = new Set(rows.filter((r) => r.meal === meal).map((r) => r.dish));
+  let name = `${dish} (bản sao)`;
+  let n = 2;
+  while (existing.has(name)) name = `${dish} (bản sao ${n++})`;
+  const copies = dishRows.map((r) => ({ ...r, uid: genId(), dish: name }));
+  let lastIndex = -1;
+  for (let i = rows.length - 1; i >= 0; i--) if (rows[i].meal === meal && rows[i].dish === dish) { lastIndex = i; break; }
+  return lastIndex < 0 ? [...rows, ...copies] : [...rows.slice(0, lastIndex + 1), ...copies, ...rows.slice(lastIndex + 1)];
+}
+
 // ---- Tính kcal / dinh dưỡng ----
 
 export function rowKcal(row: Row): number {

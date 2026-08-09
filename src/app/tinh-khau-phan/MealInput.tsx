@@ -19,6 +19,7 @@ import {
   type RationMode,
   type Row,
   buildTree,
+  genId,
   loadRationMode,
   loadRows,
   makeRow,
@@ -309,6 +310,23 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
     if (!window.confirm(`Xóa món "${dish}" và toàn bộ thực phẩm trong đó?`)) return;
     setRows((previous) => previous.filter((row) => !(row.meal === meal && row.dish === dish)));
     setWork((current) => (current?.meal === meal && current.dish === dish ? null : current));
+  }
+
+  function duplicateDish(meal: string, dish: string) {
+    setRows((previous) => {
+      const dishRows = previous.filter((row) => row.meal === meal && row.dish === dish);
+      if (!dishRows.length) return previous;
+      const existing = new Set(previous.filter((row) => row.meal === meal).map((row) => row.dish));
+      let name = `${dish} (bản sao)`;
+      let n = 2;
+      while (existing.has(name)) name = `${dish} (bản sao ${n++})`;
+      const copies = dishRows.map((row) => ({ ...row, uid: genId(), dish: name }));
+      let lastIndex = -1;
+      for (let i = previous.length - 1; i >= 0; i--) if (previous[i].meal === meal && previous[i].dish === dish) { lastIndex = i; break; }
+      const next = lastIndex < 0 ? [...previous, ...copies] : [...previous.slice(0, lastIndex + 1), ...copies, ...previous.slice(lastIndex + 1)];
+      window.setTimeout(() => setWork({ meal, dish: name }), 0);
+      return next;
+    });
   }
 
   function deleteFoodRow(uid: string) {
@@ -602,7 +620,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
             <div className="flex flex-col gap-3">
               <p className="text-sm text-neutral-600">🍱 <b className="text-[#0c5f4d]">{selMealNode.meal}</b> › 🍽️ <b className="text-[#123c36]">{selDishNode.dish}</b></p>
               <div className="overflow-hidden rounded-lg border border-[#7f948d] bg-white shadow-sm">
-                <DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />
+                <DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDuplicate={() => duplicateDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />
               </div>
               {medRows.some((med) => med.meal === selMealNode.meal) && <p className="text-xs text-neutral-500">💊 Thuốc / TPBS của bữa <b>{selMealNode.meal}</b> hiển thị ở cây bên trái (mức bữa).</p>}
             </div>
@@ -766,8 +784,8 @@ function EditableTitle({ value, onCommit, className, placeholder }: { value: str
   return <input value={text} placeholder={placeholder} onChange={(event) => setText(event.target.value)} onBlur={() => { if (text.trim()) onCommit(text.trim()); else setText(value); }} className={className} />;
 }
 
-function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
-  node: MealNode; canMoveUp: boolean; canMoveDown: boolean; onMoveUp: () => void; onMoveDown: () => void; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onUpdateMedication: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDeleteMedication: (uid: string) => void;
+function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDuplicateDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
+  node: MealNode; canMoveUp: boolean; canMoveDown: boolean; onMoveUp: () => void; onMoveDown: () => void; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDuplicateDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onUpdateMedication: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDeleteMedication: (uid: string) => void;
 }) {
   const beforeMeal = medications.filter((med) => med.timing === "before");
   const afterMeal = medications.filter((med) => med.timing === "after");
@@ -780,7 +798,7 @@ function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, w
       <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto"><button onClick={onMoveUp} disabled={!canMoveUp} title="Chuyển bữa lên" aria-label="Chuyển bữa lên" className="rounded-md px-2 py-1.5 text-sm font-semibold text-white hover:bg-[#0a4c3d] disabled:opacity-30 disabled:hover:bg-transparent">↑</button><button onClick={onMoveDown} disabled={!canMoveDown} title="Chuyển bữa xuống" aria-label="Chuyển bữa xuống" className="rounded-md px-2 py-1.5 text-sm font-semibold text-white hover:bg-[#0a4c3d] disabled:opacity-30 disabled:hover:bg-transparent">↓</button><button onClick={onAddMedication} className="rounded-md border border-violet-200 bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">💊 Thuốc</button><button onClick={onAddDish} className="rounded-md border border-[#d5ebaf] bg-[#15745e] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#1a846c]">＋ Món</button><button onClick={onDeleteMeal} className="rounded-md px-2 py-1.5 text-sm text-white hover:bg-[#0a4c3d]" title="Xóa bữa">✕</button></div>
     </div>
     <MedicationInMeal title="💊 Thuốc / TPBS dùng trước bữa" medications={beforeMeal} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} />
-    {node.dishes.length === 0 ? <div className="px-4 py-4 text-sm text-neutral-900">Chưa có món. Bấm “＋ Món” để bắt đầu nhập.</div> : <div className="divide-y-2 divide-[#8ba39b]">{node.dishes.map((dish) => <DishBlock key={dish.dish} node={dish} mode={mode} isWork={work?.meal === node.meal && work.dish === dish.dish} onSelect={() => onSelectDish(dish.dish)} onRename={(name) => onRenameDish(dish.dish, name)} onDelete={() => onDeleteDish(dish.dish)} onDeleteFoodRow={onDeleteFoodRow} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</div>}
+    {node.dishes.length === 0 ? <div className="px-4 py-4 text-sm text-neutral-900">Chưa có món. Bấm “＋ Món” để bắt đầu nhập.</div> : <div className="divide-y-2 divide-[#8ba39b]">{node.dishes.map((dish) => <DishBlock key={dish.dish} node={dish} mode={mode} isWork={work?.meal === node.meal && work.dish === dish.dish} onSelect={() => onSelectDish(dish.dish)} onRename={(name) => onRenameDish(dish.dish, name)} onDelete={() => onDeleteDish(dish.dish)} onDuplicate={() => onDuplicateDish(dish.dish)} onDeleteFoodRow={onDeleteFoodRow} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</div>}
     <MedicationInMeal title="💊 Thuốc / TPBS dùng sau bữa" medications={afterMeal} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} />
     <MedicationInMeal title="💊 Mốc thuốc / TPBS riêng — không kèm bữa" medications={standalone} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} standalone />
     <MedicationInMeal title="💊 Thuốc / TPBS cần xác định vị trí" medications={unspecified} onUpdate={onUpdateMedication} onDelete={onDeleteMedication} warning />
@@ -953,8 +971,8 @@ function DishTotalInput({ total, onScale }: { total: number; onScale: (t: number
   return <input type="number" min={0} value={text} aria-label="Tổng khối lượng món (sống sạch) — sửa để chia lại các nguyên liệu theo tỉ lệ" onFocus={() => setFocused(true)} onChange={(e) => setText(e.target.value)} onBlur={() => { setFocused(false); const v = Number(String(text).replace(",", ".")); if (Number.isFinite(v) && v > 0) onScale(v); }} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} className="w-16 rounded border border-[#0c5f4d] bg-white px-1 py-0.5 text-right text-xs font-bold tabular-nums text-[#0c5f4d] focus:outline-none focus:ring-2 focus:ring-[#123c36]" />;
 }
 
-function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteFoodRow, onUpdateQuantity, onUpdateNote }: {
-  node: DishNode; mode: RationMode; isWork: boolean; onSelect: () => void; onRename: (name: string) => void; onDelete: () => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void;
+function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDuplicate, onDeleteFoodRow, onUpdateQuantity, onUpdateNote }: {
+  node: DishNode; mode: RationMode; isWork: boolean; onSelect: () => void; onRename: (name: string) => void; onDelete: () => void; onDuplicate: () => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void;
 }) {
   const [open, setOpen] = useState(isWork);
   const [flash, setFlash] = useState(false);
@@ -973,6 +991,7 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDeleteF
       <span className="shrink-0 text-base" aria-hidden="true">🍽️</span>
       <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 flex-1 rounded border border-[#8ba39b] bg-white px-2 py-0.5 text-sm font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
       {node.rows.length > 0 && <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-[#0c5f4d] sm:flex" title="Tổng khối lượng món (sống sạch) — sửa số này để tự chia lại các nguyên liệu theo tỉ lệ"><span aria-hidden="true">∑ món</span><DishTotalInput total={dishTotal} onScale={scaleDishRows} /><span aria-hidden="true">g</span></span>}
+      <button type="button" onClick={onDuplicate} className="shrink-0 rounded px-2 py-1 text-sm text-[#0c5f4d] hover:bg-white/70" title="Nhân đôi món">⧉</button>
       <button onClick={onDelete} className="shrink-0 rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>
     </div>
     {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía dưới.</div> : open ? <div className={`overflow-x-auto transition-colors duration-500 ${flash ? "bg-amber-100" : "bg-transparent"}`}><table className="w-full min-w-[560px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]"><colgroup><col className="w-[44%]"/><col className="w-[13%]"/><col className="w-[12%]"/><col className="w-[12%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-2 py-1 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-1 py-1 text-right font-semibold">Đã ăn</th><th className="px-1 py-1 text-right font-semibold">Hệ số</th><th className="px-1 py-1 text-right font-semibold">Sống sạch</th></> : <><th className="px-1 py-1 text-right font-semibold">Sống sạch</th><th className="px-1 py-1 text-right font-semibold">Mua/kho</th><th className="px-1 py-1 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-1 font-semibold">Ghi chú</th><th className="px-1 py-1" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div> : <button type="button" onClick={() => { setOpen(true); onSelect(); }} className="w-full border-t border-[#8ba39b] px-4 py-2.5 text-left text-sm font-medium text-[#123c36] hover:bg-[#f0f6f2]">🍽️ {node.rows.length} thực phẩm — bấm để mở</button>}

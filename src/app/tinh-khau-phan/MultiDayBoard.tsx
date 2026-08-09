@@ -39,7 +39,9 @@ import {
   addFoodToDish,
   dayKcal,
   dayMealsOrdered,
+  deleteDishInRows,
   duplicateDay,
+  duplicateDishInRows,
   duplicateMealInRows,
   loadMenuDays,
   makeEmptyDay,
@@ -261,6 +263,15 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
     patchDayRows(dayId, (rows) => addEmptyDish(rows, meal, name.trim()));
   }
 
+  function deleteDishMenu(dayId: string, meal: string, dish: string) {
+    if (!window.confirm(`Xóa món "${dish}" khỏi bữa này?`)) return;
+    patchDayRows(dayId, (rows) => deleteDishInRows(rows, meal, dish));
+  }
+
+  function duplicateDishMenu(dayId: string, meal: string, dish: string) {
+    patchDayRows(dayId, (rows) => duplicateDishInRows(rows, meal, dish));
+  }
+
   function addFood(dayId: string, meal: string, dish: string, food: MenuFoodResult) {
     patchDayRows(dayId, (rows) => addFoodToDish(rows, meal, dish, food, "menu"));
   }
@@ -339,6 +350,8 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
                   onAddDish={(meal, name) => addDishToMeal(day.id, meal, name)}
                   onAddFood={(meal, dish, food) => addFood(day.id, meal, dish, food)}
                   onAddRecipe={(meal, dishName, ingredients) => addRecipe(day.id, meal, dishName, ingredients)}
+                  onDeleteDish={(meal, dish) => deleteDishMenu(day.id, meal, dish)}
+                  onDuplicateDish={(meal, dish) => duplicateDishMenu(day.id, meal, dish)}
                 />
               ))}
             </div>
@@ -396,6 +409,8 @@ type DayCardProps = {
   onAddDish: (meal: string, name: string) => void;
   onAddFood: (meal: string, dish: string, food: MenuFoodResult) => void;
   onAddRecipe: (meal: string, dishName: string, ingredients: MenuDishIngredient[]) => void;
+  onDeleteDish: (meal: string, dish: string) => void;
+  onDuplicateDish: (meal: string, dish: string) => void;
 };
 
 function SortableDayCard(props: DayCardProps) {
@@ -430,6 +445,8 @@ function DayCard({
   onAddDish,
   onAddFood,
   onAddRecipe,
+  onDeleteDish,
+  onDuplicateDish,
 }: DayCardProps) {
   const meals = dayMealsOrdered(day);
   const kcal = dayKcal(day);
@@ -509,6 +526,8 @@ function DayCard({
           onAddDish={(name) => onAddDish(expandedMeal, name)}
           onAddFood={(dish, food) => onAddFood(expandedMeal, dish, food)}
           onAddRecipe={(dishName, ingredients) => onAddRecipe(expandedMeal, dishName, ingredients)}
+          onDeleteDish={(dish) => onDeleteDish(expandedMeal, dish)}
+          onDuplicateDish={(dish) => onDuplicateDish(expandedMeal, dish)}
         />
       )}
     </div>
@@ -552,6 +571,8 @@ function MealPanel({
   onAddDish,
   onAddFood,
   onAddRecipe,
+  onDeleteDish,
+  onDuplicateDish,
 }: {
   dayId: string;
   meal: ReturnType<typeof dayMealsOrdered>[number];
@@ -563,6 +584,8 @@ function MealPanel({
   onAddDish: (name: string) => void;
   onAddFood: (dish: string, food: MenuFoodResult) => void;
   onAddRecipe: (dishName: string, ingredients: MenuDishIngredient[]) => void;
+  onDeleteDish: (dish: string) => void;
+  onDuplicateDish: (dish: string) => void;
 }) {
   const [selectedDish, setSelectedDish] = useState<string | null>(meal.dishes[0]?.dish ?? null);
   const selected = meal.dishes.find((d) => d.dish === selectedDish) ?? null;
@@ -592,7 +615,7 @@ function MealPanel({
           ) : (
             <div className="flex flex-col gap-1.5">
               {meal.dishes.map((dish) => (
-                <DishRow key={dish.dish} dayId={dayId} meal={meal.meal} dish={dish} active={selectedDish === dish.dish} onSelect={() => setSelectedDish(dish.dish)} />
+                <DishRow key={dish.dish} dayId={dayId} meal={meal.meal} dish={dish} active={selectedDish === dish.dish} onSelect={() => setSelectedDish(dish.dish)} onDelete={() => { onDeleteDish(dish.dish); if (selectedDish === dish.dish) setSelectedDish(null); }} onDuplicate={() => onDuplicateDish(dish.dish)} />
               ))}
             </div>
           )}
@@ -619,22 +642,26 @@ function MealPanel({
 }
 
 // Món ở cột trái: tay nắm kéo (sang ngày khác) + bấm để chọn xem chi tiết bên phải.
-function DishRow({ dayId, meal, dish, active, onSelect }: {
+function DishRow({ dayId, meal, dish, active, onSelect, onDelete, onDuplicate }: {
   dayId: string;
   meal: string;
   dish: ReturnType<typeof dayMealsOrdered>[number]["dishes"][number];
   active: boolean;
   onSelect: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
 }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({ id: `dish::${dayId}::${meal}::${dish.dish}` });
   const dKcal = Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0));
   return (
     <div ref={setNodeRef} className="flex items-center gap-1 rounded-lg border transition-colors" style={{ borderColor: active ? ACCENT : "#e0e9f4", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff", opacity: isDragging ? 0.4 : 1 }}>
       <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo món ${dish.dish} sang ngày khác`} title="Giữ và kéo món sang ngày khác" className="cursor-grab touch-none select-none px-1.5 py-2 text-lg active:cursor-grabbing" style={{ color: ACCENT }}>⠿</button>
-      <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center justify-between gap-2 py-2 pr-2 text-left">
+      <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center justify-between gap-2 py-2 text-left">
         <span className="min-w-0 truncate text-sm font-semibold" style={{ color: INK }}>🍽️ {dish.dish}</span>
         <span className="shrink-0 text-xs" style={{ color: active ? ACCENT : "#7d8ea3" }}>{dish.rows.length} TP · {dKcal} kcal {active ? "▸" : ""}</span>
       </button>
+      <button type="button" onClick={onDuplicate} title="Nhân đôi món" className="shrink-0 rounded px-1.5 py-2 text-sm hover:bg-white" style={{ color: ACCENT }}>⧉</button>
+      <button type="button" onClick={onDelete} title="Xóa món" className="shrink-0 rounded px-1.5 py-2 text-sm hover:bg-white" style={{ color: "#8a2323" }}>✕</button>
     </div>
   );
 }
