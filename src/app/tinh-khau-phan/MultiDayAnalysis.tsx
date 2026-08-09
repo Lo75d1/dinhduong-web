@@ -229,18 +229,31 @@ export default function MultiDayAnalysis({
       </AnalysisSection>
 
       <AnalysisSection eyebrow="03 · BỮA ĂN" title="Phân bổ năng lượng và P/L/G theo bữa" note="Tổng bữa được cộng trên toàn bộ ngày có dữ liệu; một bữa có thể chứa vài chục món mà không giới hạn dòng.">
-        <details className="mb-3 rounded-lg border border-[#B5D4F4] bg-[#F4F9FE]" open={!sharesValid}>
-          <summary className="cursor-pointer px-3 py-2 text-sm font-bold text-[#0C447C]">⚙ Mục tiêu năng lượng từng bữa {sharesValid ? `(đủ ${round(shareTotal)}%)` : `(hiện ${round(shareTotal)}%)`}</summary>
-          <div className="border-t border-[#D7E6F5] p-3">
-            <p className="text-xs text-neutral-700">Chỉ đánh giá thiếu/đạt/vượt theo bữa khi tổng tỷ lệ do người dùng đặt bằng 100%.</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {mealNames.map((meal) => <label key={meal} className="flex items-center gap-1 rounded border border-[#B5D4F4] bg-white px-2 py-1 text-xs"><span className="max-w-40 truncate">{meal}</span><input aria-label={`Tỷ lệ mục tiêu ${meal}`} inputMode="decimal" value={shareText[meal] ?? ""} onChange={(event) => setShareText((current) => ({ ...current, [meal]: event.target.value }))} className="w-14 rounded border border-neutral-300 px-1 py-0.5 text-right" /><span>%</span></label>)}
-              <button type="button" onClick={splitEvenly} className="rounded border border-[#185FA5] px-2 py-1 text-xs font-bold text-[#0C447C]">Chia đều</button>
-              <button type="button" onClick={() => setShareText({})} className="rounded border border-neutral-300 px-2 py-1 text-xs text-neutral-600">Xóa tỷ lệ</button>
-            </div>
-            {!sharesValid && <p className="mt-2 text-xs font-bold text-amber-700">Tổng phải bằng 100%. Hiện tại: {round(shareTotal)}%.</p>}
+        <div className="mb-3 rounded-lg border-2 border-[#185FA5] bg-[#F4F9FE] p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h4 className="text-base font-bold text-[#0C447C]">⚙ Mục tiêu năng lượng từng bữa</h4>
+            <span className={`text-sm font-bold ${sharesValid ? "text-emerald-700" : "text-amber-700"}`}>Tổng: {round(shareTotal)}% {sharesValid ? "✓ đủ 100%" : "· cần = 100%"}</span>
           </div>
-        </details>
+          <p className="mt-1 text-xs text-neutral-700">Nhập % cho từng bữa. Cột kcal bên phải = % × nhu cầu ngày ({analysis.target.value != null ? `${round(analysis.target.value)} kcal/ngày` : "chưa có RNI"}) — dùng cho bếp lên khẩu phần. Chỉ đánh giá thiếu/đạt/vượt theo bữa khi tổng = 100%.</p>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {mealNames.map((meal) => {
+              const pct = shares[meal] ?? 0;
+              const kcalTarget = analysis.target.value != null ? (pct / 100) * analysis.target.value : null;
+              return <div key={meal} className="rounded-lg border border-[#B5D4F4] bg-white p-2">
+                <div className="truncate text-sm font-semibold text-[#0C447C]">{meal}</div>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <input aria-label={`Tỷ lệ mục tiêu ${meal}`} inputMode="decimal" value={shareText[meal] ?? ""} onChange={(event) => setShareText((current) => ({ ...current, [meal]: event.target.value }))} className="w-16 rounded border border-neutral-400 px-2 py-1.5 text-right text-base font-bold" />
+                  <span className="text-sm font-semibold text-neutral-600">%</span>
+                  <span className="ml-auto text-sm font-bold text-[#185FA5]">{kcalTarget != null ? `${round(kcalTarget)} kcal` : "—"}</span>
+                </div>
+              </div>;
+            })}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" onClick={splitEvenly} className="rounded-md border-2 border-[#185FA5] px-3 py-1.5 text-sm font-bold text-[#0C447C]">Chia đều</button>
+            <button type="button" onClick={() => setShareText({})} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-600">Xóa tỷ lệ</button>
+          </div>
+        </div>
         <div className="overflow-x-auto rounded-lg border border-[#B5D4F4]">
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Bữa</th><th className="px-3 py-2 text-right">Ngày có bữa</th><th className="px-3 py-2 text-right">Tổng kcal</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">% toàn kỳ</th><th className="px-3 py-2 text-right">Mục tiêu</th><th className="px-3 py-2 text-right">Chênh lệch</th><th className="px-3 py-2 text-right">P (g)</th><th className="px-3 py-2 text-right">L (g)</th><th className="px-3 py-2 text-right">G (g)</th><th className="px-3 py-2 text-center">Đánh giá</th></tr></thead>
