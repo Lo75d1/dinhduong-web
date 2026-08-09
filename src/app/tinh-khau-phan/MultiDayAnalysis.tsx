@@ -7,9 +7,9 @@ import MultiDayDietCode from "./MultiDayDietCode";
 import RationDetail from "./RationDetail";
 import RecommendationComparison from "./RecommendationComparison";
 import ShoppingList from "./ShoppingList";
-import type { Profile } from "./PersonalProfile";
+import PersonalProfile, { type Profile } from "./PersonalProfile";
 import type { RecommendationRow } from "./matchRecommendation";
-import { dayKcal, dayMealsOrdered, type MenuDay } from "./multi-day";
+import { dayKcal, dayMealsOrdered, mealNodeKcal, type MenuDay } from "./multi-day";
 import {
   analyzeMenuPeriod,
   buildPeriodShoppingList,
@@ -192,14 +192,18 @@ export default function MultiDayAnalysis({
 
       <MacroPerKgRow macros={analysis.macros} profile={profile} kcalPerDay={analysis.averageEnergyKcal} />
 
-      {profile && (
-        <AnalysisSection eyebrow="HỒ SƠ · KHUYẾN NGHỊ" title="Đối chiếu nhu cầu — TRUNG BÌNH mỗi ngày" note="Cột “Thực tế” là TRUNG BÌNH MỖI NGÀY (tổng cả kỳ ÷ số ngày có thực phẩm), KHÔNG phải tổng cả kỳ — để so trực tiếp với nhu cầu 1 ngày theo tuổi/giới. P/L/G hiển thị theo %NL (% năng lượng khẩu phần) — cách chuẩn để đánh giá cân đối chất sinh năng lượng.">
-          <RecommendationComparison profile={profile} totals={avgTotals} />
-        </AnalysisSection>
-      )}
-
-      {/* Mã chế độ ăn bệnh lý — nằm ngay khu khuyến nghị (không đẩy xuống cuối) */}
-      <MultiDayDietCode days={days} />
+      {/* Mục Hồ sơ & Khuyến nghị — 2 cột như 1 ngày: trái hồ sơ + mã chế độ ăn, phải đối chiếu nhu cầu */}
+      <AnalysisSection eyebrow="HỒ SƠ · KHUYẾN NGHỊ" title="Hồ sơ, đối chiếu nhu cầu và mã chế độ ăn" note="“Thực tế” là TRUNG BÌNH MỖI NGÀY (tổng cả kỳ ÷ số ngày có thực phẩm), so trực tiếp với nhu cầu 1 ngày theo tuổi/giới. P/L/G theo %NL (% năng lượng).">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
+          <div className="flex flex-col gap-3 lg:sticky lg:top-2">
+            <ProfileCard profile={profile} />
+            <MultiDayDietCode days={days} />
+          </div>
+          <div className="mt-3 lg:mt-0">
+            {profile ? <RecommendationComparison profile={profile} totals={avgTotals} /> : <p className="rounded-lg border border-[#B5D4F4] bg-white p-3 text-sm text-neutral-600">Nhập hồ sơ (bên trái) để đối chiếu nhu cầu theo tuổi/giới.</p>}
+          </div>
+        </div>
+      </AnalysisSection>
 
       {(analysis.emptyDayCount > 0 || analysis.totalEnergy.incomplete) && <div className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
         <b>Độ đầy đủ:</b> {analysis.emptyDayCount ? `${analysis.emptyDayCount} ngày đang trống. ` : ""}{analysis.totalEnergy.incomplete ? "Có thực phẩm thiếu năng lượng nên tổng kỳ được giữ “—”." : "Các phép tính tổng chỉ dùng ngày có thực phẩm."}
@@ -211,6 +215,12 @@ export default function MultiDayAnalysis({
         </div>
       </AnalysisSection>
 
+      {/* Từ mục 1 đến đơn vị ăn: 2 cột — trái = thực đơn cố định, phải = các mục phân tích */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
+        <div className="lg:sticky lg:top-2">
+          <MealPlanOverview days={days} />
+        </div>
+        <div className="mt-3 flex min-w-0 flex-col gap-4 lg:mt-0">
       <AnalysisSection eyebrow="01 · NĂNG LƯỢNG" title="Tổng kỳ và biến động từng ngày" note="Ngưỡng đạt: 90–110% nhu cầu ngày. Chênh lệch dương là vượt, âm là thiếu.">
         <EnergyTimeline days={analysis.days} target={analysis.target.value} />
         <div className="mt-3 overflow-x-auto rounded-lg border border-[#B5D4F4]">
@@ -315,6 +325,8 @@ export default function MultiDayAnalysis({
           <ShoppingList rows={allRows} />
         </div>
       </AnalysisSection>
+        </div>
+      </div>
 
       <AnalysisSection defaultOpen={false} eyebrow="07 · CHI TIẾT TỪNG NGÀY" title="Chi tiết dinh dưỡng từng ngày — như báo cáo một ngày" note="Mỗi ngày là một bảng chi tiết ĐẦY ĐỦ: Bữa → Món → Thực phẩm, có ⚙ Chọn chất, tổng món/bữa/ngày và quy đổi đi chợ. Bấm để mở từng ngày.">
         <div className="flex flex-col gap-2">
@@ -368,6 +380,54 @@ function MacroPerKgRow({ macros, profile, kcalPerDay }: { macros: { key: string;
         })}
       </div>
       <p className="mt-2 text-[11px] text-[#7d8ea3]">Trung bình mỗi ngày trên cân nặng hồ sơ. Tham khảo: đạm ~1–1,5 g/kg (bệnh lý gan/thận… có ngưỡng riêng — đối chiếu chỉ định).</p>
+    </div>
+  );
+}
+
+// Thực đơn dạng khối (cố định bên trái khu phân tích): ngày → bữa → món, 2 khối/hàng.
+function MealPlanOverview({ days }: { days: MenuDay[] }) {
+  return (
+    <div className="rounded-lg border-2 border-[#B5D4F4] bg-[#F4F9FE] p-2">
+      <h4 className="mb-2 text-sm font-bold text-[#0C447C]">🗓️ Thực đơn ({days.length} ngày)</h4>
+      <div className="grid grid-cols-2 gap-2">
+        {days.map((day) => (
+          <div key={day.id} className="rounded-md border border-[#B5D4F4] bg-white p-2">
+            <div className="flex items-center justify-between gap-1">
+              <span className="min-w-0 truncate text-sm font-bold text-[#0C447C]">{day.label}</span>
+              <span className="shrink-0 text-xs font-bold text-[#185FA5]">{Math.round(dayKcal(day))}</span>
+            </div>
+            <div className="mt-1 flex flex-col gap-1">
+              {dayMealsOrdered(day).map((meal) => (
+                <div key={meal.meal}>
+                  <div className="truncate text-xs font-semibold text-[#0C447C]">{meal.meal} · {Math.round(mealNodeKcal(meal))}</div>
+                  <ul>{meal.dishes.map((dish) => <li key={dish.dish} className="truncate text-xs text-neutral-700">· {dish.dish}</li>)}</ul>
+                </div>
+              ))}
+              {dayMealsOrdered(day).length === 0 && <div className="text-xs text-neutral-400">— trống</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Thẻ hồ sơ (chip + nút nhập) — bên trái mục Khuyến nghị, như 1 ngày.
+function ProfileCard({ profile }: { profile: Profile | null }) {
+  const h = Number(profile?.height), w = Number(profile?.weight);
+  const bmi = h > 0 && w > 0 ? Math.round((w / (h / 100) ** 2) * 10) / 10 : null;
+  const chips: [string, string][] = profile
+    ? [["Giới", profile.gender], ["Tuổi", `${profile.age || "—"} ${profile.ageUnit === "thang" ? "tháng" : "tuổi"}`], ["Cao", profile.height ? `${profile.height} cm` : "—"], ["Nặng", profile.weight ? `${profile.weight} kg` : "—"], ["BMI", bmi != null ? String(bmi) : "—"]]
+    : [];
+  return (
+    <div className="rounded-lg border-2 border-[#B5D4F4] bg-white p-2">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <h4 className="text-sm font-bold text-[#0C447C]">Hồ sơ người dùng</h4>
+        <PersonalProfile onChange={() => { /* đồng bộ qua event khauphan:profile */ }} />
+      </div>
+      {profile ? (
+        <div className="flex flex-wrap gap-1.5">{chips.map(([l, v]) => <span key={l} className="inline-flex items-baseline gap-1 rounded border border-[#B5D4F4] bg-[#F4F9FE] px-2 py-0.5 text-xs"><span className="text-neutral-500">{l}:</span><span className="font-semibold text-[#0C447C]">{v}</span></span>)}</div>
+      ) : <p className="text-xs text-neutral-500">Chưa nhập hồ sơ — bấm nút để nhập tuổi/giới/cân nặng.</p>}
     </div>
   );
 }
