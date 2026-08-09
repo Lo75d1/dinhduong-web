@@ -156,6 +156,28 @@ export function reorderMealsInRows(rows: Row[], activeMeal: string, overMeal: st
   return nextOrder.flatMap((meal) => groups.get(meal) ?? []);
 }
 
+// Chuyển nguyên một MÓN (mọi dòng của meal+dish) từ ngày này sang ngày khác,
+// giữ nguyên tên bữa/món (gộp vào bữa cùng tên nếu ngày đích đã có). Giữ uid.
+export function moveDishToDay(
+  days: MenuDay[],
+  srcDayId: string,
+  meal: string,
+  dish: string,
+  dstDayId: string
+): MenuDay[] {
+  if (srcDayId === dstDayId) return days;
+  const src = days.find((d) => d.id === srcDayId);
+  const dst = days.find((d) => d.id === dstDayId);
+  if (!src || !dst) return days;
+  const moving = src.rows.filter((r) => r.meal === meal && r.dish === dish);
+  if (!moving.length) return days;
+  return days.map((d) => {
+    if (d.id === srcDayId) return { ...d, rows: d.rows.filter((r) => !(r.meal === meal && r.dish === dish)) };
+    if (d.id === dstDayId) return { ...d, rows: [...d.rows, ...moving.map((r) => ({ ...r }))] };
+    return d;
+  });
+}
+
 // ---- Thêm bữa / món / thực phẩm trực tiếp lên board (Phase 2) ----
 
 export const UNASSIGNED_DISH = "(Chưa phân món)";
