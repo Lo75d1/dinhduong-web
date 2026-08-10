@@ -6,22 +6,27 @@ import PublicFooter from "./PublicFooter";
 import VisitTracker from "./VisitTracker";
 import AccountMenu from "./AccountMenu";
 
-const siteTitle = "Dinh dưỡng 2598";
+const siteTitle = "Dinh dưỡng 2598 | Tra cứu & phân tích khẩu phần";
 const siteDescription =
-  "Tra cứu thực phẩm, món ăn và phân tích khẩu phần. Sáng kiến cải tiến tại Bệnh viện Đa khoa Nam Liên Chiểu · Sở Y tế thành phố Đà Nẵng.";
+  "Hệ thống hỗ trợ tra cứu dữ liệu dinh dưỡng, xây dựng và phân tích khẩu phần một ngày hoặc nhiều ngày, đối chiếu nhu cầu và chế độ ăn bệnh lý.";
 const siteUrl = "https://dinhduong2598.food";
-const coverImage = "/dinh-duong-2597-cover.jpg";
+const coverImage = "/dinh-duong-2598-og.png";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: siteTitle,
   description: siteDescription,
+  applicationName: "Dinh dưỡng 2598",
+  icons: {
+    icon: [{ url: "/icon.png", type: "image/png", sizes: "512x512" }],
+    apple: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
+  },
   openGraph: {
     title: siteTitle,
     description: siteDescription,
     url: siteUrl,
-    siteName: siteTitle,
-    images: [{ url: coverImage, width: 1200, height: 630, alt: siteTitle }],
+    siteName: "Dinh dưỡng 2598",
+    images: [{ url: coverImage, width: 1730, height: 909, alt: "Dinh dưỡng 2598 — Tra cứu và phân tích khẩu phần" }],
     locale: "vi_VN",
     type: "website",
   },
