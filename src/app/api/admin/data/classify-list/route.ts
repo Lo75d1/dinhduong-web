@@ -8,6 +8,9 @@ import { unauthorizedResponse } from "@/lib/auth";
 const select = {
   id: true, name: true, source: true, imageUrl: true, foodType: true, foodGroup: true,
   proteinOrigin: true, giLevel: true, purinLevel: true, cholesterolLevel: true,
+  sourceCode: true, unit: true, wastePercent: true, vddGroupRaw: true,
+  energyKcal: true, proteinG: true, lipidG: true, glucidG: true, fiberG: true,
+  sodiumMg: true, calciumMg: true, ironMg: true, purinMg: true, cholesterolMg: true,
 };
 
 export async function GET() {
