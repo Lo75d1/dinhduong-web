@@ -8,7 +8,7 @@ import AccountMenu from "./AccountMenu";
 
 const siteTitle = "Dinh dưỡng 2598 | Tra cứu & phân tích khẩu phần";
 const siteDescription =
-  "Hệ thống hỗ trợ tra cứu dữ liệu dinh dưỡng, xây dựng và phân tích khẩu phần một ngày hoặc nhiều ngày, đối chiếu nhu cầu và chế độ ăn bệnh lý.";
+  "Dữ liệu có nguồn từ Viện Dinh dưỡng, RNI, Bộ Y tế và WHO. Hỗ trợ tra cứu thực phẩm, xây dựng, phân tích khẩu phần và đối chiếu chế độ ăn bệnh lý.";
 const siteUrl = "https://dinhduong2598.food";
 const coverImage = "/dinh-duong-2598-og.png";
 
