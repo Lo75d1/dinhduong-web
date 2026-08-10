@@ -4,7 +4,7 @@
 // 1 trường phân loại rồi qua thẻ kế. Tái dùng API classify-list (đọc) và
 // bulk-classify (ghi, có nhật ký). Mobile-first để cài như app trên điện thoại.
 import { useEffect, useMemo, useState } from "react";
-import DiamondBreak from "./DiamondBreak";
+import ShiftEvent, { type StatImpact } from "./ShiftEvent";
 
 type FoodRow = {
   id: string; name: string; source: string; imageUrl: string | null;
@@ -104,21 +104,34 @@ function optStyle(field: FieldKey, value: string): { sw: Swatch; icon: string } 
   return { sw: SW[hashPick(norm)], icon: "🏷️" };
 }
 
-function loadGameStats(): { reviewed: number; score: number; round: number; keys: string[] } {
-  const empty = { reviewed: 0, score: 0, round: 1, keys: [] as string[] };
+type SurvivalStats = { focus: number; integrity: number; momentum: number; morale: number };
+type GameSave = { reviewed: number; round: number; keys: string[]; stats: SurvivalStats; shiftTurns: number; bestRun: number };
+const INITIAL_STATS: SurvivalStats = { focus: 72, integrity: 76, momentum: 58, morale: 70 };
+
+function loadGameStats(): GameSave {
+  const empty: GameSave = { reviewed: 0, round: 1, keys: [], stats: INITIAL_STATS, shiftTurns: 0, bestRun: 0 };
   if (typeof window === "undefined") return empty;
   try {
     const saved = JSON.parse(localStorage.getItem("phanloai_game_stats_v1") || "{}");
     return {
       reviewed: typeof saved.reviewed === "number" ? saved.reviewed : 0,
-      score: typeof saved.score === "number" ? saved.score : 0,
       round: typeof saved.round === "number" ? saved.round : 1,
       keys: Array.isArray(saved.keys) ? saved.keys.filter((value: unknown): value is string => typeof value === "string") : [],
+      stats: saved.stats && typeof saved.stats === "object" ? {
+        focus: numberOr(saved.stats.focus, INITIAL_STATS.focus), integrity: numberOr(saved.stats.integrity, INITIAL_STATS.integrity),
+        momentum: numberOr(saved.stats.momentum, INITIAL_STATS.momentum), morale: numberOr(saved.stats.morale, INITIAL_STATS.morale),
+      } : INITIAL_STATS,
+      shiftTurns: numberOr(saved.shiftTurns, 0),
+      bestRun: numberOr(saved.bestRun, 0),
     };
   } catch { return empty; }
 }
 
+function numberOr(value: unknown, fallback: number) { return typeof value === "number" ? value : fallback; }
+function clampStat(value: number) { return Math.max(0, Math.min(100, value)); }
+
 export default function RapidClassify() {
+  const [initialGame] = useState(loadGameStats);
   const [items, setItems] = useState<FoodRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -145,11 +158,15 @@ export default function RapidClassify() {
   const [installEvt, setInstallEvt] = useState<{ prompt: () => void; userChoice: Promise<unknown> } | null>(null);
   const [standalone, setStandalone] = useState(false);
   const [configOpen, setConfigOpen] = useState(true); // focus: đóng phần cài đặt sau khi bắt đầu
-  const [reviewed, setReviewed] = useState(() => loadGameStats().reviewed);
-  const [gameScore, setGameScore] = useState(() => loadGameStats().score);
-  const [gameOpen, setGameOpen] = useState(false);
-  const [gameRound, setGameRound] = useState(() => loadGameStats().round);
-  const [reviewedKeys, setReviewedKeys] = useState<string[]>(() => loadGameStats().keys);
+  const [reviewed, setReviewed] = useState(initialGame.reviewed);
+  const [eventOpen, setEventOpen] = useState(false);
+  const [eventRound, setEventRound] = useState(initialGame.round);
+  const [reviewedKeys, setReviewedKeys] = useState<string[]>(initialGame.keys);
+  const [stats, setStats] = useState<SurvivalStats>(initialGame.stats);
+  const [shiftTurns, setShiftTurns] = useState(initialGame.shiftTurns);
+  const [bestRun, setBestRun] = useState(initialGame.bestRun);
+  const [gameOver, setGameOver] = useState(Object.values(initialGame.stats).some((value) => value <= 0));
+  const [sourceOpen, setSourceOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -165,8 +182,8 @@ export default function RapidClassify() {
   }, []);
 
   useEffect(() => {
-    try { localStorage.setItem("phanloai_game_stats_v1", JSON.stringify({ reviewed, score: gameScore, round: gameRound, keys: reviewedKeys })); } catch { /* localStorage bị chặn */ }
-  }, [reviewed, gameScore, gameRound, reviewedKeys]);
+    try { localStorage.setItem("phanloai_game_stats_v1", JSON.stringify({ reviewed, round: eventRound, keys: reviewedKeys, stats, shiftTurns, bestRun })); } catch { /* localStorage bị chặn */ }
+  }, [reviewed, eventRound, reviewedKeys, stats, shiftTurns, bestRun]);
 
   // Bắt sự kiện cài PWA của Chrome/Android để hiện nút "Cài ứng dụng" ngay trên trang.
   useEffect(() => {
@@ -188,7 +205,23 @@ export default function RapidClassify() {
 
   function resetGameProgress() {
     if (!window.confirm("Xóa tiến độ chơi trên máy này? Dữ liệu trong CSDL không bị thay đổi.")) return;
-    setReviewed(0); setGameScore(0); setGameRound(1); setReviewedKeys([]);
+    setReviewed(0); setEventRound(1); setReviewedKeys([]); setStats(INITIAL_STATS); setShiftTurns(0); setBestRun(0); setGameOver(false);
+  }
+
+  function applyImpact(impact: StatImpact, countTurn = true) {
+    const next = { ...stats };
+    for (const key of Object.keys(impact) as (keyof SurvivalStats)[]) next[key] = clampStat(next[key] + (impact[key] ?? 0));
+    setStats(next);
+    if (countTurn) {
+      const turns = shiftTurns + 1;
+      setShiftTurns(turns);
+      setBestRun((best) => Math.max(best, turns));
+    }
+    if (Object.values(next).some((value) => value <= 0)) setGameOver(true);
+  }
+
+  function startNewShift() {
+    setStats(INITIAL_STATS); setShiftTurns(0); setGameOver(false); setEventOpen(false); setSourceOpen(false);
   }
 
   const byId = useMemo(() => new Map(items.map((it) => [it.id, it])), [items]);
@@ -257,7 +290,7 @@ export default function RapidClassify() {
     try {
       const res = await fetch("/api/admin/data/bulk-classify", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ids: [id], field, value, reason: `Phân loại nhanh (mobile): ${FIELD_LABEL[field]}` }),
+        body: JSON.stringify({ ids: [id], field, value, reason: `Ca trực 2598: ${FIELD_LABEL[field]}` }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setMessage(data.error ?? "Chưa lưu được."); setBusy(false); setPhase("idle"); setPending(null); return; }
@@ -267,13 +300,23 @@ export default function RapidClassify() {
       setPhase("saved");
       const nextReviewed = reviewed + 1;
       setReviewed(nextReviewed);
+      applyImpact(value === null
+        ? { focus: -3, integrity: -4, momentum: 1, morale: -2 }
+        : value === prev
+          ? { focus: -2, integrity: 2, momentum: 4, morale: 1 }
+          : { focus: -5, integrity: 5, momentum: 3, morale: 2 });
       setReviewedKeys((keys) => keys.includes(`${field}:${id}`) ? keys : [...keys, `${field}:${id}`]);
       // Giữ ✓ một nhịp để người dùng kịp thấy rồi mới trượt qua thẻ kế.
-      window.setTimeout(() => { setPos((p) => p + 1); setCustom(""); setPhase("idle"); setPending(null); setBusy(false); if (nextReviewed % 10 === 0) setGameOpen(true); }, 430);
+      window.setTimeout(() => { setPos((p) => p + 1); setCustom(""); setSourceOpen(false); setPhase("idle"); setPending(null); setBusy(false); if (nextReviewed % 10 === 0) setEventOpen(true); }, 430);
     } catch { setMessage("Mất kết nối khi lưu."); setBusy(false); setPhase("idle"); setPending(null); }
   }
 
-  function skip() { setPos((p) => p + 1); }
+  function skip() { applyImpact({ focus: 2, integrity: 3, momentum: -5, morale: -1 }); setSourceOpen(false); setPos((p) => p + 1); }
+
+  function inspectSource() {
+    if (!sourceOpen) applyImpact({ focus: -1, integrity: 3, momentum: -1 }, false);
+    setSourceOpen((open) => !open);
+  }
 
   async function undo() {
     const last = history[history.length - 1];
@@ -282,7 +325,7 @@ export default function RapidClassify() {
     try {
       await fetch("/api/admin/data/bulk-classify", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ids: [last.id], field: last.field, value: last.prev === "" ? null : (LEVEL_FIELDS.has(last.field) ? Number(last.prev) : last.prev), reason: "Hoàn tác phân loại nhanh (mobile)" }),
+        body: JSON.stringify({ ids: [last.id], field: last.field, value: last.prev === "" ? null : (LEVEL_FIELDS.has(last.field) ? Number(last.prev) : last.prev), reason: "Hoàn tác Ca trực 2598" }),
       });
       setItems((prevItems) => prevItems.map((it) => (it.id === last.id ? { ...it, [last.field]: last.prev === "" ? null : last.prev } : it)));
       setHistory((h) => h.slice(0, -1));
@@ -311,8 +354,9 @@ export default function RapidClassify() {
       {(!focusMode || configOpen) ? (
       <header className="max-h-[calc(100svh-1rem)] shrink-0 overflow-y-auto rounded-2xl border-2 border-[#123c36] bg-[#eef6f1] p-3">
         {!focusMode && <>
-        <p className="text-[11px] font-bold tracking-[.16em] text-[#0f5a4e]">PHÂN LOẠI NHANH</p>
-        <div className="flex flex-wrap items-end justify-between gap-2"><h1 className="text-lg font-semibold text-[#102f2b]">🎮 Rà dữ liệu · chơi từng thẻ</h1><div className="flex gap-2 text-xs font-bold"><span className="rounded-full bg-white px-2.5 py-1 text-[#0c5f4d]">✅ {reviewed} thẻ</span><span className="rounded-full bg-[#102f59] px-2.5 py-1 text-white">💎 {gameScore} điểm</span></div></div>
+        <p className="text-[11px] font-bold tracking-[.16em] text-[#0f5a4e]">GAME KIỂM DUYỆT DỮ LIỆU</p>
+        <div className="flex flex-wrap items-end justify-between gap-2"><div><h1 className="text-lg font-semibold text-[#102f2b]">👑 Ca trực 2598</h1><p className="text-xs text-[#527168]">Sinh tồn bằng những lựa chọn có căn cứ.</p></div><div className="flex gap-2 text-xs font-bold"><span className="rounded-full bg-white px-2.5 py-1 text-[#0c5f4d]">✅ {reviewed} thẻ</span><span className="rounded-full bg-[#102f59] px-2.5 py-1 text-white">Kỷ lục {bestRun} lượt</span></div></div>
+        <SurvivalMeters stats={stats} />
         {!standalone && (installEvt
           ? <button type="button" onClick={installApp} className="mt-2 w-full rounded-lg border-2 border-[#0c5f4d] bg-white px-3 py-2 text-sm font-bold text-[#0c5f4d] active:scale-[.99]">📲 Cài ứng dụng ra màn hình chính</button>
           : <p className="mt-2 rounded-lg bg-white/70 px-3 py-1.5 text-[11px] text-[#4b655e]">Cài như app: menu Chrome ⋮ → “Thêm vào màn hình chính”.</p>
@@ -344,7 +388,7 @@ export default function RapidClassify() {
           <input type="checkbox" checked={onlyMissing} onChange={(e) => setOnlyMissing(e.target.checked)} className="h-4 w-4" />
           Chỉ dòng còn trống ({remainingMissing} dòng)
         </label><label className="flex items-center gap-2 text-xs font-semibold text-[#24483f]"><input type="checkbox" checked={hideReviewed} onChange={(e) => setHideReviewed(e.target.checked)} className="h-4 w-4" />Ẩn thẻ đã rà trên máy</label><label className="ml-auto flex items-center gap-2 text-xs font-semibold text-[#24483f]">Mỗi lượt<select value={roundSize} onChange={(e) => setRoundSize(Number(e.target.value))} className="rounded-md border border-[#8fa99e] bg-white px-2 py-1"><option value={10}>10 thẻ</option><option value={30}>30 thẻ</option><option value={50}>50 thẻ</option><option value={100}>100 thẻ</option></select></label></div>
-        <div className="mt-2 flex flex-wrap items-center gap-2"><button type="button" onClick={() => { setCampaign((value) => !value); setOnlyMissing(false); }} className={`rounded-lg border-2 px-3 py-1.5 text-xs font-bold ${campaign ? "border-[#102f59] bg-[#102f59] text-white" : "border-[#8fa99e] bg-white text-[#24483f]"}`}>🏆 Chiến dịch đủ 6 trường {campaign ? "✓" : ""}</button><button type="button" onClick={resetGameProgress} className="rounded-lg border border-[#8fa99e] bg-white px-3 py-1.5 text-xs font-semibold text-[#637a73]">Đặt lại điểm/tiến độ</button></div>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><button type="button" onClick={() => { setCampaign((value) => !value); setOnlyMissing(false); }} className={`rounded-lg border-2 px-3 py-1.5 text-xs font-bold ${campaign ? "border-[#102f59] bg-[#102f59] text-white" : "border-[#8fa99e] bg-white text-[#24483f]"}`}>🏆 Chiến dịch đủ 6 trường {campaign ? "✓" : ""}</button><button type="button" onClick={resetGameProgress} className="rounded-lg border border-[#8fa99e] bg-white px-3 py-1.5 text-xs font-semibold text-[#637a73]">Đặt lại ca/tiến độ</button></div>
         <div className="mt-2 flex gap-2">
           <button type="button" onClick={buildQueue} disabled={loading} className="flex-1 rounded-lg bg-[#123c36] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
             {loading ? "Đang tải dữ liệu…" : queue.length ? "Làm lại hàng đợi" : campaign ? "Bắt đầu chiến dịch" : "Bắt đầu"}
@@ -359,6 +403,7 @@ export default function RapidClassify() {
             <p className="truncate text-xs font-bold text-[#0f5a4e]">{campaign ? "🏆 Chiến dịch · " : ""}{FIELD_LABEL[field]}{sourceFilter ? ` · ${sourceFilter}` : ""} · còn {remainingMissing}</p>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#dbe7e1]"><div className="h-full bg-[#0c5f4d] transition-all" style={{ width: `${pct}%` }} /></div>
           </div>
+          <SurvivalMeters stats={stats} compact />
           <span className="shrink-0 text-xs font-bold text-[#4b655e]">{pos + 1}/{queue.length}</span>
         </div>
       )}
@@ -399,14 +444,16 @@ export default function RapidClassify() {
                 </p>
               </div>
             </div>
-            <details className="mt-2 rounded-lg border border-[#cdddd6] bg-[#f7faf8] px-2.5 py-1.5">
-              <summary className="cursor-pointer text-xs font-bold text-[#24483f]">📊 Số liệu nguồn — chỉ đọc, không chỉnh</summary>
+            <div className="mt-2 rounded-lg border border-[#cdddd6] bg-[#f7faf8] px-2.5 py-1.5">
+              <button type="button" onClick={inspectSource} className="w-full text-left text-xs font-bold text-[#24483f]">📊 {sourceOpen ? "Ẩn" : "Mở"} số liệu nguồn — chỉ đọc, không chỉnh</button>
+              {sourceOpen && <>
               <div className="mt-2 grid grid-cols-3 gap-1.5 text-center text-[11px] sm:grid-cols-6">
                 <Fact label="Năng lượng" value={fmt(current.energyKcal, "kcal")} /><Fact label="Đạm" value={fmt(current.proteinG, "g")} /><Fact label="Béo" value={fmt(current.lipidG, "g")} /><Fact label="Bột đường" value={fmt(current.glucidG, "g")} /><Fact label="Xơ" value={fmt(current.fiberG, "g")} /><Fact label="Natri" value={fmt(current.sodiumMg, "mg")} />
                 <Fact label="Canxi" value={fmt(current.calciumMg, "mg")} /><Fact label="Sắt" value={fmt(current.ironMg, "mg")} /><Fact label="Purin" value={fmt(current.purinMg, "mg")} /><Fact label="Cholesterol" value={fmt(current.cholesterolMg, "mg")} /><Fact label="Thải bỏ" value={fmt(current.wastePercent, "%")} /><Fact label="Đơn vị" value={current.unit || "—"} />
               </div>
               <p className="mt-2 text-[11px] text-[#637a73]">Mã nguồn: {current.sourceCode || "—"} · Nhóm VDD gốc: {current.vddGroupRaw || "—"}</p>
-            </details>
+              </>}
+            </div>
             <p className="mt-2 text-xs font-bold uppercase tracking-wide text-[#0f5a4e]">Chọn {FIELD_LABEL[field]}</p>
           </div>
 
@@ -449,7 +496,8 @@ export default function RapidClassify() {
           {campaign ? (hasMoreInField ? <button type="button" onClick={buildQueue} className="mt-3 rounded-lg bg-[#102f59] px-4 py-2.5 text-sm font-bold text-white">Lượt tiếp: {FIELD_LABEL[field]} →</button> : <button type="button" onClick={nextCampaignField} className="mt-3 rounded-lg bg-[#102f59] px-4 py-2.5 text-sm font-bold text-white">{FIELD_ORDER.indexOf(field) < FIELD_ORDER.length - 1 ? <>Trường kế: {FIELD_LABEL[FIELD_ORDER[FIELD_ORDER.indexOf(field) + 1]]} →</> : <>🏆 Hoàn tất chiến dịch</>}</button>) : <button type="button" onClick={buildQueue} className="mt-3 rounded-lg bg-[#123c36] px-4 py-2.5 text-sm font-bold text-white">Tải lượt tiếp</button>}
         </div>
       )}
-      {gameOpen && <DiamondBreak round={gameRound} onDone={(score) => { setGameScore((value) => value + score); setGameRound((value) => value + 1); setGameOpen(false); }} />}
+      {eventOpen && !gameOver && <ShiftEvent round={eventRound} onChoose={(impact) => { applyImpact(impact); setEventRound((value) => value + 1); setEventOpen(false); }} />}
+      {gameOver && <GameOver stats={stats} turns={shiftTurns} best={bestRun} onRestart={startNewShift} />}
     </div>
   );
 }
@@ -460,4 +508,25 @@ function fmt(value: number | null, unit: string) {
 
 function Fact({ label, value }: { label: string; value: string }) {
   return <div className="rounded-md border border-[#d7e4de] bg-white px-1 py-1.5"><span className="block text-[#637a73]">{label}</span><b className="mt-0.5 block text-[#122f2a]">{value}</b></div>;
+}
+
+const STAT_META = {
+  focus: { label: "Tập trung", icon: "◉", color: "#2878a5" },
+  integrity: { label: "Thận trọng", icon: "◆", color: "#0c7a5c" },
+  momentum: { label: "Nhịp độ", icon: "»", color: "#b56b17" },
+  morale: { label: "Tinh thần", icon: "♥", color: "#a13c67" },
+} satisfies Record<keyof SurvivalStats, { label: string; icon: string; color: string }>;
+
+function SurvivalMeters({ stats, compact = false }: { stats: SurvivalStats; compact?: boolean }) {
+  if (compact) return <div className="hidden w-36 shrink-0 grid-cols-2 gap-x-2 gap-y-1 sm:grid">
+    {(Object.keys(STAT_META) as (keyof SurvivalStats)[]).map((key) => <div key={key} title={`${STAT_META[key].label}: ${stats[key]}`} className="flex items-center gap-1 text-[9px] font-black" style={{ color: STAT_META[key].color }}><span>{STAT_META[key].icon}</span><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white"><div className="h-full transition-all duration-500" style={{ width: `${stats[key]}%`, backgroundColor: STAT_META[key].color }} /></div><span>{stats[key]}</span></div>)}
+  </div>;
+  return <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-[#c5d9d1] bg-white/70 p-2 sm:grid-cols-4">
+    {(Object.keys(STAT_META) as (keyof SurvivalStats)[]).map((key) => <div key={key}><div className="flex items-center justify-between text-[11px] font-black" style={{ color: STAT_META[key].color }}><span>{STAT_META[key].icon} {STAT_META[key].label}</span><span>{stats[key]}</span></div><div className="mt-1 h-2 overflow-hidden rounded-full bg-[#e5ede9]"><div className="h-full rounded-full transition-all duration-500" style={{ width: `${stats[key]}%`, backgroundColor: STAT_META[key].color }} /></div></div>)}
+  </div>;
+}
+
+function GameOver({ stats, turns, best, onRestart }: { stats: SurvivalStats; turns: number; best: number; onRestart: () => void }) {
+  const failed = (Object.keys(stats) as (keyof SurvivalStats)[]).find((key) => stats[key] <= 0);
+  return <div className="fixed inset-0 z-[110] grid place-items-center bg-[#071b17]/85 p-4 backdrop-blur-sm"><section className="w-full max-w-md rounded-3xl border-4 border-[#9bb9ad] bg-[#f7faf8] p-6 text-center shadow-2xl"><div className="text-5xl">🕯️</div><p className="mt-3 text-xs font-black tracking-[.16em] text-[#6b7f78]">CA TRỰC KẾT THÚC</p><h2 className="mt-2 text-2xl font-black text-[#102f2b]">{failed ? `${STAT_META[failed].label} đã cạn` : "Đã đến lúc nghỉ ca"}</h2><p className="mt-2 text-sm leading-6 text-[#4f6b62]">Bạn trụ được <b>{turns} lượt</b>. Kỷ lục trên thiết bị này là <b>{best} lượt</b>. Các chỉnh sửa đã lưu vẫn giữ nguyên và có nhật ký.</p><SurvivalMeters stats={stats} /><button type="button" onClick={onRestart} className="mt-5 w-full rounded-xl bg-[#123c36] px-4 py-3 font-black text-white">Bắt đầu ca mới</button></section></div>;
 }
