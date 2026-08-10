@@ -491,6 +491,12 @@ model User {
   rations  Ration[]
   submissions       FoodSubmission[] @relation("SubmissionAuthor")
   reviewedSubmissions FoodSubmission[] @relation("SubmissionReviewer")
+  departmentMemberships DepartmentMembership[]
+  submittedMealOrders MealOrder[] @relation("MealOrderSubmitter")
+  approvedKitchenMenus KitchenMenu[] @relation("KitchenMenuApprover")
+  kitchenShiftMemberships KitchenShiftMember[]
+  assignedKitchenTasks KitchenTask[] @relation("KitchenTaskAssignee")
+  createdKitchenTasks KitchenTask[] @relation("KitchenTaskCreator")
 
   @@map("app_users")
 }
@@ -722,4 +728,252 @@ model MedicationRef {
   createdAt       DateTime @default(now())
 
   @@map("medication_refs")
+}
+
+// =====================================================================
+// KITCHEN OPERATIONS — báo suất theo khoa, thực đơn vận hành và lịch trực.
+// Tách khỏi Ration/Patient; không lưu dữ liệu nhận dạng bệnh nhân.
+// =====================================================================
+model Department {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  status    String   @default("ACTIVE")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships DepartmentMembership[]
+  mealOrders  MealOrder[]
+
+  @@index([status, sortOrder])
+  @@map("departments")
+}
+
+model DepartmentMembership {
+  id           String   @id @default(cuid())
+  userId       String
+  departmentId String
+  role         String   @default("REPORTER")
+  status       String   @default("ACTIVE")
+  canSubmit    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departmentId])
+  @@index([departmentId, status])
+  @@map("department_memberships")
+}
+
+model MealType {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  serviceLocalTime String
+  cutoffLocalTime String
+  cutoffDaysBefore Int     @default(0)
+  status          String   @default("ACTIVE")
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  mealOrders   MealOrder[]
+  kitchenMenus KitchenMenu[]
+
+  @@index([status, sortOrder])
+  @@map("meal_types")
+}
+
+model KitchenDietType {
+  id         String   @id @default(cuid())
+  code       String   @unique
+  name       String
+  dietCodeId String?
+  status     String   @default("ACTIVE")
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orderItems MealOrderItem[]
+  menuItems  KitchenMenuItem[]
+
+  @@index([status, sortOrder])
+  @@map("kitchen_diet_types")
+}
+
+model MealOrder {
+  id            String   @id @default(cuid())
+  publicCode    String   @unique
+  lastRequestKey String? @unique
+  departmentId  String
+  mealDate      DateTime @db.Date
+  mealTypeId    String
+  status        String   @default("SUBMITTED")
+  version       Int      @default(1)
+  submittedById String
+  source        String   @default("WEB")
+  note          String?
+  submittedAt   DateTime @default(now())
+  lockedAt      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  department  Department    @relation(fields: [departmentId], references: [id])
+  mealType    MealType      @relation(fields: [mealTypeId], references: [id])
+  submittedBy User          @relation("MealOrderSubmitter", fields: [submittedById], references: [id])
+  items       MealOrderItem[]
+  audits      MealOperationAudit[]
+  changeRequests MealOrderChangeRequest[]
+
+  @@unique([departmentId, mealDate, mealTypeId])
+  @@index([mealDate, mealTypeId, status])
+  @@map("meal_orders")
+}
+
+model MealOrderItem {
+  id         String @id @default(cuid())
+  mealOrderId String
+  dietTypeId String
+  quantity   Int
+
+  mealOrder MealOrder       @relation(fields: [mealOrderId], references: [id], onDelete: Cascade)
+  dietType KitchenDietType @relation(fields: [dietTypeId], references: [id])
+
+  @@unique([mealOrderId, dietTypeId])
+  @@map("meal_order_items")
+}
+
+model KitchenMenu {
+  id           String   @id @default(cuid())
+  mealDate     DateTime @db.Date
+  mealTypeId   String
+  status       String   @default("DRAFT")
+  title        String
+  note         String?
+  approvedById String?
+  approvedAt   DateTime?
+  handedOffAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  mealType  MealType @relation(fields: [mealTypeId], references: [id])
+  approvedBy User?    @relation("KitchenMenuApprover", fields: [approvedById], references: [id])
+  items      KitchenMenuItem[]
+
+  @@unique([mealDate, mealTypeId])
+  @@index([mealDate, status])
+  @@map("kitchen_menus")
+}
+
+model KitchenMenuItem {
+  id         String @id @default(cuid())
+  menuId     String
+  dietTypeId String
+  dishName   String
+  note       String?
+  sortOrder  Int    @default(0)
+
+  menu     KitchenMenu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  dietType KitchenDietType @relation(fields: [dietTypeId], references: [id])
+
+  @@index([menuId, sortOrder])
+  @@map("kitchen_menu_items")
+}
+
+model KitchenShift {
+  id        String   @id @default(cuid())
+  shiftDate DateTime @db.Date
+  name      String
+  startsAt  DateTime
+  endsAt    DateTime
+  status    String   @default("PLANNED")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members KitchenShiftMember[]
+  tasks   KitchenTask[]
+
+  @@unique([shiftDate, name])
+  @@index([shiftDate, status])
+  @@map("kitchen_shifts")
+}
+
+model KitchenShiftMember {
+  id      String  @id @default(cuid())
+  shiftId String
+  userId  String
+  role    String  @default("STAFF")
+  status  String  @default("ASSIGNED")
+  note    String?
+
+  shift KitchenShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, userId])
+  @@index([userId, status])
+  @@map("kitchen_shift_members")
+}
+
+model KitchenTask {
+  id           String   @id @default(cuid())
+  shiftId      String
+  title        String
+  description  String?
+  assignedToId String?
+  createdById  String
+  status       String   @default("TODO")
+  acknowledgedAt DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shift      KitchenShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  assignedTo User?        @relation("KitchenTaskAssignee", fields: [assignedToId], references: [id])
+  createdBy  User         @relation("KitchenTaskCreator", fields: [createdById], references: [id])
+
+  @@index([shiftId, status])
+  @@index([assignedToId, status])
+  @@map("kitchen_tasks")
+}
+
+model MealOperationAudit {
+  id          String   @id @default(cuid())
+  mealOrderId String?
+  entityType  String
+  entityId    String
+  action      String
+  actorId     String
+  actorName   String
+  beforeJson  Json?
+  afterJson   Json?
+  reason      String
+  createdAt   DateTime @default(now())
+
+  mealOrder MealOrder? @relation(fields: [mealOrderId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([mealOrderId, createdAt])
+  @@map("meal_operation_audits")
+}
+
+model MealOrderChangeRequest {
+  id            String   @id @default(cuid())
+  mealOrderId   String
+  requestedById String
+  reason        String
+  proposedJson  Json
+  status        String   @default("PENDING")
+  reviewedById  String?
+  reviewNote    String?
+  reviewedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  mealOrder MealOrder @relation(fields: [mealOrderId], references: [id], onDelete: Cascade)
+
+  @@index([mealOrderId, status, createdAt])
+  @@index([status, createdAt])
+  @@map("meal_order_change_requests")
 }

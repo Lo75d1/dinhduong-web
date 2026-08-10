@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     if (requester.role !== "ADMIN") return Response.json({ error: "Bạn không có quyền quản trị." }, { status: 403 });
     const body = await request.json().catch(() => null) as { displayName?: unknown; email?: unknown; password?: unknown; role?: unknown } | null;
     const email = normalizeEmail(body?.email); const displayName = typeof body?.displayName === "string" ? body.displayName.trim().slice(0, 100) : "";
-    const role = body?.role === "ADMIN" ? "ADMIN" : body?.role === "EDITOR" ? "EDITOR" : "CLINICIAN";
+    const allowed = new Set(["ADMIN", "EDITOR", "CLINICIAN", "DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF", "DEPARTMENT_STAFF"]);
+    const role = typeof body?.role === "string" && allowed.has(body.role) ? body.role : "CLINICIAN";
     if (!email || !displayName || !validPassword(body?.password)) return Response.json({ error: "Cần họ tên, email hợp lệ và mật khẩu tối thiểu 10 ký tự." }, { status: 400 });
     const item = await prisma.user.create({ data: { email, displayName, passwordHash: hashPassword(body!.password as string), role }, select: { id: true, displayName: true, email: true, role: true, createdAt: true } });
     return Response.json({ item }, { status: 201 });
