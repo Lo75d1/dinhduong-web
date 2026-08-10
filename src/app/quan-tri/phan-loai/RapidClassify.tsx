@@ -397,7 +397,7 @@ export default function RapidClassify() {
         </div>
       </header>
       ) : (
-        <div className="flex shrink-0 items-center gap-2 rounded-xl border-2 border-[#123c36] bg-[#eef6f1] px-2.5 py-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border-2 border-[#123c36] bg-[#eef6f1] px-2.5 py-2 sm:flex-nowrap">
           <button type="button" onClick={() => setConfigOpen(true)} aria-label="Cài đặt" className="shrink-0 rounded-lg border-2 border-[#8fa99e] bg-white px-2.5 py-1.5 text-base leading-none text-[#24483f]">⚙</button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-bold text-[#0f5a4e]">{campaign ? "🏆 Chiến dịch · " : ""}{FIELD_LABEL[field]}{sourceFilter ? ` · ${sourceFilter}` : ""} · còn {remainingMissing}</p>
@@ -518,7 +518,7 @@ const STAT_META = {
 } satisfies Record<keyof SurvivalStats, { label: string; icon: string; color: string }>;
 
 function SurvivalMeters({ stats, compact = false }: { stats: SurvivalStats; compact?: boolean }) {
-  if (compact) return <div className="hidden w-36 shrink-0 grid-cols-2 gap-x-2 gap-y-1 sm:grid">
+  if (compact) return <div className="order-last grid w-full shrink-0 grid-cols-4 gap-x-2 gap-y-1 border-t border-[#c5d9d1] pt-1.5 sm:order-none sm:w-36 sm:grid-cols-2 sm:border-0 sm:pt-0">
     {(Object.keys(STAT_META) as (keyof SurvivalStats)[]).map((key) => <div key={key} title={`${STAT_META[key].label}: ${stats[key]}`} className="flex items-center gap-1 text-[9px] font-black" style={{ color: STAT_META[key].color }}><span>{STAT_META[key].icon}</span><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white"><div className="h-full transition-all duration-500" style={{ width: `${stats[key]}%`, backgroundColor: STAT_META[key].color }} /></div><span>{stats[key]}</span></div>)}
   </div>;
   return <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-[#c5d9d1] bg-white/70 p-2 sm:grid-cols-4">
