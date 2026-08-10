@@ -101,7 +101,7 @@ export default function MenuFoodSearch({
   }, [q, kind, foodType, source, group, dishCategory, dishAge, dishDisease]);
 
   return (
-    <div className="rounded-lg border bg-white p-2" style={{ borderColor: "#d5e3f2" }}>
+    <div className="rounded-lg border bg-white p-2" style={{ borderColor: "#D7E6F5" }}>
       <div className="flex items-center gap-1.5">
         <input
           value={q}

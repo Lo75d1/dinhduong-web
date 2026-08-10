@@ -58,7 +58,7 @@ export default function Calculator() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
-  // Chế độ cấp trang: một ngày (mặc định) ↔ thực đơn nhiều ngày (board riêng).
+  // Chế độ cấp trang: một ngày ↔ thực đơn nhiều ngày (board riêng).
   const [pageMode, setPageMode] = useState<"single" | "multi">("single");
   const [reportMeta, setReportMeta] = useState<ReportMeta>(() => ({ subjectName: "", subjectGroup: "", clinicalCourse: "", authorName: "", authorRole: "Bác sĩ", authorOrganization: "", reportDate: new Date().toISOString().slice(0, 10), menuNote: "" }));
   const setMenuNote = (menuNote: string) => setReportMeta((current) => ({ ...current, menuNote }));
@@ -95,6 +95,9 @@ export default function Calculator() {
 
   function changePageMode(next: "single" | "multi") {
     setPageMode(next);
+    // Mỗi lần đổi chế độ đều trở về bước lập/nhập thực đơn, tránh giữ lại màn
+    // phân tích của chế độ trước và giúp người dùng định hướng ngay sau chuyển cảnh.
+    setActiveView("entry");
     try { localStorage.setItem("khauphan_pagemode_v1", next); } catch { /* localStorage bị chặn */ }
   }
   const foodRows = rows.filter((r) => r.foodId);
@@ -124,7 +127,7 @@ export default function Calculator() {
         {/* Chế độ lập khẩu phần: 1 ngày / nhiều ngày — cùng thanh header với bước 1/2 */}
         <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" role="group" aria-label="Chế độ lập khẩu phần">
           <button type="button" onClick={() => changePageMode("single")} aria-pressed={pageMode === "single"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "single" ? "bg-[#123c36] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>📋 Một ngày</button>
-          <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>🗓️ Nhiều ngày</button>
+          <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-[#E6F1FB]"}`}>🗓️ Nhiều ngày</button>
         </div>
         {pageMode === "single" && (
           <nav className="clinical-stepper flex flex-1 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước tính khẩu phần">
@@ -137,11 +140,11 @@ export default function Calculator() {
           </nav>
         )}
         {pageMode === "multi" && (
-          <nav className="clinical-stepper flex flex-1 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước thực đơn nhiều ngày">
-            <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "entry" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
+          <nav className="clinical-stepper flex flex-1 items-center gap-1 rounded-lg border border-[#7d8ea3] bg-white p-1" aria-label="Các bước thực đơn nhiều ngày">
+            <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors duration-200 ${activeView === "entry" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-[#E6F1FB]"}`} aria-pressed={activeView === "entry"}>
               <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập thực đơn
             </button>
-            <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "analysis" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
+            <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors duration-200 ${activeView === "analysis" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-[#E6F1FB]"}`} aria-pressed={activeView === "analysis"}>
               <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>Phân tích
             </button>
           </nav>
@@ -150,13 +153,13 @@ export default function Calculator() {
       headerSlot
     )}
 
-    {pageMode === "multi" && <section className="clinical-panel min-w-0"><MultiDayBoard view={activeView} /></section>}
+    {pageMode === "multi" && <section key={`multi-${activeView}`} className="mode-panel-enter clinical-panel min-w-0"><MultiDayBoard view={activeView} /></section>}
 
-    <section className={pageMode === "single" && activeView === "entry" ? "clinical-panel lg:flex lg:h-[calc(100vh-5.25rem)] lg:flex-col lg:overflow-hidden" : "hidden"}>
+    <section className={pageMode === "single" && activeView === "entry" ? "mode-panel-enter clinical-panel lg:flex lg:h-[calc(100vh-5.25rem)] lg:flex-col lg:overflow-hidden" : "hidden"}>
       <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} onMedsChange={setMeds} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
     </section>
 
-    <section className={pageMode === "single" && activeView === "analysis" ? "clinical-panel min-w-0" : "hidden"}>
+    <section className={pageMode === "single" && activeView === "analysis" ? "mode-panel-enter clinical-panel min-w-0" : "hidden"}>
       <section data-print-header><p className="text-center text-sm font-semibold tracking-[0.16em] text-[#123c36]">BÁO CÁO PHÂN TÍCH KHẨU PHẦN</p><h1 className="mt-2 text-center text-2xl font-semibold">Phiếu đánh giá dinh dưỡng</h1><div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 border-y-2 border-[#123c36] py-3 text-sm"><p><b>Người được đánh giá:</b> {reportMeta.subjectName || "Chưa ghi"}</p><p><b>Ngày lập:</b> {reportMeta.reportDate || "Chưa ghi"}</p><p><b>Nhóm / mục tiêu:</b> {reportMeta.subjectGroup || "Chưa ghi"}</p><p><b>Người lập:</b> {reportMeta.authorName || "Chưa ghi"} ({reportMeta.authorRole})</p><p className="col-span-2"><b>Đơn vị / cơ sở:</b> {reportMeta.authorOrganization || "Chưa ghi"}</p><p className="col-span-2"><b>Hồ sơ:</b> {profile ? `${profile.gender}, ${profile.age || "—"} ${profile.ageUnit}, ${profile.weight || "—"} kg, ${profile.height || "—"} cm${profile.physiology.startsWith("pregnant_") ? ` · Thai kỳ: ${profile.pregnancyWeek ? `tuần ${profile.pregnancyWeek}` : "chưa ghi tuần"}${profile.prePregnancyWeight ? ` · trước thai ${profile.prePregnancyWeight} kg` : ""}` : ""}` : "Chưa nhập"}</p>{profile?.pregnancyNote && <p className="col-span-2"><b>Ghi chú thai kỳ:</b> {profile.pregnancyNote}</p>}{reportMeta.menuNote && <p className="col-span-2"><b>Ghi chú thực đơn / khẩu phần:</b> {reportMeta.menuNote}</p>}{reportMeta.clinicalCourse && <p className="col-span-2"><b>Diễn biến bệnh lý / theo dõi:</b> {reportMeta.clinicalCourse}</p>}</div></section>
       <div className="border-b-2 border-[#123c36] pb-3"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 2 · KẾT QUẢ</p><h2 className="mt-1 text-2xl font-semibold text-neutral-950">Kết quả &amp; phân tích</h2></div>
       {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <div className="mt-4 flex flex-col gap-3">
@@ -284,7 +287,7 @@ function MealDishOverview({ rows, meds = [] }: { rows: Row[]; meds?: MedicationR
             <div key={mealName} className="overflow-hidden rounded-md border border-neutral-200 bg-white">
               <div className="flex items-center justify-between gap-2 bg-[#eef4f1] px-2 py-1 text-sm font-semibold text-[#0c5f4d]"><span className="min-w-0 truncate">{mealName}</span><span className="shrink-0 rounded bg-[#123c36] px-1.5 text-xs font-bold text-white">{Math.round(mealKcal)} kcal</span></div>
               {meal && meal.dishes.length > 0 && <ul className="divide-y divide-neutral-100">{meal.dishes.map((dish) => <li key={dish.dish} className="flex items-center justify-between gap-2 px-2 py-1 pl-4 text-sm"><span className="min-w-0 truncate text-neutral-800">🍽️ {dish.dish}</span><span className="shrink-0 rounded bg-amber-100 px-1.5 text-xs font-semibold text-amber-900">{Math.round(dishKcalOf(dish))}</span></li>)}</ul>}
-              {mealMeds.length > 0 && <div className="border-t border-dashed border-violet-200 bg-[#faf9ff]">
+              {mealMeds.length > 0 && <div className="border-t border-dashed border-violet-200 bg-[#f7faf8]">
                 {MED_TIMING_ORDER.map(({ timing, label }) => {
                   const list = mealMeds.filter((m) => m.timing === timing);
                   if (list.length === 0) return null;

@@ -156,7 +156,7 @@ export default function MultiDayAnalysis({
   }
 
   return (
-    <section className="mt-3 flex flex-col gap-4 rounded-xl border-2 border-[#B5D4F4] bg-[#EEF5FE] p-3 sm:p-4" aria-label="Phân tích thực đơn nhiều ngày">
+    <section className="mt-3 flex flex-col gap-4 rounded-xl border-2 border-[#B5D4F4] bg-[#EEF3F9] p-3 sm:p-4" aria-label="Phân tích thực đơn nhiều ngày">
       {/* Thanh gọn: tiêu đề + xuất (không còn header to) */}
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-lg border-2 border-[#185FA5] bg-white px-3 py-2">
         <div>
@@ -164,7 +164,7 @@ export default function MultiDayAnalysis({
           <p className="text-xs text-[#5a708c]">Phân tích {analysis.dataDayCount}/{analysis.calendarDayCount} ngày có thực phẩm · ngày trống không tính là 0 kcal.</p>
         </div>
         <div className="flex flex-wrap gap-2" data-no-print>
-          <button type="button" onClick={() => download(buildMultiDayWordHtml(days, analysis, shopping, profile), "application/msword;charset=utf-8", "bao-cao-dinh-duong-toan-ky.doc")} className="rounded-md border-2 border-[#185FA5] bg-white px-3 py-1.5 text-sm font-semibold text-[#0C447C] hover:bg-[#EAF3FE]">⬇ Word</button>
+          <button type="button" onClick={() => download(buildMultiDayWordHtml(days, analysis, shopping, profile), "application/msword;charset=utf-8", "bao-cao-dinh-duong-toan-ky.doc")} className="rounded-md border-2 border-[#185FA5] bg-white px-3 py-1.5 text-sm font-semibold text-[#0C447C] hover:bg-[#E6F1FB]">⬇ Word</button>
           <button type="button" onClick={() => download(buildMultiDayExcelXml(days, analysis, shopping, profile), "application/vnd.ms-excel;charset=utf-8", "bao-cao-dinh-duong-toan-ky.xls")} className="rounded-md bg-[#185FA5] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0C447C]">⬇ Excel</button>
         </div>
       </header>
@@ -178,7 +178,7 @@ export default function MultiDayAnalysis({
         </div>
       </div>
       {kitchenMode && (
-        <div className="rounded-lg border-l-4 border-[#185FA5] bg-[#EAF3FE] px-3 py-2 text-sm text-[#0C447C]">
+        <div className="rounded-lg border-l-4 border-[#185FA5] bg-[#E6F1FB] px-3 py-2 text-sm text-[#0C447C]">
           <b>Bếp tập thể:</b> thực đơn thường chỉ gồm vài bữa (không phải cả ngày) — nên số so với <b>nhu cầu cả ngày</b> chỉ để tham khảo (% đạt, trung bình), <b>không phải thiếu hụt thật</b>. Tập trung cân đối P:L:G, natri, đa dạng món và bảng đi chợ. Cờ “thiếu/đạt/vượt” theo cả ngày đã ẩn ở phần tổng.
         </div>
       )}
@@ -488,4 +488,3 @@ function MacroCard({ macro }: { macro: MacroPeriodSummary }) {
 function NutrientRow({ nutrient }: { nutrient: NutrientPeriodSummary }) {
   return <tr className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-bold text-[#0C447C]">{nutrient.label}</td><td className="px-3 py-2 text-right">{formatMetric(nutrient.total, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.averagePerDay, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPerDay, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPeriod, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.percentOfTarget, "%")}</td><td className="px-3 py-2 text-right">{nutrient.comparableDays ? `${nutrient.achievedDays}/${nutrient.comparableDays}` : "—"}</td><td className="px-3 py-2 text-center"><StatusBadge status={nutrient.status} /></td><td className="px-3 py-2 text-xs text-neutral-600">{nutrient.total.incomplete ? "Thiếu dữ liệu ở một số thực phẩm" : nutrient.targetPerDay == null ? "Chưa có mốc RNI phù hợp" : nutrient.isUpperLimit ? "Đối chiếu giới hạn trên" : nutrient.targetType || "Đủ dữ liệu"}</td></tr>;
 }
-

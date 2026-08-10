@@ -78,6 +78,9 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
   const [moveNotice, setMoveNotice] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationRow[]>([]);
+  // #3: món đang chọn (trong bữa đang mở) + tab của thanh tìm cố định đáy màn hình
+  const [selDish, setSelDish] = useState<string | null>(null);
+  const [bottomKind, setBottomKind] = useState<"food" | "dish">("food");
   const daySensors = useMenuSensors();
 
   useEffect(() => {
@@ -286,6 +289,22 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
     if (msg) window.setTimeout(() => window.alert(msg), 0);
   }
 
+  // Bữa đang mở + các món của nó (để thanh tìm đáy biết thêm vào đâu).
+  const openDay = expanded ? days.find((d) => d.id === expanded.dayId) : null;
+  const openMealDishes = openDay ? dayMealsOrdered(openDay).find((m) => m.meal === expanded!.meal)?.dishes.map((d) => d.dish) ?? [] : [];
+  const targetDish = selDish && openMealDishes.includes(selDish) ? selDish : (openMealDishes[0] ?? null);
+
+  function pickFoodBottom(food: MenuFoodResult) {
+    if (!expanded) { window.alert("Bấm vào một bữa (rồi chọn món) để thêm thực phẩm."); return; }
+    if (!targetDish) { window.alert("Bữa này chưa có món. Dùng tab “Món ăn” để thêm món trước, hoặc bấm “＋ Món trống”."); return; }
+    addFood(expanded.dayId, expanded.meal, targetDish, food);
+  }
+  function pickDishBottom(dish: { name: string; ingredients: MenuDishIngredient[] }) {
+    if (!expanded) { window.alert("Bấm vào một bữa để thêm món."); return; }
+    addRecipe(expanded.dayId, expanded.meal, dish.name, dish.ingredients);
+    setSelDish(dish.name);
+  }
+
   const totalKcalAll = days.reduce((s, d) => s + dayKcal(d), 0);
 
   return (
@@ -352,6 +371,8 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
                   onAddRecipe={(meal, dishName, ingredients) => addRecipe(day.id, meal, dishName, ingredients)}
                   onDeleteDish={(meal, dish) => deleteDishMenu(day.id, meal, dish)}
                   onDuplicateDish={(meal, dish) => duplicateDishMenu(day.id, meal, dish)}
+                  selectedDish={expanded?.dayId === day.id ? selDish : null}
+                  onSelectDish={setSelDish}
                 />
               ))}
             </div>
@@ -369,6 +390,24 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={addEmptyDay} className="flex-1 rounded-lg border-2 border-dashed px-3 py-3 text-base font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#F4F9FE" }}>＋ Thêm ngày</button>
           <button type="button" onClick={importCurrentDay} className="rounded-lg border px-3 py-3 text-sm font-semibold" style={{ borderColor: "#B5D4F4", color: "#5a708c" }} title="Lấy khẩu phần đang mở ở tab Một ngày">↧ nhập ngày đang mở</button>
+        </div>
+      )}
+
+      {/* #3 · Thanh tìm & thêm CỐ ĐỊNH đáy màn hình (như 1 ngày): thêm vào bữa/món đang chọn */}
+      {days.length > 0 && (
+        <div className="sticky bottom-0 z-30 -mx-1 mt-1 rounded-t-xl border-2 border-b-0 bg-white px-3 py-2 shadow-[0_-6px_18px_rgba(12,68,124,0.15)]" style={{ borderColor: ACCENT }}>
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="text-sm font-bold" style={{ color: INK }}>🔎 Tìm & thêm</span>
+            <div className="inline-flex overflow-hidden rounded-md border" style={{ borderColor: "#B5D4F4" }}>
+              {(["food", "dish"] as const).map((k) => (
+                <button key={k} type="button" onClick={() => setBottomKind(k)} className="px-3 py-1 text-sm font-semibold" style={bottomKind === k ? { background: ACCENT, color: "#fff" } : { color: "#5a708c" }}>{k === "food" ? "Thực phẩm" : "Món ăn"}</button>
+              ))}
+            </div>
+            <span className="text-xs" style={{ color: expanded ? INK : "#8a5a1d" }}>
+              {expanded ? <>→ thêm vào <b>{openDay?.label} · {expanded.meal}{bottomKind === "food" && targetDish ? ` · ${targetDish}` : ""}</b></> : "Bấm một bữa (rồi chọn món) để chọn nơi thêm"}
+            </span>
+          </div>
+          <MenuFoodSearch kind={bottomKind} onPickFood={pickFoodBottom} onPickDish={pickDishBottom} />
         </div>
       )}
       </>}
@@ -410,6 +449,8 @@ type DayCardProps = {
   onAddRecipe: (meal: string, dishName: string, ingredients: MenuDishIngredient[]) => void;
   onDeleteDish: (meal: string, dish: string) => void;
   onDuplicateDish: (meal: string, dish: string) => void;
+  selectedDish: string | null;
+  onSelectDish: (dish: string) => void;
 };
 
 function SortableDayCard(props: DayCardProps) {
@@ -446,6 +487,8 @@ function DayCard({
   onAddRecipe,
   onDeleteDish,
   onDuplicateDish,
+  selectedDish,
+  onSelectDish,
 }: DayCardProps) {
   const meals = dayMealsOrdered(day);
   const kcal = dayKcal(day);
@@ -460,7 +503,7 @@ function DayCard({
     if (overMeal && active !== overMeal) onReorderMeal(active, overMeal);
   }
   return (
-    <div ref={setDropRef} className="menu-day-enter overflow-hidden rounded-xl border transition-colors" style={{ borderColor: isOver ? ACCENT : "#B5D4F4", borderWidth: isOver ? 2 : 1, background: isOver ? "#EAF3FE" : "#fff" }}>
+    <div ref={setDropRef} className="menu-day-enter overflow-hidden rounded-xl border transition-colors" style={{ borderColor: isOver ? ACCENT : "#B5D4F4", borderWidth: isOver ? 2 : 1, background: isOver ? "#E6F1FB" : "#fff" }}>
       {/* Đầu ngày */}
       <div className="flex flex-wrap items-center gap-2 px-2.5 py-1.5" style={{ background: "#E6F1FB" }}>
         {dragHandle}
@@ -527,6 +570,8 @@ function DayCard({
           onAddRecipe={(dishName, ingredients) => onAddRecipe(expandedMeal, dishName, ingredients)}
           onDeleteDish={(dish) => onDeleteDish(expandedMeal, dish)}
           onDuplicateDish={(dish) => onDuplicateDish(expandedMeal, dish)}
+          selectedDish={selectedDish}
+          onSelectDish={onSelectDish}
         />
       )}
     </div>
@@ -535,7 +580,7 @@ function DayCard({
 
 function SortableMealCard({ meal, active, onToggle }: { meal: ReturnType<typeof dayMealsOrdered>[number]; active: boolean; onToggle: () => void }) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id: meal.meal });
-  return <div ref={setNodeRef} className="flex flex-1 overflow-hidden rounded-lg border" style={{ minWidth: 190, transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1, borderColor: active ? ACCENT : "#d5e3f2", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff" }}>
+  return <div ref={setNodeRef} className="flex flex-1 overflow-hidden rounded-lg border" style={{ minWidth: 190, transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.3 : 1, borderColor: active ? ACCENT : "#D7E6F5", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff" }}>
     <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo để sắp xếp bữa ${meal.meal}`} title="Giữ và kéo để sắp xếp bữa" className="cursor-grab touch-none select-none border-r px-2 text-lg active:cursor-grabbing" style={{ borderColor: "#D7E6F5", color: ACCENT }}>⠿</button>
     <button type="button" onClick={onToggle} className="min-w-0 flex-1 px-2.5 py-2 text-left">
       <div className="flex items-center justify-between gap-1">
@@ -572,6 +617,8 @@ function MealPanel({
   onAddRecipe,
   onDeleteDish,
   onDuplicateDish,
+  selectedDish,
+  onSelectDish,
 }: {
   dayId: string;
   meal: ReturnType<typeof dayMealsOrdered>[number];
@@ -585,15 +632,17 @@ function MealPanel({
   onAddRecipe: (dishName: string, ingredients: MenuDishIngredient[]) => void;
   onDeleteDish: (dish: string) => void;
   onDuplicateDish: (dish: string) => void;
+  selectedDish: string | null;
+  onSelectDish: (dish: string) => void;
 }) {
-  const [selectedDish, setSelectedDish] = useState<string | null>(meal.dishes[0]?.dish ?? null);
-  const selected = meal.dishes.find((d) => d.dish === selectedDish) ?? null;
+  // Món đang chọn do board quản lý (đồng bộ với ô tìm ở đáy); nếu không khớp bữa này → mặc định món đầu.
+  const selected = meal.dishes.find((d) => d.dish === selectedDish) ?? meal.dishes[0] ?? null;
   function addEmptyDishPrompt() {
     const name = window.prompt("Tên món mới", `Món ${meal.dishes.length + 1}`)?.trim();
-    if (name) { onAddDish(name); setSelectedDish(name); }
+    if (name) { onAddDish(name); onSelectDish(name); }
   }
   return (
-    <div className="menu-drop border-t-2 px-3 py-3" style={{ borderColor: ACCENT, background: "#EAF3FE" }}>
+    <div className="menu-drop border-t-2 px-3 py-3" style={{ borderColor: ACCENT, background: "#E6F1FB" }}>
       {/* Đầu bữa */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <EditableText value={meal.meal} onCommit={onRename} className="rounded border bg-white px-2 py-1 text-base font-semibold" style={{ color: INK, borderColor: "#B5D4F4" }} />
@@ -610,27 +659,25 @@ function MealPanel({
         <div className="flex flex-col gap-2 rounded-lg border bg-white p-2.5" style={{ borderColor: "#D7E6F5" }}>
           <div className="text-sm font-semibold" style={{ color: INK }}>Món trong bữa</div>
           {meal.dishes.length === 0 ? (
-            <p className="text-sm" style={{ color: "#7d8ea3" }}>Chưa có món — thêm ở dưới.</p>
+            <p className="text-sm" style={{ color: "#7d8ea3" }}>Chưa có món — dùng ô tìm ở đáy màn hình (tab <b>Món ăn</b>), hoặc bấm ＋ Món trống.</p>
           ) : (
             <div className="flex flex-col gap-1.5">
               {meal.dishes.map((dish) => (
-                <DishRow key={dish.dish} dayId={dayId} meal={meal.meal} dish={dish} active={selectedDish === dish.dish} onSelect={() => setSelectedDish(dish.dish)} onDelete={() => { onDeleteDish(dish.dish); if (selectedDish === dish.dish) setSelectedDish(null); }} onDuplicate={() => onDuplicateDish(dish.dish)} />
+                <DishRow key={dish.dish} dayId={dayId} meal={meal.meal} dish={dish} active={selected?.dish === dish.dish} onSelect={() => onSelectDish(dish.dish)} onDelete={() => onDeleteDish(dish.dish)} onDuplicate={() => onDuplicateDish(dish.dish)} />
               ))}
             </div>
           )}
-          <div className="mt-1 flex flex-col gap-1.5 border-t pt-2" style={{ borderColor: "#eef3f9" }}>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold" style={{ color: INK }}>Thêm món</span>
-              <button type="button" onClick={addEmptyDishPrompt} className="rounded border px-2 py-1 text-sm font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>＋ Món trống</button>
-            </div>
-            <MenuFoodSearch kind="dish" onPickDish={(dish) => { onAddRecipe(dish.name, dish.ingredients); setSelectedDish(dish.name); }} />
+          <div className="mt-1 flex flex-wrap items-center gap-2 border-t pt-2" style={{ borderColor: "#EEF3F9" }}>
+            <span className="text-sm font-semibold" style={{ color: INK }}>Thêm món</span>
+            <button type="button" onClick={addEmptyDishPrompt} className="rounded border px-2 py-1 text-sm font-semibold" style={{ borderColor: ACCENT, color: INK, background: "#E6F1FB" }}>＋ Món trống</button>
+            <span className="text-xs" style={{ color: "#7d8ea3" }}>hoặc tìm ở ô đáy màn hình →</span>
           </div>
         </div>
 
         {/* PHẢI — tự nhảy sang chi tiết + nhập thực phẩm (remount theo món để có hoạt ảnh) */}
         <div className="rounded-lg border-2 bg-white p-2.5" style={{ borderColor: ACCENT }}>
           {!selected ? (
-            <p className="text-sm" style={{ color: "#7d8ea3" }}>Chọn một món bên trái để xem thành phần và thêm thực phẩm.</p>
+            <p className="text-sm" style={{ color: "#7d8ea3" }}>Chọn một món bên trái để xem/sửa thành phần (thêm thực phẩm ở ô đáy màn hình).</p>
           ) : (
             <DishEditor key={selected.dish} dish={selected} onUpdateGrams={onUpdateGrams} onDeleteRow={onDeleteRow} onAddFood={onAddFood} />
           )}
@@ -653,7 +700,7 @@ function DishRow({ dayId, meal, dish, active, onSelect, onDelete, onDuplicate }:
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({ id: `dish::${dayId}::${meal}::${dish.dish}` });
   const dKcal = Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0));
   return (
-    <div ref={setNodeRef} className="flex items-center gap-1 rounded-lg border transition-colors" style={{ borderColor: active ? ACCENT : "#e0e9f4", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff", opacity: isDragging ? 0.4 : 1 }}>
+    <div ref={setNodeRef} className="flex items-center gap-1 rounded-lg border transition-colors" style={{ borderColor: active ? ACCENT : "#E1E9F5", borderWidth: active ? 2 : 1, background: active ? "#E6F1FB" : "#fff", opacity: isDragging ? 0.4 : 1 }}>
       <button ref={setActivatorNodeRef} type="button" {...attributes} {...listeners} aria-label={`Kéo món ${dish.dish} sang ngày khác`} title="Giữ và kéo món sang ngày khác" className="cursor-grab touch-none select-none px-1.5 py-2 text-lg active:cursor-grabbing" style={{ color: ACCENT }}>⠿</button>
       <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center justify-between gap-2 py-2 text-left">
         <span className="min-w-0 truncate text-sm font-semibold" style={{ color: INK }}>🍽️ {dish.dish}</span>
@@ -679,7 +726,7 @@ function DishEditor({ dish, onUpdateGrams, onDeleteRow, onAddFood }: {
         <span className="text-xs" style={{ color: "#7d8ea3" }}>{dish.rows.length} thực phẩm · {Math.round(dish.rows.reduce((s, r) => s + rowKcal(r), 0))} kcal</span>
       </div>
       {dish.rows.length === 0 ? (
-        <p className="text-sm" style={{ color: "#7d8ea3" }}>Món trống — tìm thực phẩm bên dưới để thêm.</p>
+        <p className="text-sm" style={{ color: "#7d8ea3" }}>Món trống — dùng ô tìm ở đáy màn hình (tab <b>Thực phẩm</b>) để thêm.</p>
       ) : (
         <table className="w-full text-sm">
           <thead>
@@ -692,7 +739,7 @@ function DishEditor({ dish, onUpdateGrams, onDeleteRow, onAddFood }: {
           </thead>
           <tbody>
             {dish.rows.map((row) => (
-              <tr key={row.uid} className="border-t" style={{ borderColor: "#eef3f9" }}>
+              <tr key={row.uid} className="border-t" style={{ borderColor: "#EEF3F9" }}>
                 <td className="py-1 pr-2">{row.foodName || "(chưa đặt tên)"}</td>
                 <td className="py-1 text-right"><GramInput value={row.inputGrams} onCommit={(g) => onUpdateGrams(row.uid, g)} /></td>
                 <td className="py-1 text-right tabular-nums" style={{ color: "#5a708c" }}>{Math.round(rowKcal(row))}</td>
@@ -702,7 +749,6 @@ function DishEditor({ dish, onUpdateGrams, onDeleteRow, onAddFood }: {
           </tbody>
         </table>
       )}
-      <MenuFoodSearch kind="food" onPickFood={(food) => onAddFood(dish.dish, food)} />
     </div>
   );
 }

@@ -247,6 +247,16 @@ table th {
   }
 }
 
+/* Chuyển cảnh nhẹ khi đổi Một ngày ↔ Nhiều ngày hoặc Nhập ↔ Phân tích. */
+@keyframes mode-panel-enter {
+  from { opacity: 0; transform: translateY(8px) scale(0.995); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mode-panel-enter {
+  animation: mode-panel-enter 240ms ease-out both;
+}
+
 @media (max-width: 640px) {
   .calculation-workspace table th:first-child,
   .calculation-workspace table td:first-child {

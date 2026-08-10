@@ -41,14 +41,6 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#f1f6f4] text-neutral-900">
         <VisitTracker />
         <header className="site-header border-b-4 border-[#123c36] bg-white shadow-[0_5px_20px_rgba(18,60,54,0.08)]">
-          <div className="site-topbar bg-[#123c36] text-white">
-            <div className="flex w-full items-center justify-between gap-3 px-5 py-1 text-[11px]">
-              <span className="font-semibold tracking-[.08em]">
-                SÁNG KIẾN CẢI TIẾN · BỆNH VIỆN ĐA KHOA NAM LIÊN CHIỂU
-              </span>
-              <span className="hidden sm:inline">Sở Y tế thành phố Đà Nẵng</span>
-            </div>
-          </div>
           <nav className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-5 py-2 sm:gap-x-5">
             <Link
               href="/"
