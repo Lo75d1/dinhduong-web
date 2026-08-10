@@ -395,7 +395,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
 
       {/* #3 · Thanh tìm & thêm CỐ ĐỊNH đáy màn hình (như 1 ngày): thêm vào bữa/món đang chọn */}
       {days.length > 0 && (
-        <div className="sticky bottom-0 z-30 -mx-1 mt-1 rounded-t-xl border-2 border-b-0 bg-white px-3 py-2 shadow-[0_-6px_18px_rgba(12,68,124,0.15)]" style={{ borderColor: ACCENT }}>
+        <div className="fixed inset-x-2 bottom-0 z-50 mx-auto max-w-7xl rounded-t-xl border-2 border-b-0 bg-white px-3 py-2 shadow-[0_-8px_28px_rgba(12,68,124,0.24)] sm:inset-x-5" style={{ borderColor: ACCENT }}>
           <div className="mb-1.5 flex flex-wrap items-center gap-2">
             <span className="text-sm font-bold" style={{ color: INK }}>🔎 Tìm & thêm</span>
             <div className="inline-flex overflow-hidden rounded-md border" style={{ borderColor: "#B5D4F4" }}>
@@ -410,6 +410,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
           <MenuFoodSearch kind={bottomKind} onPickFood={pickFoodBottom} onPickDish={pickDishBottom} />
         </div>
       )}
+      {view === "entry" && days.length > 0 && <div className="h-32" aria-hidden />}
       </>}
 
       {view === "analysis" && (days.length === 0 ? (

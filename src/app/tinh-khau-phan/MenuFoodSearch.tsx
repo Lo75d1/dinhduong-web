@@ -12,12 +12,28 @@ type DishResult = {
   id: string;
   name: string;
   totalWeightG: number | null;
+  servingUnit: string | null;
   categoryRaw: string | null;
+  ageGroup: string | null;
+  diseaseDiet: string | null;
+  imageSourceId?: string | null;
   ingredients: MenuDishIngredient[];
 };
 
 const ACCENT = "#185FA5";
 const INK = "#0C447C";
+
+const FOOD_TYPE_META: Record<string, { label: string; className: string }> = {
+  TS: { label: "🥬 Tươi sống", className: "bg-emerald-100 text-emerald-900" },
+  CB: { label: "🍳 Chế biến", className: "bg-amber-50 text-amber-800" },
+  MA: { label: "🍜 Món ăn", className: "bg-sky-50 text-sky-700" },
+  SP: { label: "📦 Sản phẩm", className: "bg-violet-50 text-violet-800" },
+};
+
+function nutrient(food: MenuFoodResult, key: string) {
+  const value = food[key];
+  return typeof value === "number" && Number.isFinite(value) ? Math.round(value * 10) / 10 : null;
+}
 
 export default function MenuFoodSearch({
   kind,
@@ -107,9 +123,10 @@ export default function MenuFoodSearch({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={placeholder ?? (kind === "food" ? "Tìm thực phẩm để thêm vào món…" : "Tìm món để thêm vào bữa…")}
-          className="min-w-0 flex-1 rounded border px-2 py-1.5 text-sm"
+          className="min-w-0 flex-1 rounded border px-3 py-2 text-sm"
           style={{ borderColor: "#cdd9e6" }}
         />
+        {q && <button type="button" onClick={() => setQ("")} className="shrink-0 rounded border border-neutral-300 px-2 py-2 text-xs font-semibold text-neutral-600" aria-label="Xóa nội dung tìm kiếm">✕</button>}
         <button type="button" onClick={() => setFiltersOpen((o) => !o)} className="shrink-0 rounded border px-2 py-1.5 text-xs font-semibold" style={{ borderColor: ACCENT, color: INK, background: filtersOpen ? "#E6F1FB" : "#fff" }}>Bộ lọc {filtersOpen ? "▾" : "▸"}</button>
         {kind === "food" && <button type="button" onClick={() => setManualOpen((o) => !o)} className="shrink-0 rounded border px-2 py-1.5 text-xs font-semibold" style={{ borderColor: "#0c5f4d", color: "#0c5f4d", background: manualOpen ? "#eafaf2" : "#fff" }}>＋ TP mới</button>}
       </div>
@@ -152,24 +169,30 @@ export default function MenuFoodSearch({
         </p>
       )}
       {q.trim() && !loading && !failed && (
-        <div className="mt-1 max-h-56 overflow-y-auto">
+        <div className="mt-2 max-h-[min(45vh,22rem)] overflow-y-auto rounded-md border border-[#D7E6F5] bg-white shadow-lg">
           {kind === "food" ? (
             foods.length === 0 ? (
               <p className="px-1 py-2 text-[11px]" style={{ color: "#7d8ea3" }}>Không tìm thấy thực phẩm.</p>
             ) : (
-              <ul className="flex flex-col">
+              <ul className="divide-y divide-[#E1E9F5]">
                 {foods.slice(0, 30).map((food) => (
                   <li key={food.id}>
                     <button
                       type="button"
                       onClick={() => { onPickFood?.(food); setQ(""); }}
-                      className="flex w-full items-baseline justify-between gap-2 rounded px-2 py-1 text-left text-[12px] hover:bg-[#E6F1FB]"
+                      className="flex w-full items-start gap-3 px-3 py-2.5 text-left text-sm hover:bg-[#E6F1FB]"
                     >
-                      <span className="min-w-0 truncate" style={{ color: INK }}>{food.name}</span>
-                      <span className="shrink-0 text-[10px]" style={{ color: "#7d8ea3" }}>
-                        {typeof food.energyKcal === "number" ? `${Math.round(food.energyKcal)} kcal/100g` : "—"}
-                        {typeof food.source === "string" ? ` · ${food.source}` : ""}
+                      {typeof food.imageUrl === "string" && food.imageUrl ? <img src={food.imageUrl} alt="" className="h-11 w-11 shrink-0 rounded-md border border-[#D7E6F5] object-cover" loading="lazy" /> : <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#F4F9FE] text-xl" aria-hidden>🥗</span>}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold" style={{ color: INK }}>{food.name}</span>
+                        <span className="mt-1 flex flex-wrap gap-1 text-[11px]">
+                          {typeof food.foodType === "string" && FOOD_TYPE_META[food.foodType] && <span className={`rounded-full px-2 py-0.5 font-medium ${FOOD_TYPE_META[food.foodType].className}`}>{FOOD_TYPE_META[food.foodType].label}</span>}
+                          {typeof food.source === "string" && <span className="rounded bg-neutral-100 px-1.5 py-0.5">Nguồn: {food.source}</span>}
+                          {typeof food.foodGroup === "string" && food.foodGroup && <span className="rounded bg-[#F4F9FE] px-1.5 py-0.5 text-[#0C447C]">{food.foodGroup}</span>}
+                        </span>
+                        <span className="mt-1 block text-xs text-neutral-700">100 g: <b>{nutrient(food, "energyKcal") ?? "—"} kcal</b> · P {nutrient(food, "proteinG") ?? "—"} g · L {nutrient(food, "lipidG") ?? "—"} g · G {nutrient(food, "glucidG") ?? "—"} g{typeof food.wastePercent === "number" ? ` · thải bỏ ${food.wastePercent}%` : ""}</span>
                       </span>
+                      <span className="shrink-0 rounded border border-[#185FA5] px-2 py-1 text-xs font-semibold text-[#0C447C]">＋ Thêm</span>
                     </button>
                   </li>
                 ))}
@@ -178,7 +201,7 @@ export default function MenuFoodSearch({
           ) : dishes.length === 0 ? (
             <p className="px-1 py-2 text-[11px]" style={{ color: "#7d8ea3" }}>Không tìm thấy món.</p>
           ) : (
-            <ul className="flex flex-col">
+            <ul className="divide-y divide-[#E1E9F5]">
               {dishes.slice(0, 30).map((dish) => {
                 const usable = dish.ingredients.filter((i) => i.food).length;
                 return (
@@ -186,12 +209,19 @@ export default function MenuFoodSearch({
                     <button
                       type="button"
                       onClick={() => { onPickDish?.(dish); setQ(""); }}
-                      className="flex w-full items-baseline justify-between gap-2 rounded px-2 py-1 text-left text-[12px] hover:bg-[#E6F1FB]"
+                      className="flex w-full items-start gap-3 px-3 py-3 text-left text-sm hover:bg-[#E6F1FB]"
                     >
-                      <span className="min-w-0 truncate" style={{ color: INK }}>{dish.name}</span>
-                      <span className="shrink-0 text-[10px]" style={{ color: usable ? "#7d8ea3" : "#8a5a1d" }}>
-                        {usable ? `${usable} nguyên liệu` : "chưa có dữ liệu nguyên liệu"}
+                      {dish.imageSourceId ? <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt="" className="h-12 w-12 shrink-0 rounded-md border border-[#D7E6F5] object-cover" loading="lazy" /> : <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-[#F4F9FE] text-xl" aria-hidden>🍲</span>}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold" style={{ color: INK }}>{dish.name}</span>
+                        <span className="mt-1 flex flex-wrap gap-1 text-[11px] text-neutral-700">
+                          {dish.categoryRaw && <span className="rounded bg-neutral-100 px-1.5 py-0.5">{dish.categoryRaw}</span>}
+                          {dish.ageGroup && <span className="rounded bg-sky-50 px-1.5 py-0.5">{dish.ageGroup}</span>}
+                          {dish.diseaseDiet && <span className="rounded bg-rose-50 px-1.5 py-0.5">{dish.diseaseDiet}</span>}
+                        </span>
+                        <span className="mt-1 block text-xs" style={{ color: usable ? "#5a708c" : "#8a5a1d" }}>{usable ? `${usable}/${dish.ingredients.length} nguyên liệu có dữ liệu` : "Chưa có nguyên liệu liên kết dữ liệu"}{dish.totalWeightG ? ` · ${dish.totalWeightG} g` : ""}{dish.servingUnit ? ` · ${dish.servingUnit}` : ""}</span>
                       </span>
+                      <span className="shrink-0 rounded border border-[#185FA5] px-2 py-1 text-xs font-semibold text-[#0C447C]">＋ Thêm món</span>
                     </button>
                   </li>
                 );
