@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: siteTitle,
   description: siteDescription,
   applicationName: "Dinh dưỡng 2598",
+  alternates: { canonical: "/" },
+  robots: { index: true, follow: true },
+  keywords: ["Dinh dưỡng 2598", "tra cứu dinh dưỡng", "tính khẩu phần", "thành phần thực phẩm"],
   icons: {
     icon: [{ url: "/icon.png", type: "image/png", sizes: "512x512" }],
     apple: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
@@ -44,6 +47,20 @@ export default function RootLayout({
   return (
     <html lang="vi" className="h-full">
       <body className="min-h-full flex flex-col bg-[#f1f6f4] text-neutral-900">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "Dinh dưỡng 2598",
+              alternateName: "Dinh duong 2598",
+              url: siteUrl,
+              description: siteDescription,
+              inLanguage: "vi",
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
         <VisitTracker />
         <header className="site-header border-b-4 border-[#123c36] bg-white shadow-[0_5px_20px_rgba(18,60,54,0.08)]">
           <nav className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-5 py-2 sm:gap-x-5">
