@@ -4,22 +4,47 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-type SessionUser = { id: string; email: string; displayName: string; role: string };
+type SessionUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  role: string;
+};
 
 function roleLabel(role: string) {
-  return role === "ADMIN" ? "Quản trị viên" : role === "EDITOR" ? "Biên tập dữ liệu" : "Tài khoản cá nhân";
+  return role === "ADMIN"
+    ? "Quản trị viên"
+    : role === "EDITOR"
+      ? "Biên tập dữ liệu"
+      : role === "CLINICIAN"
+        ? "Bác sĩ"
+        : role === "DEPARTMENT_STAFF"
+          ? "Điều dưỡng khoa"
+          : role === "DIETITIAN"
+            ? "Dinh dưỡng"
+            : role === "KITCHEN_MANAGER"
+              ? "Bếp trưởng"
+              : role === "KITCHEN_STAFF"
+                ? "Nhân viên bếp"
+                : "Tài khoản cá nhân";
 }
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
   if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
-  return (parts[0].slice(0, 1) + parts[parts.length - 1].slice(0, 1)).toUpperCase();
+  return (
+    parts[0].slice(0, 1) + parts[parts.length - 1].slice(0, 1)
+  ).toUpperCase();
 }
 
 // Menu tài khoản kiểu Google: chỉ hiện ảnh đại diện (chữ viết tắt) ở góc phải; bấm
 // vào mới mở popup gồm tên/email/vai trò và các liên kết Tài khoản/Quản trị/Đăng xuất.
-export default function AccountMenuClient({ user }: { user: SessionUser | null }) {
+export default function AccountMenuClient({
+  user,
+}: {
+  user: SessionUser | null;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -27,7 +52,8 @@ export default function AccountMenuClient({ user }: { user: SessionUser | null }
   useEffect(() => {
     if (!open) return;
     function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
@@ -78,17 +104,73 @@ export default function AccountMenuClient({ user }: { user: SessionUser | null }
               {initials(user.displayName)}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-[#123c36]">{user.displayName}</span>
-              <span className="block truncate text-xs text-neutral-600">{user.email}</span>
-              <span className="mt-0.5 block text-[11px] font-semibold text-[#0c5f4d]">{roleLabel(user.role)}</span>
+              <span className="block truncate text-sm font-semibold text-[#123c36]">
+                {user.displayName}
+              </span>
+              <span className="block truncate text-xs text-neutral-600">
+                {user.email}
+              </span>
+              <span className="mt-0.5 block text-[11px] font-semibold text-[#0c5f4d]">
+                {roleLabel(user.role)}
+              </span>
             </span>
           </div>
           <div className="flex flex-col py-1 text-sm">
-            <Link href="/tai-khoan" onClick={() => setOpen(false)} className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]" role="menuitem">
+            <Link
+              href="/tai-khoan"
+              onClick={() => setOpen(false)}
+              className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
+              role="menuitem"
+            >
               Tài khoản của tôi
             </Link>
+            {user.role === "CLINICIAN" && (
+              <Link
+                href="/chi-dinh-che-do-an"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
+                role="menuitem"
+              >
+                Chỉ định chế độ ăn
+              </Link>
+            )}
+            {user.role === "DEPARTMENT_STAFF" && (
+              <Link
+                href="/bao-suat-an"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
+                role="menuitem"
+              >
+                Báo suất ăn
+              </Link>
+            )}
+            {user.role === "KITCHEN_STAFF" && (
+              <Link
+                href="/bep"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
+                role="menuitem"
+              >
+                Ca trực bếp
+              </Link>
+            )}
+            {["ADMIN", "DIETITIAN", "KITCHEN_MANAGER"].includes(user.role) && (
+              <Link
+                href="/quan-tri/suat-an"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
+                role="menuitem"
+              >
+                Quản lý suất ăn
+              </Link>
+            )}
             {user.role === "ADMIN" && (
-              <Link href="/quan-tri" onClick={() => setOpen(false)} className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]" role="menuitem">
+              <Link
+                href="/quan-tri"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
+                role="menuitem"
+              >
                 Trang quản trị
               </Link>
             )}

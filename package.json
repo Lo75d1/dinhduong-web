@@ -12,7 +12,8 @@
     "test:ration-report": "tsx scripts/test-ration-report.ts",
     "test:exchange-units": "tsx scripts/test-exchange-units.ts",
     "test:menu-export": "tsx scripts/test-menu-analysis-workbook.ts",
-    "test:multi-day": "tsx scripts/test-multi-day.ts"
+    "test:multi-day": "tsx scripts/test-multi-day.ts",
+    "test:diet-orders": "tsx scripts/test-diet-orders.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -25,6 +26,7 @@
     "exceljs": "^4.4.0",
     "next": "16.2.10",
     "pg": "^8.22.0",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -32,6 +34,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
