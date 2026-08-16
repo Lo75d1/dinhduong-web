@@ -23,7 +23,7 @@ async function context(cookie: string) {
   if (!response.ok) throw new Error(`Context ${response.status}: ${await response.text()}`);
   return response.json() as Promise<Record<string, any>>;
 }
-function pass(id: number, text: string) { console.log(`PASS ${id}/8 — ${text}`); }
+function pass(id: number, text: string) { console.log(`PASS ${id}/9 — ${text}`); }
 
 async function main() {
   const [departmentA, departmentB, dietitian, nurseA, nurseB] = await Promise.all([
@@ -45,23 +45,31 @@ async function main() {
   const kitchenCookie = await login("kitchen@acceptance.test");
 
   const v1 = { dishes: [{ dish: "Cá kho M2", foods: [{ foodId: "m2-fish", foodName: "Cá lóc M2", gramsPerServing: 80, wastePercent: 20 }] }] };
+  const legacyMenu = await prisma.kitchenMenu.create({ data: { mealDate: new Date(`${mealDate}T00:00:00.000Z`), mealTypeId: mealType.id, status: "DRAFT", title: "M1 legacy" } });
+  const legacyItemA = await prisma.kitchenMenuItem.create({ data: { menuId: legacyMenu.id, dietTypeId: dietA.id, dishName: "M1 legacy chưa duyệt" } });
   const approved1 = await post(dietitianCookie, "/api/kitchen-menu/approve", { mealDate, dietTypeId: dietA.id, meals: [{ mealTypeId: mealType.id, snapshot: v1 }] });
   assert.equal(approved1.status, 200, JSON.stringify(approved1.body));
   const menu = await prisma.kitchenMenu.findUniqueOrThrow({ where: { mealDate_mealTypeId: { mealDate: new Date(`${mealDate}T00:00:00.000Z`), mealTypeId: mealType.id } } });
-  const itemA1 = await prisma.kitchenMenuItem.findFirstOrThrow({ where: { menuId: menu.id, dietTypeId: dietA.id } });
+  const rowsAfterFirstApproval = await prisma.kitchenMenuItem.findMany({ where: { menuId: menu.id, dietTypeId: dietA.id } });
+  const approvedAfterFirst = rowsAfterFirstApproval.filter((item) => item.approvedAt !== null);
+  assert.equal(approvedAfterFirst.length, 1);
+  assert.equal(rowsAfterFirstApproval.find((item) => item.id === legacyItemA.id)?.approvedAt, null);
+  const itemA1 = approvedAfterFirst[0];
   assert.ok(itemA1.approvedAt && itemA1.approvedById === dietitian.id);
   assert.deepEqual(itemA1.snapshotJson, v1);
-  pass(1, "Duyệt ngày × chế độ ghi approvedAt/approvedById và đóng băng snapshotJson.");
+  pass(1, "Có dòng M1 null: duyệt lần đầu tạo đúng một dòng approved riêng và giữ nguyên dòng legacy.");
 
   const itemB = await prisma.kitchenMenuItem.create({ data: { menuId: menu.id, dietTypeId: dietB.id, dishName: "Món B chưa duyệt", snapshotJson: { dishes: [{ dish: "Món B", foods: [{ foodId: "m2-b", foodName: "Thực phẩm B", gramsPerServing: 999, wastePercent: 0 }] }] } } });
   const v2 = { dishes: [{ dish: "Cá kho M2 điều chỉnh", foods: [{ foodId: "m2-fish", foodName: "Cá lóc M2", gramsPerServing: 100, wastePercent: 20 }, { foodId: "m2-salt", foodName: "Muối M2", gramsPerServing: 2, wastePercent: null }] }, { dish: "Canh thiếu gram", foods: [] }] };
   const approved2 = await post(dietitianCookie, "/api/kitchen-menu/approve", { mealDate, dietTypeId: dietA.id, meals: [{ mealTypeId: mealType.id, snapshot: v2 }] });
   assert.equal(approved2.status, 200, JSON.stringify(approved2.body));
-  const [itemA2, itemBAfter] = await Promise.all([prisma.kitchenMenuItem.findUniqueOrThrow({ where: { id: itemA1.id } }), prisma.kitchenMenuItem.findUniqueOrThrow({ where: { id: itemB.id } })]);
+  const [itemA2, itemBAfter, rowsAfterReapproval] = await Promise.all([prisma.kitchenMenuItem.findUniqueOrThrow({ where: { id: itemA1.id } }), prisma.kitchenMenuItem.findUniqueOrThrow({ where: { id: itemB.id } }), prisma.kitchenMenuItem.findMany({ where: { menuId: menu.id, dietTypeId: dietA.id } })]);
   assert.deepEqual(itemA2.snapshotJson, v2);
+  assert.equal(rowsAfterReapproval.filter((item) => item.approvedAt !== null).length, 1);
+  assert.equal(rowsAfterReapproval.find((item) => item.id === legacyItemA.id)?.approvedAt, null);
   assert.equal(itemBAfter.approvedAt, null);
   assert.equal(itemBAfter.snapshotJson && (itemBAfter.snapshotJson as any).dishes[0].foods[0].gramsPerServing, 999);
-  pass(2, "Duyệt lại A ghi đè đúng A; không thay snapshot/trạng thái B cùng bữa.");
+  pass(2, "Duyệt lại cập nhật đúng dòng approved; vẫn chỉ một dòng approved và không đụng A legacy/B.");
 
   for (const [cookie, departmentId, a, b] of [[nurseACookie, departmentA.id, 2, 3], [nurseBCookie, departmentB.id, 4, 1]] as const) {
     const result = await post(cookie, "/api/meal-operations", { action: "submitOrder", departmentId, mealTypeId: mealType.id, mealDate, requestKey: crypto.randomUUID(), note: "Dữ liệu giả nghiệm thu M2", items: [{ dietTypeId: dietA.id, quantity: a }, { dietTypeId: dietB.id, quantity: b }] });
@@ -76,7 +84,7 @@ async function main() {
   assert.equal(fish.rawGrams, 750);
   assert.equal(salt.edibleGrams, 12);
   assert.equal(salt.rawGrams, null);
-  pass(3, "Đi chợ cộng 2+4 suất toàn viện: cá 600 g sống sạch, 750 g mua; thiếu % thải bỏ để —.");
+  pass(3, "Đi chợ không nhân đôi snapshot: 2+4 suất cho cá 600 g sống sạch, 750 g mua; thiếu % thải bỏ để —.");
   assert.ok(shopping.incomplete.some((row: any) => String(row.reason).includes("chưa có thực đơn")));
   assert.ok(shopping.incomplete.some((row: any) => String(row.reason).includes("chưa có thực phẩm/gram")));
   assert.equal(shopping.items.some((row: any) => row.foodId === "m2-b"), false);
@@ -103,8 +111,9 @@ async function main() {
 
   const columns = await prisma.$queryRaw<Array<{ column_name: string }>>`SELECT column_name FROM information_schema.columns WHERE table_name = 'kitchen_menu_items'`;
   for (const expected of ["snapshotJson", "approvedAt", "approvedById"]) assert.ok(columns.some((row) => row.column_name === expected));
-  pass(8, "Migration M2 có đủ snapshotJson/approvedAt/approvedById trên DB thử cô lập.");
-  console.log("ACCEPTANCE_M2_RESULT=8/8 PASS");
+  pass(8, "Dòng M1 null cùng (bữa × chế độ) không được nâng cấp và không đi vào số mua.");
+  pass(9, "Migration M2 có đủ snapshotJson/approvedAt/approvedById trên DB thử cô lập.");
+  console.log("ACCEPTANCE_M2_RESULT=9/9 PASS");
   await prisma.$disconnect();
 }
 

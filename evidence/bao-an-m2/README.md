@@ -26,18 +26,19 @@ All migrations have been successfully applied.
 Chạy `npx tsx scripts/acceptance-m2-snapshot.ts` trên app local kết nối DB thử:
 
 ```text
-PASS 1/8 — Duyệt ngày × chế độ ghi approvedAt/approvedById và đóng băng snapshotJson.
-PASS 2/8 — Duyệt lại A ghi đè đúng A; không thay snapshot/trạng thái B cùng bữa.
-PASS 3/8 — Đi chợ cộng 2+4 suất toàn viện: cá 600 g sống sạch, 750 g mua; thiếu % thải bỏ để —.
-PASS 4/8 — Chế độ có suất nhưng chưa duyệt và món thiếu gram đều cảnh báo, không tính số đoán.
-PASS 5/8 — KITCHEN_STAFF chỉ nhận item approvedAt khác null.
-PASS 6/8 — Trang bệnh nhân chỉ hiện item được duyệt.
-PASS 7/8 — Duyệt và duyệt lại đều có audit ở item; KitchenMenu.status chỉ là trạng thái hiển thị.
-PASS 8/8 — Migration M2 có đủ snapshotJson/approvedAt/approvedById trên DB thử cô lập.
-ACCEPTANCE_M2_RESULT=8/8 PASS
+PASS 1/9 — Có dòng M1 null: duyệt lần đầu tạo đúng một dòng approved riêng và giữ nguyên dòng legacy.
+PASS 2/9 — Duyệt lại cập nhật đúng dòng approved; vẫn chỉ một dòng approved và không đụng A legacy/B.
+PASS 3/9 — Đi chợ không nhân đôi snapshot: 2+4 suất cho cá 600 g sống sạch, 750 g mua; thiếu % thải bỏ để —.
+PASS 4/9 — Chế độ có suất nhưng chưa duyệt và món thiếu gram đều cảnh báo, không tính số đoán.
+PASS 5/9 — KITCHEN_STAFF chỉ nhận item approvedAt khác null.
+PASS 6/9 — Trang bệnh nhân chỉ hiện item được duyệt.
+PASS 7/9 — Duyệt và duyệt lại đều có audit ở item; KitchenMenu.status chỉ là trạng thái hiển thị.
+PASS 8/9 — Dòng M1 null cùng (bữa × chế độ) không được nâng cấp và không đi vào số mua.
+PASS 9/9 — Migration M2 có đủ snapshotJson/approvedAt/approvedById trên DB thử cô lập.
+ACCEPTANCE_M2_RESULT=9/9 PASS
 ```
 
-Harness seed dữ liệu giả cho hai khoa `TEST-A`/`TEST-B`, hai chế độ M2 và tài khoản giả DIETITIAN/DEPARTMENT_STAFF/KITCHEN_STAFF. Không chứa dữ liệu người bệnh thật.
+Harness seed dữ liệu giả cho hai khoa `TEST-A`/`TEST-B`, hai chế độ M2 và tài khoản giả DIETITIAN/DEPARTMENT_STAFF/KITCHEN_STAFF. Ca hồi quy tạo sẵn một dòng M1 `approvedAt = null` cùng `(bữa × chế độ)`, duyệt rồi duyệt lại để xác nhận API luôn tạo/cập nhật đúng một dòng đã duyệt và bảng đi chợ không cộng snapshot hai lần. Không chứa dữ liệu người bệnh thật.
 
 ## Gate kỹ thuật
 

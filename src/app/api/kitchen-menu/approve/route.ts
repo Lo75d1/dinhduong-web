@@ -55,9 +55,12 @@ export async function POST(request: Request) {
           update: { status: "APPROVED", title: "Thực đơn bệnh viện", approvedAt, approvedById: user.id },
           create: { mealDate, mealTypeId: meal.mealTypeId, status: "APPROVED", title: "Thực đơn bệnh viện", approvedAt, approvedById: user.id },
         });
-        const existing = await tx.kitchenMenuItem.findFirst({ where: { menuId: menu.id, dietTypeId }, orderBy: [{ approvedAt: "desc" }, { sortOrder: "asc" }] });
-        result.push(existing
-          ? await tx.kitchenMenuItem.update({ where: { id: existing.id }, data: { dishName: meal.dishName, snapshotJson: meal.snapshot, approvedAt, approvedById: user.id, sortOrder } })
+        const existingApproved = await tx.kitchenMenuItem.findFirst({
+          where: { menuId: menu.id, dietTypeId, approvedAt: { not: null } },
+          orderBy: [{ approvedAt: "desc" }, { sortOrder: "asc" }],
+        });
+        result.push(existingApproved
+          ? await tx.kitchenMenuItem.update({ where: { id: existingApproved.id }, data: { dishName: meal.dishName, snapshotJson: meal.snapshot, approvedAt, approvedById: user.id, sortOrder } })
           : await tx.kitchenMenuItem.create({ data: { menuId: menu.id, dietTypeId, dishName: meal.dishName, snapshotJson: meal.snapshot, approvedAt, approvedById: user.id, sortOrder } }));
       }
       return result;
