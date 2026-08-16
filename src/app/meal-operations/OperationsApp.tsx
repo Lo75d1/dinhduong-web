@@ -823,15 +823,52 @@ function SnapshotMenuPanel({ data }: { data: Row }) {
   if (!["ADMIN", "DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF"].includes(data.user.role)) return null;
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
-      <section className={panel}>
-        <h2 className="text-xl font-black text-[#123c36]">Thực đơn đã duyệt</h2>
-        <p className="mt-1 text-sm text-neutral-600">Chỉ đọc bản chụp từ Tính khẩu phần; không nhập món hoặc gram tại đây.</p>
-        <div className="mt-4 grid gap-2">{data.menus.length ? data.menus.map((menu: Row) => <article key={menu.id} className="rounded-xl border border-[#c9d9d2] p-3"><b>{menu.mealType.name}</b><div className="mt-2 grid gap-2">{menu.items.map((item: Row) => <div key={item.id} className="rounded-lg bg-[#f1f7f4] p-2 text-sm"><b className="text-[#123c36]">{item.dietType.name}</b><p>{item.dishName}</p><p className="text-xs text-neutral-500">Duyệt {item.approvedAt ? new Date(item.approvedAt).toLocaleString("vi-VN") : "—"}{item.approvedBy?.displayName ? " · " + item.approvedBy.displayName : ""}</p></div>)}</div></article>) : <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Chưa có thực đơn nào được duyệt cho ngày này.</p>}</div>
+      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+        <div className="border-b border-[#123c36]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[#123c36]">Thực đơn đã duyệt</h2>
+          <p className="mt-1 text-sm text-neutral-600">Chỉ đọc bản chụp từ Tính khẩu phần; không nhập món hoặc gram tại đây.</p>
+        </div>
+        <div className="grid gap-3 px-5 py-4">
+          {data.menus.length ? data.menus.map((menu: Row) => (
+            <article key={menu.id} className="overflow-hidden rounded-xl border border-[#123c36]/10">
+              <div className="border-b border-[#123c36]/10 px-4 py-3 font-medium text-[#123c36]">{menu.mealType.name}</div>
+              <div className="grid gap-2 p-3">
+                {menu.items.map((item: Row) => (
+                  <div key={item.id} className="rounded-lg bg-[#e1f5ee] px-3 py-2 text-sm">
+                    <span className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-[#085041]">{item.dietType.name}</span>
+                    <p className="mt-1 text-[#24483f]">{item.dishName}</p>
+                    <p className="mt-1 text-xs text-neutral-500">Duyệt {item.approvedAt ? new Date(item.approvedAt).toLocaleString("vi-VN") : "—"}{item.approvedBy?.displayName ? " · " + item.approvedBy.displayName : ""}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          )) : <p className="rounded-lg border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900">Chưa có thực đơn nào được duyệt cho ngày này.</p>}
+        </div>
       </section>
-      <section className={panel}>
-        <h2 className="text-xl font-black text-[#123c36]">Bảng đi chợ toàn viện</h2>
-        <p className="mt-1 text-sm text-neutral-600">Sống sạch = gram/người × tổng suất các khoa. Số mua có tính tỷ lệ thải bỏ.</p>
-        <div className="mt-4 grid gap-3">{data.shoppingLists.map((list: Row) => <article key={list.mealType.id} className="overflow-hidden rounded-xl border border-[#c9d9d2]"><div className="bg-[#edf5f1] px-3 py-2 font-black text-[#123c36]">{list.mealType.name}</div>{list.items.length ? <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Thực phẩm</th><th className="p-2 text-right">Sống sạch</th><th className="p-2 text-right">Mua</th></tr></thead><tbody>{list.items.map((item: Row) => <tr key={item.foodId} className="border-b last:border-0"><td className="p-2 font-semibold">{item.foodName}</td><td className="p-2 text-right">{Math.round(item.edibleGrams).toLocaleString("vi-VN")} g</td><td className="p-2 text-right font-bold">{item.rawGrams == null ? "—" : Math.round(item.rawGrams).toLocaleString("vi-VN") + " g"}</td></tr>)}</tbody></table> : <p className="p-3 text-sm text-neutral-600">Chưa có nguyên liệu đủ điều kiện tính.</p>}{list.incomplete.length > 0 && <div className="border-t border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><b>Cảnh báo — không đoán số thiếu:</b><ul className="mt-1 list-disc pl-5">{list.incomplete.map((warning: Row, index: number) => <li key={warning.menuItemId + "-" + index}>{warning.dishName}: {warning.reason}</li>)}</ul></div>}</article>)}</div>
+      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+        <div className="border-b border-[#123c36]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[#123c36]">Bảng đi chợ toàn viện</h2>
+          <p className="mt-1 text-sm text-neutral-600">Sống sạch = gram/người × tổng suất các khoa. Số mua có tính tỷ lệ thải bỏ.</p>
+        </div>
+        <div className="grid gap-3 px-5 py-4">
+          {data.shoppingLists.map((list: Row) => (
+            <article key={list.mealType.id} className="overflow-hidden rounded-xl border border-[#123c36]/10">
+              <div className="flex items-center justify-between gap-3 bg-[#e1f5ee] px-5 py-3">
+                <span className="font-medium text-[#085041]">{list.mealType.name}</span>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#085041]">Đi chợ</span>
+              </div>
+              {list.items.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[480px] text-sm">
+                    <thead><tr className="border-y border-[#123c36]/10 text-left text-xs text-neutral-500"><th className="px-4 py-2 font-normal">Thực phẩm</th><th className="px-4 py-2 text-right font-normal">Sống sạch</th><th className="px-4 py-2 text-right font-normal">Mua</th></tr></thead>
+                    <tbody>{list.items.map((item: Row) => <tr key={item.foodId} className="border-b border-[#123c36]/5 last:border-b-0"><td className="px-4 py-2.5 font-medium text-[#24483f]">{item.foodName}</td><td className="px-4 py-2.5 text-right tabular-nums">{Math.round(item.edibleGrams).toLocaleString("vi-VN")} g</td><td className="px-4 py-2.5 text-right font-medium tabular-nums text-[#085041]">{item.rawGrams == null ? "—" : Math.round(item.rawGrams).toLocaleString("vi-VN") + " g"}</td></tr>)}</tbody>
+                  </table>
+                </div>
+              ) : <p className="px-5 py-4 text-sm text-neutral-600">Chưa có nguyên liệu đủ điều kiện tính.</p>}
+              {list.incomplete.length > 0 && <div className="border-t border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900"><span className="font-medium">Cảnh báo — không đoán số thiếu:</span><ul className="mt-1 list-disc pl-5">{list.incomplete.map((warning: Row, index: number) => <li key={warning.menuItemId + "-" + index}>{warning.dishName}: {warning.reason}</li>)}</ul></div>}
+            </article>
+          ))}
+        </div>
       </section>
     </div>
   );
@@ -1310,9 +1347,11 @@ function DoctorPanel({
   });
   if (data.user.role !== "CLINICIAN")
     return (
-      <section className={panel}>
-        <h2 className="text-xl font-black text-rose-800">Không đúng vai trò</h2>
-        <p className="mt-2">
+      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+        <div className="border-b border-[#123c36]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-rose-800">Không đúng vai trò</h2>
+        </div>
+        <p className="px-5 py-4">
           Màn hình này chỉ dành cho tài khoản bác sĩ có vai trò CLINICIAN.
         </p>
       </section>
@@ -1320,6 +1359,8 @@ function DoctorPanel({
   const active = (data.dietOrders ?? []).filter(
     (order: Row) => order.status === "ACTIVE",
   );
+  const doctorInput =
+    "mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm";
   async function submit(e: FormEvent) {
     e.preventDefault();
     const ok = await act({
@@ -1338,14 +1379,16 @@ function DoctorPanel({
   }
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,440px)_1fr]">
-      <section className={panel}>
-        <h2 className="text-xl font-black text-[#123c36]">Tạo chỉ định</h2>
-        <p className="mt-1 text-sm text-neutral-600">
-          Chỉ nhập mã người bệnh nội bộ. Không nhập họ tên, chẩn đoán, CCCD hoặc
-          bệnh án.
-        </p>
-        <form onSubmit={submit} className="mt-4 space-y-3">
-          <label className="block font-bold">
+      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+        <div className="border-b border-[#123c36]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[#123c36]">Tạo chỉ định</h2>
+          <p className="mt-1 text-sm text-neutral-600">
+            Chỉ nhập mã người bệnh nội bộ. Không nhập họ tên, chẩn đoán, CCCD hoặc
+            bệnh án.
+          </p>
+        </div>
+        <form onSubmit={submit} className="space-y-3 px-5 py-4">
+          <label className="block text-sm font-medium text-[#24483f]">
             Mã người bệnh *
             <input
               required
@@ -1354,12 +1397,12 @@ function DoctorPanel({
               onChange={(e) =>
                 setForm({ ...form, patientCode: e.target.value.toUpperCase() })
               }
-              className={input}
+              className={doctorInput}
               placeholder="Ví dụ: NB-00125"
             />
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Khoa *
               <select
                 required
@@ -1367,7 +1410,7 @@ function DoctorPanel({
                 onChange={(e) =>
                   setForm({ ...form, departmentId: e.target.value })
                 }
-                className={input}
+                className={doctorInput}
               >
                 {data.departments.map((item: Row) => (
                   <option key={item.id} value={item.id}>
@@ -1376,23 +1419,23 @@ function DoctorPanel({
                 ))}
               </select>
             </label>
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Phòng
               <input
                 maxLength={80}
                 value={form.room}
                 onChange={(e) => setForm({ ...form, room: e.target.value })}
-                className={input}
+                className={doctorInput}
               />
             </label>
           </div>
-          <label className="block font-bold">
+          <label className="block text-sm font-medium text-[#24483f]">
             Chế độ ăn *
             <select
               required
               value={form.dietTypeId}
               onChange={(e) => setForm({ ...form, dietTypeId: e.target.value })}
-              className={input}
+              className={doctorInput}
             >
               {data.dietTypes.map((item: Row) => (
                 <option key={item.id} value={item.id}>
@@ -1402,7 +1445,7 @@ function DoctorPanel({
             </select>
           </label>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Hiệu lực từ *
               <input
                 required
@@ -1411,21 +1454,21 @@ function DoctorPanel({
                 onChange={(e) =>
                   setForm({ ...form, effectiveDate: e.target.value })
                 }
-                className={input}
+                className={doctorInput}
               />
             </label>
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Kết thúc dự kiến
               <input
                 type="date"
                 min={form.effectiveDate}
                 value={form.endDate}
                 onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                className={input}
+                className={doctorInput}
               />
             </label>
           </div>
-          <label className="block font-bold">
+          <label className="block text-sm font-medium text-[#24483f]">
             Ghi chú chuyên môn
             <textarea
               maxLength={500}
@@ -1434,10 +1477,10 @@ function DoctorPanel({
               onChange={(e) =>
                 setForm({ ...form, clinicalNote: e.target.value })
               }
-              className={input}
+              className={doctorInput}
             />
           </label>
-          <label className="flex items-start gap-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 font-bold text-amber-950">
+          <label className="flex items-start gap-3 rounded-xl border border-amber-400 bg-amber-50 px-4 py-3 font-medium text-amber-900">
             <input
               type="checkbox"
               checked={form.critical}
@@ -1459,46 +1502,46 @@ function DoctorPanel({
               !form.departmentId ||
               !form.dietTypeId
             }
-            className="w-full rounded-xl bg-[#123c36] px-5 py-3 font-black text-white disabled:opacity-50"
+            className="w-full rounded-lg bg-[#0f6e56] px-5 py-2.5 font-semibold text-white transition hover:bg-[#0c5a47] disabled:opacity-50"
           >
             Lưu chỉ định
           </button>
         </form>
       </section>
-      <section className={panel}>
-        <div className="flex items-center justify-between">
+      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+        <div className="flex items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
           <div>
-            <h2 className="text-xl font-black text-[#123c36]">
+            <h2 className="text-lg font-semibold text-[#123c36]">
               Chỉ định đang hoạt động
             </h2>
             <p className="mt-1 text-sm text-neutral-600">
               Tạo chỉ định mới cho cùng mã chỉ sau khi kết thúc chỉ định cũ.
             </p>
           </div>
-          <span className="rounded-full bg-[#e7f2ed] px-3 py-1 font-black text-[#123c36]">
+          <span className="rounded-full bg-[#e1f5ee] px-3 py-1 text-xs font-medium text-[#085041]">
             {active.length}
           </span>
         </div>
-        <div className="mt-4 grid gap-3">
+        <div className="grid gap-3 px-5 py-4">
           {active.map((order: Row) => (
             <article
               key={order.id}
-              className={`rounded-xl border-2 p-4 ${order.critical ? "border-amber-500 bg-amber-50" : "border-[#c9d9d2] bg-[#f7faf8]"}`}
+              className={`rounded-xl border px-4 py-3 ${order.critical ? "border-amber-400 bg-amber-50 text-amber-900" : "border-[#123c36]/10 bg-white"}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <b className="text-lg text-[#123c36]">{order.patientCode}</b>
+                  <span className="text-lg font-semibold text-[#123c36]">{order.patientCode}</span>
                   <p className="text-sm">
                     {order.department.name} · {order.room || "Chưa ghi phòng"}
                   </p>
                 </div>
                 {order.critical && (
-                  <span className="rounded-full bg-amber-600 px-3 py-1 text-xs font-black text-white">
+                  <span className="rounded-full border border-amber-400 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
                     XÁC MINH TRỰC TIẾP
                   </span>
                 )}
               </div>
-              <p className="mt-2 font-bold">{order.dietType.name}</p>
+              <p className="mt-2 font-medium">{order.dietType.name}</p>
               <p className="mt-1 text-sm text-neutral-600">
                 Hiệu lực {String(order.effectiveDate).slice(0, 10)}
                 {order.endDate
@@ -1528,7 +1571,7 @@ function DoctorPanel({
                           : date,
                     });
                 }}
-                className="mt-3 rounded-lg border-2 border-rose-700 px-3 py-2 text-sm font-bold text-rose-800"
+                className="mt-3 rounded-lg border border-rose-300 px-3 py-2 text-sm font-medium text-rose-800 hover:bg-rose-50 disabled:opacity-50"
               >
                 Kết thúc chỉ định
               </button>
