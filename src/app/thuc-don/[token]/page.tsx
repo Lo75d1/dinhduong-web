@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
   const department = await prisma.department.findFirst({ where: { publicToken: token, status: "ACTIVE" }, select: { name: true, publicToken: true } });
   if (!department?.publicToken) notFound();
   const [menus, mealTypes] = await Promise.all([
-    prisma.kitchenMenu.findMany({ where: { mealDate: today.date, status: "APPROVED" }, include: { mealType: true, items: { include: { dietType: true }, orderBy: { sortOrder: "asc" } } }, orderBy: { mealType: { sortOrder: "asc" } } }),
+    prisma.kitchenMenu.findMany({ where: { mealDate: today.date, items: { some: { approvedAt: { not: null } } } }, include: { mealType: true, items: { where: { approvedAt: { not: null } }, include: { dietType: true }, orderBy: { sortOrder: "asc" } } }, orderBy: { mealType: { sortOrder: "asc" } } }),
     prisma.mealType.findMany({ where: { status: "ACTIVE" }, orderBy: [{ sortOrder: "asc" }, { serviceLocalTime: "asc" }] }),
   ]);
   const menuByMeal = new Map(menus.map((menu) => [menu.mealTypeId, menu]));

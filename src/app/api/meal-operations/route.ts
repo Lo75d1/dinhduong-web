@@ -57,6 +57,8 @@ export async function POST(request: Request) {
       unknown
     > | null;
     const action = cleanText(body?.action, 50);
+    if (action === "saveMenu" || action === "approveMenu")
+      throw new Error("Thực đơn chỉ được duyệt theo từng chế độ từ màn Tính khẩu phần.");
     if (!body || !action)
       return Response.json({ error: "Yêu cầu không hợp lệ." }, { status: 400 });
 
@@ -492,89 +494,6 @@ export async function POST(request: Request) {
         before: note,
         after: item,
         reason: cleanText(body.reviewNote, 300) || decision,
-      });
-      return Response.json({ item });
-    }
-
-    if (action === "saveMenu") {
-      requireManager(user, ["ADMIN", "DIETITIAN"]);
-      const mealDate = localDate(body.mealDate);
-      const mealTypeId = cleanText(body.mealTypeId);
-      const rows = (Array.isArray(body.items) ? body.items : [])
-        .map((raw, index) => {
-          const row = raw as Record<string, unknown>;
-          return {
-            dietTypeId: cleanText(row.dietTypeId),
-            dishName: cleanText(row.dishName),
-            note: cleanText(row.note, 300) || null,
-            sortOrder: index,
-          };
-        })
-        .filter((row) => row.dietTypeId && row.dishName);
-      if (!rows.length) throw new Error("Thực đơn cần ít nhất một món.");
-      const old = await prisma.kitchenMenu.findUnique({
-        where: { mealDate_mealTypeId: { mealDate, mealTypeId } },
-      });
-      const menu = await prisma.$transaction(async (tx) => {
-        if (old) {
-          await tx.kitchenMenuItem.deleteMany({ where: { menuId: old.id } });
-          return tx.kitchenMenu.update({
-            where: { id: old.id },
-            data: {
-              title: cleanText(body.title) || "Thực đơn",
-              note: cleanText(body.note, 500) || null,
-              status: "DRAFT",
-              approvedAt: null,
-              approvedById: null,
-              items: { create: rows },
-            },
-            include: { items: true },
-          });
-        }
-        return tx.kitchenMenu.create({
-          data: {
-            mealDate,
-            mealTypeId,
-            title: cleanText(body.title) || "Thực đơn",
-            note: cleanText(body.note, 500) || null,
-            items: { create: rows },
-          },
-          include: { items: true },
-        });
-      });
-      await audit({
-        entityType: "KITCHEN_MENU",
-        entityId: menu.id,
-        action: old ? "UPDATE" : "CREATE",
-        user,
-        before: old,
-        after: menu,
-        reason: "Soạn thực đơn vận hành",
-      });
-      return Response.json({ item: menu });
-    }
-
-    if (action === "approveMenu") {
-      requireManager(user, ["ADMIN", "DIETITIAN"]);
-      const id = cleanText(body.id);
-      const before = await prisma.kitchenMenu.findUnique({ where: { id } });
-      if (!before) throw new Error("Không tìm thấy thực đơn.");
-      const item = await prisma.kitchenMenu.update({
-        where: { id },
-        data: {
-          status: "APPROVED",
-          approvedById: user.id,
-          approvedAt: new Date(),
-        },
-      });
-      await audit({
-        entityType: "KITCHEN_MENU",
-        entityId: id,
-        action: "APPROVE",
-        user,
-        before,
-        after: item,
-        reason: "Dinh dưỡng duyệt thực đơn",
       });
       return Response.json({ item });
     }

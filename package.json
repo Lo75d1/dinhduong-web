@@ -13,7 +13,8 @@
     "test:exchange-units": "tsx scripts/test-exchange-units.ts",
     "test:menu-export": "tsx scripts/test-menu-analysis-workbook.ts",
     "test:multi-day": "tsx scripts/test-multi-day.ts",
-    "test:diet-orders": "tsx scripts/test-diet-orders.ts"
+    "test:diet-orders": "tsx scripts/test-diet-orders.ts",
+    "test:kitchen-snapshot": "tsx scripts/test-kitchen-snapshot.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

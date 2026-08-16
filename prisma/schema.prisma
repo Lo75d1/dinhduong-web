@@ -486,18 +486,19 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  sessions                Session[]
-  patients                Patient[]
-  rations                 Ration[]
-  submissions             FoodSubmission[]       @relation("SubmissionAuthor")
-  reviewedSubmissions     FoodSubmission[]       @relation("SubmissionReviewer")
-  departmentMemberships   DepartmentMembership[]
-  submittedMealOrders     MealOrder[]            @relation("MealOrderSubmitter")
-  approvedKitchenMenus    KitchenMenu[]          @relation("KitchenMenuApprover")
-  prescribedDietOrders    DietOrder[]            @relation("DietOrderPrescriber")
-  kitchenShiftMemberships KitchenShiftMember[]
-  assignedKitchenTasks    KitchenTask[]          @relation("KitchenTaskAssignee")
-  createdKitchenTasks     KitchenTask[]          @relation("KitchenTaskCreator")
+  sessions                 Session[]
+  patients                 Patient[]
+  rations                  Ration[]
+  submissions              FoodSubmission[]       @relation("SubmissionAuthor")
+  reviewedSubmissions      FoodSubmission[]       @relation("SubmissionReviewer")
+  departmentMemberships    DepartmentMembership[]
+  submittedMealOrders      MealOrder[]            @relation("MealOrderSubmitter")
+  approvedKitchenMenus     KitchenMenu[]          @relation("KitchenMenuApprover")
+  approvedKitchenMenuItems KitchenMenuItem[]      @relation("KitchenMenuItemApprover")
+  prescribedDietOrders     DietOrder[]            @relation("DietOrderPrescriber")
+  kitchenShiftMemberships  KitchenShiftMember[]
+  assignedKitchenTasks     KitchenTask[]          @relation("KitchenTaskAssignee")
+  createdKitchenTasks      KitchenTask[]          @relation("KitchenTaskCreator")
 
   @@map("app_users")
 }
@@ -873,17 +874,23 @@ model KitchenMenu {
 }
 
 model KitchenMenuItem {
-  id         String  @id @default(cuid())
-  menuId     String
-  dietTypeId String
-  dishName   String
-  note       String?
-  sortOrder  Int     @default(0)
+  id           String    @id @default(cuid())
+  menuId       String
+  dietTypeId   String
+  dishName     String
+  note         String?
+  snapshotJson Json?
+  approvedAt   DateTime?
+  approvedById String?
+  sortOrder    Int       @default(0)
 
-  menu     KitchenMenu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  dietType KitchenDietType @relation(fields: [dietTypeId], references: [id])
+  menu       KitchenMenu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  dietType   KitchenDietType @relation(fields: [dietTypeId], references: [id])
+  approvedBy User?           @relation("KitchenMenuItemApprover", fields: [approvedById], references: [id])
 
+  @@unique([menuId, dietTypeId])
   @@index([menuId, sortOrder])
+  @@index([approvedAt])
   @@map("kitchen_menu_items")
 }
 
