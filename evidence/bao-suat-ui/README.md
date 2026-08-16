@@ -21,3 +21,35 @@ Nhánh: `claude/ui-bao-suat` · commit giao kiểm tra: `162e504`
 - Không thấy vỡ bảng, tràn chữ hoặc chồng control ở viewport desktop.
 
 ![Màn báo suất điều dưỡng ở trạng thái lệch gợi ý](./01-department-staff-mismatch-desktop.png)
+
+## Render bổ sung và đồng bộ design-language
+
+Các ảnh dưới đây được render sau khi chỉ thay lớp giao diện của `DoctorPanel` và
+`SnapshotMenuPanel`; handler, payload và luồng nghiệp vụ được giữ nguyên.
+
+### Điều dưỡng · desktop 1280 px
+
+![ReportPanel ở trạng thái khớp](./02-report-panel-desktop.png)
+
+### Người bệnh · mobile 390 px
+
+![Trang thực đơn người bệnh](./03-patient-menu-mobile.png)
+
+### Bác sĩ · desktop 1280 px
+
+- Thẻ và dải tiêu đề dùng viền hairline; nhãn/input/nút theo token chung.
+- Cảnh báo không nhập PII vẫn giữ nguyên.
+- Danh sách chỉ định đang hiệu lực dùng badge và thẻ sạch; ảnh phụ xác nhận vùng
+  cảnh báo amber và nút chính teal ở cuối form.
+
+![DoctorPanel tổng quan](./04-doctor-panel-desktop.png)
+
+![DoctorPanel vùng thao tác](./05-doctor-actions-desktop.png)
+
+### Bếp · desktop 1280 px
+
+- Thực đơn duyệt, badge chế độ ăn và dải từng bữa dùng nền xanh nhạt.
+- Bảng đi chợ có header hairline, số căn phải/tabular và số mua thiếu dữ liệu để `—`.
+- Giữ đủ ba cảnh báo: thiếu tỷ lệ thải bỏ, món thiếu gram và chế độ chưa duyệt.
+
+![SnapshotMenuPanel và bảng đi chợ](./06-snapshot-menu-kitchen-desktop.png)
