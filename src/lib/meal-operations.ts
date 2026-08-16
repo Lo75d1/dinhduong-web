@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/lib/auth";
 import { dietOrderSuggestions } from "@/lib/diet-orders";
+import { buildKitchenShoppingList } from "@/lib/kitchen-shopping";
 
 export const OPS_ROLES = [
   "ADMIN",
@@ -46,6 +47,7 @@ export function cutoffAt(
 
 export async function operationsContext(user: SessionUser, date: Date) {
   const manager = MANAGER_ROLES.has(user.role);
+  const kitchenViewer = manager || user.role === "KITCHEN_STAFF";
   const memberships = await prisma.departmentMembership.findMany({
     where: { userId: user.id, status: "ACTIVE", canSubmit: true },
     include: { department: true },
@@ -80,7 +82,7 @@ export async function operationsContext(user: SessionUser, date: Date) {
     prisma.mealOrder.findMany({
       where: {
         mealDate: date,
-        ...(manager ? {} : { departmentId: { in: departmentIds } }),
+        ...(kitchenViewer ? {} : { departmentId: { in: departmentIds } }),
       },
       include: {
         department: true,
@@ -95,14 +97,31 @@ export async function operationsContext(user: SessionUser, date: Date) {
       },
       orderBy: { updatedAt: "desc" },
     }),
-    manager
+    kitchenViewer
       ? prisma.kitchenMenu.findMany({
-          where: { mealDate: date },
+          where: { mealDate: date, ...(manager ? {} : { status: "APPROVED" }) },
           include: {
             mealType: true,
             approvedBy: { select: { displayName: true } },
             items: {
-              include: { dietType: true },
+              include: {
+                dietType: true,
+                dish: {
+                  select: {
+                    id: true,
+                    name: true,
+                    totalWeightG: true,
+                    ingredients: {
+                      orderBy: { sortOrder: "asc" },
+                      select: {
+                        foodNameRaw: true,
+                        quantityG: true,
+                        food: { select: { id: true, name: true, wastePercent: true } },
+                      },
+                    },
+                  },
+                },
+              },
               orderBy: { sortOrder: "asc" },
             },
           },
@@ -168,6 +187,16 @@ export async function operationsContext(user: SessionUser, date: Date) {
       take: 500,
     }),
   ]);
+  const quantities = orders.flatMap((order) =>
+    order.items.map((item) => ({
+      mealTypeId: order.mealTypeId,
+      dietTypeId: item.dietTypeId,
+      quantity: item.quantity,
+    })),
+  );
+  const shoppingLists = menus.map((menu) =>
+    buildKitchenShoppingList(menu.id, menu.mealTypeId, menu.items, quantities),
+  );
   return {
     user,
     manager,
@@ -177,6 +206,7 @@ export async function operationsContext(user: SessionUser, date: Date) {
     dietTypes,
     orders,
     menus,
+    shoppingLists,
     shifts,
     users,
     publicNotes,
