@@ -495,6 +495,7 @@ model User {
   submittedMealOrders      MealOrder[]            @relation("MealOrderSubmitter")
   approvedKitchenMenus     KitchenMenu[]          @relation("KitchenMenuApprover")
   approvedKitchenMenuItems KitchenMenuItem[]      @relation("KitchenMenuItemApprover")
+  uploadedKitchenMenuPhotos KitchenMenuItem[]     @relation("KitchenMenuItemPhotoUploader")
   prescribedDietOrders     DietOrder[]            @relation("DietOrderPrescriber")
   kitchenShiftMemberships  KitchenShiftMember[]
   assignedKitchenTasks     KitchenTask[]          @relation("KitchenTaskAssignee")
@@ -882,14 +883,19 @@ model KitchenMenuItem {
   snapshotJson Json?
   approvedAt   DateTime?
   approvedById String?
+  photoStoragePath String?   @db.Text
+  photoUploadedById String?
+  photoUploadedAt DateTime?
   sortOrder    Int       @default(0)
 
   menu       KitchenMenu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
   dietType   KitchenDietType @relation(fields: [dietTypeId], references: [id])
   approvedBy User?           @relation("KitchenMenuItemApprover", fields: [approvedById], references: [id])
+  photoUploadedBy User?      @relation("KitchenMenuItemPhotoUploader", fields: [photoUploadedById], references: [id])
 
   @@index([menuId, sortOrder])
   @@index([approvedAt])
+  @@index([photoUploadedAt])
   @@map("kitchen_menu_items")
 }
 

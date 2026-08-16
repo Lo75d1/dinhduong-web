@@ -45,6 +45,18 @@ export default function OperationsApp({
     setBusy(false);
     return res.ok;
   }
+  async function uploadPhoto(itemId: string, file: File) {
+    setBusy(true);
+    const form = new FormData();
+    form.set("itemId", itemId);
+    form.set("photo", file);
+    const res = await fetch("/api/kitchen-menu/photo", { method: "POST", body: form });
+    const body = await res.json().catch(() => ({}));
+    setNotice(res.ok ? "Đã tải ảnh đối chứng." : (body.error ?? "Chưa thể tải ảnh."));
+    if (res.ok) await load();
+    setBusy(false);
+    return res.ok;
+  }
   if (!data)
     return (
       <main className="mx-auto max-w-xl">
@@ -131,13 +143,13 @@ export default function OperationsApp({
           {data.user.role === "ADMIN" && (
             <ConfigPanel data={data} busy={busy} act={act} />
           )}
-          <SnapshotMenuPanel data={data} />
+          <SnapshotMenuPanel data={data} busy={busy} uploadPhoto={uploadPhoto} />
           <ShiftPanel data={data} date={date} busy={busy} act={act} />
         </>
       )}
       {mode === "kitchen" && (
         <>
-          <SnapshotMenuPanel data={data} />
+          <SnapshotMenuPanel data={data} busy={busy} uploadPhoto={uploadPhoto} />
           <ApprovedPublicNotes data={data} />
           <KitchenPanel data={data} busy={busy} act={act} />
         </>
@@ -829,7 +841,7 @@ function ConfigPanel({
   );
 }
 
-function SnapshotMenuPanel({ data }: { data: Row }) {
+function SnapshotMenuPanel({ data, busy, uploadPhoto }: { data: Row; busy: boolean; uploadPhoto: (itemId: string, file: File) => Promise<boolean> }) {
   if (!["ADMIN", "DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF"].includes(data.user.role)) return null;
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
@@ -848,6 +860,18 @@ function SnapshotMenuPanel({ data }: { data: Row }) {
                     <span className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-[#085041]">{item.dietType.name}</span>
                     <p className="mt-1 text-[#24483f]">{item.dishName}</p>
                     <p className="mt-1 text-xs text-neutral-500">Duyệt {item.approvedAt ? new Date(item.approvedAt).toLocaleString("vi-VN") : "—"}{item.approvedBy?.displayName ? " · " + item.approvedBy.displayName : ""}</p>
+                    {item.photoUrl && <div className="mt-2 overflow-hidden rounded-lg border border-[#123c36]/10 bg-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.photoUrl} alt={`Ảnh đối chứng ${item.dietType.name}`} className="aspect-[4/3] w-full object-cover" />
+                    </div>}
+                    {["DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF"].includes(data.user.role) && <form className="mt-2 flex flex-wrap items-center gap-2" onSubmit={(event) => {
+                      event.preventDefault();
+                      const file = new FormData(event.currentTarget).get("photo");
+                      if (file instanceof File && file.size > 0) void uploadPhoto(item.id, file);
+                    }}>
+                      <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required className="min-w-0 flex-1 rounded-lg border border-[#8fa99e] bg-white px-2 py-1.5 text-xs" />
+                      <button disabled={busy} className="rounded-lg bg-[#0f6e56] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{item.photoUrl ? "Đổi ảnh" : "Tải ảnh đối chứng"}</button>
+                    </form>}
                   </div>
                 ))}
               </div>

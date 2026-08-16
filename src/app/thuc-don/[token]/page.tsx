@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import PublicMealReportForm from "@/app/bao-an/PublicMealReportForm";
+import { mealPhotoPublicUrl } from "@/lib/meal-photo";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Thực đơn hôm nay | Dinh dưỡng 2598", description: "Xem thực đơn bệnh viện và gửi ghi chú cho điều dưỡng khoa." };
@@ -42,6 +43,11 @@ export default async function Page({ params }: { params: Promise<{ token: string
               <b className="text-sm font-semibold text-[#0f6e56]">{item.dietType.name}</b>
               <p className="mt-1 text-[17px] leading-snug text-neutral-800">{item.dishName}</p>
               {item.note && <p className="mt-1 text-sm text-neutral-500">{item.note}</p>}
+              {item.photoStoragePath && mealPhotoPublicUrl(item.photoStoragePath) && <figure className="mt-3 overflow-hidden rounded-xl border border-[#123c36]/10 bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={mealPhotoPublicUrl(item.photoStoragePath) ?? undefined} alt={`Ảnh đối chứng ${item.dietType.name}`} className="aspect-[4/3] w-full object-cover" />
+                <figcaption className="px-3 py-2 text-xs text-neutral-500">Ảnh suất mẫu để đối chiếu</figcaption>
+              </figure>}
             </div>)}</div>
           : <p className="mt-3 rounded-xl bg-neutral-50 px-3 py-3 text-neutral-500">Thực đơn đang được cập nhật.</p>}
         </article>;

@@ -4,6 +4,7 @@ import type { SessionUser } from "@/lib/auth";
 import { dietOrderSuggestions } from "@/lib/diet-orders";
 import { buildKitchenShoppingList } from "@/lib/kitchen-menu-snapshot";
 import { dietOrdersEnabled } from "@/lib/feature-flags";
+import { mealPhotoPublicUrl } from "@/lib/meal-photo";
 
 export const OPS_ROLES = [
   "ADMIN",
@@ -179,6 +180,13 @@ export async function operationsContext(user: SessionUser, date: Date) {
     const menu = menuByMeal.get(mealType.id);
     return { mealType, ...buildKitchenShoppingList(menu?.id ?? ("missing-" + mealType.id), mealType.id, menu?.items ?? [], quantities) };
   }) : [];
+  const menusWithPhotos = menus.map((menu) => ({
+    ...menu,
+    items: menu.items.map((item) => ({
+      ...item,
+      photoUrl: mealPhotoPublicUrl(item.photoStoragePath),
+    })),
+  }));
   return {
     user,
     manager,
@@ -187,7 +195,7 @@ export async function operationsContext(user: SessionUser, date: Date) {
     mealTypes,
     dietTypes,
     orders,
-    menus,
+    menus: menusWithPhotos,
     shoppingLists,
     shifts,
     users,

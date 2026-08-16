@@ -14,7 +14,8 @@
     "test:menu-export": "tsx scripts/test-menu-analysis-workbook.ts",
     "test:multi-day": "tsx scripts/test-multi-day.ts",
     "test:diet-orders": "tsx scripts/test-diet-orders.ts",
-    "test:kitchen-snapshot": "tsx scripts/test-kitchen-snapshot.ts"
+    "test:kitchen-snapshot": "tsx scripts/test-kitchen-snapshot.ts",
+    "test:meal-photo": "tsx scripts/test-meal-photo.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
