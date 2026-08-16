@@ -494,6 +494,7 @@ model User {
   departmentMemberships   DepartmentMembership[]
   submittedMealOrders     MealOrder[]            @relation("MealOrderSubmitter")
   approvedKitchenMenus    KitchenMenu[]          @relation("KitchenMenuApprover")
+  prescribedDietOrders    DietOrder[]            @relation("DietOrderPrescriber")
   kitchenShiftMemberships KitchenShiftMember[]
   assignedKitchenTasks    KitchenTask[]          @relation("KitchenTaskAssignee")
   createdKitchenTasks     KitchenTask[]          @relation("KitchenTaskCreator")
@@ -746,6 +747,7 @@ model Department {
 
   memberships DepartmentMembership[]
   mealOrders  MealOrder[]
+  dietOrders  DietOrder[]
 
   @@index([status, sortOrder])
   @@map("departments")
@@ -800,6 +802,7 @@ model KitchenDietType {
 
   orderItems MealOrderItem[]
   menuItems  KitchenMenuItem[]
+  dietOrders DietOrder[]
 
   @@index([status, sortOrder])
   @@map("kitchen_diet_types")
@@ -977,6 +980,31 @@ model MealOrderChangeRequest {
   @@index([mealOrderId, status, createdAt])
   @@index([status, createdAt])
   @@map("meal_order_change_requests")
+}
+
+model DietOrder {
+  id             String    @id @default(cuid())
+  patientCode    String
+  departmentId   String
+  room           String?
+  dietTypeId     String
+  effectiveDate  DateTime  @db.Date
+  endDate        DateTime? @db.Date
+  clinicalNote   String?
+  critical       Boolean   @default(false)
+  status         String    @default("ACTIVE")
+  prescribedById String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  department   Department      @relation(fields: [departmentId], references: [id])
+  dietType     KitchenDietType @relation(fields: [dietTypeId], references: [id])
+  prescribedBy User            @relation("DietOrderPrescriber", fields: [prescribedById], references: [id])
+
+  @@index([departmentId, effectiveDate, endDate, status])
+  @@index([patientCode, status])
+  @@index([dietTypeId, effectiveDate, endDate, status])
+  @@map("diet_orders")
 }
 
 // Phiếu báo ăn từ liên kết/QR công khai. Tách khỏi hồ sơ bệnh nhân và chỉ lưu
