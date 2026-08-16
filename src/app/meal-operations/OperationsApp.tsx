@@ -10,6 +10,8 @@ type Row = Record<string, any>;
 const input =
   "mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-3 py-2 text-sm";
 const panel = "rounded-2xl border-2 border-[#123c36] bg-white p-4 shadow-sm";
+const adminInput =
+  "mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm";
 const today = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
 
@@ -546,10 +548,10 @@ function Summary({
     [data],
   );
   return (
-    <section className={panel}>
-      <div className="flex flex-wrap justify-between gap-2">
+    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
         <div>
-          <h2 className="text-xl font-black text-[#123c36]">
+          <h2 className="text-lg font-semibold text-[#123c36]">
             Tổng hợp ngày {date}
           </h2>
           <p className="text-sm text-neutral-600">
@@ -559,42 +561,42 @@ function Summary({
         </div>
         <a
           href={`/api/admin/meal-orders/export?date=${date}`}
-          className="rounded-lg border-2 border-[#123c36] px-3 py-2 font-bold text-[#123c36]"
+          className="rounded-lg border border-[#123c36]/25 px-3 py-1.5 font-medium text-[#123c36] hover:bg-[#f6faf8]"
         >
           Xuất Excel
         </a>
       </div>
-      <div className="mt-4 overflow-x-auto">
+      <div className="overflow-x-auto px-5 py-4">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="bg-[#e7f2ed] text-left">
-              <th className="p-2">Khoa · bữa</th>
+            <tr className="border-y border-[#123c36]/10 text-left text-xs text-neutral-500">
+              <th className="px-3 py-2 font-normal">Khoa · bữa</th>
               {data.dietTypes.map((d: Row) => (
-                <th key={d.id} className="p-2 text-right">
+                <th key={d.id} className="px-3 py-2 text-right font-normal">
                   {d.name}
                 </th>
               ))}
-              <th className="p-2 text-right">Tổng</th>
-              <th className="p-2">Trạng thái</th>
+              <th className="px-3 py-2 text-right font-normal">Tổng</th>
+              <th className="px-3 py-2 font-normal">Trạng thái</th>
             </tr>
           </thead>
           <tbody>
             {data.orders.map((o: Row) => (
-              <tr key={o.id} className="border-b">
-                <td className="p-2 font-bold">
+              <tr key={o.id} className="border-b border-[#123c36]/5">
+                <td className="px-3 py-2.5 font-medium text-[#24483f]">
                   {o.department.name} · {o.mealType.name}
                 </td>
                 {data.dietTypes.map((d: Row) => (
-                  <td key={d.id} className="p-2 text-right">
+                  <td key={d.id} className="px-3 py-2.5 text-right tabular-nums">
                     {o.items.find((i: Row) => i.dietTypeId === d.id)
                       ?.quantity ?? 0}
                   </td>
                 ))}
-                <td className="p-2 text-right font-black">
+                <td className="px-3 py-2.5 text-right font-medium tabular-nums">
                   {o.items.reduce((s: number, i: Row) => s + i.quantity, 0)}
                 </td>
-                <td className="p-2">
-                  <span className="mr-2 rounded-full bg-neutral-100 px-2 py-1 text-xs font-bold">
+                <td className="px-3 py-2.5">
+                  <span className={`mr-2 rounded-full px-2.5 py-1 text-xs font-medium ${o.status === "LOCKED" ? "bg-neutral-100 text-neutral-600" : "bg-[#e1f5ee] text-[#085041]"}`}>
                     {o.status}
                   </span>
                   {["ADMIN", "KITCHEN_MANAGER"].includes(data.user.role) &&
@@ -604,7 +606,7 @@ function Summary({
                         onClick={() =>
                           void act({ action: "lockOrder", id: o.id })
                         }
-                        className="text-xs font-bold text-[#0c5f4d] underline"
+                        className="rounded-lg border border-[#123c36]/25 px-3 py-1.5 text-xs font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
                       >
                         Khóa
                       </button>
@@ -614,14 +616,14 @@ function Summary({
             ))}
           </tbody>
           <tfoot>
-            <tr className="bg-[#123c36] font-black text-white">
-              <td className="p-2">TỔNG</td>
+            <tr className="bg-[#e1f5ee] font-semibold text-[#085041]">
+              <td className="px-3 py-3">TỔNG</td>
               {data.dietTypes.map((d: Row) => (
-                <td key={d.id} className="p-2 text-right">
+                <td key={d.id} className="px-3 py-3 text-right tabular-nums">
                   {totals[d.id]}
                 </td>
               ))}
-              <td className="p-2 text-right">
+              <td className="px-3 py-3 text-right tabular-nums">
                 {Object.values(totals).reduce(
                   (a: number, b) => a + Number(b),
                   0,
@@ -651,20 +653,22 @@ function ChangeApprovals({
   );
   if (!pending.length) return null;
   return (
-    <section className={panel}>
-      <h2 className="text-xl font-black text-[#6b4f08]">
-        Thay đổi chờ bếp trưởng duyệt
-      </h2>
-      <div className="mt-3 space-y-2">
+    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+      <div className="border-b border-[#123c36]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[#123c36]">
+          Thay đổi chờ bếp trưởng duyệt
+        </h2>
+      </div>
+      <div className="space-y-3 px-5 py-4">
         {pending.map(({ order, request }: Row) => (
           <article
             key={request.id}
-            className="rounded-xl border-2 border-amber-300 bg-amber-50 p-3"
+            className="rounded-xl border border-amber-400 bg-amber-50 px-4 py-3 text-amber-900"
           >
-            <b>
+            <div className="font-medium">
               {order.publicCode} · {order.department.name} ·{" "}
               {order.mealType.name}
-            </b>
+            </div>
             <p className="mt-1 text-sm">Lý do: {request.reason}</p>
             <div className="mt-2 flex gap-2">
               <button
@@ -677,7 +681,7 @@ function ChangeApprovals({
                     reviewNote: "Bếp trưởng chấp thuận",
                   })
                 }
-                className="rounded-lg bg-[#0c5f4d] px-3 py-2 text-sm font-bold text-white"
+                className="rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50"
               >
                 Chấp thuận
               </button>
@@ -691,7 +695,7 @@ function ChangeApprovals({
                     reviewNote: "Bếp trưởng từ chối",
                   })
                 }
-                className="rounded-lg border-2 border-rose-400 bg-white px-3 py-2 text-sm font-bold text-rose-700"
+                className="rounded-lg border border-[#123c36]/25 bg-white px-3 py-1.5 font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
               >
                 Từ chối
               </button>
@@ -720,8 +724,10 @@ function ConfigPanel({
   const [userId, setUserId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   return (
-    <section className={panel}>
-      <h2 className="text-xl font-black text-[#123c36]">Cấu hình ban đầu</h2>
+    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+      <div className="border-b border-[#123c36]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[#123c36]">Cấu hình ban đầu</h2>
+      </div>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -741,14 +747,14 @@ function ConfigPanel({
             setName("");
           }
         }}
-        className="mt-3 grid gap-3 sm:grid-cols-3"
+        className="grid gap-3 px-5 py-4 sm:grid-cols-3"
       >
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Loại
           <select
             value={kind}
             onChange={(e) => setKind(e.target.value)}
-            className={input}
+            className={adminInput}
           >
             <option value="department">Khoa/phòng</option>
             <option value="mealType">Bữa ăn</option>
@@ -758,12 +764,12 @@ function ConfigPanel({
         </label>
         {kind === "membership" ? (
           <>
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Nhân viên
               <select
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                className={input}
+                className={adminInput}
               >
                 <option value="">Chọn…</option>
                 {data.users.map((u: Row) => (
@@ -773,12 +779,12 @@ function ConfigPanel({
                 ))}
               </select>
             </label>
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Khoa
               <select
                 value={departmentId}
                 onChange={(e) => setDepartmentId(e.target.value)}
-                className={input}
+                className={adminInput}
               >
                 <option value="">Chọn…</option>
                 {data.departments.map((d: Row) => (
@@ -791,40 +797,40 @@ function ConfigPanel({
           </>
         ) : (
           <>
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Mã
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className={input}
+                className={adminInput}
               />
             </label>
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Tên
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={input}
+                className={adminInput}
               />
             </label>
             {kind === "mealType" && (
               <>
-                <label className="font-bold">
+                <label className="text-sm font-medium text-[#24483f]">
                   Giờ phục vụ
                   <input
                     type="time"
                     value={service}
                     onChange={(e) => setService(e.target.value)}
-                    className={input}
+                    className={adminInput}
                   />
                 </label>
-                <label className="font-bold">
+                <label className="text-sm font-medium text-[#24483f]">
                   Giờ chốt
                   <input
                     type="time"
                     value={cutoff}
                     onChange={(e) => setCutoff(e.target.value)}
-                    className={input}
+                    className={adminInput}
                   />
                 </label>
               </>
@@ -833,7 +839,7 @@ function ConfigPanel({
         )}
         <button
           disabled={busy}
-          className="self-end rounded-lg bg-[#123c36] px-4 py-2.5 font-bold text-white"
+          className="self-end rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50"
         >
           Lưu cấu hình
         </button>
@@ -973,10 +979,13 @@ function ShiftPanel({
     ["KITCHEN_MANAGER", "KITCHEN_STAFF", "ADMIN"].includes(u.role),
   );
   return (
-    <section className={panel}>
-      <h2 className="text-xl font-black text-[#123c36]">
-        Lịch trực và nhiệm vụ
-      </h2>
+    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+      <div className="border-b border-[#123c36]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[#123c36]">
+          Lịch trực và nhiệm vụ
+        </h2>
+      </div>
+      <div className="px-5 py-4">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -989,35 +998,35 @@ function ShiftPanel({
             memberIds,
           });
         }}
-        className="mt-3 grid gap-3 sm:grid-cols-4"
+        className="grid gap-3 sm:grid-cols-4"
       >
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Tên ca
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className={input}
+            className={adminInput}
           />
         </label>
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Bắt đầu
           <input
             type="time"
             value={startsAt}
             onChange={(e) => setStartsAt(e.target.value)}
-            className={input}
+            className={adminInput}
           />
         </label>
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Kết thúc
           <input
             type="time"
             value={endsAt}
             onChange={(e) => setEndsAt(e.target.value)}
-            className={input}
+            className={adminInput}
           />
         </label>
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Nhân viên
           <select
             multiple
@@ -1025,7 +1034,7 @@ function ShiftPanel({
             onChange={(e) =>
               setMemberIds([...e.target.selectedOptions].map((o) => o.value))
             }
-            className={input}
+            className={adminInput}
           >
             {kitchenUsers.map((u: Row) => (
               <option key={u.id} value={u.id}>
@@ -1036,7 +1045,7 @@ function ShiftPanel({
         </label>
         <button
           disabled={busy}
-          className="rounded-lg bg-[#123c36] px-4 py-2.5 font-bold text-white"
+          className="rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50"
         >
           Tạo ca trực
         </button>
@@ -1053,12 +1062,12 @@ function ShiftPanel({
         }}
         className="mt-4 grid gap-3 sm:grid-cols-3"
       >
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Ca
           <select
             value={shiftId}
             onChange={(e) => setShiftId(e.target.value)}
-            className={input}
+            className={adminInput}
           >
             <option value="">Chọn…</option>
             {data.shifts.map((s: Row) => (
@@ -1068,20 +1077,20 @@ function ShiftPanel({
             ))}
           </select>
         </label>
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Nhiệm vụ
           <input
             value={task}
             onChange={(e) => setTask(e.target.value)}
-            className={input}
+            className={adminInput}
           />
         </label>
-        <label className="font-bold">
+        <label className="text-sm font-medium text-[#24483f]">
           Giao cho
           <select
             value={assignedToId}
             onChange={(e) => setAssignedToId(e.target.value)}
-            className={input}
+            className={adminInput}
           >
             <option value="">Cả ca</option>
             {kitchenUsers.map((u: Row) => (
@@ -1093,12 +1102,13 @@ function ShiftPanel({
         </label>
         <button
           disabled={busy || !shiftId || !task}
-          className="rounded-lg bg-[#0c5f4d] px-4 py-2.5 font-bold text-white"
+          className="rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50"
         >
           Giao nhiệm vụ
         </button>
       </form>
       <KitchenPanel data={data} busy={busy} act={act} />
+      </div>
     </section>
   );
 }
@@ -1113,13 +1123,13 @@ function KitchenPanel({
   act: (p: Row) => Promise<boolean>;
 }) {
   return (
-    <div className="grid gap-3">
+    <div className="mt-4 grid gap-3 border-t border-[#123c36]/10 pt-4">
       {data.shifts.map((s: Row) => (
         <article
           key={s.id}
-          className="rounded-xl border-2 border-[#9bb9ad] bg-[#f7faf8] p-4"
+          className="rounded-xl border border-[#123c36]/10 bg-[#f6faf8] px-4 py-3"
         >
-          <h3 className="font-black text-[#123c36]">
+          <h3 className="font-semibold text-[#123c36]">
             {s.name} ·{" "}
             {new Date(s.startsAt).toLocaleTimeString("vi-VN", {
               hour: "2-digit",
@@ -1149,7 +1159,7 @@ function KitchenPanel({
                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white p-3"
               >
                 <div>
-                  <b>{t.title}</b>
+                  <span className="font-medium">{t.title}</span>
                   <p className="text-xs text-neutral-600">
                     {t.assignedTo?.displayName ?? "Cả ca"} · {t.status}
                   </p>
@@ -1165,7 +1175,7 @@ function KitchenPanel({
                           status: "ACKNOWLEDGED",
                         })
                       }
-                      className="rounded border border-[#0c5f4d] px-2 py-1 text-xs font-bold text-[#0c5f4d]"
+                      className="rounded-lg border border-[#123c36]/25 px-3 py-1.5 text-xs font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
                     >
                       Đã nhận
                     </button>
@@ -1180,7 +1190,7 @@ function KitchenPanel({
                           status: "COMPLETED",
                         })
                       }
-                      className="rounded bg-[#123c36] px-2 py-1 text-xs font-bold text-white"
+                      className="rounded-lg bg-[#0f6e56] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50"
                     >
                       Hoàn thành
                     </button>
@@ -1234,12 +1244,12 @@ function WorkflowHint({ role }: { role: "nurse" | "manager" }) {
   return (
     <nav
       aria-label="Quy trình nhanh"
-      className="grid grid-cols-2 gap-2 rounded-2xl border border-[#b8cbc3] bg-[#eef6f2] p-3 sm:grid-cols-4"
+      className="grid grid-cols-2 gap-2 rounded-2xl border border-[#123c36]/15 bg-[#e1f5ee] p-3 sm:grid-cols-4"
     >
       {steps.map((step, index) => (
         <div
           key={step}
-          className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-bold text-[#123c36]"
+          className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-[#123c36]"
         >
           <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#123c36] text-xs text-white">
             {index + 1}
@@ -1267,20 +1277,22 @@ function PublicNoteReview({
   );
   if (!notes.length)
     return (
-      <section className={panel}>
-        <h2 className="text-lg font-black text-[#123c36]">
-          Ghi chú người bệnh chờ duyệt
-        </h2>
-        <p className="mt-2 text-sm text-neutral-600">
+      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+        <div className="border-b border-[#123c36]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[#123c36]">
+            Ghi chú người bệnh chờ duyệt
+          </h2>
+        </div>
+        <p className="px-5 py-4 text-sm text-neutral-600">
           Không có ghi chú mới trong ngày.
         </p>
       </section>
     );
   return (
-    <section className={panel}>
-      <div className="flex items-center justify-between gap-3">
+    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
         <div>
-          <h2 className="text-lg font-black text-[#123c36]">
+          <h2 className="text-lg font-semibold text-[#123c36]">
             Ghi chú người bệnh chờ duyệt
           </h2>
           <p className="mt-1 text-sm text-neutral-600">
@@ -1288,22 +1300,22 @@ function PublicNoteReview({
             an toàn.
           </p>
         </div>
-        <span className="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-900">
+        <span className="rounded-full border border-amber-400 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-900">
           {notes.length} chờ
         </span>
       </div>
-      <div className="mt-4 grid gap-3">
+      <div className="grid gap-3 px-5 py-4">
         {notes.map((note: Row) => (
           <article
             key={note.id}
-            className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4"
+            className="rounded-xl border border-amber-400 bg-amber-50 px-4 py-3 text-amber-900"
           >
             <div className="flex flex-wrap justify-between gap-2">
-              <b className="text-[#123c36]">
+              <span className="font-medium text-[#123c36]">
                 {note.departmentName} ·{" "}
                 {note.roomBed || "Chưa ghi phòng/giường"}
-              </b>
-              <span className="text-xs font-bold text-neutral-600">
+              </span>
+              <span className="text-xs font-medium text-neutral-600">
                 {note.publicCode}
               </span>
             </div>
@@ -1328,7 +1340,7 @@ function PublicNoteReview({
                     decision: "APPROVED",
                   })
                 }
-                className="rounded-lg bg-[#123c36] px-4 py-2 font-bold text-white"
+                className="rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50"
               >
                 Duyệt gửi bếp
               </button>
@@ -1342,7 +1354,7 @@ function PublicNoteReview({
                     reviewNote: "Không chuyển bếp",
                   })
                 }
-                className="rounded-lg border-2 border-neutral-400 bg-white px-4 py-2 font-bold text-neutral-700"
+                className="rounded-lg border border-[#123c36]/25 bg-white px-3 py-1.5 font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
               >
                 Không chuyển
               </button>
