@@ -208,12 +208,28 @@ function ReportPanel({
     )
       setRequestKey(crypto.randomUUID());
   }
+  const currentDeptName = data.departments.find(
+    (d: Row) => d.id === departmentId,
+  )?.name;
+  const currentMealName = data.mealTypes.find(
+    (m: Row) => m.id === mealTypeId,
+  )?.name;
   return (
-    <section className={panel}>
-      <h2 className="text-xl font-black text-[#123c36]">Phiếu báo suất</h2>
+    <section className="overflow-hidden rounded-2xl border border-[#123c36]/20 bg-white shadow-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[#123c36]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[#123c36]">Phiếu báo suất</h2>
+        {currentDeptName && (
+          <span className="text-sm text-neutral-500">
+            {currentDeptName}
+            {currentMealName ? ` · ${currentMealName}` : ""}
+          </span>
+        )}
+      </div>
       {criticalOrders.length > 0 && (
-        <div className="mt-3 rounded-xl border-2 border-amber-500 bg-amber-50 p-3 text-amber-950">
-          <b>Cần xác minh trực tiếp ({criticalOrders.length})</b>
+        <div className="mx-5 mt-4 rounded-xl border border-amber-400 bg-amber-50 px-4 py-3 text-amber-900">
+          <div className="font-semibold">
+            ⚠ Cần xác minh trực tiếp ({criticalOrders.length})
+          </div>
           <p className="mt-1 text-sm">
             {criticalOrders
               .map(
@@ -227,21 +243,21 @@ function ReportPanel({
       {!data.departments.length ||
       !data.mealTypes.length ||
       !data.dietTypes.length ? (
-        <p className="mt-3 rounded-lg bg-amber-50 p-3 text-amber-900">
+        <p className="m-5 rounded-lg bg-amber-50 px-4 py-3 text-amber-900">
           Quản trị viên cần cấu hình khoa, bữa và chế độ ăn trước.
         </p>
       ) : (
-        <form onSubmit={submit} className="mt-4 space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="font-bold">
-              Khoa/phòng
+        <form onSubmit={submit}>
+          <div className="grid gap-3 px-5 pt-4 sm:grid-cols-2">
+            <label className="text-sm font-medium text-[#24483f]">
+              Khoa / phòng
               <select
                 value={departmentId}
                 onChange={(e) => {
                   setDepartmentId(e.target.value);
                   selectOrder(e.target.value, mealTypeId);
                 }}
-                className={input}
+                className="mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm text-[#123c36]"
               >
                 {data.departments.map((d: Row) => (
                   <option key={d.id} value={d.id}>
@@ -250,7 +266,7 @@ function ReportPanel({
                 ))}
               </select>
             </label>
-            <label className="font-bold">
+            <label className="text-sm font-medium text-[#24483f]">
               Bữa
               <select
                 value={mealTypeId}
@@ -258,7 +274,7 @@ function ReportPanel({
                   setMealTypeId(e.target.value);
                   selectOrder(departmentId, e.target.value);
                 }}
-                className={input}
+                className="mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm text-[#123c36]"
               >
                 {data.mealTypes.map((m: Row) => (
                   <option key={m.id} value={m.id}>
@@ -271,62 +287,111 @@ function ReportPanel({
               </select>
             </label>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {data.dietTypes.map((d: Row) => (
-              <label
-                key={d.id}
-                className="rounded-xl border-2 border-[#c9d9d2] bg-[#f6faf8] p-3 font-bold text-[#24483f]"
-              >
-                <span className="flex items-center justify-between gap-2">
-                  <span>{d.name}</span>
-                  <span className="rounded-full bg-[#dcebe5] px-2 py-1 text-xs">
-                    Gợi ý {suggestionFor(d.id)}
-                  </span>
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  max={10000}
-                  value={quantities[d.id] ?? 0}
-                  onChange={(e) =>
-                    setQuantities({
-                      ...quantities,
-                      [d.id]: Number(e.target.value),
-                    })
-                  }
-                  className="mt-2 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-3 py-3 text-center text-xl font-black"
-                />
-              </label>
-            ))}
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm">
+              <thead>
+                <tr className="border-y border-[#123c36]/10 text-left text-xs text-neutral-500">
+                  <th className="px-5 py-2 font-normal">Chế độ ăn</th>
+                  <th className="px-2 py-2 text-right font-normal">
+                    Gợi ý từ chỉ định
+                  </th>
+                  <th className="px-2 py-2 text-center font-normal">Số suất</th>
+                  <th className="px-5 py-2 text-right font-normal">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.dietTypes.map((d: Row) => {
+                  const q = Number(quantities[d.id] ?? 0);
+                  const sug = suggestionFor(d.id);
+                  const diff = q - sug;
+                  return (
+                    <tr
+                      key={d.id}
+                      className={`border-b border-[#123c36]/5 ${diff !== 0 ? "bg-amber-50" : ""}`}
+                    >
+                      <td className="px-5 py-2.5 font-medium text-[#24483f]">
+                        {d.name}
+                      </td>
+                      <td className="px-2 py-2.5 text-right tabular-nums text-neutral-500">
+                        {sug}
+                      </td>
+                      <td className="px-2 py-2.5 text-center">
+                        <input
+                          type="number"
+                          min={0}
+                          max={10000}
+                          value={quantities[d.id] ?? 0}
+                          onChange={(e) =>
+                            setQuantities({
+                              ...quantities,
+                              [d.id]: Number(e.target.value),
+                            })
+                          }
+                          className={`w-[76px] rounded-lg border bg-white px-2 py-1.5 text-center text-xl font-semibold tabular-nums text-[#123c36] ${diff !== 0 ? "border-amber-400" : "border-[#8fa99e]"}`}
+                        />
+                      </td>
+                      <td className="px-5 py-2.5 text-right">
+                        {diff === 0 ? (
+                          <span className="text-xs text-emerald-700">
+                            ✓ khớp
+                          </span>
+                        ) : (
+                          <span className="text-xs font-medium text-amber-700">
+                            ⚠ lệch {diff > 0 ? `+${diff}` : diff}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          {mismatch && (
-            <p className="rounded-xl border-2 border-amber-400 bg-amber-50 p-3 font-bold text-amber-950">
-              Số nhập đang khác số gợi ý từ chỉ định. Hãy kiểm tra lại và ghi rõ
-              lý do trước khi xác nhận.
-            </p>
-          )}
-          <label className="block font-bold">
-            Ghi chú {mismatch && "*"}
-            <input
-              required={mismatch}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className={input}
-            />
-          </label>
-          <div className="flex items-center justify-between rounded-xl bg-[#e7f2ed] p-4">
-            <b className="text-lg text-[#123c36]">Tổng: {total} suất</b>
-            <button
-              disabled={busy || total === 0 || (mismatch && !note.trim())}
-              className="rounded-xl bg-[#123c36] px-5 py-3 font-black text-white disabled:opacity-50"
+          <div className="flex items-center justify-between gap-3 border-t border-[#123c36]/10 bg-[#e1f5ee] px-5 py-3">
+            <span className="text-sm text-[#085041]">Tổng suất</span>
+            <span className="text-2xl font-semibold tabular-nums text-[#085041]">
+              {total} suất
+            </span>
+          </div>
+          <div className="border-t border-[#123c36]/10 px-5 py-4">
+            <label
+              className={`block text-sm ${mismatch ? "text-amber-700" : "text-[#24483f]"}`}
             >
-              Xác nhận báo suất
-            </button>
+              Ghi chú{mismatch ? " *" : ""}
+              <input
+                required={mismatch}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={
+                  mismatch
+                    ? "Ghi rõ lý do lệch so với gợi ý…"
+                    : "Ghi chú thêm (không bắt buộc)"
+                }
+                className={`mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm ${mismatch ? "border-amber-400" : "border-[#8fa99e]"}`}
+              />
+            </label>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-neutral-500">
+                Sau khi xác nhận vẫn sửa được đến giờ chốt.
+              </span>
+              <button
+                disabled={busy || total === 0 || (mismatch && !note.trim())}
+                className="rounded-lg bg-[#0f6e56] px-5 py-2.5 font-semibold text-white transition hover:bg-[#0c5a47] disabled:opacity-50"
+              >
+                Xác nhận báo suất
+              </button>
+            </div>
           </div>
         </form>
       )}
-      <h3 className="mt-6 font-black">Phiếu đã báo trong ngày</h3>
-      <OrderCards orders={data.orders} />
+      <div className="border-t border-[#123c36]/10 px-5 py-4">
+        <h3 className="text-sm font-semibold text-[#123c36]">
+          Phiếu đã báo trong ngày
+        </h3>
+        <div className="mt-2">
+          <OrderCards orders={data.orders} />
+        </div>
+      </div>
     </section>
   );
 }
