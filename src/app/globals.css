@@ -306,6 +306,65 @@ table th {
     height: auto !important;
   }
 
+  body.print-meal-labels * {
+    visibility: hidden !important;
+  }
+
+  body.print-meal-labels .meal-label-sheet,
+  body.print-meal-labels .meal-label-sheet * {
+    visibility: visible !important;
+  }
+
+  body.print-meal-labels .meal-label-sheet {
+    display: grid !important;
+    position: absolute;
+    inset: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4mm;
+  }
+
+  body.print-meal-labels .meal-label {
+    display: flex;
+    min-height: 32mm;
+    break-inside: avoid;
+    flex-direction: column;
+    justify-content: center;
+    border: 0.35mm solid #123c36;
+    border-radius: 2mm;
+    padding: 3mm;
+    text-align: center;
+  }
+
+  body.print-meal-labels .meal-label-brand {
+    font-size: 7pt;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: #42655d;
+  }
+
+  body.print-meal-labels .meal-label-diet {
+    margin-top: 1.5mm;
+    font-size: 15pt;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #123c36;
+  }
+
+  body.print-meal-labels .meal-label-department {
+    margin-top: 1mm;
+    font-size: 10pt;
+    font-weight: 600;
+  }
+
+  body.print-meal-labels .meal-label-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2mm;
+    border-top: 0.2mm solid #b7c8c2;
+    padding-top: 1.5mm;
+    font-size: 8pt;
+  }
+
   /* Popup Kết quả (printable): khi mở và bấm In, in nội dung trong luồng thay vì
      lớp phủ cố định — nhờ đó "In PDF" ra đúng nhóm kết quả đang xem. */
   .modal-print-overlay {
@@ -327,6 +386,10 @@ table th {
     overflow: visible !important;
     padding: 0 !important;
   }
+}
+
+.meal-label-sheet {
+  display: none;
 }
 
 [data-print-header] {

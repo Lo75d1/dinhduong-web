@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { buildMealLabelGroups, expandMealLabels } from "@/lib/meal-labels";
 
 // API trả về một aggregate vận hành có nhiều relation Prisma; giữ Row động tại biên UI.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -143,13 +144,13 @@ export default function OperationsApp({
           {data.user.role === "ADMIN" && (
             <ConfigPanel data={data} busy={busy} act={act} />
           )}
-          <SnapshotMenuPanel data={data} busy={busy} uploadPhoto={uploadPhoto} />
+          <SnapshotMenuPanel data={data} date={date} busy={busy} uploadPhoto={uploadPhoto} />
           <ShiftPanel data={data} date={date} busy={busy} act={act} />
         </>
       )}
       {mode === "kitchen" && (
         <>
-          <SnapshotMenuPanel data={data} busy={busy} uploadPhoto={uploadPhoto} />
+          <SnapshotMenuPanel data={data} date={date} busy={busy} uploadPhoto={uploadPhoto} />
           <ApprovedPublicNotes data={data} />
           <KitchenPanel data={data} busy={busy} act={act} />
         </>
@@ -841,8 +842,15 @@ function ConfigPanel({
   );
 }
 
-function SnapshotMenuPanel({ data, busy, uploadPhoto }: { data: Row; busy: boolean; uploadPhoto: (itemId: string, file: File) => Promise<boolean> }) {
+function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date: string; busy: boolean; uploadPhoto: (itemId: string, file: File) => Promise<boolean> }) {
   if (!["ADMIN", "DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF"].includes(data.user.role)) return null;
+  const labelGroups = buildMealLabelGroups(data.orders);
+  const labels = expandMealLabels(labelGroups);
+  function printLabels() {
+    document.body.classList.add("print-meal-labels");
+    window.addEventListener("afterprint", () => document.body.classList.remove("print-meal-labels"), { once: true });
+    window.print();
+  }
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
       <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
@@ -903,6 +911,39 @@ function SnapshotMenuPanel({ data, busy, uploadPhoto }: { data: Row; busy: boole
             </article>
           ))}
         </div>
+      </section>
+      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white xl:col-span-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
+          <div>
+            <h2 className="text-lg font-semibold text-[#123c36]">Tem dán suất ăn</h2>
+            <p className="mt-1 text-sm text-neutral-600">Mỗi suất đã chốt tạo một tem, chỉ gồm ngày, bữa, khoa và chế độ ăn.</p>
+          </div>
+          <button type="button" onClick={printLabels} disabled={!labels.length} className="rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50">
+            In {labels.length.toLocaleString("vi-VN")} tem A4
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          {labelGroups.length ? (
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {labelGroups.map((group: Row) => (
+                <div key={group.key} className="flex items-center justify-between gap-3 rounded-lg border border-[#123c36]/10 px-3 py-2 text-sm">
+                  <div><span className="font-medium text-[#123c36]">{group.department}</span><span className="text-neutral-500"> · {group.mealType} · {group.dietType}</span></div>
+                  <span className="rounded-full bg-[#e1f5ee] px-2.5 py-1 font-medium tabular-nums text-[#085041]">{group.quantity} tem</span>
+                </div>
+              ))}
+            </div>
+          ) : <p className="text-sm text-neutral-600">Chưa có suất đã chốt để in tem trong ngày này.</p>}
+        </div>
+      </section>
+      <section className="meal-label-sheet" aria-hidden="true">
+        {labels.map((label: Row) => (
+          <article key={`${label.key}-${label.index}`} className="meal-label">
+            <p className="meal-label-brand">DINH DƯỠNG 2598</p>
+            <p className="meal-label-diet">{label.dietType}</p>
+            <p className="meal-label-department">{label.department}</p>
+            <div className="meal-label-meta"><span>{label.mealType}</span><span>{date.split("-").reverse().join("/")}</span></div>
+          </article>
+        ))}
       </section>
     </div>
   );
