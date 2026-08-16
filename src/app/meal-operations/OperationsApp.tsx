@@ -872,6 +872,7 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.photoUrl} alt={`Ảnh đối chứng ${item.dietType.name}`} className="aspect-[4/3] w-full object-cover" />
                     </div>}
+                    {["ADMIN", "DIETITIAN"].includes(data.user.role) && <a href={`/tinh-khau-phan?menuDate=${date}&dietTypeId=${item.dietType.id}`} className="mt-2 inline-flex rounded-lg border border-[#123c36]/25 bg-white px-3 py-1.5 text-xs font-medium text-[#123c36] hover:bg-[#f6faf8]">Mở và chỉnh tại Tính khẩu phần →</a>}
                     {["DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF"].includes(data.user.role) && <form className="mt-2 flex flex-wrap items-center gap-2" onSubmit={(event) => {
                       event.preventDefault();
                       const file = new FormData(event.currentTarget).get("photo");

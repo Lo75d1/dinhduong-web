@@ -28,6 +28,8 @@ import { restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modif
 import MenuFoodSearch from "./MenuFoodSearch";
 import MultiDayAnalysis from "./MultiDayAnalysis";
 import PersonalProfile, { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
+import { CLASSIFY_SELECT_KEYS, EMPTY_CLASSIFY } from "@/lib/food-classify";
+import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import type { RecommendationRow } from "./matchRecommendation";
 import { basisForMode, calculateQuantity } from "./quantity";
 import { loadRows, type Row } from "./types";
@@ -87,6 +89,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
   const [mealLinks, setMealLinks] = useState<Record<string, string>>({});
   const [publishing, setPublishing] = useState(false);
   const [publishNotice, setPublishNotice] = useState("");
+  const approvedImportStarted = useRef(false);
   const daySensors = useMenuSensors();
 
   useEffect(() => {
@@ -123,6 +126,51 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
       .then((response) => response.ok ? response.json() : Promise.reject())
       .then((data) => setKitchenRefs({ dietTypes: data.dietTypes ?? [], mealTypes: data.mealTypes ?? [] }))
       .catch(() => setKitchenRefs(null));
+  }, []);
+
+  useEffect(() => {
+    if (approvedImportStarted.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const mealDate = params.get("menuDate") ?? "";
+    const dietTypeId = params.get("dietTypeId") ?? "";
+    if (!mealDate || !dietTypeId) return;
+    const sourceKey = `${mealDate}:${dietTypeId}`;
+    const existingCopy = loadMenuDays().find((day) => day.sourceKey === sourceKey);
+    approvedImportStarted.current = true;
+    fetch(`/api/kitchen-menu/approve?mealDate=${encodeURIComponent(mealDate)}&dietTypeId=${encodeURIComponent(dietTypeId)}`)
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || "Không thể mở thực đơn đã duyệt.");
+        return body;
+      })
+      .then((body) => {
+        const draft = body.approvedDraft;
+        if (!draft?.items?.length) throw new Error("Chưa có thực đơn đã duyệt để tạo bản chỉnh sửa.");
+        const dayId = existingCopy?.id ?? crypto.randomUUID();
+        const foodRefs = new Map<string, Record<string, unknown>>((draft.foods ?? []).map((food: Record<string, unknown>) => [String(food.id), food]));
+        const rows: Row[] = draft.items.flatMap((item: { snapshotJson?: { dishes?: Array<{ dish: string; foods?: Array<{ foodId: string; foodName: string; gramsPerServing: number; wastePercent: number | null }> }> }; menu: { mealType: { id: string; name: string } } }) =>
+          (item.snapshotJson?.dishes ?? []).flatMap((dish) =>
+            (dish.foods ?? []).map((food) => {
+              const source = foodRefs.get(food.foodId);
+              return {
+                uid: crypto.randomUUID(), meal: item.menu.mealType.name, dish: dish.dish,
+                foodId: food.foodId, foodName: food.foodName, grams: food.gramsPerServing,
+                inputGrams: food.gramsPerServing, inputBasis: "edible" as const, conversionFactor: 1,
+                wastePercent: food.wastePercent, note: source ? "" : "Thiếu liên kết dữ liệu Food; chưa có số dinh dưỡng.",
+                nutrients: Object.fromEntries(CORE_CALC_FIELDS.map((field) => [field.key, typeof source?.[field.key] === "number" ? source[field.key] : null])),
+                classify: source ? { ...EMPTY_CLASSIFY, ...Object.fromEntries(CLASSIFY_SELECT_KEYS.map((key) => [key, source[key] ?? null])) } : EMPTY_CLASSIFY,
+              };
+            }),
+          ),
+        );
+        const dietName = body.dietTypes?.find((item: KitchenRef) => item.id === dietTypeId)?.name ?? "chế độ ăn";
+        const copy: MenuDay = { id: dayId, label: `Bản chỉnh ${dietName}`, date: mealDate, dietTypeId, sourceKey, rows };
+        setDays((current) => current.some((day) => day.sourceKey === sourceKey) ? current : [...current, copy]);
+        setPublishDayId(dayId);
+        setMealLinks((current) => ({ ...current, ...Object.fromEntries(draft.items.map((item: { menu: { mealType: { id: string; name: string } } }) => [`${dayId}::${item.menu.mealType.name}`, item.menu.mealType.id])) }));
+        setPublishNotice(existingCopy ? "Đã mở lại bản chỉnh của thực đơn này." : "Đã tạo bản sao từ thực đơn đã duyệt. Chỉnh sửa rồi bấm duyệt lại để thay bản đang dùng.");
+      })
+      .catch((error) => setPublishNotice(error instanceof Error ? error.message : "Không thể mở thực đơn đã duyệt."));
   }, []);
 
   useEffect(() => {
@@ -379,7 +427,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
             <label className="text-sm font-bold">Sao chép từ chế độ khác<select className="mt-1 w-full rounded-lg border bg-white p-2" defaultValue="" onChange={(event) => { copyFromDiet(event.target.value); event.target.value = ""; }}><option value="">— Không sao chép —</option>{days.filter((day) => day.id !== publishDay?.id && day.date && day.date === publishDay?.date && day.dietTypeId).map((day) => <option key={day.id} value={day.id}>{kitchenRefs.dietTypes.find((diet) => diet.id === day.dietTypeId)?.name ?? day.label}</option>)}</select></label>
           </div>
           {publishDay && <div className="mt-3 grid gap-2 md:grid-cols-3">{publishMeals.map((meal) => <label key={meal.meal} className="rounded-lg border bg-white p-2 text-sm font-bold">{meal.meal}<select className="mt-1 w-full rounded border p-2" value={mealLinks[`${publishDay.id}::${meal.meal}`] ?? ""} onChange={(event) => setMealLinks((current) => ({ ...current, [`${publishDay.id}::${meal.meal}`]: event.target.value }))}><option value="">— Nối loại bữa —</option>{kitchenRefs.mealTypes.map((type) => <option key={type.id} value={type.id}>{type.name}{type.serviceLocalTime ? ` · ${type.serviceLocalTime}` : ""}</option>)}</select></label>)}</div>}
-          <div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" disabled={publishing} onClick={() => void approvePublishDay()} className="rounded-lg bg-[#123c36] px-4 py-2.5 font-bold text-white disabled:opacity-50">{publishing ? "Đang duyệt…" : "Duyệt và chuyển sang báo ăn"}</button>{publishNotice && <p className="text-sm font-semibold text-[#0c5f4d]">{publishNotice}</p>}</div>
+          <div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" disabled={publishing} onClick={() => void approvePublishDay()} className="rounded-lg bg-[#123c36] px-4 py-2.5 font-bold text-white disabled:opacity-50">{publishing ? "Đang duyệt…" : "Duyệt và chuyển sang báo ăn"}</button><a href={`/bep?date=${publishDay?.date || new Date().toISOString().slice(0, 10)}`} className="rounded-lg border border-[#123c36]/25 bg-white px-4 py-2.5 text-sm font-semibold text-[#123c36] hover:bg-[#f6faf8]">Mở màn bếp →</a>{publishNotice && <p className="w-full text-sm font-semibold text-[#0c5f4d]">{publishNotice}</p>}</div>
         </div>
       )}
 

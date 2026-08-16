@@ -18,6 +18,7 @@ Ngay chay: 2026-08-16. Nhanh: `codex/tinh-chinh-bao-an`.
 4. Benh nhan: chi item da duyet co anh moi hien anh suat mau; item khong co anh khong tao khoang trong.
 5. Anh mau khong chua du lieu nguoi benh. Upload chap nhan JPEG/PNG/WebP, toi da 5 MiB.
 6. Bep co bang tem theo khoa x bua x che do; moi suat SUBMITTED/LOCKED tao dung mot tem A4, khong co PII.
+7. Cau noi hai chieu: Dinh duong mo item da duyet tu man bep vao Tinh khau phan thanh ban sao chinh sua; nap lai URL khong nhan doi, duyet lai moi thay snapshot dang dung.
 
 Anh:
 
@@ -25,6 +26,7 @@ Anh:
 - `02-bep-anh-doi-chung-desktop.png`: desktop 1280 px, anh doi chung va nut doi anh.
 - `03-benh-nhan-anh-doi-chung-mobile-390.png`: mobile 390 px, anh suat mau dung che do.
 - `04-tem-suat-an-bep-desktop.png`: desktop 1280 px, tong 10 tem khop 2 khoa va 2 che do trong DB thu.
+- `05-cau-noi-thuc-don-tinh-khau-phan.png`: ban da duyet duoc nap nguoc dung ngay, che do, bua va gram de chinh sua.
 
 ## Gate cuoi
 

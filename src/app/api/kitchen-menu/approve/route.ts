@@ -2,21 +2,38 @@ import { requireSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { parseKitchenMenuSnapshot } from "@/lib/kitchen-menu-snapshot";
 import { audit, cleanText, localDate, requireManager } from "@/lib/meal-operations";
 import { prisma } from "@/lib/prisma";
+import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
+import { CLASSIFY_SELECT_KEYS } from "@/lib/food-classify";
 
 function failure(error: unknown) {
   if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
   return Response.json({ error: error instanceof Error ? error.message : "Không thể duyệt thực đơn." }, { status: 400 });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireSessionUser();
     requireManager(user, ["ADMIN", "DIETITIAN"]);
+    const url = new URL(request.url);
+    const requestedDate = url.searchParams.get("mealDate");
+    const requestedDietTypeId = cleanText(url.searchParams.get("dietTypeId"));
     const [dietTypes, mealTypes] = await Promise.all([
       prisma.kitchenDietType.findMany({ where: { status: "ACTIVE" }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true } }),
       prisma.mealType.findMany({ where: { status: "ACTIVE" }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }], select: { id: true, name: true, serviceLocalTime: true } }),
     ]);
-    return Response.json({ dietTypes, mealTypes });
+    if (!requestedDate || !requestedDietTypeId) return Response.json({ dietTypes, mealTypes });
+    const mealDate = localDate(requestedDate);
+    const items = await prisma.kitchenMenuItem.findMany({
+      where: { dietTypeId: requestedDietTypeId, approvedAt: { not: null }, menu: { mealDate } },
+      include: { menu: { include: { mealType: true } }, dietType: { select: { id: true, name: true } } },
+      orderBy: [{ menu: { mealType: { sortOrder: "asc" } } }, { sortOrder: "asc" }],
+    });
+    const foodIds = [...new Set(items.flatMap((item) => parseKitchenMenuSnapshot(item.snapshotJson)?.dishes.flatMap((dish) => dish.foods.map((food) => food.foodId)) ?? []))];
+    const foods = foodIds.length ? await prisma.food.findMany({
+      where: { id: { in: foodIds } },
+      select: { id: true, ...Object.fromEntries(CORE_CALC_FIELDS.map((field) => [field.key, true])), ...Object.fromEntries(CLASSIFY_SELECT_KEYS.map((key) => [key, true])) },
+    }) : [];
+    return Response.json({ dietTypes, mealTypes, approvedDraft: { mealDate: requestedDate, dietTypeId: requestedDietTypeId, items, foods } });
   } catch (error) { return failure(error); }
 }
 

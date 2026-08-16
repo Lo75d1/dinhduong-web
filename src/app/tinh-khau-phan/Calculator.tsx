@@ -88,7 +88,8 @@ export default function Calculator() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHeaderSlot(document.getElementById("header-page-slot"));
     try {
-      if (localStorage.getItem("khauphan_pagemode_v1") === "multi") setPageMode("multi");
+      const params = new URLSearchParams(window.location.search);
+      if ((params.get("menuDate") && params.get("dietTypeId")) || localStorage.getItem("khauphan_pagemode_v1") === "multi") setPageMode("multi");
     } catch { /* localStorage bị chặn */ }
     return () => document.body.classList.remove("ration-focus");
   }, []);
