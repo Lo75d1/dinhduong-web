@@ -62,16 +62,24 @@
   - `requireManager(user, ["ADMIN","DIETITIAN"])`.
   - Với mỗi bữa: upsert `KitchenMenu(mealDate, mealTypeId)` (tạo nếu chưa có) →
     upsert `KitchenMenuItem(menuId, dietTypeId)` với `snapshotJson` + `dishName` tóm
-    tắt, `status`/duyệt: đặt `KitchenMenu.status = APPROVED` (hoặc mức item nếu cần
-    duyệt lẻ từng chế độ — xem 2.4).
-  - `audit` entityType `KITCHEN_MENU`.
+    tắt + **`approvedAt`/`approvedById`** (duyệt mức item — xem 2.4). Đặt
+    `KitchenMenu.status = APPROVED` khi có ≥1 item duyệt (chỉ để hiển thị).
+  - `audit` entityType `KITCHEN_MENU` (hoặc `KITCHEN_MENU_ITEM`).
 
-### 2.4 Duyệt lại / phiên bản
-- Duyệt lại (ngày × chế độ) → **ghi đè `snapshotJson`** của các `KitchenMenuItem` tương
-  ứng (bản mới nhất thắng). Meal-ops luôn đọc bản đang APPROVED. Ghi `audit`.
-- Cân nhắc: duyệt theo **từng chế độ** (không phải cả `KitchenMenu`), vì mỗi chế độ
-  duyệt độc lập. → có thể cần cờ duyệt ở mức `KitchenMenuItem` (VD `approvedAt` trên
-  item) thay vì chỉ ở `KitchenMenu`. **Chốt khi làm.**
+### 2.4 Duyệt TỪNG CHẾ ĐỘ ở KitchenMenuItem (ĐÃ CHỐT 2026-08-16)
+Mỗi `KitchenMenuItem` = một (bữa × chế độ ăn); các chế độ duyệt **độc lập**. Duyệt cả
+`KitchenMenu` sẽ vô tình duyệt đồng loạt mọi chế độ cùng bữa → SAI mô hình. Chốt:
+- Thêm **`approvedAt DateTime?`** + **`approvedById String?`** trên `KitchenMenuItem`.
+- **MỌI đường ĐỌC lọc theo `item.approvedAt != null`** — bếp (`operationsContext`),
+  bảng đi chợ, và **trang bệnh nhân M1** (hiện đang lọc theo `KitchenMenu.status` →
+  ĐỔI sang lọc item-level, kẻo hiện nhầm/giấu nhầm).
+- **`KitchenMenu.status`** chỉ giữ để tương thích/hiển thị (đặt `APPROVED` khi ≥1 item
+  được duyệt); **KHÔNG dùng để gate đọc dữ liệu.**
+- Duyệt lại một chế độ → **ghi đè `snapshotJson` + cập nhật `approvedAt/approvedById`
+  của đúng item đó + audit chế độ đó**; KHÔNG ảnh hưởng chế độ khác cùng bữa.
+- Chưa duyệt (`approvedAt == null`) → **không đưa vào tính mua, hiện cảnh báo**.
+- **Nhất quán action cũ:** M1 có `approveMenu` (duyệt cả menu). Luồng mới là duyệt-item
+  → thay/tách rõ, **không để 2 cơ chế duyệt song song** đá nhau.
 
 ### 2.5 Đi chợ trong meal-ops — chỉ đọc, cộng toàn viện
 - Trong `operationsContext` (đã có sườn M2): với mỗi (mealDate, mealType, dietType) đã
