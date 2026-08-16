@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import MenuFoodSearch from "@/app/tinh-khau-phan/MenuFoodSearch";
 
 // API trả về một aggregate vận hành có nhiều relation Prisma; giữ Row động tại biên UI.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -123,16 +124,39 @@ export default function OperationsApp({
             <ConfigPanel data={data} busy={busy} act={act} />
           )}
           <MenuPanel data={data} date={date} busy={busy} act={act} />
+          <KitchenShoppingPanel data={data} />
           <ShiftPanel data={data} date={date} busy={busy} act={act} />
         </>
       )}
       {mode === "kitchen" && (
         <>
           <ApprovedPublicNotes data={data} />
+          <KitchenShoppingPanel data={data} />
           <KitchenPanel data={data} busy={busy} act={act} />
         </>
       )}
     </main>
+  );
+}
+
+function KitchenShoppingPanel({ data }: { data: Row }) {
+  const fmt = (value: number | null) => value == null ? "—" : value >= 1000 ? `${(value / 1000).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} kg` : `${Math.round(value)} g`;
+  if (!data.menus?.length) return <section className={panel}><h2 className="text-xl font-black text-[#123c36]">Bảng đi chợ / xuất kho</h2><p className="mt-2 text-neutral-600">Chưa có thực đơn cho ngày đã chọn.</p></section>;
+  return (
+    <section className={panel}>
+      <h2 className="text-xl font-black text-[#123c36]">Bảng đi chợ / xuất kho theo số suất</h2>
+      <p className="mt-1 text-sm text-neutral-600">Tự động lấy gram mỗi suất × tổng số suất điều dưỡng đã chốt. Lượng mua có tính tỷ lệ thải bỏ khi kho thực phẩm có dữ liệu.</p>
+      <div className="mt-4 grid gap-4">
+        {data.menus.map((menu: Row) => {
+          const list = data.shoppingLists?.find((item: Row) => item.menuId === menu.id);
+          return <article key={menu.id} className="overflow-hidden rounded-xl border border-[#b8cbc3]">
+            <div className="bg-[#eef6f2] px-4 py-3"><b className="text-[#123c36]">{menu.mealType.name} · {menu.title}</b><span className="ml-2 text-xs font-bold">{menu.status}</span></div>
+            {list?.items?.length ? <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-sm"><thead><tr className="border-b text-left"><th className="px-3 py-2">Thực phẩm</th><th className="px-3 py-2 text-right">Sống sạch</th><th className="px-3 py-2 text-right">Mua / xuất kho</th><th className="px-3 py-2 text-right">Thải bỏ</th></tr></thead><tbody>{list.items.map((item: Row) => <tr key={item.foodId} className="border-b border-neutral-100"><td className="px-3 py-2 font-medium">{item.foodName}</td><td className="px-3 py-2 text-right tabular-nums">{fmt(item.edibleGrams)}</td><td className="px-3 py-2 text-right tabular-nums">{fmt(item.rawGrams)}</td><td className="px-3 py-2 text-right">{item.wastePercent == null ? "—" : `${item.wastePercent}%`}</td></tr>)}</tbody></table></div> : <p className="p-4 text-sm text-neutral-600">Chưa có số suất hoặc chưa có món đủ dữ liệu để tính.</p>}
+            {!!list?.incomplete?.length && <div className="border-t border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"><b>Cần hoàn thiện dữ liệu:</b><ul className="mt-1 list-disc pl-5">{list.incomplete.slice(0, 10).map((item: Row, index: number) => <li key={`${item.menuItemId}-${index}`}>{item.dishName}: {item.reason}</li>)}</ul></div>}
+          </article>;
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -766,7 +790,21 @@ function MenuPanel({
 }) {
   const [mealTypeId, setMealTypeId] = useState(data.mealTypes[0]?.id ?? "");
   const [title, setTitle] = useState("Thực đơn trong ngày");
-  const [dishNames, setDishNames] = useState<Record<string, string>>({});
+  const [selectedDietTypeId, setSelectedDietTypeId] = useState(data.dietTypes[0]?.id ?? "");
+  const [menuRows, setMenuRows] = useState<Row[]>([]);
+  useEffect(() => {
+    const existing = data.menus.find((menu: Row) => menu.mealTypeId === mealTypeId);
+    setTitle(existing?.title ?? "Thực đơn trong ngày");
+    setMenuRows((existing?.items ?? []).filter((item: Row) => item.dishId).map((item: Row) => ({
+      localId: item.id,
+      dietTypeId: item.dietTypeId,
+      dishId: item.dishId,
+      dishName: item.dishName,
+      servingWeightG: item.servingWeightG ?? item.dish?.totalWeightG ?? 0,
+      ingredientCount: item.dish?.ingredients?.length ?? 0,
+      linkedIngredientCount: item.dish?.ingredients?.filter((ingredient: Row) => ingredient.food).length ?? 0,
+    })));
+  }, [mealTypeId, data.menus]);
   if (!["ADMIN", "DIETITIAN", "KITCHEN_MANAGER"].includes(data.user.role))
     return null;
   return (
@@ -780,9 +818,10 @@ function MenuPanel({
             mealDate: date,
             mealTypeId,
             title,
-            items: data.dietTypes.map((d: Row) => ({
-              dietTypeId: d.id,
-              dishName: dishNames[d.id] || "",
+            items: menuRows.map((row) => ({
+              dietTypeId: row.dietTypeId,
+              dishId: row.dishId,
+              servingWeightG: Number(row.servingWeightG),
             })),
           });
         }}
@@ -812,24 +851,43 @@ function MenuPanel({
             />
           </label>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {data.dietTypes.map((d: Row) => (
-            <label key={d.id} className="font-bold">
-              {d.name}
-              <input
-                value={dishNames[d.id] || ""}
-                onChange={(e) =>
-                  setDishNames({ ...dishNames, [d.id]: e.target.value })
-                }
-                placeholder="Các món…"
-                className={input}
-              />
-            </label>
+        <div className="rounded-xl border border-[#b8cbc3] bg-[#f7faf8] p-3">
+          <label className="font-bold">
+            Chế độ ăn đang thêm món
+            <select value={selectedDietTypeId} onChange={(e) => setSelectedDietTypeId(e.target.value)} className={input}>
+              {data.dietTypes.map((diet: Row) => <option key={diet.id} value={diet.id}>{diet.name}</option>)}
+            </select>
+          </label>
+          <div className="mt-3">
+            <MenuFoodSearch
+              kind="dish"
+              placeholder="Tìm món trong kho công thức…"
+              onPickDish={(dish) => setMenuRows((rows) => [...rows, {
+                localId: crypto.randomUUID(),
+                dietTypeId: selectedDietTypeId,
+                dishId: dish.id,
+                dishName: dish.name,
+                servingWeightG: dish.totalWeightG ?? 0,
+                ingredientCount: dish.ingredients.length,
+                linkedIngredientCount: dish.ingredients.filter((ingredient) => ingredient.food).length,
+              }])}
+            />
+          </div>
+        </div>
+        <div className="grid gap-2">
+          {menuRows.map((row) => (
+            <div key={row.localId} className="grid gap-2 rounded-xl border border-[#c9d9d2] p-3 sm:grid-cols-[1fr_1fr_10rem_auto] sm:items-end">
+              <div><b>{row.dishName}</b><p className="text-xs text-neutral-600">{row.linkedIngredientCount}/{row.ingredientCount} nguyên liệu đã nối dữ liệu</p></div>
+              <label className="font-bold">Chế độ ăn<select value={row.dietTypeId} onChange={(e) => setMenuRows((rows) => rows.map((item) => item.localId === row.localId ? { ...item, dietTypeId: e.target.value } : item))} className={input}>{data.dietTypes.map((diet: Row) => <option key={diet.id} value={diet.id}>{diet.name}</option>)}</select></label>
+              <label className="font-bold">Gram/suất<input type="number" min={1} max={5000} step="1" value={row.servingWeightG} onChange={(e) => setMenuRows((rows) => rows.map((item) => item.localId === row.localId ? { ...item, servingWeightG: e.target.value } : item))} className={input} /></label>
+              <button type="button" onClick={() => setMenuRows((rows) => rows.filter((item) => item.localId !== row.localId))} className="rounded-lg border border-rose-300 px-3 py-2 text-sm font-bold text-rose-700">Bỏ</button>
+            </div>
           ))}
+          {!menuRows.length && <p className="rounded-lg border border-dashed border-[#8fa99e] p-3 text-sm text-neutral-600">Chọn chế độ ăn rồi tìm món để tạo thực đơn có cấu trúc.</p>}
         </div>
         {["ADMIN", "DIETITIAN"].includes(data.user.role) && (
           <button
-            disabled={busy}
+            disabled={busy || !menuRows.length}
             className="rounded-lg bg-[#123c36] px-4 py-2.5 font-bold text-white"
           >
             Lưu bản nháp
@@ -850,7 +908,7 @@ function MenuPanel({
             </div>
             <p className="mt-1 text-sm">
               {m.items
-                .map((i: Row) => `${i.dietType.name}: ${i.dishName}`)
+                .map((i: Row) => `${i.dietType.name}: ${i.dishName}${i.servingWeightG ? ` (${Math.round(i.servingWeightG)} g/suất)` : ""}`)
                 .join(" · ")}
             </p>
             {["ADMIN", "DIETITIAN"].includes(data.user.role) &&

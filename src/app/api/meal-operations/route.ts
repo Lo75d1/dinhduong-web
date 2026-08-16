@@ -500,18 +500,34 @@ export async function POST(request: Request) {
       requireManager(user, ["ADMIN", "DIETITIAN"]);
       const mealDate = localDate(body.mealDate);
       const mealTypeId = cleanText(body.mealTypeId);
-      const rows = (Array.isArray(body.items) ? body.items : [])
+      const requestedRows = (Array.isArray(body.items) ? body.items : [])
         .map((raw, index) => {
           const row = raw as Record<string, unknown>;
+          const servingWeightG = Number(row.servingWeightG);
           return {
             dietTypeId: cleanText(row.dietTypeId),
-            dishName: cleanText(row.dishName),
+            dishId: cleanText(row.dishId),
+            servingWeightG,
             note: cleanText(row.note, 300) || null,
             sortOrder: index,
           };
         })
-        .filter((row) => row.dietTypeId && row.dishName);
-      if (!rows.length) throw new Error("Thực đơn cần ít nhất một món.");
+        .filter((row) => row.dietTypeId && row.dishId);
+      if (!requestedRows.length) throw new Error("Thực đơn cần ít nhất một món có cấu trúc.");
+      if (requestedRows.some((row) => !Number.isFinite(row.servingWeightG) || row.servingWeightG <= 0 || row.servingWeightG > 5000))
+        throw new Error("Khối lượng mỗi suất phải lớn hơn 0 và không quá 5.000 g.");
+      const dishes = await prisma.dish.findMany({
+        where: { id: { in: requestedRows.map((row) => row.dishId) }, isActive: true },
+        select: { id: true, name: true, totalWeightG: true },
+      });
+      const dishesById = new Map(dishes.map((dish) => [dish.id, dish]));
+      const rows = requestedRows.map((row) => {
+        const dish = dishesById.get(row.dishId);
+        if (!dish) throw new Error("Món đã chọn không còn tồn tại hoặc đã ngừng sử dụng.");
+        if (!dish.totalWeightG || dish.totalWeightG <= 0)
+          throw new Error(`Món “${dish.name}” chưa có tổng khối lượng công thức.`);
+        return { ...row, dishName: dish.name };
+      });
       const old = await prisma.kitchenMenu.findUnique({
         where: { mealDate_mealTypeId: { mealDate, mealTypeId } },
       });

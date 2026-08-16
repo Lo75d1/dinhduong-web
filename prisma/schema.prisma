@@ -303,7 +303,8 @@ model Dish {
 
   cookingSteps String? @db.Text // "Cách chế biến" gốc — đây là văn bản công thức nấu, KHÔNG phải 1 chip method
 
-  ingredients DishIngredient[]
+  ingredients      DishIngredient[]
+  kitchenMenuItems KitchenMenuItem[]
 
   createdAt DateTime @default(now())
 
@@ -873,17 +874,21 @@ model KitchenMenu {
 }
 
 model KitchenMenuItem {
-  id         String  @id @default(cuid())
-  menuId     String
-  dietTypeId String
-  dishName   String
-  note       String?
-  sortOrder  Int     @default(0)
+  id             String  @id @default(cuid())
+  menuId         String
+  dietTypeId     String
+  dishId         String?
+  dishName       String
+  servingWeightG Float?
+  note           String?
+  sortOrder      Int     @default(0)
 
   menu     KitchenMenu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
   dietType KitchenDietType @relation(fields: [dietTypeId], references: [id])
+  dish     Dish?           @relation(fields: [dishId], references: [id], onDelete: SetNull)
 
   @@index([menuId, sortOrder])
+  @@index([dishId])
   @@map("kitchen_menu_items")
 }
 
