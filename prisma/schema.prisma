@@ -888,7 +888,6 @@ model KitchenMenuItem {
   dietType   KitchenDietType @relation(fields: [dietTypeId], references: [id])
   approvedBy User?           @relation("KitchenMenuItemApprover", fields: [approvedById], references: [id])
 
-  @@unique([menuId, dietTypeId])
   @@index([menuId, sortOrder])
   @@index([approvedAt])
   @@map("kitchen_menu_items")

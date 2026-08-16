@@ -3,9 +3,6 @@ ADD COLUMN "snapshotJson" JSONB,
 ADD COLUMN "approvedAt" TIMESTAMP(3),
 ADD COLUMN "approvedById" TEXT;
 
-CREATE UNIQUE INDEX "kitchen_menu_items_menuId_dietTypeId_key"
-ON "kitchen_menu_items"("menuId", "dietTypeId");
-
 CREATE INDEX "kitchen_menu_items_approvedAt_idx"
 ON "kitchen_menu_items"("approvedAt");
 

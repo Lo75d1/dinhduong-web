@@ -128,6 +128,7 @@ export default function OperationsApp({
       )}
       {mode === "kitchen" && (
         <>
+          <SnapshotMenuPanel data={data} />
           <ApprovedPublicNotes data={data} />
           <KitchenPanel data={data} busy={busy} act={act} />
         </>
