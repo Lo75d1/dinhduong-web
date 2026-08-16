@@ -60,6 +60,7 @@ const INK = "#0C447C";
 const ACCENT = "#185FA5";
 
 const round = (n: number) => Math.round(n * 10) / 10;
+type KitchenRef = { id: string; name: string; serviceLocalTime?: string };
 
 function useMenuSensors() {
   return useSensors(
@@ -81,11 +82,18 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
   // #3: món đang chọn (trong bữa đang mở) + tab của thanh tìm cố định đáy màn hình
   const [selDish, setSelDish] = useState<string | null>(null);
   const [bottomKind, setBottomKind] = useState<"food" | "dish">("food");
+  const [kitchenRefs, setKitchenRefs] = useState<{ dietTypes: KitchenRef[]; mealTypes: KitchenRef[] } | null>(null);
+  const [publishDayId, setPublishDayId] = useState("");
+  const [mealLinks, setMealLinks] = useState<Record<string, string>>({});
+  const [publishing, setPublishing] = useState(false);
+  const [publishNotice, setPublishNotice] = useState("");
   const daySensors = useMenuSensors();
 
   useEffect(() => {
+    const loadedDays = loadMenuDays();
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDays(loadMenuDays());
+    setDays(loadedDays);
+    setPublishDayId(loadedDays[0]?.id ?? "");
     try {
       const rawProfile = window.localStorage.getItem("khauphan_profile_v1");
       if (rawProfile) setProfile({ ...DEFAULT_PROFILE, ...JSON.parse(rawProfile) });
@@ -111,6 +119,13 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
   }, []);
 
   useEffect(() => {
+    fetch("/api/kitchen-menu/approve")
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data) => setKitchenRefs({ dietTypes: data.dietTypes ?? [], mealTypes: data.mealTypes ?? [] }))
+      .catch(() => setKitchenRefs(null));
+  }, []);
+
+  useEffect(() => {
     if (!hydrated) return;
     saveMenuDays(days);
   }, [days, hydrated]);
@@ -131,7 +146,7 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
     }
     setDays((prev) => [
       ...prev,
-      { id: makeEmptyDay(prev.length).id, label: `Ngày ${prev.length + 1}`, date: "", rows },
+      { id: makeEmptyDay(prev.length).id, label: `Ngày ${prev.length + 1}`, date: "", dietTypeId: "", rows },
     ]);
   }
 
@@ -306,6 +321,34 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
   }
 
   const totalKcalAll = days.reduce((s, d) => s + dayKcal(d), 0);
+  const publishDay = days.find((day) => day.id === publishDayId) ?? null;
+  const publishMeals = publishDay ? dayMealsOrdered(publishDay) : [];
+
+  function copyFromDiet(sourceId: string) {
+    if (!publishDay || !sourceId) return;
+    const source = days.find((day) => day.id === sourceId);
+    if (!source || source.date !== publishDay.date) return window.alert("Chỉ sao chép giữa các chế độ trong cùng một ngày.");
+    if (publishDay.rows.length && !window.confirm("Ghi đè toàn bộ bữa, món và thực phẩm của chế độ đích?")) return;
+    patchDay(publishDay.id, { rows: source.rows.map((row) => ({ ...row, uid: crypto.randomUUID() })) });
+    setPublishNotice(`Đã sao chép từ ${source.label}; hãy điều chỉnh rồi mới duyệt.`);
+  }
+
+  async function approvePublishDay() {
+    if (!publishDay?.date || !publishDay.dietTypeId) return window.alert("Cần chọn ngày và chế độ ăn trước khi duyệt.");
+    const meals = publishMeals.map((meal) => ({
+      mealTypeId: mealLinks[`${publishDay.id}::${meal.meal}`] || "",
+      snapshot: { dishes: meal.dishes.map((dish) => ({ dish: dish.dish, foods: dish.rows.filter((row) => row.foodId && row.grams > 0).map((row) => ({ foodId: row.foodId, foodName: row.foodName, gramsPerServing: row.grams, wastePercent: row.wastePercent })) })) },
+    }));
+    if (!meals.length || meals.some((meal) => !meal.mealTypeId)) return window.alert("Cần nối từng bữa trong thực đơn với đúng loại bữa của hệ thống.");
+    setPublishing(true); setPublishNotice("");
+    try {
+      const response = await fetch("/api/kitchen-menu/approve", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mealDate: publishDay.date, dietTypeId: publishDay.dietTypeId, meals }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Không thể duyệt thực đơn.");
+      setPublishNotice("Đã duyệt và chuyển bản chụp sang báo ăn. Duyệt lại sẽ thay bản cũ của đúng chế độ này.");
+    } catch (error) { setPublishNotice(error instanceof Error ? error.message : "Không thể duyệt thực đơn."); }
+    finally { setPublishing(false); }
+  }
 
   return (
     <section className="flex flex-col gap-3" aria-label="Thực đơn nhiều ngày">
@@ -324,6 +367,19 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
         <div className="menu-day-enter flex items-center gap-2 rounded-lg border px-3 py-2 text-sm" style={{ borderColor: ACCENT, background: "#E6F1FB", color: INK }}>
           <span>↔ {moveNotice}</span>
           <button type="button" onClick={() => setMoveNotice(null)} className="ml-auto text-xs font-semibold" style={{ color: ACCENT }}>✕</button>
+        </div>
+      )}
+
+      {view === "entry" && kitchenRefs && days.length > 0 && (
+        <div className="rounded-xl border-2 border-[#123c36] bg-[#f1f7f4] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-black text-[#123c36]">Duyệt thực đơn → báo ăn</h3><p className="text-sm text-neutral-600">Một bộ thực đơn = một ngày × một chế độ ăn. Bản duyệt được đóng băng ở mức thực phẩm.</p></div><span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#123c36]">Khoa Dinh dưỡng</span></div>
+          <div className="mt-3 grid gap-3 lg:grid-cols-3">
+            <label className="text-sm font-bold">Bộ thực đơn<select className="mt-1 w-full rounded-lg border bg-white p-2" value={publishDayId} onChange={(event) => setPublishDayId(event.target.value)}>{days.map((day) => <option key={day.id} value={day.id}>{day.label}{day.date ? ` · ${day.date}` : " · chưa có ngày"}</option>)}</select></label>
+            <label className="text-sm font-bold">Chế độ ăn<select className="mt-1 w-full rounded-lg border bg-white p-2" value={publishDay?.dietTypeId ?? ""} onChange={(event) => publishDay && patchDay(publishDay.id, { dietTypeId: event.target.value })}><option value="">— Chọn chế độ —</option>{kitchenRefs.dietTypes.map((diet) => <option key={diet.id} value={diet.id}>{diet.name}</option>)}</select></label>
+            <label className="text-sm font-bold">Sao chép từ chế độ khác<select className="mt-1 w-full rounded-lg border bg-white p-2" defaultValue="" onChange={(event) => { copyFromDiet(event.target.value); event.target.value = ""; }}><option value="">— Không sao chép —</option>{days.filter((day) => day.id !== publishDay?.id && day.date && day.date === publishDay?.date && day.dietTypeId).map((day) => <option key={day.id} value={day.id}>{kitchenRefs.dietTypes.find((diet) => diet.id === day.dietTypeId)?.name ?? day.label}</option>)}</select></label>
+          </div>
+          {publishDay && <div className="mt-3 grid gap-2 md:grid-cols-3">{publishMeals.map((meal) => <label key={meal.meal} className="rounded-lg border bg-white p-2 text-sm font-bold">{meal.meal}<select className="mt-1 w-full rounded border p-2" value={mealLinks[`${publishDay.id}::${meal.meal}`] ?? ""} onChange={(event) => setMealLinks((current) => ({ ...current, [`${publishDay.id}::${meal.meal}`]: event.target.value }))}><option value="">— Nối loại bữa —</option>{kitchenRefs.mealTypes.map((type) => <option key={type.id} value={type.id}>{type.name}{type.serviceLocalTime ? ` · ${type.serviceLocalTime}` : ""}</option>)}</select></label>)}</div>}
+          <div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" disabled={publishing} onClick={() => void approvePublishDay()} className="rounded-lg bg-[#123c36] px-4 py-2.5 font-bold text-white disabled:opacity-50">{publishing ? "Đang duyệt…" : "Duyệt và chuyển sang báo ăn"}</button>{publishNotice && <p className="text-sm font-semibold text-[#0c5f4d]">{publishNotice}</p>}</div>
         </div>
       )}
 
@@ -636,6 +692,7 @@ function MealPanel({
   selectedDish: string | null;
   onSelectDish: (dish: string) => void;
 }) {
+  void onAddRecipe;
   // Món đang chọn do board quản lý (đồng bộ với ô tìm ở đáy); nếu không khớp bữa này → mặc định món đầu.
   const selected = meal.dishes.find((d) => d.dish === selectedDish) ?? meal.dishes[0] ?? null;
   function addEmptyDishPrompt() {
@@ -720,6 +777,7 @@ function DishEditor({ dish, onUpdateGrams, onDeleteRow, onAddFood }: {
   onDeleteRow: (uid: string) => void;
   onAddFood: (dish: string, food: MenuFoodResult) => void;
 }) {
+  void onAddFood;
   return (
     <div className="menu-day-enter flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">

@@ -122,7 +122,7 @@ export default function OperationsApp({
           {data.user.role === "ADMIN" && (
             <ConfigPanel data={data} busy={busy} act={act} />
           )}
-          <MenuPanel data={data} date={date} busy={busy} act={act} />
+          <SnapshotMenuPanel data={data} />
           <ShiftPanel data={data} date={date} busy={busy} act={act} />
         </>
       )}
@@ -753,119 +753,21 @@ function ConfigPanel({
   );
 }
 
-function MenuPanel({
-  data,
-  date,
-  busy,
-  act,
-}: {
-  data: Row;
-  date: string;
-  busy: boolean;
-  act: (p: Row) => Promise<boolean>;
-}) {
-  const [mealTypeId, setMealTypeId] = useState(data.mealTypes[0]?.id ?? "");
-  const [title, setTitle] = useState("Thực đơn trong ngày");
-  const [dishNames, setDishNames] = useState<Record<string, string>>({});
-  if (!["ADMIN", "DIETITIAN", "KITCHEN_MANAGER"].includes(data.user.role))
-    return null;
+function SnapshotMenuPanel({ data }: { data: Row }) {
+  if (!["ADMIN", "DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF"].includes(data.user.role)) return null;
   return (
-    <section className={panel}>
-      <h2 className="text-xl font-black text-[#123c36]">Thực đơn vận hành</h2>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void act({
-            action: "saveMenu",
-            mealDate: date,
-            mealTypeId,
-            title,
-            items: data.dietTypes.map((d: Row) => ({
-              dietTypeId: d.id,
-              dishName: dishNames[d.id] || "",
-            })),
-          });
-        }}
-        className="mt-3 space-y-3"
-      >
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="font-bold">
-            Bữa
-            <select
-              value={mealTypeId}
-              onChange={(e) => setMealTypeId(e.target.value)}
-              className={input}
-            >
-              {data.mealTypes.map((m: Row) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="font-bold">
-            Tên thực đơn
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={input}
-            />
-          </label>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {data.dietTypes.map((d: Row) => (
-            <label key={d.id} className="font-bold">
-              {d.name}
-              <input
-                value={dishNames[d.id] || ""}
-                onChange={(e) =>
-                  setDishNames({ ...dishNames, [d.id]: e.target.value })
-                }
-                placeholder="Các món…"
-                className={input}
-              />
-            </label>
-          ))}
-        </div>
-        {["ADMIN", "DIETITIAN"].includes(data.user.role) && (
-          <button
-            disabled={busy}
-            className="rounded-lg bg-[#123c36] px-4 py-2.5 font-bold text-white"
-          >
-            Lưu bản nháp
-          </button>
-        )}
-      </form>
-      <div className="mt-4 grid gap-2">
-        {data.menus.map((m: Row) => (
-          <article
-            key={m.id}
-            className="rounded-xl border border-[#c9d9d2] p-3"
-          >
-            <div className="flex justify-between">
-              <b>
-                {m.mealType.name} · {m.title}
-              </b>
-              <span>{m.status}</span>
-            </div>
-            <p className="mt-1 text-sm">
-              {m.items
-                .map((i: Row) => `${i.dietType.name}: ${i.dishName}`)
-                .join(" · ")}
-            </p>
-            {["ADMIN", "DIETITIAN"].includes(data.user.role) &&
-              m.status !== "APPROVED" && (
-                <button
-                  onClick={() => void act({ action: "approveMenu", id: m.id })}
-                  className="mt-2 text-sm font-bold text-[#0c5f4d] underline"
-                >
-                  Duyệt thực đơn
-                </button>
-              )}
-          </article>
-        ))}
-      </div>
-    </section>
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
+      <section className={panel}>
+        <h2 className="text-xl font-black text-[#123c36]">Thực đơn đã duyệt</h2>
+        <p className="mt-1 text-sm text-neutral-600">Chỉ đọc bản chụp từ Tính khẩu phần; không nhập món hoặc gram tại đây.</p>
+        <div className="mt-4 grid gap-2">{data.menus.length ? data.menus.map((menu: Row) => <article key={menu.id} className="rounded-xl border border-[#c9d9d2] p-3"><b>{menu.mealType.name}</b><div className="mt-2 grid gap-2">{menu.items.map((item: Row) => <div key={item.id} className="rounded-lg bg-[#f1f7f4] p-2 text-sm"><b className="text-[#123c36]">{item.dietType.name}</b><p>{item.dishName}</p><p className="text-xs text-neutral-500">Duyệt {item.approvedAt ? new Date(item.approvedAt).toLocaleString("vi-VN") : "—"}{item.approvedBy?.displayName ? " · " + item.approvedBy.displayName : ""}</p></div>)}</div></article>) : <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Chưa có thực đơn nào được duyệt cho ngày này.</p>}</div>
+      </section>
+      <section className={panel}>
+        <h2 className="text-xl font-black text-[#123c36]">Bảng đi chợ toàn viện</h2>
+        <p className="mt-1 text-sm text-neutral-600">Sống sạch = gram/người × tổng suất các khoa. Số mua có tính tỷ lệ thải bỏ.</p>
+        <div className="mt-4 grid gap-3">{data.shoppingLists.map((list: Row) => <article key={list.mealType.id} className="overflow-hidden rounded-xl border border-[#c9d9d2]"><div className="bg-[#edf5f1] px-3 py-2 font-black text-[#123c36]">{list.mealType.name}</div>{list.items.length ? <table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Thực phẩm</th><th className="p-2 text-right">Sống sạch</th><th className="p-2 text-right">Mua</th></tr></thead><tbody>{list.items.map((item: Row) => <tr key={item.foodId} className="border-b last:border-0"><td className="p-2 font-semibold">{item.foodName}</td><td className="p-2 text-right">{Math.round(item.edibleGrams).toLocaleString("vi-VN")} g</td><td className="p-2 text-right font-bold">{item.rawGrams == null ? "—" : Math.round(item.rawGrams).toLocaleString("vi-VN") + " g"}</td></tr>)}</tbody></table> : <p className="p-3 text-sm text-neutral-600">Chưa có nguyên liệu đủ điều kiện tính.</p>}{list.incomplete.length > 0 && <div className="border-t border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"><b>Cảnh báo — không đoán số thiếu:</b><ul className="mt-1 list-disc pl-5">{list.incomplete.map((warning: Row, index: number) => <li key={warning.menuItemId + "-" + index}>{warning.dishName}: {warning.reason}</li>)}</ul></div>}</article>)}</div>
+      </section>
+    </div>
   );
 }
 

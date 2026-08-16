@@ -11,6 +11,7 @@ export type MenuDay = {
   id: string;
   label: string; // "Ngày 1", có thể đổi tên
   date: string; // yyyy-mm-dd hoặc "" nếu chưa gán lịch
+  dietTypeId?: string; // KitchenDietType; rỗng với dữ liệu localStorage cũ
   rows: Row[];
 };
 
@@ -47,6 +48,7 @@ export function loadMenuDays(): MenuDay[] {
         id: typeof day.id === "string" && day.id ? day.id : genId(),
         label: typeof day.label === "string" && day.label.trim() ? day.label : `Ngày ${index + 1}`,
         date: typeof day.date === "string" ? day.date : "",
+        dietTypeId: typeof day.dietTypeId === "string" ? day.dietTypeId : "",
         rows: Array.isArray(day.rows) ? day.rows.map(normalizeRow) : [],
       }));
   } catch {
@@ -64,7 +66,7 @@ export function saveMenuDays(days: MenuDay[]) {
 }
 
 export function makeEmptyDay(index: number): MenuDay {
-  return { id: genId(), label: `Ngày ${index + 1}`, date: "", rows: [] };
+  return { id: genId(), label: `Ngày ${index + 1}`, date: "", dietTypeId: "", rows: [] };
 }
 
 // Nhân bản một ngày: cấp uid mới cho mọi dòng để không đụng dữ liệu ngày gốc.
@@ -73,6 +75,7 @@ export function duplicateDay(day: MenuDay, index: number): MenuDay {
     id: genId(),
     label: `Ngày ${index + 1}`,
     date: "",
+    dietTypeId: day.dietTypeId,
     rows: day.rows.map((row) => ({ ...row, uid: genId() })),
   };
 }
