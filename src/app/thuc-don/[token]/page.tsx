@@ -19,12 +19,35 @@ export default async function Page({ params }: { params: Promise<{ token: string
     prisma.mealType.findMany({ where: { status: "ACTIVE" }, orderBy: [{ sortOrder: "asc" }, { serviceLocalTime: "asc" }] }),
   ]);
   const menuByMeal = new Map(menus.map((menu) => [menu.mealTypeId, menu]));
-  return <main className="mx-auto max-w-4xl space-y-5 pb-12">
-    <header className="rounded-3xl bg-[#123c36] p-5 text-white sm:p-7"><p className="text-xs font-bold tracking-[.18em] text-[#bad8cd]">DINH DƯỠNG 2598 · {department.name.toUpperCase()}</p><h1 className="mt-1 text-3xl font-black">Thực đơn hôm nay</h1><p className="mt-2 text-white/85">Ngày {today.key.split("-").reverse().join("/")} · Chọn đúng dòng chế độ ăn đã được nhân viên y tế hướng dẫn.</p></header>
-    <section aria-labelledby="menu-title" className="rounded-2xl border-2 border-[#b7cbc3] bg-white p-4 sm:p-5"><div className="flex flex-wrap items-center justify-between gap-2"><h2 id="menu-title" className="text-xl font-black text-[#123c36]">Các bữa trong ngày</h2><span className="rounded-full bg-[#e7f2ed] px-3 py-1 text-xs font-bold text-[#123c36]">Chỉ hiển thị thực đơn đã duyệt</span></div>
-      <div className="mt-4 grid gap-3">{mealTypes.map((meal) => { const menu = menuByMeal.get(meal.id); return <article key={meal.id} className="rounded-xl border border-[#cbd9d4] p-4"><div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-lg font-black text-[#123c36]">{meal.name}</h3><span className="text-sm font-bold text-neutral-600">Phục vụ {meal.serviceLocalTime}</span></div>{menu ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{menu.items.map((item) => <div key={item.id} className="rounded-lg bg-[#f1f7f4] p-3"><b className="text-[#123c36]">{item.dietType.name}</b><p className="mt-1 text-base text-neutral-800">{item.dishName}</p>{item.note && <p className="mt-1 text-sm text-neutral-600">{item.note}</p>}</div>)}</div> : <p className="mt-3 rounded-lg bg-neutral-50 p-3 text-neutral-600">Thực đơn đang được cập nhật.</p>}</article>; })}</div>
+  return <main className="mx-auto max-w-3xl space-y-4 px-4 pb-12">
+    <header className="rounded-3xl bg-[#123c36] p-6 text-white sm:p-8">
+      <p className="text-xs font-medium tracking-[.18em] text-[#bad8cd]">DINH DƯỠNG 2598 · {department.name.toUpperCase()}</p>
+      <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Thực đơn hôm nay</h1>
+      <p className="mt-2 text-[15px] leading-relaxed text-white/80">Ngày {today.key.split("-").reverse().join("/")} · Chọn đúng dòng chế độ ăn đã được nhân viên y tế hướng dẫn.</p>
+    </header>
+    <section aria-labelledby="menu-title" className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#123c36]/10 px-5 py-4">
+        <h2 id="menu-title" className="text-lg font-semibold text-[#123c36]">Các bữa trong ngày</h2>
+        <span className="rounded-full bg-[#e1f5ee] px-3 py-1 text-xs font-medium text-[#085041]">Chỉ hiển thị thực đơn đã duyệt</span>
+      </div>
+      <div className="divide-y divide-[#123c36]/8">{mealTypes.map((meal) => {
+        const menu = menuByMeal.get(meal.id);
+        return <article key={meal.id} className="px-5 py-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 className="text-lg font-semibold text-[#123c36]">{meal.name}</h3>
+            <span className="text-sm text-neutral-500">Phục vụ {meal.serviceLocalTime}</span>
+          </div>
+          {menu ? <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{menu.items.map((item) =>
+            <div key={item.id} className="rounded-xl border border-[#123c36]/10 bg-[#f6faf8] p-3.5">
+              <b className="text-sm font-semibold text-[#0f6e56]">{item.dietType.name}</b>
+              <p className="mt-1 text-[17px] leading-snug text-neutral-800">{item.dishName}</p>
+              {item.note && <p className="mt-1 text-sm text-neutral-500">{item.note}</p>}
+            </div>)}</div>
+          : <p className="mt-3 rounded-xl bg-neutral-50 px-3 py-3 text-neutral-500">Thực đơn đang được cập nhật.</p>}
+        </article>;
+      })}</div>
     </section>
-    <aside className="rounded-2xl border-l-4 border-amber-500 bg-amber-50 p-4 text-sm text-amber-950"><b>Lưu ý an toàn:</b> Thực đơn trên màn hình không thay thế chỉ định của bác sĩ hoặc chuyên gia dinh dưỡng. Nếu chưa biết chế độ ăn của mình, hãy hỏi điều dưỡng trước khi dùng.</aside>
+    <aside className="rounded-2xl border-l-4 border-amber-500 bg-amber-50 px-4 py-3.5 text-sm leading-relaxed text-amber-900"><b>Lưu ý an toàn:</b> Thực đơn trên màn hình không thay thế chỉ định của bác sĩ hoặc chuyên gia dinh dưỡng. Nếu chưa biết chế độ ăn của mình, hãy hỏi điều dưỡng trước khi dùng.</aside>
     <PublicMealReportForm departmentToken={department.publicToken} />
   </main>;
 }
