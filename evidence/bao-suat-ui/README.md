@@ -53,3 +53,22 @@ Các ảnh dưới đây được render sau khi chỉ thay lớp giao diện c�
 - Giữ đủ ba cảnh báo: thiếu tỷ lệ thải bỏ, món thiếu gram và chế độ chưa duyệt.
 
 ![SnapshotMenuPanel và bảng đi chợ](./06-snapshot-menu-kitchen-desktop.png)
+
+## Quản trị suất ăn · desktop 1280 px
+
+Render bằng tài khoản giả `ADMIN` trên DB thử cô lập. Sáu khối admin giữ nguyên
+luồng nghiệp vụ và được đồng bộ về thẻ hairline, dải tiêu đề, chữ vừa, input một
+viền và nút teal/viền.
+
+- `Summary` là khối trung tâm: bảng khoa × bữa × chế độ, số căn phải/tabular,
+  badge trạng thái, nút `Khóa`/`Xuất Excel` và dòng `TỔNG` xanh nhạt.
+- `PublicNoteReview` giữ trạng thái chờ duyệt màu amber; dữ liệu thử hiện không có
+  ghi chú mới nên ảnh thể hiện empty state.
+- `ConfigPanel`, `SnapshotMenuPanel` và `ShiftPanel` cùng nhịp viền/khoảng cách;
+  ba cảnh báo đi chợ vẫn giữ nguyên.
+
+![Summary và ghi chú chờ duyệt](./07-admin-summary-desktop.png)
+
+![Cấu hình và thực đơn đi chợ](./08-admin-config-menu-desktop.png)
+
+![Lịch trực và nhiệm vụ](./09-admin-shifts-desktop.png)
