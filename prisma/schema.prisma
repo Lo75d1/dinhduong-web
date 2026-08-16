@@ -246,7 +246,7 @@ model FoodPrice {
   basis     String // "per_kg" | "per_100g" | "per_piece" | "per_pack"
   packG     Float? // Khối lượng 1 đơn vị mua (g) khi basis = per_piece/per_pack
   source    String? // Tên chuỗi bán lẻ / nguồn tham khảo
-  sourceUrl String? @db.Text
+  sourceUrl String?   @db.Text
   note      String? // Ghi chú thêm (mặc định coi là "chỉ tham khảo")
   asOfDate  DateTime? // Thời điểm giá có hiệu lực / được ghi nhận
 
@@ -478,25 +478,25 @@ model ChildGrowthStandard {
 // Các bảng này tách biệt hoàn toàn với Food/Dish là dữ liệu nguồn VDD/RNI.
 // =====================================================================
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
   displayName  String
   passwordHash String
-  role         String    @default("CLINICIAN") // CLINICIAN | ADMIN
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  role         String   @default("CLINICIAN") // CLINICIAN | ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  sessions Session[]
-  patients Patient[]
-  rations  Ration[]
-  submissions       FoodSubmission[] @relation("SubmissionAuthor")
-  reviewedSubmissions FoodSubmission[] @relation("SubmissionReviewer")
-  departmentMemberships DepartmentMembership[]
-  submittedMealOrders MealOrder[] @relation("MealOrderSubmitter")
-  approvedKitchenMenus KitchenMenu[] @relation("KitchenMenuApprover")
+  sessions                Session[]
+  patients                Patient[]
+  rations                 Ration[]
+  submissions             FoodSubmission[]       @relation("SubmissionAuthor")
+  reviewedSubmissions     FoodSubmission[]       @relation("SubmissionReviewer")
+  departmentMemberships   DepartmentMembership[]
+  submittedMealOrders     MealOrder[]            @relation("MealOrderSubmitter")
+  approvedKitchenMenus    KitchenMenu[]          @relation("KitchenMenuApprover")
   kitchenShiftMemberships KitchenShiftMember[]
-  assignedKitchenTasks KitchenTask[] @relation("KitchenTaskAssignee")
-  createdKitchenTasks KitchenTask[] @relation("KitchenTaskCreator")
+  assignedKitchenTasks    KitchenTask[]          @relation("KitchenTaskAssignee")
+  createdKitchenTasks     KitchenTask[]          @relation("KitchenTaskCreator")
 
   @@map("app_users")
 }
@@ -534,17 +534,17 @@ model Patient {
 }
 
 model Ration {
-  id          String      @id @default(cuid())
+  id          String   @id @default(cuid())
   ownerId     String
   patientId   String?
   title       String
-  observedAt  DateTime    @default(now())
+  observedAt  DateTime @default(now())
   profileJson Json?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  owner   User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  patient Patient?  @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  owner   User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  patient Patient?     @relation(fields: [patientId], references: [id], onDelete: SetNull)
   items   RationItem[]
 
   @@index([ownerId, observedAt])
@@ -580,22 +580,22 @@ model RationItem {
 // Bản nháp do người dùng đề xuất. Không phải Food/Dish nguồn và không được
 // tự động đưa vào bảng dữ liệu chính, kể cả khi trạng thái là APPROVED.
 model FoodSubmission {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   submitterId String
   reviewerId  String?
   name        String
   foodType    String?
-  description String   @db.Text
-  sourceNote  String?  @db.Text
+  description String    @db.Text
+  sourceNote  String?   @db.Text
   energyKcal  Float?
   proteinG    Float?
   lipidG      Float?
   glucidG     Float?
-  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  reviewNote  String?  @db.Text
+  status      String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote  String?   @db.Text
   reviewedAt  DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   submitter User  @relation("SubmissionAuthor", fields: [submitterId], references: [id], onDelete: Cascade)
   reviewer  User? @relation("SubmissionReviewer", fields: [reviewerId], references: [id], onDelete: SetNull)
@@ -608,20 +608,20 @@ model FoodSubmission {
 // Cấu hình công khai do quản trị viên tự chỉnh trong Admin. Tách riêng hoàn toàn
 // khỏi dữ liệu nguồn Food/Dish để thay đổi thông tin liên hệ không ảnh hưởng CSDL dinh dưỡng.
 model SiteSetting {
-  id           String   @id @default("public")
-  contactName  String
-  organization String?
-  phone        String?
-  email        String?
-  address      String?
-  zaloUrl      String?
-  thankYouTitle String? @default("Lời cảm ơn")
-  thankYouBody  String? @db.Text
-  geminiKeyEncrypted String? @db.Text
-  geminiModel        String? @default("gemini-2.5-flash")
-  geminiEnabled      Boolean @default(false)
-  offlineDownloadUrl String? @db.Text
-  updatedAt    DateTime @updatedAt
+  id                 String   @id @default("public")
+  contactName        String
+  organization       String?
+  phone              String?
+  email              String?
+  address            String?
+  zaloUrl            String?
+  thankYouTitle      String?  @default("Lời cảm ơn")
+  thankYouBody       String?  @db.Text
+  geminiKeyEncrypted String?  @db.Text
+  geminiModel        String?  @default("gemini-2.5-flash")
+  geminiEnabled      Boolean  @default(false)
+  offlineDownloadUrl String?  @db.Text
+  updatedAt          DateTime @updatedAt
 
   @@map("site_settings")
 }
@@ -647,21 +647,21 @@ model ContactMessage {
 // hiệu quả website. Ẩn danh: chỉ lưu vai trò + tần suất dùng + 10 câu (1-5) +
 // điểm SUS (tính ở server) + góp ý. KHÔNG lưu thông tin định danh người bệnh.
 model SusResponse {
-  id       String  @id @default(cuid())
-  role     String? // Bác sĩ / Dinh dưỡng viên / Điều dưỡng / ...
-  useFreq  String? // "1-2" | "3-5" | ">5"
-  q1       Int
-  q2       Int
-  q3       Int
-  q4       Int
-  q5       Int
-  q6       Int
-  q7       Int
-  q8       Int
-  q9       Int
-  q10      Int
-  susScore Float // 0-100, tính ở server từ q1..q10
-  comment  String? @db.Text
+  id        String   @id @default(cuid())
+  role      String? // Bác sĩ / Dinh dưỡng viên / Điều dưỡng / ...
+  useFreq   String? // "1-2" | "3-5" | ">5"
+  q1        Int
+  q2        Int
+  q3        Int
+  q4        Int
+  q5        Int
+  q6        Int
+  q7        Int
+  q8        Int
+  q9        Int
+  q10       Int
+  susScore  Float // 0-100, tính ở server từ q1..q10
+  comment   String?  @db.Text
   createdAt DateTime @default(now())
 
   @@index([createdAt])
@@ -718,14 +718,14 @@ model DataChangeLog {
 // lưu mô tả/hướng dẫn dùng nguyên văn của nguồn (tránh sao chép nội dung có
 // bản quyền). sourceUrl duy nhất để nhập lại 1 link không tạo dòng trùng.
 model MedicationRef {
-  id              String   @id @default(cuid())
-  name            String
-  category        String?
-  imageUrl        String?
-  sourceUrl       String   @unique
-  sourceLabel     String?
-  createdByLabel  String?
-  createdAt       DateTime @default(now())
+  id             String   @id @default(cuid())
+  name           String
+  category       String?
+  imageUrl       String?
+  sourceUrl      String   @unique
+  sourceLabel    String?
+  createdByLabel String?
+  createdAt      DateTime @default(now())
 
   @@map("medication_refs")
 }
@@ -735,13 +735,14 @@ model MedicationRef {
 // Tách khỏi Ration/Patient; không lưu dữ liệu nhận dạng bệnh nhân.
 // =====================================================================
 model Department {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  name      String
-  status    String   @default("ACTIVE")
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  publicToken String?  @unique
+  status      String   @default("ACTIVE")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   memberships DepartmentMembership[]
   mealOrders  MealOrder[]
@@ -769,16 +770,16 @@ model DepartmentMembership {
 }
 
 model MealType {
-  id              String   @id @default(cuid())
-  code            String   @unique
-  name            String
+  id               String   @id @default(cuid())
+  code             String   @unique
+  name             String
   serviceLocalTime String
-  cutoffLocalTime String
-  cutoffDaysBefore Int     @default(0)
-  status          String   @default("ACTIVE")
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  cutoffLocalTime  String
+  cutoffDaysBefore Int      @default(0)
+  status           String   @default("ACTIVE")
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   mealOrders   MealOrder[]
   kitchenMenus KitchenMenu[]
@@ -805,27 +806,27 @@ model KitchenDietType {
 }
 
 model MealOrder {
-  id            String   @id @default(cuid())
-  publicCode    String   @unique
-  lastRequestKey String? @unique
-  departmentId  String
-  mealDate      DateTime @db.Date
-  mealTypeId    String
-  status        String   @default("SUBMITTED")
-  version       Int      @default(1)
-  submittedById String
-  source        String   @default("WEB")
-  note          String?
-  submittedAt   DateTime @default(now())
-  lockedAt      DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String    @id @default(cuid())
+  publicCode     String    @unique
+  lastRequestKey String?   @unique
+  departmentId   String
+  mealDate       DateTime  @db.Date
+  mealTypeId     String
+  status         String    @default("SUBMITTED")
+  version        Int       @default(1)
+  submittedById  String
+  source         String    @default("WEB")
+  note           String?
+  submittedAt    DateTime  @default(now())
+  lockedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  department  Department    @relation(fields: [departmentId], references: [id])
-  mealType    MealType      @relation(fields: [mealTypeId], references: [id])
-  submittedBy User          @relation("MealOrderSubmitter", fields: [submittedById], references: [id])
-  items       MealOrderItem[]
-  audits      MealOperationAudit[]
+  department     Department               @relation(fields: [departmentId], references: [id])
+  mealType       MealType                 @relation(fields: [mealTypeId], references: [id])
+  submittedBy    User                     @relation("MealOrderSubmitter", fields: [submittedById], references: [id])
+  items          MealOrderItem[]
+  audits         MealOperationAudit[]
   changeRequests MealOrderChangeRequest[]
 
   @@unique([departmentId, mealDate, mealTypeId])
@@ -834,33 +835,33 @@ model MealOrder {
 }
 
 model MealOrderItem {
-  id         String @id @default(cuid())
+  id          String @id @default(cuid())
   mealOrderId String
-  dietTypeId String
-  quantity   Int
+  dietTypeId  String
+  quantity    Int
 
   mealOrder MealOrder       @relation(fields: [mealOrderId], references: [id], onDelete: Cascade)
-  dietType KitchenDietType @relation(fields: [dietTypeId], references: [id])
+  dietType  KitchenDietType @relation(fields: [dietTypeId], references: [id])
 
   @@unique([mealOrderId, dietTypeId])
   @@map("meal_order_items")
 }
 
 model KitchenMenu {
-  id           String   @id @default(cuid())
-  mealDate     DateTime @db.Date
+  id           String    @id @default(cuid())
+  mealDate     DateTime  @db.Date
   mealTypeId   String
-  status       String   @default("DRAFT")
+  status       String    @default("DRAFT")
   title        String
   note         String?
   approvedById String?
   approvedAt   DateTime?
   handedOffAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  mealType  MealType @relation(fields: [mealTypeId], references: [id])
-  approvedBy User?    @relation("KitchenMenuApprover", fields: [approvedById], references: [id])
+  mealType   MealType          @relation(fields: [mealTypeId], references: [id])
+  approvedBy User?             @relation("KitchenMenuApprover", fields: [approvedById], references: [id])
   items      KitchenMenuItem[]
 
   @@unique([mealDate, mealTypeId])
@@ -869,12 +870,12 @@ model KitchenMenu {
 }
 
 model KitchenMenuItem {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   menuId     String
   dietTypeId String
   dishName   String
   note       String?
-  sortOrder  Int    @default(0)
+  sortOrder  Int     @default(0)
 
   menu     KitchenMenu     @relation(fields: [menuId], references: [id], onDelete: Cascade)
   dietType KitchenDietType @relation(fields: [dietTypeId], references: [id])
@@ -918,17 +919,17 @@ model KitchenShiftMember {
 }
 
 model KitchenTask {
-  id           String   @id @default(cuid())
-  shiftId      String
-  title        String
-  description  String?
-  assignedToId String?
-  createdById  String
-  status       String   @default("TODO")
+  id             String    @id @default(cuid())
+  shiftId        String
+  title          String
+  description    String?
+  assignedToId   String?
+  createdById    String
+  status         String    @default("TODO")
   acknowledgedAt DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   shift      KitchenShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
   assignedTo User?        @relation("KitchenTaskAssignee", fields: [assignedToId], references: [id])
@@ -960,20 +961,56 @@ model MealOperationAudit {
 }
 
 model MealOrderChangeRequest {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   mealOrderId   String
   requestedById String
   reason        String
   proposedJson  Json
-  status        String   @default("PENDING")
+  status        String    @default("PENDING")
   reviewedById  String?
   reviewNote    String?
   reviewedAt    DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 
   mealOrder MealOrder @relation(fields: [mealOrderId], references: [id], onDelete: Cascade)
 
   @@index([mealOrderId, status, createdAt])
   @@index([status, createdAt])
   @@map("meal_order_change_requests")
+}
+
+// Phiếu báo ăn từ liên kết/QR công khai. Tách khỏi hồ sơ bệnh nhân và chỉ lưu
+// thông tin tối thiểu do người báo chủ động cung cấp.
+model PublicMealReport {
+  id              String   @id @default(cuid())
+  publicCode      String   @unique
+  requestKey      String   @unique
+  reporterName    String
+  reporterPhone   String?
+  patientRef      String?
+  departmentId    String?
+  departmentName  String
+  roomBed         String?
+  mealDate        DateTime @db.Date
+  mealTypeId      String?
+  mealTypeName    String
+  dietTypeId      String?
+  dietTypeName    String
+  quantity        Int      @default(1)
+  requestType     String   @default("NEW")
+  note            String?
+  status          String   @default("RECEIVED")
+  reviewedById    String?
+  reviewedByName  String?
+  reviewedAt      DateTime?
+  reviewNote      String?
+  emailStatus     String   @default("PENDING")
+  emailError      String?
+  submittedIpHash String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([mealDate, status])
+  @@index([departmentId, mealDate])
+  @@map("public_meal_reports")
 }
