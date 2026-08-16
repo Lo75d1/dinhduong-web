@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { SessionUser } from "@/lib/auth";
 import { dietOrderSuggestions } from "@/lib/diet-orders";
 import { buildKitchenShoppingList } from "@/lib/kitchen-menu-snapshot";
+import { dietOrdersEnabled } from "@/lib/feature-flags";
 
 export const OPS_ROLES = [
   "ADMIN",
@@ -46,6 +47,7 @@ export function cutoffAt(
 }
 
 export async function operationsContext(user: SessionUser, date: Date) {
+  const enableDietOrders = dietOrdersEnabled();
   const manager = MANAGER_ROLES.has(user.role);
   const kitchenViewer = manager || user.role === "KITCHEN_STAFF";
   const memberships = await prisma.departmentMembership.findMany({
@@ -151,7 +153,7 @@ export async function operationsContext(user: SessionUser, date: Date) {
       orderBy: { createdAt: "desc" },
       take: 200,
     }),
-    prisma.dietOrder.findMany({
+    enableDietOrders ? prisma.dietOrder.findMany({
       where: {
         ...(manager ? {} : { departmentId: { in: departmentIds } }),
         status: "ACTIVE",
@@ -169,7 +171,7 @@ export async function operationsContext(user: SessionUser, date: Date) {
       },
       orderBy: [{ critical: "desc" }, { createdAt: "desc" }],
       take: 500,
-    }),
+    }) : Promise.resolve([]),
   ]);
   const quantities = orders.flatMap((order) => order.items.map((item) => ({ mealTypeId: order.mealTypeId, dietTypeId: item.dietTypeId, quantity: item.quantity })));
   const menuByMeal = new Map(menus.map((menu) => [menu.mealTypeId, menu]));
@@ -190,6 +192,7 @@ export async function operationsContext(user: SessionUser, date: Date) {
     shifts,
     users,
     publicNotes,
+    dietOrdersEnabled: enableDietOrders,
     dietOrders,
     dietOrderSuggestions: dietOrderSuggestions(dietOrders, date),
   };

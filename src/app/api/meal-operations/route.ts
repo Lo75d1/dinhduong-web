@@ -19,6 +19,7 @@ import {
   dietOrderSuggestions,
   dietOrderWindowsOverlap,
 } from "@/lib/diet-orders";
+import { dietOrdersEnabled } from "@/lib/feature-flags";
 
 export async function GET(request: Request) {
   try {
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Yêu cầu không hợp lệ." }, { status: 400 });
 
     if (action === "createDietOrder") {
+      if (!dietOrdersEnabled()) throw new Error("Tính năng chỉ định chế độ ăn chưa được bật.");
       if (!canPrescribeDietOrder(user.role))
         throw new Error("Chỉ bác sĩ được tạo chỉ định chế độ ăn.");
       const patientCode = cleanText(body.patientCode, 80).toUpperCase();
@@ -123,6 +125,7 @@ export async function POST(request: Request) {
     }
 
     if (action === "endDietOrder") {
+      if (!dietOrdersEnabled()) throw new Error("Tính năng chỉ định chế độ ăn chưa được bật.");
       if (!canPrescribeDietOrder(user.role))
         throw new Error("Chỉ bác sĩ được kết thúc chỉ định chế độ ăn.");
       const id = cleanText(body.id);
@@ -255,7 +258,7 @@ export async function POST(request: Request) {
         .filter((row) => row.dietTypeId);
       if (!items.length || items.every((item) => item.quantity === 0))
         throw new Error("Cần nhập ít nhất một suất ăn.");
-      const activeDietOrders = await prisma.dietOrder.findMany({
+      const activeDietOrders = dietOrdersEnabled() ? await prisma.dietOrder.findMany({
         where: {
           departmentId,
           status: "ACTIVE",
@@ -269,14 +272,14 @@ export async function POST(request: Request) {
           endDate: true,
           status: true,
         },
-      });
+      }) : [];
       const suggestions = dietOrderSuggestions(activeDietOrders, mealDate);
       const mismatch = items.some(
         (item) =>
           item.quantity !==
           (suggestions[`${departmentId}:${item.dietTypeId}`] ?? 0),
       );
-      if (mismatch && !cleanText(body.note, 500))
+      if (dietOrdersEnabled() && mismatch && !cleanText(body.note, 500))
         throw new Error(
           "Số suất khác số gợi ý từ chỉ định. Cần ghi chú lý do trước khi xác nhận.",
         );

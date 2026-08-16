@@ -111,7 +111,16 @@ export default function OperationsApp({
         </>
       )}
       {mode === "doctor" && (
-        <DoctorPanel data={data} date={date} busy={busy} act={act} />
+        data.dietOrdersEnabled ? (
+          <DoctorPanel data={data} date={date} busy={busy} act={act} />
+        ) : (
+          <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
+            <div className="border-b border-[#123c36]/10 px-5 py-4">
+              <h2 className="text-lg font-semibold text-[#123c36]">Chỉ định chế độ ăn chưa bật</h2>
+            </div>
+            <p className="px-5 py-4 text-sm text-neutral-600">Bệnh viện đang dùng quy trình báo suất tổng theo khoa. Quản trị viên có thể bật tính năng chỉ định theo từng người bệnh khi cần.</p>
+          </section>
+        )
       )}
       {mode === "admin" && (
         <>
@@ -169,14 +178,15 @@ function ReportPanel({
   );
   const [note, setNote] = useState(initialOrder?.note ?? "");
   const [requestKey, setRequestKey] = useState(() => crypto.randomUUID());
+  const hasSuggestions = data.dietOrdersEnabled === true;
   const suggestionFor = (dietTypeId: string) =>
     data.dietOrderSuggestions?.[`${departmentId}:${dietTypeId}`] ?? 0;
-  const mismatch = data.dietTypes.some(
+  const mismatch = hasSuggestions && data.dietTypes.some(
     (d: Row) => (quantities[d.id] ?? 0) !== suggestionFor(d.id),
   );
-  const criticalOrders = (data.dietOrders ?? []).filter(
+  const criticalOrders = hasSuggestions ? (data.dietOrders ?? []).filter(
     (order: Row) => order.departmentId === departmentId && order.critical,
-  );
+  ) : [];
   function selectOrder(nextDepartmentId: string, nextMealTypeId: string) {
     const existing = data.orders.find(
       (o: Row) =>
@@ -248,8 +258,8 @@ function ReportPanel({
         </p>
       ) : (
         <form onSubmit={submit}>
-          <div className="grid gap-3 px-5 pt-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-[#24483f]">
+          <div className={`grid gap-3 px-5 pt-4 ${data.departments.length > 1 ? "sm:grid-cols-2" : ""}`}>
+            {data.departments.length > 1 && <label className="text-sm font-medium text-[#24483f]">
               Khoa / phòng
               <select
                 value={departmentId}
@@ -265,7 +275,7 @@ function ReportPanel({
                   </option>
                 ))}
               </select>
-            </label>
+            </label>}
             <label className="text-sm font-medium text-[#24483f]">
               Bữa
               <select
@@ -292,9 +302,9 @@ function ReportPanel({
               <thead>
                 <tr className="border-y border-[#123c36]/10 text-left text-xs text-neutral-500">
                   <th className="px-5 py-2 font-normal">Chế độ ăn</th>
-                  <th className="px-2 py-2 text-right font-normal">
+                  {hasSuggestions && <th className="px-2 py-2 text-right font-normal">
                     Gợi ý từ chỉ định
-                  </th>
+                  </th>}
                   <th className="px-2 py-2 text-center font-normal">Số suất</th>
                   <th className="px-5 py-2 text-right font-normal">Trạng thái</th>
                 </tr>
@@ -302,7 +312,7 @@ function ReportPanel({
               <tbody>
                 {data.dietTypes.map((d: Row) => {
                   const q = Number(quantities[d.id] ?? 0);
-                  const sug = suggestionFor(d.id);
+                  const sug = hasSuggestions ? suggestionFor(d.id) : q;
                   const diff = q - sug;
                   return (
                     <tr
@@ -312,9 +322,9 @@ function ReportPanel({
                       <td className="px-5 py-2.5 font-medium text-[#24483f]">
                         {d.name}
                       </td>
-                      <td className="px-2 py-2.5 text-right tabular-nums text-neutral-500">
+                      {hasSuggestions && <td className="px-2 py-2.5 text-right tabular-nums text-neutral-500">
                         {sug}
-                      </td>
+                      </td>}
                       <td className="px-2 py-2.5 text-center">
                         <input
                           type="number"
@@ -327,11 +337,11 @@ function ReportPanel({
                               [d.id]: Number(e.target.value),
                             })
                           }
-                          className={`w-[76px] rounded-lg border bg-white px-2 py-1.5 text-center text-xl font-semibold tabular-nums text-[#123c36] ${diff !== 0 ? "border-amber-400" : "border-[#8fa99e]"}`}
+                          className={`w-[76px] rounded-lg border bg-white px-2 py-1.5 text-center text-xl font-semibold tabular-nums text-[#123c36] ${hasSuggestions && diff !== 0 ? "border-amber-400" : "border-[#8fa99e]"}`}
                         />
                       </td>
                       <td className="px-5 py-2.5 text-right">
-                        {diff === 0 ? (
+                        {!hasSuggestions || diff === 0 ? (
                           <span className="text-xs text-emerald-700">
                             ✓ khớp
                           </span>

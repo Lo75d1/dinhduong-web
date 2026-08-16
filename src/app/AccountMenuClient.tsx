@@ -42,8 +42,10 @@ function initials(name: string) {
 // vào mới mở popup gồm tên/email/vai trò và các liên kết Tài khoản/Quản trị/Đăng xuất.
 export default function AccountMenuClient({
   user,
+  enableDietOrders,
 }: {
   user: SessionUser | null;
+  enableDietOrders: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -124,7 +126,7 @@ export default function AccountMenuClient({
             >
               Tài khoản của tôi
             </Link>
-            {user.role === "CLINICIAN" && (
+            {user.role === "CLINICIAN" && enableDietOrders && (
               <Link
                 href="/chi-dinh-che-do-an"
                 onClick={() => setOpen(false)}
