@@ -1,0 +1,60 @@
+# DEMO tự chứa: chồng lên compose.yaml để chạy app + Postgres RIÊNG + seed data,
+# KHÔNG dùng Supabase, KHÔNG đụng bất kỳ DB production nào.
+#
+# Dùng:
+#   docker compose -f compose.yaml -f compose.demo.yaml --profile maintenance run --rm migrate
+#   docker compose -f compose.yaml -f compose.demo.yaml --profile maintenance run --rm seed
+#   docker compose -f compose.yaml -f compose.demo.yaml up -d --build
+#
+# .env.production cần:
+#   DATABASE_URL=postgresql://nutrition:<MẬT_KHẨU>@db:5432/nutrition?sslmode=disable
+#   DATABASE_SSL=disable
+# và file .env (cạnh compose) cần:  DB_PASSWORD=<MẬT_KHẨU cùng giá trị>
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nutrition
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Đặt DB_PASSWORD trong file .env}
+      POSTGRES_DB: nutrition
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutrition -d nutrition"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - nutrition
+
+  app:
+    depends_on:
+      db:
+        condition: service_healthy
+
+  migrate:
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Nạp dữ liệu tham chiếu (foods/dishes/ingredients) từ data/reference/*.jsonl.
+  # Dùng lại target `migrate` (có tsx + prisma + data trong image). Idempotent:
+  # `npm run seed` dừng nếu bảng nền đã có dữ liệu.
+  seed:
+    build:
+      context: .
+      target: migrate
+    profiles: ["maintenance"]
+    env_file: .env.production
+    command: ["npm", "run", "seed"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - nutrition
+
+volumes:
+  db_data:
