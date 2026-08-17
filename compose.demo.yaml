@@ -49,7 +49,7 @@ services:
       target: migrate
     profiles: ["maintenance"]
     env_file: .env.production
-    command: ["npm", "run", "seed"]
+    command: ["sh", "-c", "npm run seed && npm run seed:demo"]
     depends_on:
       db:
         condition: service_healthy

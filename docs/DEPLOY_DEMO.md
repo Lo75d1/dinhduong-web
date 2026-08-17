@@ -55,9 +55,11 @@ Trong **`.env.production`** điền:
 D="-f compose.yaml -f compose.demo.yaml"
 docker compose $D up -d db                                  # bật Postgres, chờ healthy
 docker compose $D --profile maintenance run --rm migrate    # tạo schema (DB trống, KHÔNG drift)
-docker compose $D --profile maintenance run --rm seed       # nạp 3.719 foods + 7.369 dishes + 41.457 ingredients
+docker compose $D --profile maintenance run --rm seed       # data nền + cấu hình + tài khoản demo
 ```
-Kỳ vọng seed in ra số dòng đã nạp. (Chạy lại `seed` sẽ dừng vì bảng đã có dữ liệu — đúng thiết kế.)
+Bước `seed` chạy 2 phần: **(a)** nạp 3.719 foods + 7.369 dishes + 41.457 ingredients; **(b)**
+tạo khoa/bữa/chế độ ăn + **tài khoản demo** (in ra danh sách + mật khẩu). Chạy lại: phần (a)
+dừng vì đã có data (đúng thiết kế), phần (b) idempotent (upsert).
 
 ## 5. Chạy web
 ```bash
@@ -72,10 +74,20 @@ curl -s https://<DOMAIN>/api/health   # kỳ vọng {"status":"ok"}
 ```
 Mở `https://<DOMAIN>` — Caddy tự cấp HTTPS sau khi DNS trỏ đúng.
 
-## 7. Tạo tài khoản demo (admin) để trải nghiệm suất ăn
-Ứng dụng chưa có seed tài khoản. Tạo 1 admin bằng cách chạy trong container app hoặc
-qua trang đăng ký nội bộ (nếu có). *(Chốt cách tạo admin đầu tiên khi lên VPS — có thể
-thêm 1 script seed-demo-users nhỏ nếu cần.)*
+## 7. Tài khoản demo (đã tự tạo ở bước 4)
+Mật khẩu chung: **`DemoNutri2026`** (đổi bằng biến `DEMO_PASSWORD` trước khi seed nếu công khai).
+
+| Vai trò | Email đăng nhập |
+|---|---|
+| Quản trị (trưởng khoa DD) | `admin@demo.dinhduong2598` |
+| Khoa Dinh dưỡng | `dinhduong@demo.dinhduong2598` |
+| Điều dưỡng (Khoa Nội) | `dieuduong@demo.dinhduong2598` |
+| Nhân viên bếp | `bep@demo.dinhduong2598` |
+| Bác sĩ (Khoa Nội) | `bacsi@demo.dinhduong2598` |
+
+Đã tạo sẵn: **Khoa Nội / Khoa Ngoại**, bữa **Sáng/Trưa/Chiều** (có giờ chốt), chế độ
+**Cơm thường / Cháo / Đái tháo đường**. Khoa DD lập thực đơn ở `/tinh-khau-phan` → "Duyệt
+và chuyển sang báo ăn"; điều dưỡng báo suất ở `/bao-suat-an`; bếp xem đi chợ ở `/bep`.
 
 ## Ghi chú
 - **Chưa có**: `nutrition_recommendations` / `diet_codes` / `child_growth_standards`
