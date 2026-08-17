@@ -1,0 +1,41 @@
+{
+  "generatedFrom": "offline JSON 2026-08-04T13:29:41.420Z",
+  "generatedAt": "2026-08-17T02:33:04.632Z",
+  "files": {
+    "foods.jsonl": {
+      "count": 3719,
+      "bytes": 13244568,
+      "sha256": "f765e0b1a308dc619fa81d7440bcf6ddaec2478bb2f8f0484ea7ef208c553cc5"
+    },
+    "dishes.jsonl": {
+      "count": 7369,
+      "bytes": 6561054,
+      "sha256": "ecc00f270f80c7a302f1eab0bcb6d9fccfa5c64a2e8c63c00f34b5789486ad87"
+    },
+    "dish_ingredients.jsonl": {
+      "count": 41457,
+      "bytes": 7916125,
+      "sha256": "7f46bf925d25aa64438b033dedd7c81ffbaf9a3a00244bd6423353764830f1b4"
+    },
+    "food_aliases.jsonl": {
+      "count": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "nutrition_recommendations.jsonl": {
+      "count": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "diet_codes.jsonl": {
+      "count": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "child_growth_standards.jsonl": {
+      "count": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}
