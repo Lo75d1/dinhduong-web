@@ -2,6 +2,9 @@
 FROM node:24-alpine AS builder
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# VPS demo hiện không có IPv6 route ổn định; npm sẽ treo đến timeout nếu Node
+# chọn địa chỉ AAAA của registry trước. Ưu tiên IPv4, vẫn giữ fallback DNS chuẩn.
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 COPY package.json package-lock.json ./
 RUN npm ci
