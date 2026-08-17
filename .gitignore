@@ -26,6 +26,14 @@ devguide.log
 # production
 /build
 
+# local/production databases and mutable runtime data
+*.db
+*.sqlite
+*.sqlite3
+/backups/
+/uploads/
+/public/storage/
+
 # misc
 .DS_Store
 *.pem

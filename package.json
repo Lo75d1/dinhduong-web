@@ -16,7 +16,11 @@
     "test:diet-orders": "tsx scripts/test-diet-orders.ts",
     "test:kitchen-snapshot": "tsx scripts/test-kitchen-snapshot.ts",
     "test:meal-photo": "tsx scripts/test-meal-photo.ts",
-    "test:meal-labels": "tsx scripts/test-meal-labels.ts"
+    "test:meal-labels": "tsx scripts/test-meal-labels.ts",
+    "reference:export": "tsx scripts/export-reference-data.ts",
+    "reference:import": "tsx scripts/import-reference-data.ts",
+    "reference:verify": "tsx scripts/verify-reference-data.ts",
+    "seed": "npm run reference:import"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
