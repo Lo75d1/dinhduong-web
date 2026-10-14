@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import QRCode from "qrcode";
 import { getNutritionPublicUrl, getNutritionResourceUrl } from "@/lib/nutrition-chat/oauth-validation";
+import { nutritionStartLinks } from "@/lib/nutrition-chat/start-guide";
 import WorkbookImport from "./WorkbookImport";
 
 export const metadata: Metadata = {
@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   description: "Hướng dẫn kết nối để tra thực phẩm, chốt khẩu phần trong hội thoại và nhận Excel có thể chỉnh lại.",
   alternates: { canonical: "/ket-noi-ai" },
 };
+export const dynamic = "force-dynamic";
 
 // A trust-first service page: existing moss brand, low motion, editorial spacing.
 // DESIGN_VARIANCE 3 / MOTION_INTENSITY 2 / VISUAL_DENSITY 4.
@@ -18,8 +19,7 @@ const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visi
 export default async function ConnectAiPage() {
   const publicUrl = getNutritionPublicUrl();
   const resourceUrl = getNutritionResourceUrl();
-  const landingUrl = `${publicUrl}/ket-noi-ai`;
-  const qr = await QRCode.toDataURL(landingUrl, { width: 200, margin: 2, errorCorrectionLevel: "M", color: { dark: "#123c36", light: "#ffffff" } });
+  const startLinks = nutritionStartLinks(publicUrl);
 
   return (
     <div className="mx-auto max-w-5xl text-[#123c36]">
@@ -29,13 +29,14 @@ export default async function ConnectAiPage() {
           <h1 id="connect-title" className="text-4xl font-semibold leading-[1.12] sm:text-5xl">Nói bữa ăn.<br />Nhận bảng tính.</h1>
           <p className="mt-5 max-w-lg text-lg text-neutral-700">Tra thực phẩm, chốt khẩu phần và nhận Excel chỉnh được ngay từ ChatGPT hoặc Claude.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a href="#cai-ket-noi" className={`rounded-lg bg-[#123c36] px-5 py-3 font-semibold text-white hover:bg-[#0f5c51] ${focus}`}>Hướng dẫn kết nối</a>
+            <Link href="/ket-noi-ai/bat-dau" className={`rounded-lg bg-[#123c36] px-5 py-3 font-semibold text-white hover:bg-[#0f5c51] ${focus}`}>Bắt đầu bằng QR hoặc link →</Link>
+            <a href="#cai-ket-noi" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Cài kết nối lần đầu</a>
             <a href="#nhap-excel" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Gửi lại Excel đã sửa</a>
           </div>
         </div>
         <figure className="flex items-center gap-4 md:flex-col md:gap-2">
-          <Image src={qr} alt="Mã QR mở trang hướng dẫn kết nối Dinh dưỡng 2598" width={200} height={200} unoptimized className="h-32 w-32 rounded-lg border border-[#b1c8bd] bg-white md:h-48 md:w-48" />
-          <figcaption className="max-w-48 text-sm text-neutral-700">Quét để mở hướng dẫn. QR không chứa khóa và không tự cấp quyền.</figcaption>
+          <Image src={startLinks.qr} alt="QR mở trang bắt đầu hội thoại Dinh dưỡng 2598" width={200} height={200} unoptimized className="h-32 w-32 rounded-lg border border-[#b1c8bd] bg-white md:h-48 md:w-48" />
+          <figcaption className="max-w-48 text-sm text-neutral-700">Quét để lấy lời nhắn dán vào chat và hướng dẫn từ đầu đến cuối. QR không chứa khóa hoặc tự cấp quyền.</figcaption>
         </figure>
       </section>
 
@@ -66,16 +67,16 @@ export default async function ConnectAiPage() {
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-neutral-700">
               <li>Mở Plugins, thêm custom MCP server với URL phía trên.</li>
               <li>Chọn OAuth, đăng nhập Dinh dưỡng 2598 và xem quyền trước khi cấp.</li>
-              <li>Cài gói skill/plugin ở bề mặt hỗ trợ, bật kết nối trong hội thoại rồi yêu cầu tính khẩu phần.</li>
+              <li>Cài plugin cá nhân vừa tạo; mở hội thoại Work, dùng @ chọn Dinh dưỡng 2598 và gửi lời nhắn bắt đầu.</li>
             </ol>
-            <a href="https://developers.openai.com/plugins/build/plugins" target="_blank" rel="noopener noreferrer" className={`mt-3 inline-block text-sm underline underline-offset-4 ${focus}`}>Hướng dẫn chính thức của OpenAI</a>
+            <a href="https://developers.openai.com/plugins/quickstart" target="_blank" rel="noopener noreferrer" className={`mt-3 inline-block text-sm underline underline-offset-4 ${focus}`}>Hướng dẫn chính thức của OpenAI</a>
           </div>
           <div>
             <h3 className="text-xl font-semibold">Claude</h3>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-neutral-700">
               <li>Mở Customize → Connectors, thêm custom connector với URL phía trên.</li>
               <li>Chọn đăng nhập OAuth và “Register automatically”; cấp quyền bằng tài khoản riêng.</li>
-              <li>Tải skill ZIP, thêm tại Customize → Skills; bật skill và connector cho hội thoại.</li>
+              <li>Bật connector trong chat rồi gửi lời nhắn bắt đầu; có thể cài thêm skill ZIP để dùng lại quy trình.</li>
             </ol>
             <a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp" target="_blank" rel="noopener noreferrer" className={`mt-3 inline-block text-sm underline underline-offset-4 ${focus}`}>Hướng dẫn chính thức của Claude</a>
           </div>

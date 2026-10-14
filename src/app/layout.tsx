@@ -111,7 +111,7 @@ export default function RootLayout({
                 Tính khẩu phần
               </Link>
               <Link
-                href="/ket-noi-ai"
+                href="/ket-noi-ai/bat-dau"
                 className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
               >
                 ChatGPT &amp; Claude

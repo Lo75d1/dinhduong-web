@@ -1,14 +1,18 @@
 # Kết nối Dinh dưỡng 2598 với ChatGPT và Claude
 
-- Trang hướng dẫn/QR: https://dinhduong2598.food/ket-noi-ai
+- Link dán vào chat / link trong QR: https://dinhduong2598.food/ket-noi-ai/bat-dau
+- Bản chữ cho AI đọc: https://dinhduong2598.food/ket-noi-ai/bat-dau/huong-dan.txt
+- Tải QR: https://dinhduong2598.food/ket-noi-ai/bat-dau/qr.png
+- Trang cài kết nối và gửi Excel: https://dinhduong2598.food/ket-noi-ai
 - URL MCP: `https://dinhduong2598.food/api/nutrition/v1/mcp`.
-- QR/link mở hướng dẫn. Skill dạy quy trình; connector cung cấp công cụ. Tài khoản riêng và màn hình OAuth cấp quyền truy cập dữ liệu. Không dán mật khẩu hoặc token vào hội thoại.
+- Quét QR bằng máy ảnh, sao chép lời nhắn trên trang bắt đầu, mở chat đã bật kết nối rồi dán/gửi. Chỉ dán link cũng cho AI đọc hướng dẫn nếu chat có công cụ mở web; lời nhắn tự đủ là phương án khi AI không mở được link.
+- QR/link không tự cài plugin/cấp quyền. Skill dạy quy trình; connector cung cấp công cụ. Tài khoản riêng và màn hình OAuth cấp quyền truy cập dữ liệu. Không dán mật khẩu hoặc token vào hội thoại.
 
 ## ChatGPT
 
 1. Mở Plugins, thêm custom MCP server bằng URL trên và chọn OAuth.
 2. Đăng nhập Dinh dưỡng 2598, kiểm tra tên ứng dụng và quyền rồi đồng ý.
-3. Bật kết nối trong hội thoại. Cài gói plugin/skill trên giao diện hỗ trợ cài gói riêng. Nói: “Dùng Dinh dưỡng 2598 tính khẩu phần hôm nay, hỏi lại phần chưa rõ trước khi chốt”.
+3. Cài plugin cá nhân vừa tạo, mở cuộc hội thoại Work, dùng @ chọn Dinh dưỡng 2598 rồi gửi lời nhắn bắt đầu. Gói skill/plugin ZIP là lựa chọn thêm, không bắt buộc để dùng lời nhắn với MCP.
 
 Gói ZIP portable không tự xuất hiện trong thư viện công khai. Đăng ký/thẩm định/public listing là việc riêng; không có ID ứng dụng đã đăng ký giả trong package. Nếu bề mặt hiện tại chưa hỗ trợ cài ZIP, dùng connector và hướng dẫn dưới đây; kiểm tra `get_workflow` trước khi gọi chức năng. [Nguồn cấu trúc và cài thử của OpenAI](https://developers.openai.com/plugins/build/plugins).
 
@@ -16,7 +20,7 @@ Gói ZIP portable không tự xuất hiện trong thư viện công khai. Đăng
 
 1. Customize → Connectors → Add custom connector, dùng URL MCP trên.
 2. Chọn đăng nhập OAuth và **Register automatically** vì máy chủ sử dụng đăng ký động DCR; không yêu cầu client secret chung.
-3. Tải `dinh-duong-2598-skill.zip`; vào Customize → Skills → Create skill → Upload a skill. Bật skill và connector trong hội thoại.
+3. Bật connector trong hội thoại và gửi lời nhắn bắt đầu. Skill ZIP là lựa chọn thêm: vào Customize → Skills → Create skill → Upload a skill để cài `dinh-duong-2598-skill.zip`.
 
 Quyền thêm connector/skill phụ thuộc tài khoản và quản trị tổ chức. [Nguồn connector của Claude](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp); [nguồn upload skill](https://support.claude.com/en/articles/12512180-use-skills-in-claude).
 
@@ -48,4 +52,4 @@ File sửa trên máy không tự đồng bộ. Khi cần, đăng nhập trang h
 - Nếu chưa có tool hoặc API lỗi, AI phải nói chưa hoàn thành; không tự điền số để thay kết quả server.
 - Sau khi ngắt kết nối ở nền tảng, thu hồi quyền tại `https://dinhduong2598.food/ket-noi-ai/authorize/connections` khi muốn vô hiệu hóa token còn hạn. Mất kết nối không xóa bản khẩu phần đã chủ ý lưu.
 
-Ngày đối chiếu tài liệu nền tảng: 14/10/2026. Tên mục trên giao diện có thể thay đổi; nghiệm thu bằng tài khoản thật sau khi VPS phát hành.
+Ngày đối chiếu tài liệu nền tảng: 15/10/2026; [OpenAI Quickstart](https://developers.openai.com/plugins/quickstart). Tên mục trên giao diện có thể thay đổi; nghiệm thu bằng tài khoản thật, không coi link/QR hoặc kết quả fixture là bằng chứng đã kết nối nền tảng.

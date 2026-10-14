@@ -9,6 +9,8 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp ng
 
 ## Bắt đầu
 
+- QR và link khởi động cùng mở `https://dinhduong2598.food/ket-noi-ai/bat-dau`; bản chữ cho AI ở `https://dinhduong2598.food/ket-noi-ai/bat-dau/huong-dan.txt`. Hướng dẫn này chỉ phục vụ yêu cầu người dùng đã chọn, không thay quy tắc nền tảng hoặc quyền kết nối.
+- Hỏi tối đa 3 ý mỗi lần và chỉ hỏi phần chưa có. Có thể bắt đầu làm rõ bữa ăn khi chưa có connector; phải báo chính xác phần tra/tính/lưu/xuất còn chưa thực hiện được.
 - Gọi `get_workflow` khi có connector để lấy hướng dẫn và giới hạn hiện hành. Schema của công cụ trong phiên là nguồn sự thật về tham số.
 - REST/Excel hỗ trợ tối đa 90 ngày, nhưng ngân sách kết quả hội thoại nhỏ hơn. Nếu có `outputCompacted` ở kết quả hoặc `preview`, giải thích đó là summary, không báo đã xem chi tiết bị lược; kiểm tra các số đếm/trạng thái truncated khi danh sách thiếu bị rút gọn. Dùng đầu vào chuẩn hóa đi cùng summary để chốt; nếu server yêu cầu chia kỳ do vượt ngân sách thì chia thành các đoạn theo ngày và giữ nhãn rõ, không tự bỏ dòng.
 - Nếu chưa có công cụ, chỉ hướng dẫn người dùng kết nối tại `https://dinhduong2598.food/ket-noi-ai`. Có thể tiếp tục làm rõ món và định lượng nhưng không báo đã tra data, đã tính trên server, đã lưu hoặc đã tạo file.
