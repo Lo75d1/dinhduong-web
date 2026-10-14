@@ -110,6 +110,12 @@ export default function RootLayout({
               >
                 Tính khẩu phần
               </Link>
+              <Link
+                href="/ket-noi-ai"
+                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
+              >
+                ChatGPT &amp; Claude
+              </Link>
             </div>
             {/* Chỗ để trang tự chèn thanh riêng (vd bước 1/2 của Tính khẩu phần) — ẩn khi rỗng. */}
             <div id="header-page-slot" className="header-page-slot order-3 flex w-full min-w-0 justify-center sm:order-2 sm:w-auto sm:flex-1"></div>
