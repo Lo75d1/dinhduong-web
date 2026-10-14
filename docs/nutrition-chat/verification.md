@@ -53,6 +53,13 @@
 - 41 checks HTTPS thực tế đạt; file XLSX 787.924 bytes xuất/tải/nhập lại đạt. User/client/session/token/ration test được dọn theo ID và metadata chính xác; file Excel test hết hạn đã được maintenance xóa.
 - App/Caddy đang chạy, volume UID 1001/mode 0700 ghi được, timer bảo trì chạy thành công. Swap 1 GiB chỉ dùng build, đã gỡ; VPS trở lại 2 GiB/no swap. Chi tiết và hạn chế tại `vps-2026-10-14.md`.
 
+## Kiểm chứng bổ sung bộ đếm footer
+
+- Bổ sung footer 14/10: OAuth/PGlite **254 checks**, gồm không đếm code lỗi/phát lại/refresh, phân loại callback chính xác, rollback, giữ tổng sau cleanup và ACL của SiteSetting. Core 67/OAuth pure 73/storage 82/HTTP 77/workbook parser cùng suite đều đạt; TypeScript/lint/build đạt.
+- VPS: backup public mới 3.710.579 bytes/258 entries; restore riêng + migration bộ đếm đạt. DB thật 23 migration up to date; SiteSetting RLS, anon/authenticated không có SELECT/UPDATE; nội dung Food/Dish/nguyên liệu và cài đặt cũ khớp dấu kiểm trước/sau.
+- API site-settings live 200/no-store, chỉ xuất tổng ChatGPT/Claude (0/0 lúc bật), không có trường Gemini/private/token/owner. Health/landing/OAuth metadata 200, timer bảo trì tiếp tục thành công. Không chạy lại smoke tạo OAuth giả trên production để tăng số công khai.
+- App `63cf966` qua build Linux/TypeScript và health/HTTPS. Trình duyệt thật xác minh footer chữ 12 px, màu rgb(107,114,128), 0/0, một hàng ở viewport 319 px/document 304 px; ảnh tại `evidence/nutrition-chat/vps-footer-connections.jpg` được ignore. Không kết luận nền tảng thật từ phép thử UI này.
+
 ## Nguồn đối chiếu
 
 - [MCP 2026 Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http), [schema chính thức](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.json).

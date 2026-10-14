@@ -17,11 +17,19 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 
 #### Đã chạy thử VPS thực tế (14/10/2026)
 
-- Sau hướng dẫn tự chạy, người dùng cấp khóa/thông tin SSH và giao Codex kết nối triển khai. VPS `/opt/dinhduong` hiện chạy nhánh `codex/nutrition-chat-api`, mã ứng dụng `bdc1f4f`; chưa merge main.
+- Sau hướng dẫn tự chạy, người dùng cấp khóa/thông tin SSH và giao Codex kết nối triển khai. VPS `/opt/dinhduong` chạy nhánh `codex/nutrition-chat-api`, lần triển khai API đầu dùng `bdc1f4f`; chưa merge main. Bản footer bổ sung bên dưới dùng app `63cf966`.
 - Đã backup/restore thử DB public riêng, build image Linux Node 24/Next 16.4.0 và áp đủ 7 migration còn thiếu. Hai migration Nutrition Chat gồm `20261014090000_nutrition_chat_oauth` và `20261014213000_nutrition_chat_private_access`; migration status up to date.
 - HTTPS thật: 41 kiểm tra OAuth/MCP/owner/revision/Excel/import/refresh/revoke đạt; 2 user/client kiểm thử và các dữ liệu liên quan đã dọn. Food/Dish/nguyên liệu món giữ nguyên cả số dòng lẫn dấu kiểm tra nội dung.
 - Timer bảo trì hết hạn OAuth/Excel 15 phút đã bật, chạy đầu thành công. Cấu hình proxy/menu/file Google riêng trên VPS được giữ lại; upstream `162.4.177.119:80` của `/thong-tin-moi/` đang timeout/502, không tự sửa máy khác.
 - Báo cáo thực tế và giới hạn còn lại: `docs/nutrition-chat/vps-2026-10-14.md`. Tài khoản ChatGPT/Claude thật, tải tối đa và quyền Data API của bảng tài khoản cũ vẫn cần nghiệm thu/rà riêng.
+
+#### Bộ đếm kết nối ở footer (14/10/2026)
+
+- Theo yêu cầu người dùng: thêm hai tổng lũy kế ChatGPT/Claude nhỏ ở footer hiện có, tái dùng `SiteSetting` và `/api/site-settings`; không dựng bảng analytics riêng.
+- Chỉ tăng khi authorization code đổi thành token lần đầu thành công; callback chính xác xác định nền tảng. Refresh/code lỗi/phát lại/mở link không tăng số, rollback không cộng số; nguồn tính không chứa định danh người dùng.
+- Migration `20261014230000_nutrition_connection_counts` đã áp, repo 23 migration up to date. `site_settings` có RLS/revoke Data API để không sửa số trực tiếp; app owner/BYPASSRLS và public API/admin hiện có tiếp tục hoạt động.
+- OAuth/PGlite 254 checks và toàn bộ suite Nutrition Chat đạt; TypeScript/lint/build đạt. Backup mới + restore thử riêng đạt; Food/Dish/nguyên liệu và cài đặt có sẵn khớp digest trước/sau. Tổng thực tế sau bật: ChatGPT 0, Claude 0; không backfill lượt thử trước đó.
+- App image `63cf966` đã chạy trên VPS; footer thật chữ 12 px/xám, một hàng ở panel 319 px và document 304 px, không tràn ngang. Migration image `3fb8cc3` chứa cùng migration/logic bộ đếm, timer bảo trì giữ nguyên.
 
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script

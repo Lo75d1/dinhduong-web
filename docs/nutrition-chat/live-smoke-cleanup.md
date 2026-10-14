@@ -2,6 +2,7 @@
 
 - Script: `evidence/nutrition-chat/live-smoke.mjs`. Thư mục `evidence/` được Git ignore; script không nằm trong image app. Root/quản trị copy riêng tới thư mục nghiệm thu, chỉ chạy sau khi bản triển khai và HTTPS đã sẵn sàng.
 - Ngày 14/10, Codex đã chạy script trên HTTPS VPS: 41 kiểm tra đạt và dữ liệu test đã dọn, xem [báo cáo thực tế](vps-2026-10-14.md). Khi chuẩn bị, `--self-test` chỉ kiểm helper offline; không dùng kết quả đó để thay nghiệm thu API/OAuth/DB thật.
+- Lượt smoke này chạy trước khi bật bộ đếm footer. Sau khi có tổng công khai, nghiệm thu OAuth giả nên chạy trên môi trường riêng: một grant thành công của tài khoản giả vẫn là lượt cấp quyền theo định nghĩa bộ đếm; không dùng smoke để tăng số hoặc sửa/xóa tổng production sau test.
 - Đã đọc public `/api/auth/register` và `src/lib/auth.ts` của bản nguồn: đăng ký chỉ tạo User `CLINICIAN` và session, không có gửi email. Hai email giả dùng `@example.invalid`; mọi tên/bản/client có prefix **NUTRITION-VPS-TEST-20261014** và mã lượt chạy riêng.
 - Script không sửa Food/Dish, không tạo hồ sơ bệnh nhân, không liên hệ ChatGPT/Claude hoặc gửi email. Callback nằm trong allowlist hiện có, nhưng **mọi redirect đều manual**: chỉ đọc code từ Location rồi đổi code tại server của dự án. HTTP wrapper từ chối URL khác origin, gồm callback nền tảng.
 
