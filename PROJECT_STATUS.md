@@ -9,11 +9,19 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 ### Nutrition Chat API — nhánh chạy thử VPS (14/10/2026)
 
 - Nhánh `codex/nutrition-chat-api`: MCP + REST + OAuth, khẩu phần 24h/một/nhiều ngày, nguồn ngoài kho, bản Ration riêng, Excel tự tính và nhập lại có xem trước. Trang `/ket-noi-ai`, đặc tả tại `docs/nutrition-chat/`.
-- Next.js nâng từ 16.2.10 lên 16.4.0 để vá cảnh báo bảo mật critical trước phát hành; không đổi Food/Dish hoặc dữ liệu canonical. Migration bổ sung `20261014090000_nutrition_chat_oauth` **chưa áp trên DB thật**.
+- Next.js nâng từ 16.2.10 lên 16.4.0 để vá cảnh báo bảo mật critical trước phát hành; không đổi Food/Dish hoặc dữ liệu canonical. Hai migration Nutrition Chat đã áp trên VPS, chi tiết ở mục nghiệm thu bên dưới.
 - `Ration.conversationJson` giữ đầu vào/nguồn/ngày/đơn vị/null và lịch sử 20 lần lưu; các cột Float của RationItem cũ không biểu diễn đủ dữ liệu này. API khẩu phần cũ chặn ghi/đọc nhầm bản hội thoại.
-- Người dùng đã bỏ cửa Claude duyệt cho phần việc này và xác nhận tự chạy lệnh VPS; Codex chỉ cập nhật nhánh GitHub, không tự merge/deploy. Hướng dẫn chạy thử nhánh: `docs/nutrition-chat/thu-vps.md`.
-- Build/test local không chứng minh đã phát hành. Cần kiểm baseline, cấu hình/migration VPS và kết nối ChatGPT/Claude thật theo `docs/nutrition-chat/vps-runbook.md`.
+- Người dùng đã bỏ cửa Claude duyệt cho phần việc này, sau đó cấp thông tin SSH và giao Codex chạy thử VPS. Giữ nhánh thử riêng, chưa merge main. Hướng dẫn vận hành: `docs/nutrition-chat/vps-runbook.md`.
+- Build/test local được bổ sung bằng nghiệm thu HTTPS/DB/Docker thật bên dưới; kết nối tài khoản ChatGPT/Claude thật vẫn chưa nghiệm thu.
 - Xem `docs/nutrition-chat/verification.md` để phân biệt kiểm chứng mới, lỗi kiểm tra cũ và các bước còn phải nghiệm thu trên VPS.
+
+#### Đã chạy thử VPS thực tế (14/10/2026)
+
+- Sau hướng dẫn tự chạy, người dùng cấp khóa/thông tin SSH và giao Codex kết nối triển khai. VPS `/opt/dinhduong` hiện chạy nhánh `codex/nutrition-chat-api`, mã ứng dụng `bdc1f4f`; chưa merge main.
+- Đã backup/restore thử DB public riêng, build image Linux Node 24/Next 16.4.0 và áp đủ 7 migration còn thiếu. Hai migration Nutrition Chat gồm `20261014090000_nutrition_chat_oauth` và `20261014213000_nutrition_chat_private_access`; migration status up to date.
+- HTTPS thật: 41 kiểm tra OAuth/MCP/owner/revision/Excel/import/refresh/revoke đạt; 2 user/client kiểm thử và các dữ liệu liên quan đã dọn. Food/Dish/nguyên liệu món giữ nguyên cả số dòng lẫn dấu kiểm tra nội dung.
+- Timer bảo trì hết hạn OAuth/Excel 15 phút đã bật, chạy đầu thành công. Cấu hình proxy/menu/file Google riêng trên VPS được giữ lại; upstream `162.4.177.119:80` của `/thong-tin-moi/` đang timeout/502, không tự sửa máy khác.
+- Báo cáo thực tế và giới hạn còn lại: `docs/nutrition-chat/vps-2026-10-14.md`. Tài khoản ChatGPT/Claude thật, tải tối đa và quyền Data API của bảng tài khoản cũ vẫn cần nghiệm thu/rà riêng.
 
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script

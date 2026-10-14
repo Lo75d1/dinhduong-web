@@ -1,7 +1,7 @@
 # Kiểm chứng Nutrition Chat API — 14/10/2026
 
 - Nhánh: `codex/nutrition-chat-api`, tách từ `origin/main` `5314cea`. Checkout gốc và các thay đổi đang dở được giữ nguyên.
-- Đây là kiểm chứng phát triển, **chưa xác nhận phát hành VPS hoặc kết nối tài khoản ChatGPT/Claude thật**.
+- Các mục dưới là snapshot kiểm chứng phát triển trước deploy. **Đã chạy thử VPS ngày 14/10** theo [báo cáo thực tế](vps-2026-10-14.md); kết nối tài khoản ChatGPT/Claude thật vẫn chưa nghiệm thu.
 
 ## Đã đạt
 
@@ -31,7 +31,7 @@
 - MCP đo cả envelope và escape, giới hạn 140.000 ký tự: rút gọn có thông báo hoặc yêu cầu chia kỳ; không cắt lặng lẽ, không để lưu thành công rồi mất ID vì kết quả quá lớn.
 - Đo trên Windows Node 26.5.0: xuất thông thường 3.719 Food × 18 chất × 7 ngày/21 dòng khoảng 2 giây, peak RSS 393 MiB; xuất tối đa khoảng 8–9 giây/1.064 MiB; nhập tối đa khoảng 1,2–1,5 giây/363 MiB. Số đo này không bảo đảm RAM/tải Linux Node 24. Dự trù staging 2 GiB thông thường, 4 GiB nếu dùng tổ hợp tối đa; đo lại trên VPS trước chốt sức chứa.
 
-## Chưa nghiệm thu trên hệ thống thật
+## Snapshot trước deploy: chưa nghiệm thu trên hệ thống thật
 
 - Read-only CLI với `.env` local không xác minh được DB (P2010); không suy ra trạng thái VPS hoặc sửa dữ liệu để chữa. File JSON ngày 14/10 có 3.719 Food/7.369 Dish là snapshot đã rà, không phải bằng chứng DB live.
 - Chưa chạy Docker/Caddy trên host này, chưa áp migration, chưa cài lịch cleanup. Build/server standalone local không thay thế thử image Linux, cấu hình Caddy và volume UID 1001.
@@ -39,10 +39,19 @@
 - Kết nối thật ChatGPT và Claude: PKCE/consent, tra Food/Dish, xem/chốt/tính, lưu/mở, xuất/tải/nhập lại, hết hạn/thu hồi và lỗi scope. Đây là cửa nghiệm thu M5, chưa được đánh dấu hoàn tất.
 - Evidence cục bộ ở `evidence/nutrition-chat` đã ignore khỏi Git/Docker; không có token production, dữ liệu thật được sửa hoặc file Excel tạm trong public.
 
-## Chuẩn bị nhánh chạy thử VPS
+## Snapshot chuẩn bị nhánh chạy thử VPS
 
 - Ngày 14/10/2026, người dùng xác nhận tự nhập lệnh VPS; Codex chỉ cập nhật GitHub, không merge hoặc truy cập server. Hướng dẫn mới tại `thu-vps.md`.
 - Rà cấu hình phát hiện volume Excel có thể được mount lần đầu bởi image maintenance (builder), trước app runner. Builder nay cũng tạo thư mục mode 0700, owner UID/GID 1001; tránh volume mới thuộc root làm app không ghi được file xuất. Chưa xác minh Docker copy-up hoặc quyền volume hiện có trên VPS.
+
+## Kiểm chứng bổ sung sau khi vào VPS
+
+- PostgreSQL thực tế 17.6, Supabase có default grants cho anon/authenticated. Migration private_access mới bật RLS và thu hồi quyền trên 5 bảng thuộc tính năng, giữ quyền owner/BYPASSRLS của app; không sửa OAuth migration cũ hoặc Food/Dish.
+- OAuth/PGlite tăng lên 239 checks (133 ACL/RLS thực SQL); storage 82, HTTP 77, TypeScript và lint các file sửa đạt. Vai trò fixture ứng dụng không SUPERUSER, có BYPASSRLS và sở hữu bảng.
+- Restore backup public vào PostgreSQL 17 riêng, không network/port ngoài, áp thử 7 migration đạt. Sau đó 7 migration trên DB thật đạt; cả 5 bảng riêng có RLS, anon/authenticated SELECT false, role ứng dụng tiếp tục hoạt động.
+- Hai backend PostgreSQL riêng kiểm contention/release của khóa Excel đạt. Đây không thay cho tải nhiều app worker hoặc phép thử mức tối đa.
+- 41 checks HTTPS thực tế đạt; file XLSX 787.924 bytes xuất/tải/nhập lại đạt. User/client/session/token/ration test được dọn theo ID và metadata chính xác; file Excel test hết hạn đã được maintenance xóa.
+- App/Caddy đang chạy, volume UID 1001/mode 0700 ghi được, timer bảo trì chạy thành công. Swap 1 GiB chỉ dùng build, đã gỡ; VPS trở lại 2 GiB/no swap. Chi tiết và hạn chế tại `vps-2026-10-14.md`.
 
 ## Nguồn đối chiếu
 

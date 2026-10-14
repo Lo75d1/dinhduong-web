@@ -1,9 +1,11 @@
 # Phát hành Nutrition Chat API trên VPS
 
+- Trạng thái thực tế ngày 14/10: người dùng sau đó giao Codex kết nối và chạy thử; đã triển khai nhánh trên VPS. Đọc [vps-2026-10-14.md](vps-2026-10-14.md) trước khi lặp lại lệnh migration hoặc bảo trì; hướng dẫn dưới vẫn là quy trình, không phải lệnh cần chạy lại ngay.
+
 ## Phạm vi và người triển khai
 
 - Dùng app hiện có tại `/opt/dinhduong`, Docker Compose + Caddy; kho dữ liệu Food/Dish hiện có giữ nguyên. Không chạy AI model trên VPS và không dựng DB song song.
-- Cập nhật theo yêu cầu trực tiếp ngày 14/10/2026: **bỏ cửa Claude duyệt cho phần việc này**; người dùng tự chạy lệnh VPS, Codex chỉ cập nhật nhánh GitHub. Chạy thử từ `codex/nutrition-chat-api` theo [thu-vps.md](thu-vps.md); chưa tự merge main hoặc deploy. Đây là ngoại lệ theo chỉ đạo người dùng đối với quy trình cũ trong AGENTS, không phải xác nhận đã phát hành.
+- Cập nhật theo yêu cầu trực tiếp ngày 14/10/2026: **bỏ cửa Claude duyệt cho phần việc này**; sau hướng dẫn tự chạy, người dùng cấp thông tin SSH và giao Codex triển khai thử nhánh `codex/nutrition-chat-api`. Đây là ngoại lệ theo chỉ đạo người dùng đối với quy trình cũ trong AGENTS; chưa merge main. [thu-vps.md](thu-vps.md) giữ lệnh mẫu cho người vận hành, [báo cáo VPS](vps-2026-10-14.md) ghi kết quả thực tế.
 - Migration mới chỉ bổ sung persistence/OAuth/hạn mức cho tính năng này. Rà SQL và migration history trước khi áp; tuyệt đối không `prisma migrate reset`, seed lại nguồn hoặc reset Git.
 
 ## Trước khi merge
@@ -72,6 +74,8 @@ curl --fail --silent --show-error --output /dev/null https://dinhduong2598.food/
 - Hạn mức theo user/client và lớp anonymous đều cần thử trên staging; kết quả 429 phải có Retry-After. Không cố vượt hạn mức trên production chung.
 
 ## Dung lượng, TTL và bảo trì
+
+- VPS này đã dùng systemd service/timer `dinhduong-nutrition-maintenance`, 15 phút/lần, cùng entrypoint cleanup bên dưới; lần chạy đầu đạt. Không cài thêm crontab trùng. Log ở `/var/log/dinhduong-nutrition-maintenance.log`, mode 0600, đã có logrotate.
 
 - OAuth: authorization code 120 giây; consent 600 giây; access token 900 giây; refresh tối đa 30 ngày tuyệt đối, client hết hạn theo hoạt động tối đa 30 ngày. Thu hồi ngăn dùng access/refresh cũ.
 - `cleanupNutritionOAuth(batchSize)` chỉ xóa bản ghi OAuth/hạn mức hết hạn, có batch bound; không xóa Food/Dish/Ration. Bảo trì gọi theo entrypoint của bản phát hành, chạy theo lịch đã duyệt, ghi số lượng và thời gian, không ghi token.
