@@ -1,15 +1,15 @@
 # Phát hành Nutrition Chat API trên VPS
 
-## Phạm vi và cửa duyệt
+## Phạm vi và người triển khai
 
 - Dùng app hiện có tại `/opt/dinhduong`, Docker Compose + Caddy; kho dữ liệu Food/Dish hiện có giữ nguyên. Không chạy AI model trên VPS và không dựng DB song song.
-- Nhánh `codex/nutrition-chat-api` → PR vào main → **Claude review, merge và deploy** theo `AGENTS.md` / `CLAUDE_HANDOFF.md`. Tài liệu này là runbook dành cho người thực hiện sau cửa duyệt, không phải xác nhận đã phát hành.
+- Cập nhật theo yêu cầu trực tiếp ngày 14/10/2026: **bỏ cửa Claude duyệt cho phần việc này**; người dùng tự chạy lệnh VPS, Codex chỉ cập nhật nhánh GitHub. Chạy thử từ `codex/nutrition-chat-api` theo [thu-vps.md](thu-vps.md); chưa tự merge main hoặc deploy. Đây là ngoại lệ theo chỉ đạo người dùng đối với quy trình cũ trong AGENTS, không phải xác nhận đã phát hành.
 - Migration mới chỉ bổ sung persistence/OAuth/hạn mức cho tính năng này. Rà SQL và migration history trước khi áp; tuyệt đối không `prisma migrate reset`, seed lại nguồn hoặc reset Git.
 
 ## Trước khi merge
 
-- Giữ APP_SECRET đang dùng nếu đủ mạnh; secret này có thể liên quan các dữ liệu mã hóa hiện có. Không tự xoay secret để bật OAuth. Nếu phải thay, Claude cần quy trình chuyển đổi/khôi phục riêng.
-- Rà `verification.md`: có lỗi lint/test cũ đã tái hiện, kiểm nguồn live và provider còn phải nghiệm thu. Không dùng kết quả fixture để bỏ cửa duyệt.
+- Giữ APP_SECRET đang dùng nếu đủ mạnh; secret này có thể liên quan các dữ liệu mã hóa hiện có. Không tự xoay secret để bật OAuth. Nếu phải thay, người triển khai cần quy trình chuyển đổi/khôi phục riêng.
+- Rà `verification.md`: có lỗi lint/test cũ đã tái hiện, kiểm nguồn live và provider còn phải nghiệm thu. Không dùng kết quả fixture thay nghiệm thu hệ thống thật.
 
 - Chạy `npx prisma generate`, `npx tsc --noEmit`, ESLint và các test Nutrition Chat/OAuth/workbook cùng các test tính đã tái dùng. Chỉ loại trừ file route Next tự sinh theo quy ước.
 - Test trình duyệt `/ket-noi-ai` desktop/mobile, upload preview, xác nhận, lưu mới và xuất lại. Nếu test dùng stub, ghi rõ là stub; không coi là kiểm chứng DB.
@@ -43,7 +43,7 @@ node scripts/package-nutrition-chat-plugin.mjs
 
 1. Ghi commit đang chạy, image app hiện hành và tình trạng migration. Tạo snapshot/backup PostgreSQL bằng cơ chế của dịch vụ DB đang dùng, kiểm tra khả năng phục hồi trên môi trường riêng; không xuất secret lên terminal.
 2. Giữ bản `.env.production` an toàn và gói image trước đó để phục hồi app. Không commit backup DB hoặc env.
-3. Sau Claude merge và cửa duyệt, theo `CLAUDE_HANDOFF.md`:
+3. Đối với bản chính thức đã merge main, theo `CLAUDE_HANDOFF.md` (bản chạy thử nhánh dùng `thu-vps.md`):
 
 ```bash
 cd /opt/dinhduong
@@ -102,7 +102,7 @@ docker compose --profile maintenance run --rm -e NUTRITION_MAINTENANCE_ENABLED=1
 ```
 
 - Lệnh đầu là dry run, không truy cập DB/file. Lệnh `--apply` chỉ dùng sau khi kiểm tra backup, migration và volume; mỗi vòng cleanup có giới hạn batch.
-- Ví dụ crontab **chưa được cài**, dành cho Claude/quản trị VPS sau duyệt (15 phút/lần):
+- Ví dụ crontab **chưa được cài**, dành cho quản trị VPS sau khi kiểm chứng bản chạy thử (15 phút/lần):
 
 ```cron
 */15 * * * * cd /opt/dinhduong && docker compose --profile maintenance run --rm -e NUTRITION_MAINTENANCE_ENABLED=1 migrate npx tsx scripts/cleanup-nutrition-chat.ts --apply --batches=10 >> /var/log/dinhduong-nutrition-maintenance.log 2>&1
@@ -114,7 +114,7 @@ docker compose --profile maintenance run --rm -e NUTRITION_MAINTENANCE_ENABLED=1
 
 - Khi migration đã áp nhưng app mới lỗi: quay lại image/commit app đã ghi nhận, giữ các bảng bổ sung; không rollback DB bằng xóa bảng. Đối chiếu tương thích schema trước khi khởi động app cũ.
 - Khi phát hiện sai dữ liệu người dùng hoặc lỗi auth: ngừng bề mặt Nutrition Chat tại ingress, thu hồi các phiên bị ảnh hưởng; các trang tra cứu/công cụ cũ giữ theo đánh giá vận hành. Không mở scope hoặc bỏ kiểm tra chủ sở hữu để chữa lỗi.
-- Restore DB chỉ khi có mất/hỏng dữ liệu đã xác nhận, bằng bản backup đã thử và quy trình của dịch vụ DB; Claude điều phối cửa bảo trì. Không ghi đè DB production chỉ vì endpoint lỗi.
+- Restore DB chỉ khi có mất/hỏng dữ liệu đã xác nhận, bằng bản backup đã thử và quy trình của dịch vụ DB; người triển khai điều phối cửa bảo trì. Không ghi đè DB production chỉ vì endpoint lỗi.
 - Lưu bằng chứng nghiệm thu và giới hạn chưa thử trong PR/run report. Không đánh dấu ChatGPT/Claude/Excel/VPS đã chạy nếu mới kiểm bằng fixture local.
 
 ## Phương pháp nhu cầu đang tái dùng

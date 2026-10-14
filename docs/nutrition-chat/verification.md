@@ -20,7 +20,7 @@
 
 - ESLint toàn repo: 6 errors, 12 warnings. Sáu errors được tái hiện trên checkout gốc với bản ESLint gốc: `scripts/check-duplicates.ts`, `AdminPortal.tsx`, trang nhật ký lỗi, `MealInput.tsx`, `MenuFoodSearch.tsx`, `MultiDayAnalysis.tsx`.
 - `test:multi-day` cũ dừng tại dòng 29: chờ `null` nhưng reducer đang trả tổng phần đã biết `600`. Test và reducer không được thay đổi trong nhánh này. API mới giữ tổng phần có số liệu và cờ incomplete, chặn kết luận đáp ứng khi thiếu; đã có kiểm tra riêng.
-- Không sửa hoặc bỏ qua các lỗi cũ để làm báo cáo xanh. Claude cần xử lý/chốt ngoại lệ phạm vi trước merge/phát hành, theo AGENTS.
+- Không sửa hoặc bỏ qua các lỗi cũ để làm báo cáo xanh. Các lỗi ngoài phạm vi vẫn cần được xử lý/chốt trước phát hành chính thức. Người dùng đã bỏ cửa Claude duyệt và tự chạy thử nhánh VPS theo `thu-vps.md`.
 
 ## Dependency và giới hạn
 
@@ -35,9 +35,14 @@
 
 - Read-only CLI với `.env` local không xác minh được DB (P2010); không suy ra trạng thái VPS hoặc sửa dữ liệu để chữa. File JSON ngày 14/10 có 3.719 Food/7.369 Dish là snapshot đã rà, không phải bằng chứng DB live.
 - Chưa chạy Docker/Caddy trên host này, chưa áp migration, chưa cài lịch cleanup. Build/server standalone local không thay thế thử image Linux, cấu hình Caddy và volume UID 1001.
-- Claude cần đọc runbook, backup/rà migration history, kiểm nguồn Food/Dish/khuyến nghị/aliases bằng cấu hình VPS đúng, chạy migration no-cache sau merge và thử hai tài khoản/hai worker.
+- Người triển khai cần đọc runbook, backup/rà migration history, kiểm nguồn Food/Dish/khuyến nghị/aliases bằng cấu hình VPS đúng, chạy migration no-cache theo hướng dẫn nhánh thử và thử hai tài khoản/hai worker.
 - Kết nối thật ChatGPT và Claude: PKCE/consent, tra Food/Dish, xem/chốt/tính, lưu/mở, xuất/tải/nhập lại, hết hạn/thu hồi và lỗi scope. Đây là cửa nghiệm thu M5, chưa được đánh dấu hoàn tất.
 - Evidence cục bộ ở `evidence/nutrition-chat` đã ignore khỏi Git/Docker; không có token production, dữ liệu thật được sửa hoặc file Excel tạm trong public.
+
+## Chuẩn bị nhánh chạy thử VPS
+
+- Ngày 14/10/2026, người dùng xác nhận tự nhập lệnh VPS; Codex chỉ cập nhật GitHub, không merge hoặc truy cập server. Hướng dẫn mới tại `thu-vps.md`.
+- Rà cấu hình phát hiện volume Excel có thể được mount lần đầu bởi image maintenance (builder), trước app runner. Builder nay cũng tạo thư mục mode 0700, owner UID/GID 1001; tránh volume mới thuộc root làm app không ghi được file xuất. Chưa xác minh Docker copy-up hoặc quyền volume hiện có trên VPS.
 
 ## Nguồn đối chiếu
 
