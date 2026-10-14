@@ -84,7 +84,10 @@ async function main() {
     assert.equal((await rest("calculate", { input: menu, confirmationToken: "bad" })).status, 409); checks++;
     const calculated = await rest("calculate", confirmedArgs);
     assert.equal(calculated.status, 200); checks++;
-    assert.equal((await calculated.json()).totals.energyKcal.value, 130); checks++;
+    const calculationBody = await calculated.json();
+    assert.equal(calculationBody.totals.energyKcal.value, 130); checks++;
+    assert.equal(calculationBody.chatReport.format, "markdown"); checks++;
+    assert.ok(calculationBody.chatReport.text.includes("**130 kcal**")); checks++;
     const savedResponse = await rest("save", { ...confirmedArgs, idempotencyKey: "http-save" });
     assert.equal(savedResponse.status, 200); checks++;
     const savedMenu = await savedResponse.json() as Awaited<ReturnType<typeof Service.saveNutritionMenu>>;
@@ -138,7 +141,10 @@ async function main() {
     const mcpPreview = (await mcpPrepared.json()).result.structuredContent as Awaited<ReturnType<typeof Service.prepareNutritionMenu>>;
     const mcpCalculated = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "calculate_menu", arguments: { input: mcpPreview.input, confirmationToken: mcpPreview.confirmationToken } }, token, true));
     assert.equal(mcpCalculated.status, 200); checks++;
-    assert.equal((await mcpCalculated.json()).result.structuredContent.totals.energyKcal.value, 130); checks++;
+    const mcpCalculationBody = await mcpCalculated.json();
+    assert.equal(mcpCalculationBody.result.structuredContent.totals.energyKcal.value, 130); checks++;
+    assert.ok(mcpCalculationBody.result.structuredContent.chatReport.text.includes("P–L–G")); checks++;
+    assert.deepEqual(JSON.parse(mcpCalculationBody.result.content[0].text).chatReport, mcpCalculationBody.result.structuredContent.chatReport); checks++;
     assert.equal((await api.mcpRoute.GET()).status, 405); checks++;
     assert.equal((await api.mcpRoute.DELETE()).status, 405); checks++;
     const largeMenu: MenuInput = structuredClone(menu);
@@ -155,6 +161,8 @@ async function main() {
     const compactBody = await compactCalculation.json();
     assert.equal(compactBody.result.structuredContent.outputCompacted, true); checks++;
     assert.equal(compactBody.result.structuredContent.totals.energyKcal.value, 45500); checks++;
+    assert.ok(compactBody.result.structuredContent.chatReport.text.includes("**45.500 kcal**")); checks++;
+    assert.ok(compactBody.result.structuredContent.chatReport.text.includes("Chưa có mục tiêu nhu cầu")); checks++;
     assert.ok(JSON.stringify(compactBody.result).length < 140_000); checks++;
     const smallOutput = api.nutritionMcpOutput("get_workflow", { name: "small fixture" });
     assert.equal(smallOutput.includeStructured, true); checks++;

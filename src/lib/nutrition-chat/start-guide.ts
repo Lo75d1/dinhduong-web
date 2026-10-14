@@ -21,14 +21,14 @@ Trả lời tiếng Việt bằng gạch đầu dòng. Trước tiên kiểm tra
 
 Hỏi các phần tôi chưa cung cấp: muốn lập thực đơn hay ghi lại ăn 24 giờ, một hay nhiều ngày, các món/thực phẩm và lượng. Hỏi tối đa 3 ý mỗi lần; không hỏi lại thông tin đã có. Mặc định chỉ tính thành phần, chỉ hỏi hồ sơ cơ thể khi tôi muốn đối chiếu nhu cầu.
 
-Tra món và thực phẩm trong kho, trình bày nguyên liệu/định lượng/nguồn; món ngoài kho hoặc thay nguyên liệu phải làm rõ nguồn và hỏi tôi chấp nhận. Không tự bịa số còn thiếu. Cho tôi xem bản chuẩn bị và chờ tôi xác nhận trước khi tính. Sau đó trả phân tích theo ngày và file Excel chỉnh được bằng công cụ thật. Chỉ lưu bản cá nhân khi tôi yêu cầu. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
+Tra món và thực phẩm trong kho, trình bày nguyên liệu/định lượng/nguồn; món ngoài kho hoặc thay nguyên liệu phải làm rõ nguồn và hỏi tôi chấp nhận. Không tự bịa số còn thiếu. Cho tôi xem bản chuẩn bị và chờ tôi xác nhận trước khi tính. Sau khi tính, trình bày báo cáo ngay trong chat trước link Excel: tổng năng lượng, đạm/béo/bột đường (g), tỷ lệ năng lượng P–L–G (%), chất xơ/natri/canxi/sắt, kết quả từng ngày và trung bình/ngày, nguồn và phần còn thiếu. Dùng chatReport công cụ trả; chỉ so nhu cầu khi có mục tiêu. Sau đó trả Excel chỉnh được bằng công cụ thật. Chỉ lưu bản cá nhân khi tôi yêu cầu. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
 }
 
 export const NUTRITION_START_STEPS = [
   { title: "Nói mục đích và bữa ăn", text: "Chọn thực đơn hoặc ghi lại ăn 24 giờ, số ngày và món đã biết. AI chỉ hỏi các phần còn thiếu, gồm lượng, đơn vị và số suất." },
   { title: "Tra kho và làm rõ nguyên liệu", text: "AI tra thực phẩm/công thức của Dinh dưỡng 2598, đưa lựa chọn có nguồn. Nguyên liệu thay, món mới và số liệu ngoài kho được trình bày để bạn xác nhận." },
   { title: "Xem bản nháp rồi chốt", text: "Bạn xem ngày, bữa, nguyên liệu, định lượng và các cảnh báo. Chỉ sau khi bạn đồng ý, AI gửi đúng bản đó đến hệ thống để tính." },
-  { title: "Nhận phân tích và Excel", text: "Nhận kết quả theo ngày, nguồn và phần còn thiếu. Excel có vùng nhập chỉnh được và tự tính lại; lưu bản cá nhân khi bạn yêu cầu." },
+  { title: "Nhận báo cáo ngay trong chat và Excel", text: "Xem năng lượng, đạm/béo/bột đường, tỷ lệ năng lượng, các chất cơ bản, kết quả theo ngày, nguồn và phần thiếu ngay trong chat. Sau đó nhận Excel có vùng nhập chỉnh được và tự tính lại; lưu bản cá nhân khi bạn yêu cầu." },
   { title: "Dùng lại hoặc gửi bản đã sửa", text: "Mở bản cá nhân đã lưu, hoặc gửi Excel đã chỉnh vào trang nhập lại để xem trước, chốt và tính lại. Công thức kho gốc được giữ nguyên." },
 ] as const;
 
@@ -93,6 +93,8 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 
 ## 4. Trả phân tích và Excel chỉnh được
 
+- Sau calculate_menu, trình bày chatReport.text ngay trong hội thoại trước link Excel. Báo cáo có tổng năng lượng (kcal), đạm/béo/bột đường (g) và tỷ lệ năng lượng P–L–G (%), chất xơ/natri/canxi/sắt và các chất đã chọn, tổng cả kỳ/trung bình/ngày/bảng từng ngày, mục tiêu/nguồn và phần thiếu. Không chỉ gửi file rồi bắt người dùng mở mới thấy số.
+- Tỷ lệ P–L–G dùng tổng năng lượng quy đổi 4P + 9L + 4G của ba chất làm mẫu số, không phải tỷ lệ gram hoặc tự thay số năng lượng từ nguồn. Thiếu một chất thì giữ tỷ lệ —; số ước tính/tổng một phần phải ghi rõ. Ngày chưa nhập không là ngày ăn 0 kcal.
 - Trả số công cụ thật theo ngày và cả kỳ, đơn vị/nguồn, phần thiếu và phần ước lượng. Không biến null thành 0 hoặc coi ngày chưa nhập là ăn 0 kcal.
 - Không có mục tiêu thì không kết luận đủ/thiếu/vượt nhu cầu. Kết quả hỗ trợ đánh giá, không thay chỉ định điều trị.
 - Gọi export_workbook cho đúng bản đã chốt, trả link tải công cụ cung cấp. Link hết hạn sau 10 phút: xuất lại khi cần, không tạo link giả hoặc lặp lại link đã hết hạn.

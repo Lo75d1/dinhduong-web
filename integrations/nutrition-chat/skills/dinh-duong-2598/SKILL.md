@@ -34,6 +34,8 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp ng
 
 ## Bước 3: trả kết quả
 
+- Sau `calculate_menu`, trình bày `chatReport.text` ngay trong chat trước link Excel: năng lượng kcal, đạm/béo/bột đường g và tỷ lệ năng lượng P–L–G %, chất xơ/natri/canxi/sắt và các chất đã chọn, tổng cả kỳ/trung bình/ngày/bảng từng ngày, nguồn và phần thiếu. Không chỉ trả file. Bản rút gọn MCP vẫn giữ báo cáo này.
+- Tỷ lệ P–L–G có mẫu số năng lượng quy đổi 4P + 9L + 4G, không phải tỷ lệ gram; không thay năng lượng bảng nguồn bằng tổng quy đổi. Thiếu một chất hoặc tổng quy đổi bằng 0 thì tỷ lệ là `—`; ghi rõ các thành phần ước tính/tổng chưa đầy đủ.
 - Dùng số server trả; giữ đơn vị, nguồn, ngày có dữ liệu và trạng thái tổng chưa đầy đủ. Không biến `null` thành 0, không coi ngày chưa nhập là ngày ăn 0 kcal.
 - Nếu không có mục tiêu, không kết luận đạt/thiếu/vượt nhu cầu. Có mục tiêu thì ghi nguồn; kết quả hỗ trợ đánh giá, không tự chuyển thành chỉ định điều trị.
 - Khi yêu cầu Excel, gọi `export_workbook` cho bản đã xác nhận và đưa link tải do server trả. Nêu link có thời hạn; không tái sử dụng link hết hạn hoặc tiết lộ token trong lời giải thích.

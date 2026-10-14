@@ -1,5 +1,5 @@
 import {spawnSync} from "node:child_process";
-const files=["test-nutrition-chat-core.ts","test-nutrition-oauth-security.ts","test-nutrition-oauth-db.ts","test-nutrition-storage.ts","test-nutrition-chat-http.ts","test-nutrition-chat-workbook.ts"];
+const files=["test-nutrition-chat-core.ts","test-nutrition-chat-report.ts","test-nutrition-oauth-security.ts","test-nutrition-oauth-db.ts","test-nutrition-storage.ts","test-nutrition-chat-http.ts","test-nutrition-chat-workbook.ts"];
 for(const file of files){
   const test=spawnSync(process.execPath,["--import","tsx",`scripts/${file}`],{stdio:"inherit",env:process.env});
   if(test.error || test.status!==0){console.error(`Failed: ${file}`);process.exit(test.status??1);}

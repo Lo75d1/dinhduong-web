@@ -1,5 +1,6 @@
 import type {ResolvedMenu,NutrientTotal} from "./contracts";
 import {NutritionInputError} from "./validation";
+import {nutritionChatReport} from "./chat-report";
 export const NUTRITION_MCP_MAX_RESULT_CHARACTERS=140_000;
 function metric(total:NutrientTotal){return {value:total.value,incomplete:total.incomplete,estimated:total.estimated,missingRowCount:total.missingRows.length,missingRows:total.missingRows.slice(0,20),missingRowsTruncated:total.missingRows.length>20};}
 function summary(menu:ResolvedMenu){
@@ -19,7 +20,7 @@ export function nutritionMcpOutput(name:string,result:unknown):{text:string;data
   const record=result as Record<string,unknown>;
   if(name==="save_menu")data={ration:record.ration,replayed:record.replayed,outputCompacted:true,detailNotice:"Bản đã lưu đầy đủ; mở bằng get_saved_menu hoặc trang bản lưu để xem."};
   else if(name==="prepare_menu" || name==="get_saved_menu")data={...record,preview:summary(record.preview as ResolvedMenu),...(Array.isArray(record.history)?{history:record.history.map(entry=>({revision:entry.revision,confirmedAt:entry.confirmedAt,dataVersion:entry.dataVersion,changedRowCount:entry.changes?.length??0})),historyDetailsCompacted:true}:{})};
-  else if(name==="calculate_menu")data=summary(result as ResolvedMenu);
+  else if(name==="calculate_menu")data={...summary(result as ResolvedMenu),chatReport:nutritionChatReport(result as ResolvedMenu)};
   text=JSON.stringify(data);
   if(size(text,data,false)>NUTRITION_MCP_MAX_RESULT_CHARACTERS)throw new NutritionInputError("Đầu vào/kết quả vượt giới hạn hội thoại. Chia thành kỳ nhỏ hơn hoặc dùng trang web/REST để giữ đủ dữ liệu; không gửi kết quả bị cắt.","mcp_result",413);
   return {text,data,includeStructured:size(text,data,true)<=NUTRITION_MCP_MAX_RESULT_CHARACTERS};

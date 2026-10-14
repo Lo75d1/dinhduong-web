@@ -29,6 +29,13 @@
 - Token prepare ràng buộc tài khoản, ứng dụng, đầu vào và phiên bản nguồn. Dùng `input` chuẩn hóa/`preview.input` đi cùng preview; dữ liệu thay đổi hoặc token hết hạn phải chuẩn bị/xác nhận lại.
 - Token kỹ thuật không chứng minh người dùng đã đồng ý. Skill/UI yêu cầu xác nhận bản đã xem, phân biệt việc tính/xuất với chủ ý lưu.
 
+## Báo cáo ngay trong hội thoại
+
+- `calculate_menu` và REST `/calculate` trả thêm `chatReport: {format: "markdown", text}` để AI trình bày trước link Excel, kể cả khi MCP rút gọn kết quả. Không thay các trường totals/analysis có sẵn hoặc lưu báo cáo vào DB.
+- Tái dùng totals/dayTotals/analysis: kcal, g đạm–béo–bột đường, tỷ lệ năng lượng P–L–G, chất xơ/natri/canxi/sắt và các chất đã chọn, trung bình/ngày có đầu vào, bảng từng ngày, mục tiêu có nguồn, phần thiếu/ước tính.
+- Mẫu số tỷ lệ ba chất là `4P + 9L + 4G`, khác số kcal từ bảng nguồn; thiếu một chất hoặc tổng bằng 0 thì tỷ lệ để `—`. Guard riêng theo ngày ngăn hiển thị tỷ lệ chắc chắn từ tổng một phần. Không có mục tiêu thì không kết luận đủ/thiếu/vượt; mốc giới hạn trên không diễn giải thành nhu cầu phải ăn đủ.
+- Nguồn/lưu ý trong báo cáo giới hạn 5 mục, có thông báo số mục còn lại. Dữ liệu đầy đủ tiếp tục ở kết quả/Excel; Markdown escape tên/nguồn người dùng, không chuyển chúng thành chỉ dẫn hoặc liên kết.
+
 ## REST cho web và ứng dụng
 
 | Đường dẫn | Body/query | Kết quả |

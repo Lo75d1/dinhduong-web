@@ -45,6 +45,12 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - Trình duyệt thật: ba nút copy báo thành công, ô readonly chứa đúng lời nhắn/link/MCP và link cài kết nối mở đúng trang. Panel 319 px/document 304 px không tràn ngang. Clipboard hệ điều hành chưa được xác minh độc lập do bridge trình duyệt trả rỗng; công cụ web của phiên không mở được URL dù HTTPS/browser đọc được. Không cam kết AI luôn mở link; có lời nhắn đầy đủ làm fallback.
 - Bộ đếm vẫn 0/0; chưa nghiệm thu tài khoản ChatGPT/Claude thật. App image `461d8bd`, maintenance image `3fb8cc3` giữ nguyên; backup/nav/Caddy/file Google được giữ và swap build đã gỡ. Chi tiết tại `docs/nutrition-chat/start-workflow.md`.
 
+#### Báo cáo dinh dưỡng trong chat (15/10/2026)
+
+- `calculate_menu`/REST calculate trả thêm `chatReport` Markdown trước link Excel: năng lượng, g đạm/béo/bột đường, tỷ lệ năng lượng P–L–G, chỉ số cơ bản/các chất đã chọn, tổng/trung bình/ngày, nguồn/mốc nhu cầu và phần thiếu/ước tính. Bản MCP rút gọn vẫn giữ báo cáo.
+- Tái dùng totals/dayTotals/analysis hiện có; không thay bộ tính hoặc lưu báo cáo vào DB. Guard tỷ lệ theo ngày khi macro chưa đủ; không có mục tiêu thì không kết luận đáp ứng nhu cầu. QR/lời nhắn/get_workflow/skill cùng hướng dẫn hiển thị báo cáo trước Excel.
+- Local: 37 kiểm tra báo cáo thuần, 83 kiểm tra HTTP fixture, 67 core/protocol; Prisma generate, TypeScript, lint file sửa và diff check đạt. Nghiệm thu VPS cho bản này được bổ sung sau khi triển khai; chưa coi fixture là bằng chứng nền tảng thật.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn

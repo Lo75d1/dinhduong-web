@@ -6,6 +6,7 @@ import { validateOperationObject, operationId, prepareNutritionMenu, confirmedNu
 import { exportNutritionMenu } from "./downloads";
 import { NUTRITION_WORKFLOW, nutritionToolScope } from "./tools";
 import { enforceNutritionRateLimit, NutritionSecurityError } from "./security";
+import { nutritionChatReport } from "./chat-report";
 
 export async function executeNutritionTool(name:string,value:unknown,identity:NutritionIdentity) {
   const scope=nutritionToolScope(name);
@@ -30,5 +31,5 @@ export async function executeNutritionTool(name:string,value:unknown,identity:Nu
   const a=validateOperationObject(value,name==="save_menu"?["input","confirmationToken","idempotencyKey","rationId","expectedRevision"]:["input","confirmationToken"],["input","confirmationToken",...(name==="save_menu"?["idempotencyKey"]:[])]);
   if(name==="save_menu")return saveNutritionMenu(a,identity);
   const menu=await confirmedNutritionMenu(a,identity);
-  return name==="export_workbook"?exportNutritionMenu(menu,identity):menu;
+  return name==="export_workbook"?exportNutritionMenu(menu,identity):{...menu,chatReport:nutritionChatReport(menu)};
 }
