@@ -58,6 +58,13 @@
 - Bổ sung footer 14/10: OAuth/PGlite **254 checks**, gồm không đếm code lỗi/phát lại/refresh, phân loại callback chính xác, rollback, giữ tổng sau cleanup và ACL của SiteSetting. Core 67/OAuth pure 73/storage 82/HTTP 77/workbook parser cùng suite đều đạt; TypeScript/lint/build đạt.
 - VPS: backup public mới 3.710.579 bytes/258 entries; restore riêng + migration bộ đếm đạt. DB thật 23 migration up to date; SiteSetting RLS, anon/authenticated không có SELECT/UPDATE; nội dung Food/Dish/nguyên liệu và cài đặt cũ khớp dấu kiểm trước/sau.
 - API site-settings live 200/no-store, chỉ xuất tổng ChatGPT/Claude (0/0 lúc bật), không có trường Gemini/private/token/owner. Health/landing/OAuth metadata 200, timer bảo trì tiếp tục thành công. Không chạy lại smoke tạo OAuth giả trên production để tăng số công khai.
+
+## Báo cáo ngay trong chat — 15/10/2026
+
+- Báo cáo pure fixture 37 checks: mẫu số tỷ lệ P–L–G khác kcal nguồn, partial/null/0, guard tỷ lệ ngày thiếu, empty day, mục tiêu/cả kỳ/trung bình, giới hạn trên/mốc 0, nguồn/ước tính/Markdown escape/giới hạn nguồn và không mutate bản đã chốt.
+- HTTP fixture tăng từ 77 lên 83 checks: REST và MCP modern trả báo cáo, text/structuredContent đồng nhất, bản MCP lớn vẫn giữ báo cáo và nằm trong ngân sách. Core/protocol 67, Prisma generate/TypeScript/lint file sửa/diff check đạt; không lặp lại các suite ngoài phạm vi đã nghiệm thu trước.
+- App `1179d21` build Linux/TypeScript, healthy; HTTPS 28 checks với session/tài khoản test thật và Food hiện có. Kiểm đủ số liệu/partial/nhiều ngày/mục tiêu/ngày trống, digest chốt đúng; dọn tài khoản/session, nguồn count+digest không đổi, tổng kết nối 0/0. Không tạo grant OAuth để thử presentation.
+- Browser VPS thật thấy lời nhắn/bước báo cáo trước Excel, 319 px/document 304 px không tràn ngang. Nghiệm thu nền tảng ChatGPT/Claude thật còn thiếu; server trả báo cáo và hướng dẫn không chứng minh mọi model luôn trình bày đúng.
 - App `63cf966` qua build Linux/TypeScript và health/HTTPS. Trình duyệt thật xác minh footer chữ 12 px, màu rgb(107,114,128), 0/0, một hàng ở viewport 319 px/document 304 px; ảnh tại `evidence/nutrition-chat/vps-footer-connections.jpg` được ignore. Không kết luận nền tảng thật từ phép thử UI này.
 
 ## Nguồn đối chiếu

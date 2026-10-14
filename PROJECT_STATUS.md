@@ -49,7 +49,8 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 
 - `calculate_menu`/REST calculate trả thêm `chatReport` Markdown trước link Excel: năng lượng, g đạm/béo/bột đường, tỷ lệ năng lượng P–L–G, chỉ số cơ bản/các chất đã chọn, tổng/trung bình/ngày, nguồn/mốc nhu cầu và phần thiếu/ước tính. Bản MCP rút gọn vẫn giữ báo cáo.
 - Tái dùng totals/dayTotals/analysis hiện có; không thay bộ tính hoặc lưu báo cáo vào DB. Guard tỷ lệ theo ngày khi macro chưa đủ; không có mục tiêu thì không kết luận đáp ứng nhu cầu. QR/lời nhắn/get_workflow/skill cùng hướng dẫn hiển thị báo cáo trước Excel.
-- Local: 37 kiểm tra báo cáo thuần, 83 kiểm tra HTTP fixture, 67 core/protocol; Prisma generate, TypeScript, lint file sửa và diff check đạt. Nghiệm thu VPS cho bản này được bổ sung sau khi triển khai; chưa coi fixture là bằng chứng nền tảng thật.
+- Local: 37 kiểm tra báo cáo thuần, 83 kiểm tra HTTP fixture, 67 core/protocol; Prisma generate, TypeScript, lint file sửa và diff check đạt. App image `1179d21` đã build Linux/TypeScript và healthy trên VPS, không chạy migration/seed.
+- HTTPS VPS: 28 kiểm tra báo cáo đạt cho dữ liệu Food có sẵn, tổng thiếu, nhiều ngày/có mốc/ngày trống; tài khoản và session kiểm thử tạm đã dọn. Food/Dish/nguyên liệu khớp count+digest trước/sau, bộ đếm vẫn 0/0. Trình duyệt thật hiển thị lời nhắn/bước nhận báo cáo, panel 319 px/document 304 px không tràn ngang. Tài khoản ChatGPT/Claude thật vẫn chưa nghiệm thu.
 
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
