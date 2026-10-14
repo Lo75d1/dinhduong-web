@@ -51,8 +51,8 @@ export default function PublicFooter() {
       </div>
       <div className="mt-5 border-t border-[#e1e7e3] px-5 pt-3 text-center text-xs text-neutral-500">
         {typeof settings.totalVisits === "number" && <p>{settings.totalVisits.toLocaleString("vi-VN")} lượt truy cập</p>}
-        <p className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1" title="Lũy kế lượt kết nối được người dùng cấp quyền thành công từ khi bật thống kê.">
-          <span>Lượt kết nối đã cấp quyền</span>
+        <p className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[12px] leading-5 text-[#6b7280]" title="Lũy kế lượt kết nối được người dùng cấp quyền thành công từ khi bật thống kê.">
+          <span>Lượt kết nối</span>
           <span>ChatGPT: {connectionCount(settings.nutritionConnections?.chatgpt)}</span>
           <span>Claude: {connectionCount(settings.nutritionConnections?.claude)}</span>
         </p>
