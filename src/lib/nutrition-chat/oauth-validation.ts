@@ -41,8 +41,13 @@ export function getConsentSecret(): string {
   return value;
 }
 
+export const NUTRITION_PLATFORM_REDIRECTS = {
+  chatgpt: "https://chatgpt.com/connector_platform_oauth_redirect",
+  claude: "https://claude.ai/api/mcp/auth_callback",
+} as const;
+
 export function allowedNutritionRedirects(): string[] {
-  const values = ["https://chatgpt.com/connector_platform_oauth_redirect", "https://claude.ai/api/mcp/auth_callback"];
+  const values: string[] = Object.values(NUTRITION_PLATFORM_REDIRECTS);
   if (process.env.NUTRITION_OAUTH_REDIRECT_URIS) {
     let parsed: unknown;
     try { parsed = JSON.parse(process.env.NUTRITION_OAUTH_REDIRECT_URIS); } catch { throw new NutritionSecurityError("server_error", 503, "Danh sách callback chưa hợp lệ."); }

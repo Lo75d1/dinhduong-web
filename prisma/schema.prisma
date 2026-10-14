@@ -709,6 +709,9 @@ model SiteSetting {
   geminiModel        String?  @default("gemini-2.5-flash")
   geminiEnabled      Boolean  @default(false)
   offlineDownloadUrl String?  @db.Text
+  // Cumulative successful initial OAuth grants; never page views or refreshes.
+  nutritionChatgptConnections Int @default(0)
+  nutritionClaudeConnections  Int @default(0)
   updatedAt          DateTime @updatedAt
 
   @@map("site_settings")

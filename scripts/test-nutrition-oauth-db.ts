@@ -10,9 +10,10 @@ import type * as OAuth from "../src/lib/nutrition-chat/oauth";
 import type * as Security from "../src/lib/nutrition-chat/security";
 import type * as State from "./fixtures/nutrition-oauth/state";
 import type * as Database from "./fixtures/nutrition-oauth/database";
+import type * as ConnectionStats from "../src/lib/nutrition-chat/connection-stats";
 import { CONSENT_COOKIE, getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken, randomNutritionToken } from "../src/lib/nutrition-chat/oauth-validation";
 
-type FixtureRuntime = typeof OAuth & typeof Security & typeof State & typeof Database;
+type FixtureRuntime = typeof OAuth & typeof Security & typeof State & typeof Database & typeof ConnectionStats;
 type Registered = { client_id: string; client_secret?: string; token_endpoint_auth_method: string };
 type Tokens = { access_token: string; refresh_token: string; token_type: string; expires_in: number; scope: string; resource: string };
 let checks = 0;
@@ -28,7 +29,7 @@ async function main() {
     delete process.env.NUTRITION_OAUTH_REDIRECT_URIS;
     delete process.env.NUTRITION_ALLOWED_ORIGINS;
     delete process.env.NUTRITION_TRUST_PROXY;
-    const sources = ["src/lib/nutrition-chat/oauth.ts", "src/lib/nutrition-chat/security.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/database.ts"];
+    const sources = ["src/lib/nutrition-chat/oauth.ts", "src/lib/nutrition-chat/security.ts", "src/lib/nutrition-chat/connection-stats.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/database.ts"];
     const outfile = join(directory, "oauth-fixture.cjs");
     await build({
       stdin: { contents: sources.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n"), resolveDir: process.cwd(), loader: "ts" },
@@ -47,6 +48,14 @@ async function main() {
     await api.initializeOAuthFixture(migration);
     const privateAccess = await verifyFixturePrivateAccess(api, migration);
     checks += privateAccess.checks;
+    async function totals() {
+      return (await api.fixtureQuery<{ chatgpt: number; claude: number }>('SELECT "nutritionChatgptConnections" AS chatgpt, "nutritionClaudeConnections" AS claude FROM "site_settings" WHERE "id" = \'public\''))[0];
+    }
+    assert.deepEqual(await totals(), { chatgpt: 0, claude: 0 }); checks++;
+    for (const role of ["anon", "authenticated", "nutrition_fixture_public_probe"]) {
+      const [access] = await api.fixtureQuery<{ read: boolean; write: boolean }>('SELECT has_table_privilege($1, \'site_settings\', \'SELECT\') AS read, has_table_privilege($1, \'site_settings\', \'UPDATE\') AS write', [role]);
+      assert.deepEqual(access, { read: false, write: false }); checks++;
+    }
     api.setFixtureUser({ id: "user-a", email: "fixture-a@example.test", displayName: "Người dùng A (fixture)", role: "CLINICIAN" });
     const publicUrl = getNutritionPublicUrl();
     const resource = getNutritionResourceUrl();
@@ -116,9 +125,12 @@ async function main() {
     assert.equal((await exchange(grant, { resource: "https://wrong.test/mcp" })).status, 400); checks++;
     assert.equal((await exchange(grant, { code_verifier: randomNutritionToken() })).status, 400); checks++;
     assert.equal((await exchange(grant, { client_id: otherClient.client_id })).status, 400); checks++;
+    assert.deepEqual(await totals(), { chatgpt: 0, claude: 0 }); checks++;
     const response = await exchange(grant);
     assert.equal(response.status, 200); checks++;
     const issued = await response.json() as Tokens;
+    assert.deepEqual(await totals(), { chatgpt: 0, claude: 1 }); checks++;
+    assert.equal((await api.fixtureQuery<{ contactName: string }>('SELECT "contactName" FROM "site_settings" WHERE "id" = \'public\''))[0].contactName, "Existing fixture contact"); checks++;
     assert.equal(issued.resource, resource); checks++;
     assert.equal(issued.token_type, "Bearer"); checks++;
     assert.ok(issued.expires_in > 0 && issued.expires_in <= 900); checks++;
@@ -130,6 +142,7 @@ async function main() {
     await identityFails(issued.access_token);
     await api.fixtureQuery('UPDATE "nutrition_oauth_tokens" SET "audience" = $1 WHERE "accessHash" = $2', [resource, hashNutritionToken(issued.access_token)]);
     assert.equal((await exchange(grant)).status, 400); checks++;
+    assert.deepEqual(await totals(), { chatgpt: 0, claude: 1 }); checks++;
     await identityFails(issued.access_token); // Code replay revoked its token family.
 
     const initial = await newTokens();
@@ -140,6 +153,7 @@ async function main() {
     const rotatedResponse = await refresh(initial.refresh_token, "nutrition:read");
     assert.equal(rotatedResponse.status, 200); checks++;
     const rotated = await rotatedResponse.json() as Tokens;
+    assert.deepEqual(await totals(), { chatgpt: 0, claude: 2 }); checks++;
     assert.equal(rotated.scope, "nutrition:read"); checks++;
     await assert.rejects(() => api.getNutritionIdentity(protectedRequest(rotated.access_token), "nutrition:write"), error => error instanceof Error && error.message === "insufficient_scope"); checks++;
     assert.equal((await refresh(initial.refresh_token)).status, 400); checks++;
@@ -164,6 +178,18 @@ async function main() {
     const revoked = await api.nutritionOAuthHandler(api.revokeNutritionToken, form("revoke", { client_id: client.client_id, token: revocable.refresh_token }));
     assert.equal(revoked.status, 200); checks++;
     await identityFails(revocable.access_token);
+    const beforeExtraStats = await totals();
+    const statsTx = api.prisma as unknown as Parameters<(typeof ConnectionStats)["recordNutritionConnection"]>[0];
+    await api.recordNutritionConnection(statsTx, "https://chatgpt.com/connector_platform_oauth_redirect");
+    assert.deepEqual(await totals(), { ...beforeExtraStats, chatgpt: 1 }); checks++;
+    await api.recordNutritionConnection(statsTx, "https://chatgpt.com/connector_platform_oauth_redirect?spoof=1");
+    await api.recordNutritionConnection(statsTx, "https://example.test/claude-callback");
+    assert.deepEqual(await totals(), { ...beforeExtraStats, chatgpt: 1 }); checks++;
+    await assert.rejects(() => api.prisma.$transaction(async tx => {
+      await api.recordNutritionConnection(tx as unknown as typeof statsTx, "https://claude.ai/api/mcp/auth_callback");
+      throw new Error("fixture rollback");
+    }), /fixture rollback/); checks++;
+    assert.deepEqual(await totals(), { ...beforeExtraStats, chatgpt: 1 }); checks++;
     assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionToken, form("revoke", { client_id: client.client_id, token: randomNutritionToken() }))).status, 200); checks++;
 
     const personal = await newTokens();
@@ -194,6 +220,9 @@ async function main() {
     await api.fixtureQuery('UPDATE "nutrition_oauth_tokens" SET "refreshExpiresAt" = $1', [new Date(Date.now() - 1000)]);
     const removed = await api.cleanupNutritionOAuth(200);
     assert.ok(removed.tokens > 0); checks++;
+    const afterCleanup = await totals();
+    assert.equal(afterCleanup.chatgpt, 1); checks++;
+    assert.ok(afterCleanup.claude > 2); checks++;
     assert.equal((await api.fixtureQuery<{ count: number }>('SELECT count(*) AS count FROM "app_users"'))[0].count, 2); checks++;
     console.log(`Nutrition OAuth disposable PostgreSQL: ${checks} checks passed. Migration, private ACL/RLS (${privateAccess.checks} checks), hashed tokens, code replay, refresh rotation/reuse, revocation/owner checks and atomic rate SQL verified.`);
     console.log("Fixture uses PGlite + substituted Prisma/session APIs. It does not prove live VPS, real ChatGPT/Claude, browser consent or multi-worker PostgreSQL locks.");

@@ -4,6 +4,14 @@
 - Source of truth: `src/lib/nutrition-chat/contracts.ts`, `validation.ts`, `tools.ts`, `protocol.ts`. Không copy thêm một schema độc lập vào plugin; `get_workflow` và tools/list trả schema phiên đang chạy.
 - Contract `1.0`; hỗ trợ MCP `2026-07-28` và compatibility `2025-11-25`, `2025-06-18`, `2025-03-26`. Client mới dùng envelope `_meta` và header method/name/version theo protocol; legacy dùng initialize. List/discover mới có `resultType`, `_meta` server info, `ttlMs`, `cacheScope: private`.
 
+## Thống kê công khai ở chân trang
+
+- Tái dùng `SiteSetting` singleton và API/footer hiện có, không dựng bảng analytics riêng. Hai bộ đếm bắt đầu từ 0 khi bật tính năng; không backfill các lượt thử trước đó.
+- Chỉ tăng trong transaction đổi authorization code thành token lần đầu thành công. Refresh, consent chưa đổi code, code lỗi/phát lại, mở link/QR hoặc client name tự khai không tăng số.
+- Phân biệt ChatGPT/Claude bằng callback chính xác đã xác thực. Callback tùy chỉnh khác không gán bừa vào một nền tảng. Đây là lượt cấp quyền kết nối, không phải số người dùng độc nhất hoặc bằng chứng đã chat trên nền tảng.
+- Lũy kế được giữ khi OAuth hết hạn/thu hồi/cleanup; cập nhật atomic chung DB giữa worker, rollback không cộng số. Không ghi thêm người dùng, token hoặc nội dung hội thoại trong thống kê.
+- API `/api/site-settings` chỉ trả hai tổng công khai trong `nutritionConnections`; lỗi/không có dữ liệu hiển thị `—`. SiteSetting có RLS và revoke quyền Data API để ngăn client trực tiếp sửa số hoặc đọc các cột riêng; server owner/BYPASSRLS vẫn phục vụ API/admin hiện có.
+
 ## Công cụ và quyền
 
 | Công cụ | Quyền | Vai trò |

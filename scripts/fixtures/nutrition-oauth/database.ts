@@ -177,10 +177,13 @@ export async function initializeOAuthFixture(migrationPath: string) {
     CREATE TABLE "rations" ("id" TEXT PRIMARY KEY, "ownerId" TEXT NOT NULL, "title" TEXT NOT NULL DEFAULT 'Fixture', "patientId" TEXT,
       "profileJson" JSONB, "observedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
-    INSERT INTO "app_users"("id") VALUES ('user-a'), ('user-b');`);
+    INSERT INTO "app_users"("id") VALUES ('user-a'), ('user-b');
+    CREATE TABLE "site_settings" ("id" TEXT PRIMARY KEY, "contactName" TEXT NOT NULL, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+    INSERT INTO "site_settings"("id", "contactName") VALUES ('public', 'Existing fixture contact');`);
   await database.exec(await readFile(migrationPath, "utf8"));
   beforePrivateAccess = await fixturePrivateTablePrivileges();
   await database.exec(await readFile(join(dirname(dirname(migrationPath)), "20261014213000_nutrition_chat_private_access", "migration.sql"), "utf8"));
+  await database.exec(await readFile(join(dirname(dirname(migrationPath)), "20261014230000_nutrition_connection_counts", "migration.sql"), "utf8"));
 }
 export async function fixtureQuery<T = Row>(sql: string, parameters?: unknown[]) { return (await database.query<T>(sql, parameters?.map(value => value instanceof Date ? value.toISOString() : value))).rows; }
 export async function closeOAuthFixture() { if (database) await database.close(); }

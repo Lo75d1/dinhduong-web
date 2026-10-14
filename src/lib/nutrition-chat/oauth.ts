@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getSessionUser, requireSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { NutritionOAuthClient } from "@/generated/prisma/client";
+import { recordNutritionConnection } from "./connection-stats";
 import {
   ACCESS_SECONDS, CLIENT_SECONDS, CONSENT_COOKIE, INTERACTION_SECONDS, NUTRITION_SCOPES, REFRESH_SECONDS,
   consentCsrf, connectionCsrf, equalSecret, getConsentSecret, getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken,
@@ -237,6 +238,7 @@ export async function exchangeNutritionToken(request: Request): Promise<Response
         refreshExpiresAt: new Date(now.getTime() + REFRESH_SECONDS * 1000),
       } });
       await tx.nutritionOAuthClient.update({ where: { id: client.id }, data: { expiresAt: new Date(now.getTime() + CLIENT_SECONDS * 1000) } });
+      await recordNutritionConnection(tx, code.redirectUri);
       return token;
     }, { maxWait: 3000, timeout: 5000 });
     if (!result) throw new NutritionSecurityError("invalid_grant", 400, "Mã đã dùng, hết hạn hoặc không khớp PKCE.");
