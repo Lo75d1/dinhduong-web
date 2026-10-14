@@ -3,6 +3,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
 
 type Row = Record<string, unknown>;
 type Where = Record<string, unknown>;
@@ -20,6 +21,22 @@ type FixturePrisma = {
 };
 let database: PGlite;
 let workbookBusy = false;
+export const fixtureApplicationRole = "nutrition_fixture_application";
+export const fixturePrivateTables = ["rations", "nutrition_oauth_clients", "nutrition_oauth_codes", "nutrition_oauth_tokens", "nutrition_api_windows"];
+export type FixtureTablePrivileges = { role: string; table: string; select: boolean; insert: boolean; update: boolean; delete: boolean; truncate: boolean; references: boolean; trigger: boolean; maintain: boolean };
+let beforePrivateAccess: FixtureTablePrivileges[] = [];
+export function fixturePrivilegesBeforePrivateAccess() { return beforePrivateAccess; }
+export async function fixturePrivateTablePrivileges() {
+  return (await database.query<FixtureTablePrivileges>(`SELECT r.rolname AS role, c.relname AS table,
+    has_table_privilege(r.oid, c.oid, 'SELECT') AS select, has_table_privilege(r.oid, c.oid, 'INSERT') AS insert,
+    has_table_privilege(r.oid, c.oid, 'UPDATE') AS update, has_table_privilege(r.oid, c.oid, 'DELETE') AS delete,
+    has_table_privilege(r.oid, c.oid, 'TRUNCATE') AS truncate, has_table_privilege(r.oid, c.oid, 'REFERENCES') AS references,
+    has_table_privilege(r.oid, c.oid, 'TRIGGER') AS trigger, has_table_privilege(r.oid, c.oid, 'MAINTAIN') AS maintain
+    FROM pg_roles r CROSS JOIN pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])
+      AND r.rolname IN ('anon', 'authenticated', 'nutrition_fixture_public_probe')
+    ORDER BY r.rolname, c.relname`, [fixturePrivateTables])).rows;
+}
 export function setFixtureWorkbookBusy(value: boolean) { workbookBusy = value; }
 const base: Executor = { query: <T>(sql: string, params?: unknown[]) => database.query<T>(sql, params) };
 
@@ -144,12 +161,26 @@ export const prisma = fixture(base);
 export async function initializeOAuthFixture(migrationPath: string) {
   database = new PGlite({ parsers: { 1114: (value: string) => new Date(value.replace(" ", "T") + "Z") } });
   await database.exec("SET TIME ZONE 'UTC'");
+  // Reproduce Supabase's permissive table defaults before applying the private
+  // migration. All subsequent application tests use a non-superuser table owner
+  // with BYPASSRLS, matching the separately verified production application role.
+  await database.exec(`CREATE ROLE anon NOLOGIN;
+    CREATE ROLE authenticated NOLOGIN;
+    CREATE ROLE nutrition_fixture_public_probe NOLOGIN;
+    CREATE ROLE nutrition_fixture_rls_probe NOLOGIN;
+    CREATE ROLE nutrition_fixture_application NOLOGIN BYPASSRLS;
+    GRANT USAGE ON SCHEMA public TO PUBLIC;
+    GRANT CREATE ON SCHEMA public TO nutrition_fixture_application;
+    SET ROLE nutrition_fixture_application;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO PUBLIC, anon, authenticated;`);
   await database.exec(`CREATE TABLE "app_users" ("id" TEXT PRIMARY KEY);
     CREATE TABLE "rations" ("id" TEXT PRIMARY KEY, "ownerId" TEXT NOT NULL, "title" TEXT NOT NULL DEFAULT 'Fixture', "patientId" TEXT,
       "profileJson" JSONB, "observedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
     INSERT INTO "app_users"("id") VALUES ('user-a'), ('user-b');`);
   await database.exec(await readFile(migrationPath, "utf8"));
+  beforePrivateAccess = await fixturePrivateTablePrivileges();
+  await database.exec(await readFile(join(dirname(dirname(migrationPath)), "20261014213000_nutrition_chat_private_access", "migration.sql"), "utf8"));
 }
 export async function fixtureQuery<T = Row>(sql: string, parameters?: unknown[]) { return (await database.query<T>(sql, parameters?.map(value => value instanceof Date ? value.toISOString() : value))).rows; }
 export async function closeOAuthFixture() { if (database) await database.close(); }

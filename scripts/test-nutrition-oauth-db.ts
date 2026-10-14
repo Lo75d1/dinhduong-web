@@ -3,6 +3,7 @@ import { build } from "esbuild";
 import { createRequire } from "node:module";
 import { mkdtemp } from "node:fs/promises";
 import { removeNutritionFixtureDirectory } from "./fixtures/nutrition-oauth/safe-temp";
+import { verifyFixturePrivateAccess } from "./fixtures/nutrition-oauth/private-access-checks";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
 import type * as OAuth from "../src/lib/nutrition-chat/oauth";
@@ -42,7 +43,10 @@ async function main() {
     });
     runtime = require(outfile) as FixtureRuntime;
     const api = runtime;
-    await api.initializeOAuthFixture(resolve("prisma/migrations/20261014090000_nutrition_chat_oauth/migration.sql"));
+    const migration = resolve("prisma/migrations/20261014090000_nutrition_chat_oauth/migration.sql");
+    await api.initializeOAuthFixture(migration);
+    const privateAccess = await verifyFixturePrivateAccess(api, migration);
+    checks += privateAccess.checks;
     api.setFixtureUser({ id: "user-a", email: "fixture-a@example.test", displayName: "Người dùng A (fixture)", role: "CLINICIAN" });
     const publicUrl = getNutritionPublicUrl();
     const resource = getNutritionResourceUrl();
@@ -191,7 +195,7 @@ async function main() {
     const removed = await api.cleanupNutritionOAuth(200);
     assert.ok(removed.tokens > 0); checks++;
     assert.equal((await api.fixtureQuery<{ count: number }>('SELECT count(*) AS count FROM "app_users"'))[0].count, 2); checks++;
-    console.log(`Nutrition OAuth disposable PostgreSQL: ${checks} checks passed. Migration, hashed tokens, code replay, refresh rotation/reuse, revocation/owner checks and atomic rate SQL verified.`);
+    console.log(`Nutrition OAuth disposable PostgreSQL: ${checks} checks passed. Migration, private ACL/RLS (${privateAccess.checks} checks), hashed tokens, code replay, refresh rotation/reuse, revocation/owner checks and atomic rate SQL verified.`);
     console.log("Fixture uses PGlite + substituted Prisma/session APIs. It does not prove live VPS, real ChatGPT/Claude, browser consent or multi-worker PostgreSQL locks.");
   } finally {
     if (runtime) await runtime.closeOAuthFixture();
