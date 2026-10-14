@@ -52,6 +52,12 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - Local: 37 kiểm tra báo cáo thuần, 83 kiểm tra HTTP fixture, 67 core/protocol; Prisma generate, TypeScript, lint file sửa và diff check đạt. App image `1179d21` đã build Linux/TypeScript và healthy trên VPS, không chạy migration/seed.
 - HTTPS VPS: 28 kiểm tra báo cáo đạt cho dữ liệu Food có sẵn, tổng thiếu, nhiều ngày/có mốc/ngày trống; tài khoản và session kiểm thử tạm đã dọn. Food/Dish/nguyên liệu khớp count+digest trước/sau, bộ đếm vẫn 0/0. Trình duyệt thật hiển thị lời nhắn/bước nhận báo cáo, panel 319 px/document 304 px không tràn ngang. Tài khoản ChatGPT/Claude thật vẫn chưa nghiệm thu.
 
+#### Câu chữ trang chủ theo chuyên môn (15/10/2026)
+
+- Theo yêu cầu người dùng, viết lại phần tĩnh `src/app/page.tsx`: tiêu đề “Tra cứu thực phẩm và phân tích khẩu phần”, mô tả chức năng/đầu vào/báo cáo, nút “Nhập qua ChatGPT / Claude”, nhãn số lượng dữ liệu, mô tả nguồn và hỗ trợ sử dụng. Trình bày đúng đơn vị/cơ sở tính theo từng nguồn, bỏ câu mặc định mọi dữ liệu trên 100 g.
+- Tái dùng trang/chức năng/liên kết có sẵn; chỉ đổi câu chữ và alt ảnh. Không thay layout/CSS, logic lấy dữ liệu, các giá trị cài đặt, lời cảm ơn hoặc thông tin liên hệ do quản trị nhập. Prisma generate/TypeScript/ESLint file sửa/diff check và build Linux/TypeScript đạt.
+- App image `a625517` đã healthy trên VPS: homepage/health/start/Google 200, menu và nút hội thoại cùng giữ đích start, bộ đếm 0/0. Trình duyệt thật 319 px/document 304 px không tràn ngang; bấm nút mới mở đúng trang. Cấu hình/nav/env/file Google riêng khớp hash trước/sau; không chạy migration/seed, swap build đã gỡ. Ảnh ignore `evidence/nutrition-chat/vps-home-copy-mobile.jpg`.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn
