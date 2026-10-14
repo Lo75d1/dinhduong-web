@@ -1,0 +1,230 @@
+import assert from "node:assert/strict";
+import { build } from "esbuild";
+import { createRequire } from "node:module";
+import { mkdtemp } from "node:fs/promises";
+import { removeNutritionFixtureDirectory } from "./fixtures/nutrition-oauth/safe-temp";
+import { tmpdir } from "node:os";
+import { resolve, join } from "node:path";
+import type * as Rest from "../src/app/api/nutrition/v1/[action]/route";
+import type * as Mcp from "../src/app/api/nutrition/v1/mcp/route";
+import type * as Upload from "../src/app/api/nutrition/v1/import/route";
+import type * as Service from "../src/lib/nutrition-chat/service";
+import type * as Workbook from "../src/lib/nutrition-chat/workbook";
+import type * as Database from "./fixtures/nutrition-oauth/database";
+import type * as State from "./fixtures/nutrition-oauth/state";
+import type * as Repository from "./fixtures/nutrition-oauth/repository";
+import type * as Output from "../src/lib/nutrition-chat/mcp-output";
+import type { MenuInput } from "../src/lib/nutrition-chat/contracts";
+import { getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken, randomNutritionToken } from "../src/lib/nutrition-chat/oauth-validation";
+type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload };
+let checks = 0;
+
+async function main() {
+  const saved = { ...process.env };
+  const directory = await mkdtemp(join(tmpdir(), "nutrition-http-fixture-"));
+  const require = createRequire(import.meta.url);
+  let runtime: Runtime | undefined;
+  try {
+    process.env.NUTRITION_PUBLIC_URL = "https://dinhduong2598.food";
+    process.env.APP_SECRET = "disposable-http-fixture-placeholder-only";
+    delete process.env.NUTRITION_ALLOWED_ORIGINS;
+    delete process.env.NUTRITION_TRUST_PROXY;
+    const sources = ["src/lib/nutrition-chat/service.ts", "src/lib/nutrition-chat/workbook.ts", "src/lib/nutrition-chat/mcp-output.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/repository.ts"];
+    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts" };
+    const outfile = join(directory, "http-fixture.cjs");
+    await build({ stdin: { contents: sources.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n") + "\n" + Object.entries(routes).map(([label, path]) => `import * as ${label} from ${JSON.stringify(resolve(path))}; export {${label}};`).join("\n"), resolveDir: process.cwd(), loader: "ts" }, outfile,
+      bundle: true, platform: "node", format: "cjs", logLevel: "silent", plugins: [{ name: "disposable-http", setup(builder) {
+        builder.onResolve({ filter: /^server-only$/ }, () => ({ path: "server-only-stub", namespace: "empty" }));
+        builder.onLoad({ filter: /.*/, namespace: "empty" }, () => ({ contents: "export {};", loader: "js" }));
+        builder.onResolve({ filter: /^@\/lib\/prisma$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/database.ts") }));
+        builder.onResolve({ filter: /^(next\/headers|@\/lib\/auth)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/state.ts") }));
+        builder.onResolve({ filter: /^\.\/repository$/ }, args => /nutrition-chat[\\/]/.test(args.importer) ? { path: resolve("scripts/fixtures/nutrition-oauth/repository.ts") } : null);
+        builder.onResolve({ filter: /^(\.\/downloads|@\/lib\/nutrition-chat\/downloads)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/downloads.ts") }));
+        builder.onResolve({ filter: /^(@electric-sql\/pglite|exceljs)$/ }, args => ({ path: require.resolve(args.path), external: true }));
+      } }] });
+    runtime = require(outfile) as Runtime;
+    const api = runtime;
+    await api.initializeOAuthFixture(resolve("prisma/migrations/20261014090000_nutrition_chat_oauth/migration.sql"));
+    const base = getNutritionPublicUrl(), resource = getNutritionResourceUrl();
+    const scopes = ["nutrition:read", "nutrition:calculate", "nutrition:write", "nutrition:export"];
+    async function bearer(userId = "user-a", granted = scopes) {
+      const token = randomNutritionToken(), clientId = `nc_${randomNutritionToken()}`, family = randomNutritionToken();
+      await api.fixtureQuery(`INSERT INTO "nutrition_oauth_clients" ("id","name","redirectUris","scopes","expiresAt") VALUES ($1,'HTTP fixture',$2,$3,$4)`, [clientId, ["https://claude.ai/api/mcp/auth_callback"], scopes, new Date(Date.now() + 86400_000)]);
+      await api.fixtureQuery(`INSERT INTO "nutrition_oauth_tokens" ("id","familyId","userId","clientId","accessHash","refreshHash","scopes","issuer","audience","accessExpiresAt","refreshExpiresAt")
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [randomNutritionToken(), family, userId, clientId, hashNutritionToken(token), hashNutritionToken(randomNutritionToken()), granted, base, resource, new Date(Date.now() + 900_000), new Date(Date.now() + 86400_000)]);
+      return token;
+    }
+    const token = await bearer(), bToken = await bearer("user-b"), readToken = await bearer("user-a", ["nutrition:read"]);
+    const menu: MenuInput = { title: "HTTP fixture", mode: "menu", comparison: { mode: "none" }, days: [{ id: "day-1", date: "2026-10-14", label: "Ngày 1", rows: [{ id: "row-1", foodId: "fixture-rice", dish: "Cơm", meal: "Trưa", quantity: 100, unit: "g", servings: 1, basis: "edible", recipeSource: { kind: "user", label: "Người dùng xác nhận (fixture)" } }] }] };
+    const context = (action: string) => ({ params: Promise.resolve({ action }) });
+    function request(path: string, value: unknown, access?: string, extra: Record<string, string> = {}) {
+      return new Request(`${base}/api/nutrition/v1/${path}`, { method: "POST", headers: { "Content-Type": "application/json", ...(access ? { Authorization: `Bearer ${access}` } : {}), ...extra }, body: JSON.stringify(value) });
+    }
+    async function rest(action: string, value: unknown, access: string | undefined = token, extra: Record<string, string> = {}) {
+      return api.restRoute.POST(request(action, value, access, extra), context(action));
+    }
+    async function get(action: string, access: string | undefined = token, query = "") {
+      return api.restRoute.GET(new Request(`${base}/api/nutrition/v1/${action}${query}`, { headers: access ? { Authorization: `Bearer ${access}` } : {} }), context(action));
+    }
+    let noAuth = await api.restRoute.POST(request("prepare", { input: menu }, undefined, { Origin: base }), context("prepare"));
+    assert.equal(noAuth.status, 401); checks++;
+    assert.ok(noAuth.headers.get("www-authenticate")?.includes("oauth-protected-resource")); checks++;
+    noAuth = await api.restRoute.POST(request("prepare", { input: menu }), context("prepare"));
+    assert.equal(noAuth.status, 403); checks++;
+    assert.equal((await rest("prepare", { input: menu }, token, { Origin: "https://evil.test" })).status, 403); checks++;
+    const missingScope = await rest("prepare", { input: menu }, readToken);
+    assert.equal(missingScope.status, 403); checks++;
+    assert.ok(missingScope.headers.get("www-authenticate")?.includes("nutrition:calculate")); checks++;
+    assert.equal((await rest("unknown", {})).status, 404); checks++;
+    assert.equal((await rest("prepare", { input: menu, extra: true })).status, 400); checks++;
+    const preparedResponse = await rest("prepare", { input: menu });
+    assert.equal(preparedResponse.status, 200); checks++;
+    const prepared = await preparedResponse.json() as Awaited<ReturnType<typeof Service.prepareNutritionMenu>>;
+    const confirmedArgs = { input: prepared.input, confirmationToken: prepared.confirmationToken };
+    assert.equal((await rest("calculate", { input: menu, confirmationToken: "bad" })).status, 409); checks++;
+    const calculated = await rest("calculate", confirmedArgs);
+    assert.equal(calculated.status, 200); checks++;
+    assert.equal((await calculated.json()).totals.energyKcal.value, 130); checks++;
+    const savedResponse = await rest("save", { ...confirmedArgs, idempotencyKey: "http-save" });
+    assert.equal(savedResponse.status, 200); checks++;
+    const savedMenu = await savedResponse.json() as Awaited<ReturnType<typeof Service.saveNutritionMenu>>;
+    assert.equal(savedMenu.ration.revision, 1); checks++;
+    assert.equal((await get("saved", token, `?id=${savedMenu.ration.id}`)).status, 200); checks++;
+    assert.equal((await get("saved", bToken, `?id=${savedMenu.ration.id}`)).status, 404); checks++;
+    assert.equal((await get("saved", token)).status, 200); checks++;
+    const updatedResponse = await rest("save", { ...confirmedArgs, idempotencyKey: "http-update", rationId: savedMenu.ration.id, expectedRevision: 1 });
+    assert.equal(updatedResponse.status, 200); checks++;
+    assert.equal((await updatedResponse.json()).ration.revision, 2); checks++;
+    assert.equal((await rest("save", { ...confirmedArgs, idempotencyKey: "http-stale", rationId: savedMenu.ration.id, expectedRevision: 1 })).status, 409); checks++;
+    assert.equal((await rest("export", confirmedArgs)).status, 200); checks++;
+    api.setFixtureUser({ id: "user-a", displayName: "User A fixture", email: "fixture@example.test", role: "CLINICIAN" });
+    assert.equal((await api.restRoute.POST(request("prepare", { input: menu }, undefined, { Origin: base }), context("prepare"))).status, 200); checks++;
+    assert.equal((await api.restRoute.POST(request("prepare", { input: menu }, undefined, { Origin: "https://evil.test" }), context("prepare"))).status, 403); checks++;
+    api.setFixtureUser(null);
+
+    let rpcId = 0;
+    function rpcRequest(method: string, params: Record<string, unknown>, access: string | undefined = token, modern = false, extra: Record<string, string> = {}) {
+      const version = modern ? "2026-07-28" : "2025-11-25";
+      const meta = modern ? { _meta: { "io.modelcontextprotocol/protocolVersion": version, "io.modelcontextprotocol/clientCapabilities": {} } } : {};
+      return request("mcp", { jsonrpc: "2.0", id: ++rpcId, method, params: { ...params, ...meta } }, access, { Accept: "application/json, text/event-stream", "Mcp-Protocol-Version": version, ...(modern ? { "Mcp-Method": method, ...(method === "tools/call" ? { "Mcp-Name": String(params.name) } : {}) } : {}), ...extra });
+    }
+    assert.equal((await api.mcpRoute.POST(rpcRequest("tools/list", {}, ""))).status, 401); checks++;
+    const badOrigin = await api.mcpRoute.POST(rpcRequest("tools/list", {}, token, false, { Origin: "https://evil.test" }));
+    const badOriginStatus = badOrigin.status; // Assert after other cases to expose independent regressions.
+    const list = await api.mcpRoute.POST(rpcRequest("tools/list", {}));
+    assert.equal(list.status, 200); checks++;
+    assert.ok((await list.json()).result.tools.some((tool: { name: string }) => tool.name === "save_menu")); checks++;
+    const init = await api.mcpRoute.POST(rpcRequest("initialize", { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "fixture", version: "1" } }));
+    assert.equal(init.status, 200); checks++;
+    assert.equal((await init.json()).result.protocolVersion, "2025-11-25"); checks++;
+    const modernList = await api.mcpRoute.POST(rpcRequest("tools/list", {}, token, true));
+    assert.equal(modernList.status, 200); checks++;
+    assert.equal((await modernList.json()).result.resultType, "complete"); checks++;
+    assert.equal((await api.mcpRoute.POST(rpcRequest("tools/list", {}, token, true, { "Mcp-Method": "tools/call" }))).status, 400); checks++;
+    const unknownRpcRequest = rpcRequest("unknown/method", {}), unknownId = rpcId;
+    const unknownRpc = await api.mcpRoute.POST(unknownRpcRequest);
+    assert.equal(unknownRpc.status, 404); checks++;
+    assert.equal((await unknownRpc.json()).id, unknownId); checks++;
+    const unknownToolRequest = rpcRequest("tools/call", { name: "unknown_tool", arguments: {} }), unknownToolId = rpcId;
+    const unknownTool = await api.mcpRoute.POST(unknownToolRequest);
+    assert.equal(unknownTool.status, 400); checks++;
+    assert.equal((await unknownTool.json()).id, unknownToolId); checks++;
+    const wrongArgs = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "prepare_menu", arguments: { input: menu, extra: true } }));
+    assert.equal(wrongArgs.status, 200); checks++;
+    assert.equal((await wrongArgs.json()).result.isError, true); checks++;
+    assert.equal((await api.mcpRoute.POST(rpcRequest("tools/call", { name: "save_menu", arguments: { ...confirmedArgs, idempotencyKey: "mcp-write-denied" } }, readToken))).status, 403); checks++;
+    const mcpPrepared = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "prepare_menu", arguments: { input: menu } }, token, true));
+    assert.equal(mcpPrepared.status, 200); checks++;
+    const mcpPreview = (await mcpPrepared.json()).result.structuredContent as Awaited<ReturnType<typeof Service.prepareNutritionMenu>>;
+    const mcpCalculated = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "calculate_menu", arguments: { input: mcpPreview.input, confirmationToken: mcpPreview.confirmationToken } }, token, true));
+    assert.equal(mcpCalculated.status, 200); checks++;
+    assert.equal((await mcpCalculated.json()).result.structuredContent.totals.energyKcal.value, 130); checks++;
+    assert.equal((await api.mcpRoute.GET()).status, 405); checks++;
+    assert.equal((await api.mcpRoute.DELETE()).status, 405); checks++;
+    const largeMenu: MenuInput = structuredClone(menu);
+    largeMenu.days[0].rows = Array.from({ length: 350 }, (_, i) => ({ ...menu.days[0].rows[0], id: `large-row-${i}`, note: "x".repeat(400) }));
+    const clientId = (await api.fixtureQuery<{ clientId: string }>('SELECT "clientId" FROM "nutrition_oauth_tokens" WHERE "accessHash"=$1', [hashNutritionToken(token)]))[0].clientId;
+    const largePrepared = await api.prepareNutritionMenu(largeMenu, { userId: "user-a", clientId, scopes });
+    const oversizedPrepare = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "prepare_menu", arguments: { input: largeMenu } }, token, true));
+    assert.equal(oversizedPrepare.status, 200); checks++;
+    const oversizedBody = await oversizedPrepare.json();
+    assert.equal(oversizedBody.result.isError, true); checks++;
+    assert.equal(JSON.parse(oversizedBody.result.content[0].text).status, 413); checks++;
+    const compactCalculation = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "calculate_menu", arguments: { input: largePrepared.input, confirmationToken: largePrepared.confirmationToken } }, token, true));
+    assert.equal(compactCalculation.status, 200); checks++;
+    const compactBody = await compactCalculation.json();
+    assert.equal(compactBody.result.structuredContent.outputCompacted, true); checks++;
+    assert.equal(compactBody.result.structuredContent.totals.energyKcal.value, 45500); checks++;
+    assert.ok(JSON.stringify(compactBody.result).length < 140_000); checks++;
+    const smallOutput = api.nutritionMcpOutput("get_workflow", { name: "small fixture" });
+    assert.equal(smallOutput.includeStructured, true); checks++;
+    const mediumOutput = api.nutritionMcpOutput("get_workflow", { padding: "x".repeat(90_000) });
+    assert.equal(mediumOutput.includeStructured, false); checks++;
+    assert.ok(JSON.stringify({ content: [{ type: "text", text: mediumOutput.text }] }).length + 1000 <= 140_000); checks++;
+    assert.throws(() => api.nutritionMcpOutput("get_workflow", { padding: '"\\'.repeat(45_000) }), error => !!error && typeof error === "object" && "status" in error && error.status === 413); checks++;
+    const saveOutput = api.nutritionMcpOutput("save_menu", { ration: savedMenu.ration, replayed: false, input: largePrepared.input, preview: largePrepared.preview });
+    assert.equal((saveOutput.data as { ration: { id: string } }).ration.id, savedMenu.ration.id); checks++;
+    assert.ok(saveOutput.text.length < 140_000); checks++;
+    const historyOutput = api.nutritionMcpOutput("get_saved_menu", { ...prepared, ration: savedMenu.ration, historyTruncated: false,
+      history: [{ revision: 2, clientId: "fixture-client", confirmedAt: new Date().toISOString(), dataVersion: prepared.preview.dataVersion,
+        changes: [{ rowId: "row-1", before: { quantity: 100, note: "x".repeat(160_000) }, after: { quantity: 200 } }],
+      }],
+    });
+    const historySummary = historyOutput.data as { history: { revision: number; changedRowCount: number; changes?: unknown }[]; historyDetailsCompacted: boolean };
+    assert.equal(historySummary.historyDetailsCompacted, true); checks++;
+    assert.equal(historySummary.history[0].revision, 2); checks++;
+    assert.equal(historySummary.history[0].changedRowCount, 1); checks++;
+    assert.equal(historySummary.history[0].changes, undefined); checks++;
+    assert.ok(historyOutput.text.length < 140_000); checks++;
+
+    // Real workbook build and import parser, fake nutrient catalogue. Export endpoint above
+    // is a stub solely to exercise routing; it does not count as real file download coverage.
+    const workbook = await api.buildNutritionWorkbook(prepared.preview, await api.loadNutritionCatalogue());
+    const multipart = new FormData();
+    multipart.append("file", new File([new Uint8Array(workbook)], "fixture.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    const imported = await api.importRoute.POST(new Request(`${base}/api/nutrition/v1/import`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: multipart }));
+    assert.equal(imported.status, 200); checks++;
+    assert.equal((await imported.json()).preview.totals.energyKcal.value, 130); checks++;
+    assert.equal((await api.importRoute.POST(request("import", {}, token))).status, 415); checks++;
+    const wrongFile = new FormData(); wrongFile.append("file", new File(["text"], "wrong.csv"));
+    assert.equal((await api.importRoute.POST(new Request(`${base}/api/nutrition/v1/import`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: wrongFile }))).status, 413); checks++;
+    const tooBig = new FormData(); tooBig.append("file", new File(["x"], "fixture.xlsx"));
+    assert.equal((await api.importRoute.POST(new Request(`${base}/api/nutrition/v1/import`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Length": "6000000" }, body: tooBig }))).status, 413); checks++;
+    function deletion(access: string, revision: number) {
+      return api.restRoute.DELETE(new Request(`${base}/api/nutrition/v1/saved`, {
+        method: "DELETE", headers: { Authorization: `Bearer ${access}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ id: savedMenu.ration.id, expectedRevision: revision }),
+      }), context("saved"));
+    }
+    assert.equal((await deletion(readToken, 2)).status, 403); checks++;
+    assert.equal((await deletion(bToken, 2)).status, 409); checks++;
+    assert.equal((await deletion(token, 1)).status, 409); checks++;
+    assert.equal((await deletion(token, 2)).status, 200); checks++;
+    assert.equal((await get("saved", token, `?id=${savedMenu.ration.id}`)).status, 404); checks++;
+    assert.equal((await deletion(token, 2)).status, 409); checks++;
+    await api.fixtureQuery('DELETE FROM "nutrition_api_windows" WHERE "key"=$1', [hashNutritionToken("nutrition-import:user-a:4:60")]);
+    api.setFixtureWorkbookBusy(true);
+    const busyWorkbook = await api.importRoute.POST(new Request(`${base}/api/nutrition/v1/import`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: multipart }));
+    assert.equal(busyWorkbook.status, 503); checks++;
+    assert.equal(busyWorkbook.headers.get("retry-after"), "15"); checks++;
+    api.setFixtureWorkbookBusy(false);
+    await api.fixtureQuery('DELETE FROM "nutrition_api_windows"');
+    const pingStatuses: number[] = [];
+    // Keep PostgreSQL CURRENT_TIMESTAMP fixed for this short test so a wall-clock
+    // minute boundary does not reset the quota in the middle of the 121 requests.
+    await api.fixtureQuery("BEGIN");
+    try { for (let i = 0; i < 121; i++) pingStatuses.push((await api.mcpRoute.POST(rpcRequest("ping", {}))).status); }
+    finally { await api.fixtureQuery("COMMIT"); }
+    assert.equal(pingStatuses.filter(status => status === 200).length, 120); checks++;
+    assert.equal(pingStatuses[120], 429); checks++;
+    assert.equal(badOriginStatus, 403, "MCP must preserve forbidden Origin403 rather than rewrite it as a JSON parse error"); checks++;
+    console.log(`Nutrition actual HTTP route-handler fixtures: ${checks} checks passed. REST + legacy/modern MCP + OAuth bearer lookup + owner/CSRF/origin/scope errors + real workbook import parser verified.`);
+    console.log("No HTTP socket, browser, real platform, live DB or real export/download; routes called directly with PGlite and isolated data/export fixtures.");
+  } finally {
+    if (runtime) await runtime.closeOAuthFixture();
+    await removeNutritionFixtureDirectory(directory, "nutrition-http-fixture-");
+    for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key];
+    Object.assign(process.env, saved);
+  }
+}
+main().catch(error => { console.error(error instanceof Error ? error.stack : "HTTP fixture failed"); process.exitCode = 1; });

@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const user = await requireSessionUser();
     const items = await prisma.ration.findMany({
-      where: { ownerId: user.id },
+      where: { ownerId: user.id, conversationRevision: 0 },
       select: { id: true, title: true, observedAt: true, updatedAt: true, patient: { select: { id: true, name: true } }, _count: { select: { items: true } } },
       orderBy: { updatedAt: "desc" },
       take: 50,

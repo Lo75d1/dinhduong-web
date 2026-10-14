@@ -1,0 +1,8 @@
+import {NUTRITION_TOOLS,nutritionToolScope} from "@/lib/nutrition-chat/tools";
+import {getNutritionPublicUrl,nutritionJson} from "@/lib/nutrition-chat/security";
+export const dynamic="force-dynamic";
+export async function GET(){
+  const origin=getNutritionPublicUrl();
+  const paths=Object.fromEntries(NUTRITION_TOOLS.map(tool=>[`/api/nutrition/v1/${tool.name}`,{post:{operationId:tool.name,summary:tool.description,security:[{nutritionOAuth:[nutritionToolScope(tool.name)]}],requestBody:{required:true,content:{"application/json":{schema:tool.inputSchema}}},responses:{"200":{description:"Kết quả có nguồn, null khi thiếu số liệu",content:{"application/json":{schema:{type:"object"}}}},"400":{description:"Đầu vào không hợp lệ"},"401":{description:"Cần OAuth hoặc đăng nhập web"},"403":{description:"Thiếu scope hoặc Origin không hợp lệ"},"409":{description:"Cần chốt bản mới / revision xung đột"},"422":{description:"Còn trường bắt buộc thiếu"},"429":{description:"Hạn mức, có Retry-After"},"503":{description:"Chưa sẵn sàng"}}}}]));
+  return nutritionJson({openapi:"3.1.0",jsonSchemaDialect:"https://json-schema.org/draft/2020-12/schema",info:{title:"Dinh dưỡng 2598 Nutrition Chat API",version:"1.0.0",description:"API và MCP dùng chung bộ xử lý. Không sửa Food/Dish; bản cá nhân thuộc tài khoản."},servers:[{url:origin}],paths,components:{securitySchemes:{nutritionOAuth:{type:"oauth2",flows:{authorizationCode:{authorizationUrl:`${origin}/api/nutrition/v1/oauth/authorize`,tokenUrl:`${origin}/api/nutrition/v1/oauth/token`,scopes:{"nutrition:read":"Tra cứu và đọc bản riêng","nutrition:calculate":"Chuẩn bị và tính khẩu phần","nutrition:write":"Lưu bản riêng","nutrition:export":"Xuất Excel"}}}}}}});
+}
