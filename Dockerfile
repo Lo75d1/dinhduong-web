@@ -6,6 +6,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY package.json package-lock.json ./
 RUN npm ci
 
+# The maintenance image can mount this named volume before the app. Seed its
+# ownership here as well, so Docker's first copy-up keeps the runner UID 1001.
+RUN mkdir -p /tmp/dinhduong2598-nutrition-chat-v1 && chown 1001:1001 /tmp/dinhduong2598-nutrition-chat-v1 && chmod 700 /tmp/dinhduong2598-nutrition-chat-v1
+
 COPY . .
 RUN npx prisma generate && npm run build
 
