@@ -6,6 +6,14 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 
 ## Bối cảnh
 
+### Nutrition Chat API — nhánh chờ Claude duyệt (14/10/2026)
+
+- Nhánh `codex/nutrition-chat-api`: MCP + REST + OAuth, khẩu phần 24h/một/nhiều ngày, nguồn ngoài kho, bản Ration riêng, Excel tự tính và nhập lại có xem trước. Trang `/ket-noi-ai`, đặc tả tại `docs/nutrition-chat/`.
+- Next.js nâng từ 16.2.10 lên 16.4.0 để vá cảnh báo bảo mật critical trước phát hành; không đổi Food/Dish hoặc dữ liệu canonical. Migration bổ sung `20261014090000_nutrition_chat_oauth` **chưa áp trên DB thật**.
+- `Ration.conversationJson` giữ đầu vào/nguồn/ngày/đơn vị/null và lịch sử 20 lần lưu; các cột Float của RationItem cũ không biểu diễn đủ dữ liệu này. API khẩu phần cũ chặn ghi/đọc nhầm bản hội thoại.
+- Build/test local không chứng minh đã phát hành. Cần Claude rà PR, baseline checks, cấu hình/migration VPS và kết nối ChatGPT/Claude thật theo `docs/nutrition-chat/vps-runbook.md`.
+- Xem `docs/nutrition-chat/verification.md` để phân biệt kiểm chứng mới, lỗi kiểm tra cũ và các bước còn phải nghiệm thu trên VPS.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn

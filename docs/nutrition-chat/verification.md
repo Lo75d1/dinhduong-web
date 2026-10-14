@@ -1,0 +1,46 @@
+# Kiểm chứng Nutrition Chat API — 14/10/2026
+
+- Nhánh: `codex/nutrition-chat-api`, tách từ `origin/main` `5314cea`. Checkout gốc và các thay đổi đang dở được giữ nguyên.
+- Đây là kiểm chứng phát triển, **chưa xác nhận phát hành VPS hoặc kết nối tài khoản ChatGPT/Claude thật**.
+
+## Đã đạt
+
+- `prisma generate`, `tsc --noEmit`, build production Next.js 16.4.0 bằng Turbopack; server standalone khởi động và trả trang kết nối 200.
+- ESLint toàn bộ file mới/sửa của tính năng với `--max-warnings=0`: sạch.
+- `npm run test:nutrition-chat`: core/protocol 67, OAuth thuần 73, OAuth/PGlite 106, lưu dữ liệu/PGlite 82, HTTP handler 77; workbook parser/nguồn/ZIP/parity đạt. PGlite và Food/session fixture riêng, không ghi DB thật.
+- HTTP handler được gọi bằng Request/Response thật trong fixture: modern MCP 2026-07-28 và legacy 2025, OAuth/scopes/Origin, lưu trùng, revision, chủ sở hữu, quota, nhập XLSX thật và các lỗi. Export HTTP dùng stub; không coi là nghiệm thu export production.
+- Workbook: 43 kiểm tra Excel native qua COM, sửa lượng/nguyên liệu/suất/ngày/mục tiêu, phân biệt null/0, bảng bữa/món, biểu đồ tự đổi, nhận xét cũ, file Excel đã lưu nhập lại khớp server.
+- Ca tối đa 90 ngày/1.000 dòng/40 chất/6.000 thực phẩm đã xuất và nhập lại. Ca 40 chất ngoài kcal/P/L/G có 44 cột nguồn cũng đạt. File xuất tự kiểm tra 5 MB nén, 32 MiB/entry, 64 MiB tổng trước khi phát link.
+- UI desktop/mobile thật trên build production: không tràn ngang ở 390 px. Luồng upload/nguồn sửa/chốt/lưu/xuất/tải/mở/xóa thử qua proxy API **giả lập**, dùng kết quả `resolveMenu` thật; không coi là DB/OAuth integration. Một lần Link trong proxy không chuyển trang; mở href trực tiếp và chuyển trang sau xóa đạt, không ghi lỗi console.
+- Metadata OAuth/OpenAPI thật trên standalone trả 200/no-store; bản lưu và MCP thiếu đăng nhập trả 401 kèm challenge; trang consent có DENY + `frame-ancestors 'none'`. Consent đăng nhập/cấp quyền thật chưa thử.
+- Package plugin/skill hợp schema upstream, ZIP an toàn và deterministic. Sáu frame MCP hợp JSON Schema chính thức 2026-07-28.
+- `test:ration` quy đổi có sẵn đạt. Cleanup dry run không truy cập DB/file; chưa chạy `--apply` trên VPS.
+
+## Các kiểm tra cũ chưa đạt
+
+- ESLint toàn repo: 6 errors, 12 warnings. Sáu errors được tái hiện trên checkout gốc với bản ESLint gốc: `scripts/check-duplicates.ts`, `AdminPortal.tsx`, trang nhật ký lỗi, `MealInput.tsx`, `MenuFoodSearch.tsx`, `MultiDayAnalysis.tsx`.
+- `test:multi-day` cũ dừng tại dòng 29: chờ `null` nhưng reducer đang trả tổng phần đã biết `600`. Test và reducer không được thay đổi trong nhánh này. API mới giữ tổng phần có số liệu và cờ incomplete, chặn kết luận đáp ứng khi thiếu; đã có kiểm tra riêng.
+- Không sửa hoặc bỏ qua các lỗi cũ để làm báo cáo xanh. Claude cần xử lý/chốt ngoại lệ phạm vi trước merge/phát hành, theo AGENTS.
+
+## Dependency và giới hạn
+
+- Next.js 16.2.10 có advisory critical; nâng Next + eslint-config-next lên 16.4.0. `npm audit --omit=dev` sau nâng: **0 critical, 7 high, 7 moderate**. Các mục còn lại ở đồ thị cũ, gồm CLI/build của Prisma và dependency ExcelJS/UUID; không downgrade Prisma/ExcelJS hoặc chạy audit fix force.
+- Rà mức tiếp cận của từng advisory trong image runner/maintenance trên staging; không coi số đếm audit là bằng chứng khai thác hoặc tuyên bố hết mọi rủi ro.
+- Một tác vụ Excel tại một thời điểm, khóa PostgreSQL chung cho import/export; bận trả 503 + Retry-After 15. Khóa nhiều worker thật chưa thử; PGlite không thay thế phép thử này.
+- Giữ 20 lần thay đổi gần nhất có đầu vào cũ/mới, nguồn và thời điểm xác nhận; báo historyTruncated khi vượt 20. Tối đa 200 bản và 25 MB/tài khoản, tối đa 5 MB/bản. Không tạo kho Food/Dish riêng.
+- MCP đo cả envelope và escape, giới hạn 140.000 ký tự: rút gọn có thông báo hoặc yêu cầu chia kỳ; không cắt lặng lẽ, không để lưu thành công rồi mất ID vì kết quả quá lớn.
+- Đo trên Windows Node 26.5.0: xuất thông thường 3.719 Food × 18 chất × 7 ngày/21 dòng khoảng 2 giây, peak RSS 393 MiB; xuất tối đa khoảng 8–9 giây/1.064 MiB; nhập tối đa khoảng 1,2–1,5 giây/363 MiB. Số đo này không bảo đảm RAM/tải Linux Node 24. Dự trù staging 2 GiB thông thường, 4 GiB nếu dùng tổ hợp tối đa; đo lại trên VPS trước chốt sức chứa.
+
+## Chưa nghiệm thu trên hệ thống thật
+
+- Read-only CLI với `.env` local không xác minh được DB (P2010); không suy ra trạng thái VPS hoặc sửa dữ liệu để chữa. File JSON ngày 14/10 có 3.719 Food/7.369 Dish là snapshot đã rà, không phải bằng chứng DB live.
+- Chưa chạy Docker/Caddy trên host này, chưa áp migration, chưa cài lịch cleanup. Build/server standalone local không thay thế thử image Linux, cấu hình Caddy và volume UID 1001.
+- Claude cần đọc runbook, backup/rà migration history, kiểm nguồn Food/Dish/khuyến nghị/aliases bằng cấu hình VPS đúng, chạy migration no-cache sau merge và thử hai tài khoản/hai worker.
+- Kết nối thật ChatGPT và Claude: PKCE/consent, tra Food/Dish, xem/chốt/tính, lưu/mở, xuất/tải/nhập lại, hết hạn/thu hồi và lỗi scope. Đây là cửa nghiệm thu M5, chưa được đánh dấu hoàn tất.
+- Evidence cục bộ ở `evidence/nutrition-chat` đã ignore khỏi Git/Docker; không có token production, dữ liệu thật được sửa hoặc file Excel tạm trong public.
+
+## Nguồn đối chiếu
+
+- [MCP 2026 Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http), [schema chính thức](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/schema/2026-07-28/schema.json).
+- [OpenAI Plugins OAuth](https://developers.openai.com/plugins/build/auth), [Claude connector](https://claude.com/docs/connectors/building).
+- [Advisory Next.js](https://github.com/vercel/next.js/security/advisories/GHSA-2xp9-vwfh-vxw4), [Next 16.4.0](https://github.com/vercel/next.js/releases/tag/v16.4.0).

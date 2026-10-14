@@ -1,0 +1,24 @@
+# Đầu vào MenuInput v1
+
+Schema công cụ đang kết nối là nguồn sự thật. Bảng này giải thích nghĩa nghiệp vụ, không thay thế schema.
+
+| Mức | Trường và nghĩa |
+| --- | --- |
+| Menu | `title`; `mode` = `recall24h` / `menu`; `days`; `comparison`; tùy chọn `fields`, `profile`, `aiComment`. |
+| Ngày | `id`, `label`, `date`, `rows`. Giữ cả ngày chưa nhập nếu người dùng chủ ý để trống; không đánh giá như ngày đã ăn. |
+| Dòng | `id`, `meal`, `dish`, một trong `foodId` hoặc `customFood`; `quantity`, `unit`, `servings`, `basis`, `recipeSource`. |
+| Nguồn công thức | `kind` = `catalog` / `user` / `ai`; `label`; `dishId` nếu lấy từ kho; `url` nếu có. |
+| Thay/ước tính | `replacedFromFoodId`; `actualFoodName`; `estimateAccepted`; `note`. Những thông tin này phải đi cùng bản đã chốt. |
+| Quy đổi | `conversionFactor` + `conversionSource`; `densityGPerMl` + `densitySource`. Chỉ nhập khi có căn cứ và đã giải thích. |
+| Nhu cầu | `comparison.mode: "none"` chỉ tính; `"profile"` dùng hồ sơ; `"manual"` dùng `targets` có `key`, `value`, `source`, tùy chọn `isUpperLimit`. |
+
+`customFood` gồm `id`, `name`, `source`, `basis`, `nutrients`, tùy chọn thải bỏ/nhóm. `source` gồm `kind`, `label`, `confirmed`, tùy chọn URL. Cơ sở `portion` phải có lượng và đơn vị của một phần. Các khóa nutrient phải nằm trong danh sách server hỗ trợ, số thiếu để `null`.
+
+Không gửi tên/số ID tự suy đoán cho thực phẩm trong kho. Không nhét giá trị nutrient tự tính vào dòng có `foodId`: server đọc dữ liệu nguồn.
+
+## Xác nhận, lưu và dùng lại
+
+- `prepare_menu` tạo preview và token. Token gắn với đầu vào, dữ liệu đã chuẩn bị, tài khoản và thời hạn; không đưa token cho người dùng sao chép.
+- `calculate_menu` / `export_workbook` nhận bản đang được xác nhận. Khi người dùng đổi một lượng hoặc nguồn, không dùng token cũ.
+- `save_menu`: dùng khóa chống trùng ổn định cho một thao tác lưu. Bản mới theo chủ ý có khóa mới; thử lại sau timeout giữ khóa cũ. Sửa bản cũ cần ID và revision hiện hành.
+- `get_saved_menu` trả đầu vào để dựng lần tính mới. Giữ nguồn bản cũ, không mặc định dữ liệu gốc hiện tại bằng snapshot đã tính trước đây.

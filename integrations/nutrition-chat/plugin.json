@@ -1,0 +1,25 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "dinh-duong-2598",
+  "version": "1.0.0",
+  "description": "Tra cứu thực phẩm, thống nhất khẩu phần trong hội thoại và nhận Excel chỉnh được từ Dinh dưỡng 2598.",
+  "author": { "name": "Dinh dưỡng 2598", "url": "https://dinhduong2598.food" },
+  "homepage": "https://dinhduong2598.food/ket-noi-ai",
+  "repository": "https://github.com/Lo75d1/dinhduong-web",
+  "keywords": ["nutrition", "vietnamese", "meal-planning", "excel"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Dinh dưỡng 2598",
+        "shortDescription": "Tra thực phẩm, tính khẩu phần và xuất Excel chỉnh được.",
+        "longDescription": "Thống nhất thực phẩm, công thức và định lượng trong hội thoại. Dùng dữ liệu có nguồn để tính một hoặc nhiều ngày, lưu bản cá nhân khi được yêu cầu và xuất Excel có công thức.",
+        "developerName": "Dinh dưỡng 2598",
+        "websiteURL": "https://dinhduong2598.food/ket-noi-ai",
+        "privacyPolicyURL": "https://dinhduong2598.food/chinh-sach-bao-mat",
+        "termsOfServiceURL": "https://dinhduong2598.food/dieu-khoan-su-dung",
+        "brandColor": "#123c36",
+        "defaultPrompt": ["Dùng Dinh dưỡng 2598 để tính khẩu phần hôm nay; hỏi lại thông tin chưa rõ trước khi chốt."]
+      }
+    }
+  }
+}

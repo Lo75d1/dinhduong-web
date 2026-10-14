@@ -3,6 +3,7 @@
 # local agent config, dev logs, generated test outputs
 .claude/
 /outputs/
+/evidence/
 devserver*.log
 devguide.log
 

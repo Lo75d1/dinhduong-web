@@ -106,4 +106,3 @@ export function nutritionAnonymousKey(request: Request): string {
   const ip = trusted ? (request.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() || "unknown") : "untrusted";
   return hashNutritionToken(ip.slice(0, 100));
 }
-
