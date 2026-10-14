@@ -37,6 +37,14 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - VPS app image `ae369ab`: build Linux/TypeScript, health và HTTPS đạt; đã bấm thử cả hai link trên trình duyệt thật. Panel 319 px/document 304 px không tràn ngang. Bộ đếm footer tiếp tục 0/0; không thay OAuth/schema/migration/Food/Dish.
 - Giữ cấu hình/nav “Thông tin mới” và file Google riêng của VPS; có backup image/env/layout/stash trước đổi. Nhánh vẫn chưa merge main. Báo cáo `docs/nutrition-chat/vps-2026-10-15.md`.
 
+#### QR / link bắt đầu hội thoại (15/10/2026)
+
+- Bản tiếp theo `461d8bd` đã chạy trên VPS: menu và nút đầu trang cùng mở `/ket-noi-ai/bat-dau`. Có lời nhắn tự đủ để sao chép/dán vào chat, QR PNG tải để chia sẻ, hướng dẫn HTML server-rendered và bản chữ `/ket-noi-ai/bat-dau/huong-dan.txt`.
+- QR chỉ chứa URL public bắt đầu, không chứa token hoặc dữ liệu người dùng. Tái dùng MCP/OAuth, quy trình và kho dữ liệu hiện có; không thay schema/migration/tính toán. ChatGPT/Claude cần cài/bật kết nối và cấp quyền một lần; link không tự cấp quyền.
+- 41 kiểm tra chỉ đọc hướng dẫn/route/QR đạt, giải mã QR 720/180/128 px đúng URL. PNG trên HTTPS VPS cũng giải mã đúng; trang chủ/start/guide/QR/health/file Google trả 200. Build Linux/TypeScript, Prisma generate, lint file sửa và diff check đạt.
+- Trình duyệt thật: ba nút copy báo thành công, ô readonly chứa đúng lời nhắn/link/MCP và link cài kết nối mở đúng trang. Panel 319 px/document 304 px không tràn ngang. Clipboard hệ điều hành chưa được xác minh độc lập do bridge trình duyệt trả rỗng; công cụ web của phiên không mở được URL dù HTTPS/browser đọc được. Không cam kết AI luôn mở link; có lời nhắn đầy đủ làm fallback.
+- Bộ đếm vẫn 0/0; chưa nghiệm thu tài khoản ChatGPT/Claude thật. App image `461d8bd`, maintenance image `3fb8cc3` giữ nguyên; backup/nav/Caddy/file Google được giữ và swap build đã gỡ. Chi tiết tại `docs/nutrition-chat/start-workflow.md`.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn
