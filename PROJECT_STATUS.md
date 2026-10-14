@@ -31,6 +31,12 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - OAuth/PGlite 254 checks và toàn bộ suite Nutrition Chat đạt; TypeScript/lint/build đạt. Backup mới + restore thử riêng đạt; Food/Dish/nguyên liệu và cài đặt có sẵn khớp digest trước/sau. Tổng thực tế sau bật: ChatGPT 0, Claude 0; không backfill lượt thử trước đó.
 - App image `63cf966` đã chạy trên VPS; footer thật chữ 12 px/xám, một hàng ở panel 319 px và document 304 px, không tràn ngang. Migration image `3fb8cc3` chứa cùng migration/logic bộ đếm, timer bảo trì giữ nguyên.
 
+#### Lối vào từ trang chủ (15/10/2026)
+
+- Đã bổ sung nút “Kết nối ChatGPT & Claude →” ở đầu trang chủ và mục “ChatGPT & Claude” trên menu chung, cùng mở `/ket-noi-ai` đã có.
+- VPS app image `ae369ab`: build Linux/TypeScript, health và HTTPS đạt; đã bấm thử cả hai link trên trình duyệt thật. Panel 319 px/document 304 px không tràn ngang. Bộ đếm footer tiếp tục 0/0; không thay OAuth/schema/migration/Food/Dish.
+- Giữ cấu hình/nav “Thông tin mới” và file Google riêng của VPS; có backup image/env/layout/stash trước đổi. Nhánh vẫn chưa merge main. Báo cáo `docs/nutrition-chat/vps-2026-10-15.md`.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn
