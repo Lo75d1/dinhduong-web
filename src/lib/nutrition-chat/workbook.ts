@@ -140,7 +140,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   workbook.title = menu.title;
   workbook.created = new Date(menu.generatedAt);
   workbook.calcProperties.fullCalcOnLoad = true;
-  if (complete) for (const name of ["Bao cao", "Thuc don", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
+  if (complete) for (const name of ["Bao cao", "Thuc don", "Thanh phan day du", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
   const analysis = workbook.addWorksheet(SHEETS.analysis);
   const comparison = workbook.addWorksheet(SHEETS.comparison);
   const targetSheet = workbook.addWorksheet(SHEETS.targets);
@@ -501,7 +501,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     input.getCell("A2").value = `Chỉnh ngày, bữa/món, mã thực phẩm, lượng, đơn vị và số suất tại các cột nhập. Dòng dự phòng được ẩn theo nhóm; có thể hiện thêm dòng khi cần (tối đa ${inputCapacity} dòng). Tra mã tại Du lieu. Bản in gọn ở Thuc don.`;
   }
   const protectionPassword = randomBytes(18).toString("base64url");
-  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Bao cao", "Thuc don", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
+  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Bao cao", "Thuc don", "Thanh phan day du", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
   const chartStart = noteRow + 5;
   const charts = [];
   const labelRange = range(SHEETS.targets, "C", FIRST + WORKBOOK_LIMITS.days - 1);

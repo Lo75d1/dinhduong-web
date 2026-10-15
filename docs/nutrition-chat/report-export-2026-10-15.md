@@ -12,7 +12,7 @@
 - `workbook.ts`/`workbook-report.ts`: mẫu báo cáo chung; kết quả lưu sẵn và công thức sống; bảng nhập dự phòng gộp/ẩn, bảng không có mốc có lời giải thích. Cập nhật đi chợ khi chọn Food ID khác. Giữ thuốc/TPBS một ngày và nhóm thực phẩm/đơn vị ăn.
 - `workbook-reader.ts`: nhập được nguồn tự nhập ở các cột sau giới hạn 40 chất cũ; chỉ đọc ô đầu vào, vẫn từ chối công thức/macro/liên kết ngoài và giữ xác nhận lại nguồn sửa. Các workbook v1 vẫn nhập được.
 - Hai nút một/nhiều ngày gọi `/api/nutrition-report/export` cùng builder của chat. Public calculator vẫn dùng được khi chưa đăng nhập; POST kiểm nguồn chính xác, schema/độ dài, rate limit và khóa xuất dùng chung. Không phát hành token, không lưu khẩu phần khi chỉ tải file.
-- `menu-analysis-workbook.ts` và route quản trị: truy vấn/xuất đủ trường nguồn, sửa kiểu trình bày; ghi rõ khung nhập trống là mẫu nhập mới.
+- `menu-analysis-workbook.ts` và route quản trị: truy vấn/xuất đủ trường nguồn, sửa kiểu trình bày; ghi rõ khung nhập trống là mẫu nhập mới. Khi hơn 1.000 bản ghi, dùng writer ghi từng dòng và cùng khóa xuất PostgreSQL; tránh giữ cả 41k dòng nguyên liệu trong các đối tượng ô. Fixture 3.719 Food/7.369 Dish/41.457 nguyên liệu + đủ chất: 3.160.784 byte, 7,4 giây, peak RSS 315 MiB (Windows Node; chưa phải đo VPS). Mẫu nhập không biến chất thiếu thành 0 và không tự đổi g/ml.
 - Hướng dẫn `get_workflow`, tool metadata, QR/text và skill có quy tắc món trước: RNI dùng Dish/get_dish; VDD món hoàn chỉnh dùng Food type MA. Không tự suy ra công thức nguyên liệu cho món VDD.
 
 ## Kiểm chứng local

@@ -1,5 +1,5 @@
 import type ExcelJS from "exceljs";
-import { ALL_NUTRIENT_FIELDS, NUTRIENT_GROUPS, SOURCE_ONLY_NUTRIENT_FIELDS } from "../nutrient-fields";
+import { ALL_NUTRIENT_FIELDS, CORE_CALC_FIELDS, NUTRIENT_GROUPS, SOURCE_ONLY_NUTRIENT_FIELDS } from "../nutrient-fields";
 import type { NutritionFood, ResolvedMenu } from "./contracts";
 import { getExchangeRule } from "@/app/tinh-khau-phan/exchange-units";
 
@@ -59,11 +59,14 @@ function context(sheet: ExcelJS.Worksheet, row: number, text: string) {
 }
 
 export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: ResolvedMenu, catalogue: NutritionFood[], options: NutritionWorkbookOptions, build: { inputCapacity: number; sourceFields: number }) {
-  const report = workbook.getWorksheet("Bao cao")!;
+  const report = workbook.getWorksheet("Thanh phan day du")!;
+  const summary = workbook.getWorksheet("Bao cao")!;
   const plan = workbook.getWorksheet("Thuc don")!;
   const sources = workbook.getWorksheet("Nguon doi soat")!;
   workbook.views = [{ x: 0, y: 0, width: 14000, height: 9000, firstSheet: 0, activeTab: 0, visibility: "visible" }];
-  reportSheet(report, "BÁO CÁO PHÂN TÍCH KHẨU PHẦN", ["Nhóm / chất dinh dưỡng", "Đơn vị", "Tổng cả kỳ", "Trung bình / ngày", "Mốc / ngày", "Tỷ lệ (%)", "Dòng thiếu", "Kết quả / ghi chú"], [35, 10, 16, 18, 16, 14, 12, 37]);
+  const headers = ["Nhóm / chất dinh dưỡng", "Đơn vị", "Tổng cả kỳ", "Trung bình / ngày", "Mốc / ngày", "Tỷ lệ (%)", "Dòng thiếu", "Kết quả / ghi chú"];
+  const widths = [35, 10, 16, 18, 16, 14, 12, 37];
+  reportSheet(report, "PHỤ LỤC THÀNH PHẦN DINH DƯỠNG ĐẦY ĐỦ", headers, widths);
   const meta = options.meta ?? {};
   const profile = menu.input.profile;
   const profileText = profile ? `${profile.gender}; ${profile.age} ${profile.ageUnit === "thang" ? "tháng" : "tuổi"}; ${profile.weight || "—"} kg; ${profile.height || "—"} cm` : "Chưa cung cấp hồ sơ";
@@ -75,6 +78,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   const structureNotice = `OR('Phan tich'!C98<>${menu.days.reduce((sum, day) => sum + day.rows.length, 0)},'Phan tich'!C99<>${dataDays})`;
   calc(report.getCell("A5"), `IF(${structureNotice},"Đã thêm/bớt dòng hoặc ngày. Tổng tự tính lại; cần xuất lại để cập nhật phạm vi bản in chi tiết.",'Phan tich'!A4)`, "Chưa sửa đầu vào; kết quả tại thời điểm xuất.");
   const targetLast = FIRST + 89;
+  const fieldRows = new Map<string, number>();
   let output = FIRST;
   for (const group of NUTRIENT_GROUPS) {
     report.mergeCells(output, 1, output, 8);
@@ -85,6 +89,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
       const index = menu.fields.findIndex(item => item.key === field.key);
       if (index < 0) continue;
       const row = output++;
+      fieldRows.set(field.key, row);
       const total = menu.totals[field.key];
       const avg = total?.value == null || !dataDays ? null : total.value / dataDays;
       const target = menu.targets.find(item => item.key === field.key && item.value !== null);
@@ -121,9 +126,47 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   }
   let note = output + 5;
   for (const text of [meta.subjectGroup && `Nhóm / mục tiêu: ${meta.subjectGroup}`, meta.clinicalCourse && `Theo dõi: ${meta.clinicalCourse}`, meta.menuNote && `Ghi chú: ${meta.menuNote}`, menu.aiComment && `Nhận xét tại thời điểm xuất: ${menu.aiComment}`].filter((text): text is string => Boolean(text))) {
-    context(report, note, text); report.getRow(note).height = Math.max(30, Math.min(400, Math.ceil(text.length / 130) * 18)); note++;
+    for (let offset = 0; offset < text.length; offset += 1000) {
+      const part = text.slice(offset, offset + 1000);
+      context(report, note, part); report.getRow(note).height = Math.max(30, Math.ceil(part.length / 130) * 18); note++;
+    }
   }
   report.pageSetup.printArea = `A1:H${note}`;
+
+  reportSheet(summary, "BÁO CÁO PHÂN TÍCH KHẨU PHẦN", headers, widths);
+  for (const r of [3, 4]) context(summary, r, String(report.getCell(r, 1).value ?? ""));
+  context(summary, 5, "");
+  calc(summary.getCell("A5"), `'Thanh phan day du'!A5`, "Chưa sửa đầu vào; kết quả tại thời điểm xuất.");
+  const mainKeys = new Set([...CORE_CALC_FIELDS.map(field => field.key), ...(menu.input.fields ?? []), "vitDMcg", "vitEMg", "vitKMcg", "vitB5Mg", "vitB6Mg", "folateTotalMcg", "folateDfeMcg", "vitB12Mcg", "cholesterolMg", "purinMg", "seleniumMcg"]);
+  let mainRow = FIRST;
+  for (const group of NUTRIENT_GROUPS) {
+    const selected = group.fields.filter(field => mainKeys.has(field.key));
+    if (!selected.length) continue;
+    summary.mergeCells(mainRow, 1, mainRow, 8); summary.getCell(mainRow++, 1).value = group.title.toLocaleUpperCase("vi");
+    for (const field of selected) {
+      const sourceRow = fieldRows.get(field.key)!;
+      summary.getCell(mainRow, 1).value = field.label; summary.getCell(mainRow, 2).value = field.unit;
+      for (let c = 3; c <= 8; c++) {
+        calc(summary.getCell(mainRow, c), `'Thanh phan day du'!${column(c)}${sourceRow}`, report.getCell(sourceRow, c).result as string | number | null);
+        summary.getCell(mainRow, c).numFmt = report.getCell(sourceRow, c).numFmt;
+      }
+      mainRow++;
+    }
+  }
+  body(summary, mainRow - 1); summary.getColumn(7).numFmt = "0";
+  for (let r = FIRST; r < mainRow; r++) if (summary.getCell(r, 1).isMerged) summary.getCell(r, 1).font = { ...font, bold: true };
+  for (let i = 0; i < 3; i++) {
+    summary.getCell(mainRow, 1).value = report.getCell(output + 1 + i, 1).value;
+    summary.getCell(mainRow, 2).value = "%";
+    calc(summary.getCell(mainRow, 3), `'Thanh phan day du'!C${output + 1 + i}`, report.getCell(output + 1 + i, 3).result as string | number | null);
+    summary.getCell(mainRow++, 3).numFmt = "0.0%";
+  }
+  context(summary, mainRow++, "Bảng này trình bày các chỉ tiêu chính và chất đã chọn. Toàn bộ 160 trường xem tại Thanh phan day du; theo từng ngày xem Dinh duong theo ngay nếu có.");
+  context(summary, mainRow++, "Dấu — là chưa có số liệu hoặc mốc. Tổng một phần chỉ gồm các dòng đã biết. Trung bình chia cho ngày có nhập; dòng thiếu không được coi bằng 0.");
+  for (const text of [meta.subjectGroup && `Nhóm / mục tiêu: ${meta.subjectGroup}`, meta.clinicalCourse && `Theo dõi: ${meta.clinicalCourse}`, meta.menuNote && `Ghi chú: ${meta.menuNote}`].filter((text): text is string => Boolean(text))) for (let offset = 0; offset < text.length; offset += 1000) {
+    const part = text.slice(offset, offset + 1000); context(summary, mainRow, part); summary.getRow(mainRow++).height = Math.max(30, Math.ceil(part.length / 130) * 18);
+  }
+  summary.pageSetup.printArea = `A1:H${mainRow - 1}`;
 
   reportSheet(plan, "CHI TIẾT THỰC ĐƠN VÀ KHẨU PHẦN", ["Ngày / bữa", "Món ăn", "Thực phẩm", "Lượng / suất", "Đơn vị", "Số suất", "Ăn được (g)", "Nguồn / ghi chú"], [22, 29, 37, 14, 10, 10, 16, 40]);
   context(plan, 3, menu.title);
@@ -233,5 +276,5 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     options.medications.forEach((item, i) => { medications.getRow(FIRST + i).values = [item.meal, item.name, item.dose, item.timing, item.note]; });
     body(medications, FIRST + options.medications.length - 1);
   }
-  return { report, plan, sources, nutrientCount: ALL_NUTRIENT_FIELDS.length };
+  return { report: summary, detail: report, plan, sources, nutrientCount: ALL_NUTRIENT_FIELDS.length };
 }

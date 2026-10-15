@@ -30,7 +30,9 @@ async function main() {
   const cached = (row: number, col: number) => report.getCell(row, col).result;
   assert.equal(cached(find("Vitamin D"), 3), 6);
   assert.equal(cached(find("Vitamin K"), 3), 0);
-  assert.equal(cached(find("Beta-tocopherol"), 3), 3);
+  const detail = wb.getWorksheet("Thanh phan day du")!;
+  let betaRow = 0; detail.eachRow((row, i) => { if (row.getCell(1).value === "Beta-tocopherol") betaRow = i; });
+  assert.ok(betaRow); assert.equal(detail.getCell(betaRow, 3).result, 3);
   assert.equal(cached(find("Canxi"), 3), 20);
   assert.equal(cached(find("Canxi"), 7), 2);
   assert.match(String(cached(find("Canxi"), 8)), /Tổng một phần/);
