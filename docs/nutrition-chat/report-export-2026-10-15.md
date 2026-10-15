@@ -20,7 +20,7 @@
 - `prisma generate`, TypeScript và production build Next 16.4.0 đạt.
 - Nutrition Chat: core67/report37/security89/OAuth261/storage82/HTTP173; workbook cũ và bộ báo cáo đầy đủ đạt. HTTP mới kiểm cả route báo cáo web, chống origin khác và thuộc tính ngoài schema; fixture không chứng minh lock nhiều process thật.
 - `test:nutrition-complete`: phủ đủ trường, vi chất bổ sung, 0/null, dữ liệu thiếu, phiên nhập lại giữ trường hội thoại, sửa nguồn sau cột 55 cần xác nhận, placeholder web và quy đổi, chặn workbook vượt ngân sách trước khi dựng ô.
-- Excel desktop thật (`scripts/verify-nutrition-complete-report-excel.ps1`): tổng/trung bình/tỷ lệ, vitamin D, số 0, đổi lượng/suất, đổi sang Food ID chưa dùng, cảnh báo thiếu thải bỏ, tên chất đối chiếu và quét lỗi công thức trên mọi sheet đạt; xuất A4 của 5 bảng đạt. Đây là dữ liệu giả lập, không phải hồ sơ người dùng.
+- Excel desktop thật (`scripts/verify-nutrition-complete-report-excel.ps1`): 23 kiểm tra đạt, gồm chỉ số kho 241 vượt vùng tự nhập, tổng/trung bình/tỷ lệ, vitamin D, số 0, đổi lượng/suất, đổi sang Food ID chưa dùng, cảnh báo thiếu thải bỏ, tên chất đối chiếu và quét lỗi công thức trên mọi sheet; xuất A4 của 6 bảng đạt. Báo cáo chính 3 trang, thực đơn 1 trang; phụ lục đầy đủ 11, theo ngày 20, nguồn 2, nhóm thực phẩm 1 trang ở fixture hai ngày. Đây là dữ liệu giả lập, không phải hồ sơ người dùng.
 - ESLint các file mới/sửa đạt, trừ lỗi có sẵn `react-hooks/set-state-in-effect` tại dòng tải `kitchenMode` của MultiDayAnalysis; đoạn này không sửa. Kiểm riêng file đó khi tắt đúng rule cũ không có lỗi mới. Không tuyên bố toàn repo hết nợ lint cũ.
 - Trình duyệt local mở được nhưng truy vấn Food/Dish bị P1000 do credential DB local cũ; không sửa/copy secret. Kiểm tương tác tải thật phải làm trên VPS sau build.
 
@@ -39,4 +39,10 @@
 
 ## Nghiệm thu VPS
 
-Chưa ghi nhận ở thời điểm commit triển khai. Bổ sung kết quả HTTPS, trình duyệt, RAM và digest nguồn sau khi chạy thử.
+- App Linux/Next 16.4.0 từ source `2aa88d3308089e7f2ea2807cba7c63455c13373f` đã build và chạy healthy tại `/opt/dinhduong`, nhánh `codex/nutrition-chat-api`; chưa merge main. Không chạy migration/seed. Backup rollback: `/opt/dinhduong-release-backups/nutrition-report-fix-20261015-095501-codex`.
+- HTTPS trước bản vá công thức (cùng route/guard): xuất 1/7 ngày thành công, kiểm Origin/schema, chiếm khóa PostgreSQL thật trả 503 + Retry-After, quota trả 429. Bộ kiểm cuối 17 checks; số probe quota thay đổi theo ranh giới phút. Export đầy đủ quản trị: 6 checks anonymous 401/CLINICIAN 403/ADMIN 200, content type/no-store/ZIP. Fixture user/session đã dọn, truy vấn cuối 0/0.
+- Tải thật bằng nút Excel trên web sau bản vá `2aa88d3`, cả một và hai ngày. Excel desktop mở file hai ngày tải thật: tổng 396, bình quân 198; đổi lượng 100 → 200 g thì tổng 594, bình quân 297, ngày đầu 396; quét mọi sheet không lỗi công thức. Báo cáo chính in A4 3 trang, thực đơn 1 trang. Bộ kiểm file thật gồm 10 checks, cùng đối chiếu file quản trị đầy đủ và tính khung nhập từ Food ID thật.
+- File quản trị: Food 3.719 dòng/170 cột (8 mô tả + 162 nguồn), Dish 7.369, nguyên liệu 41.457; kiểm đủ hàng cuối và các cột vi chất/nguồn cần đối soát. 4.878.288 byte trong 15,95 giây. Fixture streaming tương đương được mở trong Excel desktop, 12 checks đạt.
+- RAM cgroup peak ở app bản cuối sau hai lượt tải UI: 652.419.072 byte (~622 MiB); không OOM, `/api/health` 200, timer bảo trì enabled/active, swap build đã gỡ. Lần đo 1/7 ngày ở bản tối ưu trước đó peak ~786 MiB; đây là các ca kiểm cụ thể, không phải cam kết tải tối đa/concurrent users.
+- Count/digest canonical trước/sau khớp bằng cùng truy vấn `row_to_json` xếp id: Food 3.719 / `e276f0ba439a43219f523fc70b9a309d`; Dish 7.369 / `b47e289aaf51d33bd0fe51449ba19eba`; nguyên liệu 41.457 / `336c41b1755b694b348d461ad8c1cbb1`. SHA env/layout/Caddy/file Google khớp bản backup; giữ nguyên nav/cấu hình riêng của VPS.
+- Hướng dẫn ưu tiên Dish và Food loại MA đã cập nhật; không coi phép thử export là bằng chứng ChatGPT/Claude/Gemini thật đã lập món đúng. File cũ cần xuất lại để có công thức đã vá.

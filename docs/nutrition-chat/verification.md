@@ -1,5 +1,7 @@
 # Kiểm chứng Nutrition Chat API — 14/10/2026
 
+- Cập nhật báo cáo 15/10: app source `2aa88d3` healthy trên VPS; Excel web/chat chung, đủ 160 chất tính được + 2 trường nguồn đối soát, xuất quản trị đủ dữ liệu. Đã kiểm file tải thật bằng Excel desktop, sửa định lượng tự tính và quét lỗi mọi sheet; vá nguyên nhân công thức làm trống ở Food có chỉ số vượt vùng tự nhập. Xem [nghiệm thu báo cáo Excel](report-export-2026-10-15.md) để biết số đo, giới hạn, nợ lint cũ và yêu cầu xuất lại file cũ. Các snapshot kiểm chứng cũ bên dưới không thay thế biên bản này.
+
 - Cập nhật 15/10: quản lý tài khoản/OAuth thủ công đã chạy VPS `c9c74fb`, account62 + HTTPS74, migration24 up to date; đóng quyền Data API trên bảng tài khoản/phiên/audit cũ. Xem [nghiệm thu tài khoản](vps-account-2026-10-15.md). Các mục snapshot cũ bên dưới giữ để đối chiếu thời điểm; chưa nghiệm thu platform thật.
 
 - Nhánh: `codex/nutrition-chat-api`, tách từ `origin/main` `5314cea`. Checkout gốc và các thay đổi đang dở được giữ nguyên.

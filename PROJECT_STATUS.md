@@ -6,6 +6,14 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 
 ## Bối cảnh
 
+### Thống nhất báo cáo Excel web/hội thoại (15/10/2026)
+
+- Source app `2aa88d3` đã build Linux và healthy trên VPS, vẫn trên nhánh thử `codex/nutrition-chat-api`, chưa merge main. Tái dùng builder/tính toán/khóa PostgreSQL hiện có; không thêm bảng/migration/seed hoặc sửa Food/Dish. Chi tiết và giới hạn: `docs/nutrition-chat/report-export-2026-10-15.md`.
+- Excel chung dạng báo cáo hành chính trắng/đen, Times New Roman/A4, không frozen panes; báo cáo chính gọn, thực đơn thực tế, phụ lục 160 chất tính được, đối chiếu nguồn và 2 trường chưa xác minh chỉ giữ để rà. File quản trị xuất đủ 162 trường nguồn; writer streaming giảm RAM khi xuất toàn kho.
+- Đã vá lỗi Excel `AND` vẫn tính `INDEX` nguồn tự nhập ngoài vùng dù dòng dùng Food canonical: gây `#REF!` và tổng trống sau mở file. Native Excel fixture 23 checks và tải thật web 1/2 ngày sau vá; file 2 ngày sửa gram tự tính đúng, quét mọi sheet không lỗi; 10 checks file thật gồm cả khung nhập quản trị đạt. File đã tải từ bản cũ cần xuất lại.
+- HTTPS origin/schema/quota/khóa xuất thật đạt; export quản trị 401/403/200 và đầy đủ 3.719 Food/7.369 Dish/41.457 nguyên liệu. Canonical count+digest/cấu hình riêng khớp trước sau; fixture tài khoản/phiên đã dọn, timer active, không OOM, không còn swap build. Peak app sau tải UI bản cuối ~622 MiB; chưa nghiệm thu tải tối đa.
+- Hướng dẫn hội thoại ưu tiên món có sẵn: RNI lấy Dish, VDD món hoàn chỉnh lấy Food type MA; không tự bịa công thức. Chưa nghiệm thu hành vi lập món trên tài khoản ChatGPT/Claude/Gemini thật. TypeScript/build/test đạt; còn lỗi lint `set-state-in-effect` cũ ở MultiDayAnalysis ngoài phạm vi.
+
 ### Nutrition Chat API — nhánh chạy thử VPS (14/10/2026)
 
 - Nhánh `codex/nutrition-chat-api`: MCP + REST + OAuth, khẩu phần 24h/một/nhiều ngày, nguồn ngoài kho, bản Ration riêng, Excel tự tính và nhập lại có xem trước. Trang `/ket-noi-ai`, đặc tả tại `docs/nutrition-chat/`.
