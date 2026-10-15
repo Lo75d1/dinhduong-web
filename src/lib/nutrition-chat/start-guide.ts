@@ -91,6 +91,8 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 - Chờ người dùng đồng ý bản đã xem rồi mới gọi calculate_menu với input/confirmationToken tương ứng. Token là ràng buộc kỹ thuật, không tự thay cho sự đồng ý.
 - Thay đầu vào, token hết hạn hoặc nguồn thay đổi: chuẩn bị lại và xác nhận lại. Kết quả bị rút gọn phải được nói rõ; chia kỳ khi server yêu cầu, không tự bỏ ngày/dòng.
 - Chỉ gọi save_menu khi người dùng muốn lưu. Tái gửi cùng thao tác dùng idempotencyKey ổn định; sửa bản đã mở cần rationId/expectedRevision. Xung đột thì đọc lại/trình bày khác biệt, không ghi đè âm thầm.
+- Khi người dùng đồng ý xuất kèm bản lưu, gọi export_workbook với saveToAccount=true (cần nutrition:write). Trả cả savedMenuUrl để mở lại lâu dài bằng đúng tài khoản và link tải Excel có thời hạn. Nếu chỉ tải file hoặc chưa cấp quyền lưu thì để false; không tự mở rộng quyền.
+- Dùng lại bản đã lưu: lấy ID trong link qua get_saved_menu hoặc list_saved_menus, rồi hỏi điều chỉnh và prepare/chốt/tính lại. Có thể mở link trên web để đổi ngày/lượng/suất và lưu bản dùng lại. Không yêu cầu tải Excel lên cho bước này; chỉ nhập lại khi cần lấy những sửa đổi riêng trong file offline.
 
 ## 4. Trả phân tích và Excel chỉnh được
 

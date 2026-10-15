@@ -47,6 +47,15 @@ Muốn bỏ bản không dùng: bấm **Xóa bản này**, xem tên bản trong 
 
 REST dành cho ứng dụng: multipart trường `file`, `POST /api/nutrition/v1/import` với phiên web hoặc OAuth hợp lệ. Không gửi URL bên ngoài. Không đăng công thức người dùng vào kho chung.
 
+## Link và bản lưu tài khoản
+
+- Tên thực phẩm ở `Du lieu` và `Nguon doi soat` là hyperlink tới `/thuc-pham/<id>` trên chính website. Link mở dữ liệu hiện tại, không tự làm mới số liệu offline.
+- Trên web, tài khoản đăng nhập mặc định chọn lưu thêm bản thực đơn khi xuất; có thể bỏ chọn để chỉ tải. Guest vẫn tải file và có link đăng nhập để lưu. `POST /api/nutrition-report/export` nhận `saveToAccount?: boolean`; true bắt buộc phiên/quyền lưu hợp lệ, response có `X-Nutrition-Saved-Url`.
+- Trong chat, `export_workbook` nhận cùng cờ tùy chọn, true yêu cầu thêm `nutrition:write`; giữ quyền chỉ export hoạt động khi không yêu cầu lưu. Hướng dẫn phải nói rõ việc lưu và tôn trọng lựa chọn chỉ tải. Retry cùng nội dung dùng `export-<digest>` để không tạo bản trùng; không âm thầm cập nhật bản khác.
+- Nếu có bản lưu, đầu bảng báo cáo/thực đơn/nguồn có link mở bản đó, response có `savedMenuUrl` và ID/phiên bản. Link không chứa token; API mở vẫn kiểm chủ tài khoản. Bản lưu giữ đầu vào thực đơn, hồ sơ/mục tiêu/nguồn theo snapshot Ration có sẵn; thông tin trình bày báo cáo/thuốc riêng của web chưa được thêm vào snapshot này.
+- Tài khoản có lối mở danh sách; bản lưu hỗ trợ đổi tên/ngày/lượng/số suất, xem trước và chốt thành bản dùng lại trên web. Chat mở bằng `get_saved_menu`. Nhập file chỉ cần khi muốn lấy chỉnh sửa offline, không là bước bắt buộc để tái sử dụng.
+- Parser chỉ cho hyperlink đọc tới hai loại trang nêu trên ở chính public origin, không query/token/fragment/credential. Vẫn chặn các quan hệ external data, macro, URL khác hoặc công thức ngoài workbook. Hyperlink không được dùng làm quyền ghi khi nhập lại.
+
 ## Kiểm chứng khi nghiệm thu
 
 - Mở bằng Excel thực tế, bật tính tự động: đổi gram/số suất/Food ID/ngày/bữa → tổng và biểu đồ cập nhật, khớp server khi nhập lại.

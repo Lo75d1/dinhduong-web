@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import { inflateRawSync } from "node:zlib";
 import { NutritionInputError } from "./validation";
+import { isNutritionWebsiteLink } from "./website-links";
 
 export const WORKBOOK_LIMITS = { bytes: 5 * 1024 * 1024, expandedBytes: 64 * 1024 * 1024, entryBytes: 32 * 1024 * 1024, worksheetBytes: 32 * 1024 * 1024, entries: 512, rows: 1000, days: 90, customFoods: 100, catalogue: 6000 } as const;
 
@@ -104,7 +105,14 @@ export async function inspectWorkbookArchive(bytes: Uint8Array): Promise<JSZip> 
     if (entry.dir || !/\.(?:xml|rels)$/i.test(entry.name)) continue;
     const xml = await entry.async("string");
     if (/<!DOCTYPE|<!ENTITY/i.test(xml)) fail("Không cho phép thực thể XML.");
-    if (/TargetMode\s*=\s*["']External["']/i.test(xml)) fail("Không cho phép liên kết hoặc công thức ngoài workbook.");
+    // Our read-only website hyperlinks are allowed; external data/formula connections stay blocked.
+    const withoutWebsiteLinks = /\.rels$/i.test(entry.name) && /^xl\/worksheets\/_rels\/sheet\d+\.xml\.rels$/.test(entry.name) ? xml.replace(/<(?:[\w.-]+:)?Relationship\b[^<>]*\/>/g, tag => {
+      const pairs = [...tag.matchAll(/([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g)].map(match => [match[1], match[2] ?? match[3]]);
+      const attributes = Object.fromEntries(pairs);
+      const knownAttributes = pairs.length === 4 && new Set(pairs.map(pair => pair[0])).size === 4 && pairs.every(pair => ["Id", "Type", "Target", "TargetMode"].includes(pair[0]));
+      return knownAttributes && attributes.TargetMode === "External" && attributes.Type === "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" && isNutritionWebsiteLink(attributes.Target ?? "") ? "" : tag;
+    }) : xml;
+    if (/TargetMode\s*=\s*["']External["']/i.test(withoutWebsiteLinks)) fail("Không cho phép liên kết hoặc công thức ngoài workbook.");
     if (entry.name === "[Content_Types].xml" && /macroEnabled/i.test(xml)) fail("Không hỗ trợ workbook có macro.");
   }
   return zip;

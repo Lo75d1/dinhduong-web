@@ -232,6 +232,32 @@ async function main() {
     assert.match(webExport.headers.get("content-type")!, /spreadsheetml/); checks++;
     const webImported = await api.parseNutritionWorkbook(new Uint8Array(await webExport.arrayBuffer()));
     assert.equal(webImported.days[0].rows[0].foodId, "fixture-rice"); checks++;
+    // Separate feature phase in the disposable PGlite DB; quota behavior has its own fixtures/live checks.
+    await api.fixtureQuery('DELETE FROM nutrition_api_windows');
+    assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, saveToAccount: true }))).status, 401); checks++;
+    assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, saveToAccount: "true" }))).status, 400); checks++;
+    const exportOnly = await bearer("user-a", ["nutrition:export"]);
+    const exportClientId = (await api.fixtureQuery<{ clientId: string }>('SELECT "clientId" FROM nutrition_oauth_tokens WHERE "accessHash"=$1', [hashNutritionToken(exportOnly)]))[0].clientId;
+    const exportPrepared = await api.prepareNutritionMenu(menu, { userId: "user-a", clientId: exportClientId, scopes: ["nutrition:export"] });
+    assert.equal((await rest("export", { input: exportPrepared.input, confirmationToken: exportPrepared.confirmationToken }, exportOnly)).status, 200); checks++;
+    const writeDenied = await rest("export", { ...confirmedArgs, saveToAccount: true }, exportOnly);
+    assert.equal(writeDenied.status, 403); checks++;
+    assert.ok(writeDenied.headers.get("www-authenticate")?.includes("nutrition:write")); checks++;
+    assert.equal((await rest("export", { ...confirmedArgs, saveToAccount: "true" })).status, 400); checks++;
+    await api.fixtureQuery('DELETE FROM nutrition_api_windows WHERE "key"=$1', [hashNutritionToken("nutrition-export:user-a:4:60")]);
+    for (let retry = 0; retry < 2; retry++) { const response = await rest("export", { ...confirmedArgs, saveToAccount: true }); assert.equal(response.status, 200, await response.clone().text()); checks++; }
+    const autoSaved = await api.fixtureQuery<{ id: string }>('SELECT id FROM rations WHERE "ownerId"=$1 AND "conversationRequestKey"=$2', ["user-a", `export-${prepared.preview.digest}`]);
+    assert.equal(autoSaved.length, 1, "retry export saves one private menu"); checks++;
+    const autoOpened = await get("saved", token, `?id=${autoSaved[0].id}`);
+    assert.equal((await autoOpened.json()).ration.url, `${base}/ket-noi-ai/ban-luu/${autoSaved[0].id}`); checks++;
+    assert.equal((await get("saved", bToken, `?id=${autoSaved[0].id}`)).status, 404); checks++;
+    const saveWeb = webRequest({ input: { ...prepared.input, title: "Saved web fixture" }, saveToAccount: true });
+    saveWeb.headers.set("Authorization", `Bearer ${token}`);
+    const savedWebExport = await api.webReportRoute.POST(saveWeb);
+    assert.equal(savedWebExport.status, 200, savedWebExport.status === 200 ? undefined : await savedWebExport.clone().text()); checks++;
+    assert.match(savedWebExport.headers.get("X-Nutrition-Saved-Url") ?? "", /^https:\/\/dinhduong2598\.food\/ket-noi-ai\/ban-luu\/[A-Za-z0-9_-]+$/); checks++;
+    const savedWebInput = await api.parseNutritionWorkbook(new Uint8Array(await savedWebExport.arrayBuffer()));
+    assert.equal(savedWebInput.title, "Saved web fixture"); checks++;
     assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, medications: [{ meal: "Trưa", name: "test", dose: "1", timing: "sau", note: "", isAdmin: true }] }))).status, 400); checks++;
     assert.equal((await api.importRoute.POST(request("import", {}, token))).status, 415); checks++;
     const wrongFile = new FormData(); wrongFile.append("file", new File(["text"], "wrong.csv"));

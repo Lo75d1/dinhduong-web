@@ -28,8 +28,11 @@ export async function executeNutritionTool(name:string,value:unknown,identity:Nu
   if(["get_food","get_dish","get_saved_menu"].includes(name)){const a=validateOperationObject(value,["id"],["id"]),id=operationId(a.id,"id");return name==="get_food"?getNutritionFood(id):name==="get_dish"?getNutritionDish(id):getSavedNutritionMenu(id,identity);}
   if(name==="list_saved_menus"){const a=validateOperationObject(value,["offset"]);if(a.offset!==undefined && typeof a.offset!=="number")throw new NutritionInputError("Phân trang cần số nguyên.","offset");return listSavedNutritionMenus(a.offset===undefined?0:a.offset as number,identity);}
   if(name==="prepare_menu"){const a=validateOperationObject(value,["input"],["input"]);return prepareNutritionMenu(a.input,identity);}
-  const a=validateOperationObject(value,name==="save_menu"?["input","confirmationToken","idempotencyKey","rationId","expectedRevision"]:["input","confirmationToken"],["input","confirmationToken",...(name==="save_menu"?["idempotencyKey"]:[])]);
+  const a=validateOperationObject(value,name==="save_menu"?["input","confirmationToken","idempotencyKey","rationId","expectedRevision"]:name==="export_workbook"?["input","confirmationToken","saveToAccount"]:["input","confirmationToken"],["input","confirmationToken",...(name==="save_menu"?["idempotencyKey"]:[])]);
   if(name==="save_menu")return saveNutritionMenu(a,identity);
+  if(name==="export_workbook" && a.saveToAccount!==undefined && typeof a.saveToAccount!=="boolean")throw new NutritionInputError("Lựa chọn lưu tài khoản không hợp lệ.","saveToAccount");
+  if(name==="export_workbook" && a.saveToAccount===true && !identity.scopes.includes("nutrition:write"))throw new NutritionSecurityError("insufficient_scope",403,"Cần cấp quyền lưu thực đơn để lưu cùng file Excel.","nutrition:write");
   const menu=await confirmedNutritionMenu(a,identity);
+  if(name==="export_workbook" && a.saveToAccount===true)await saveNutritionMenu({...a,idempotencyKey:`export-${menu.digest}`},identity);
   return name==="export_workbook"?exportNutritionMenu(menu,identity):{...menu,chatReport:nutritionChatReport(menu)};
 }

@@ -6,6 +6,7 @@ import { createNutritionTicket, verifyNutritionTicket } from "./approval";
 import { loadNutritionFoods, loadNutritionRecommendations } from "./repository";
 import type { NutritionIdentity, ResolvedMenu } from "./contracts";
 import type { Prisma } from "@/generated/prisma/client";
+import { nutritionWebsiteLink } from "./website-links";
 
 type AuditRow={rowId:string;before:unknown;after:unknown};
 type AuditEntry={revision:number;confirmedAt:string;clientId:string;dataVersion:string;changes:AuditRow[]};
@@ -58,7 +59,7 @@ export async function confirmedNutritionMenu(args: Record<string,unknown>, ident
 }
 function savedResult(ration: { id: string; title: string; conversationRevision: number; conversationJson: unknown }) {
   const saved = snapshot(ration.conversationJson);
-  return { ration: { id: ration.id, title: ration.title, revision: ration.conversationRevision }, input: saved.preview.input, preview: saved.preview };
+  return { ration: { id: ration.id, title: ration.title, revision: ration.conversationRevision, url: nutritionWebsiteLink("saved", ration.id) }, input: saved.preview.input, preview: saved.preview };
 }
 function auditRows(menu:ResolvedMenu){
   return new Map(menu.input.days.flatMap(day=>day.rows.map(row=>[row.id,{dayId:day.id,...row}] as const)));
@@ -129,7 +130,7 @@ export async function getSavedNutritionMenu(id: string, identity: NutritionIdent
 export async function listSavedNutritionMenus(offset: number, identity: NutritionIdentity) {
   if (!Number.isInteger(offset) || offset < 0 || offset > 200) throw new NutritionInputError("Phân trang không hợp lệ.","offset");
   const items = await prisma.ration.findMany({where:{ownerId:identity.userId,conversationRevision:{gt:0}},orderBy:[{updatedAt:"desc"},{id:"asc"}],skip:offset,take:21,select:{id:true,title:true,conversationRevision:true,createdAt:true,updatedAt:true}});
-  return {items:items.slice(0,20).map(item=>({...item,revision:item.conversationRevision,conversationRevision:undefined})),nextOffset:items.length>20?offset+20:null};
+  return {items:items.slice(0,20).map(item=>({...item,revision:item.conversationRevision,conversationRevision:undefined,url:nutritionWebsiteLink("saved",item.id)})),nextOffset:items.length>20?offset+20:null};
 }
 export async function deleteSavedNutritionMenu(id:string,revision:number,identity:NutritionIdentity){
   if(!Number.isInteger(revision) || revision<1)throw new NutritionInputError("Cần phiên bản bản lưu đang xem.","expectedRevision",409);

@@ -341,6 +341,12 @@ export default function AccountSettings({
               kết nối ChatGPT / Claude.
             </p>
             <Link
+              href="/ket-noi-ai/ban-luu"
+              className="mt-3 block underline"
+            >
+              Thực đơn và khẩu phần đã lưu từ chat / Excel →
+            </Link>
+            <Link
               href="/tinh-khau-phan"
               className="mt-3 inline-block underline"
             >

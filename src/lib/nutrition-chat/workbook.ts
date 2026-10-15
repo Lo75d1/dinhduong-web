@@ -9,6 +9,7 @@ import { NUTRIENT_KEYS, parseMenuInput } from "./validation";
 import { addNativeWorkbookCharts } from "./workbook-charts";
 import { assertNutritionWorkbookExportBudget, inspectWorkbookArchive, NutritionWorkbookError, WORKBOOK_LIMITS } from "./workbook-security";
 import { workbookInputView } from "./workbook-reader";
+import { nutritionWebsiteLink } from "./website-links";
 
 const SHEETS = { analysis: "Phan tich", input: "Nhap khau phan", targets: "Ngay va muc tieu", shopping: "Di cho", custom: "Tu nhap", data: "Du lieu", meals: "Theo bua", dishes: "Theo mon", comparison: "Doi chieu", meta: "_meta", originalInput: "_input", originalCustom: "_custom", originalTargets: "_targets" };
 const FIRST = 7;
@@ -522,6 +523,14 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   const macroDenominator = macroEnergy.reduce((sum, value) => sum + value, 0);
   charts.push({ title: "P/L/G (% năng lượng Atwater)", categoryFormula: `${q(SHEETS.analysis)}!$A$${chartData + 1}:$A$${chartData + 3}`, valueFormula: `${q(SHEETS.analysis)}!$B$${chartData + 1}:$B$${chartData + 3}`, categories: macroLabels, values: macroKeys.some(key => menu.totals[key]?.incomplete || menu.totals[key]?.value == null) || macroDenominator <= 0 || macros.some(index => index < 0) ? [null, null, null] : macroEnergy.map(value => value / macroDenominator), color: GREEN, kind: "pie" as const, fromRow: chartStart, fromColumn: 6, toRow: chartStart + 15, toColumn: 12 });
   // Retain fullCalcOnLoad: Excel itself recalculates formulas and chart series after edits.
+  // Hyperlinks open website pages only; calculations keep using the embedded catalogue.
+  foods.forEach((food, index) => {
+    data.getCell(FIRST + index, 2).value = { text: food.name, hyperlink: nutritionWebsiteLink("food", food.id) };
+  });
+  data.getCell("B6").value = "Thực phẩm (bấm để tra cứu trên web)";
+  if (menu.savedRecord) for (const sheet of workbook.worksheets.filter(sheet => ["Bao cao", "Thuc don", "Nguon doi soat", "Phan tich"].includes(sheet.name))) {
+    sheet.getCell("A1").value = { text: "DINH DƯỠNG 2598 · MỞ BẢN THỰC ĐƠN ĐÃ LƯU", hyperlink: nutritionWebsiteLink("saved", menu.savedRecord.id) };
+  }
   const finalBytes = new Uint8Array(await workbook.xlsx.writeBuffer());
   const result = await addNativeWorkbookCharts(finalBytes, analysis.id, charts, names);
   assertNutritionWorkbookExportBudget(result);

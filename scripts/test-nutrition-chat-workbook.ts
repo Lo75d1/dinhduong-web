@@ -129,6 +129,8 @@ async function main() {
   assert.equal(parsed.aiComment, undefined, "snapshot prose does not masquerade as new analysis");
   const savedBytes = await buildNutritionWorkbook({ ...fixture.menu, savedRecord: { id: "private-ration-id", revision: 4 } }, fixture.foods);
   const savedWorkbook = await read(savedBytes);
+  assert.equal(savedWorkbook.getWorksheet("Phan tich")!.getCell("A1").hyperlink, "https://dinhduong2598.food/ket-noi-ai/ban-luu/private-ration-id", "private menu link has an ID, never a token");
+  assert.equal(sheet.getWorksheet("Du lieu")!.getCell("B7").hyperlink, "https://dinhduong2598.food/thuc-pham/test-rice-a", "food name opens the public catalogue record");
   assert.match(String(savedWorkbook.getWorksheet("Phan tich")!.getCell("A2").value), /private-ration-id.*phiên bản 4/);
   const savedImport = await parseNutritionWorkbook(savedBytes);
   assert.ok(!("savedRecord" in savedImport) && !JSON.stringify(savedImport).includes("private-ration-id"), "saved IDs do not grant write access on import");
@@ -158,6 +160,11 @@ async function main() {
   await assert.rejects(parseNutritionWorkbook(await edit(bytes, workbook => { workbook.getWorksheet("Nhap khau phan")!.getCell("G2000").value = 1; })), /ngoài vùng/);
   const external = await JSZip.loadAsync(bytes); external.file("xl/_rels/external.xml.rels", '<Relationships><Relationship TargetMode="External" Target="https://evil.example"/></Relationships>');
   await assert.rejects(parseNutritionWorkbook(await external.generateAsync({ type: "uint8array" })), /liên kết/);
+  for (const target of ["https://evil.example/thuc-pham/test-rice-a", "https://dinhduong2598.food/tai-khoan", "https://dinhduong2598.food/thuc-pham/test-rice-a?token=secret", "file:///C:/private.xlsx"]) {
+    const unsafe = await JSZip.loadAsync(bytes);
+    unsafe.file("xl/worksheets/_rels/sheet1.xml.rels", `<Relationships><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" TargetMode="External" Target="${target}"/></Relationships>`);
+    await assert.rejects(parseNutritionWorkbook(await unsafe.generateAsync({ type: "uint8array" })), /liên kết/);
+  }
   const macro = await JSZip.loadAsync(bytes); macro.file("xl/vbaProject.bin", "macro");
   await assert.rejects(parseNutritionWorkbook(await macro.generateAsync({ type: "uint8array" })), /macro/);
   const zeroTarget = await parseNutritionWorkbook(await edit(bytes, workbook => { workbook.getWorksheet("Ngay va muc tieu")!.getCell("F7").value = 0; }));

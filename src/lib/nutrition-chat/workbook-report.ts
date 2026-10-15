@@ -2,6 +2,7 @@ import type ExcelJS from "exceljs";
 import { ALL_NUTRIENT_FIELDS, CORE_CALC_FIELDS, NUTRIENT_GROUPS, SOURCE_ONLY_NUTRIENT_FIELDS } from "../nutrient-fields";
 import type { NutritionFood, ResolvedMenu } from "./contracts";
 import { getExchangeRule } from "@/app/tinh-khau-phan/exchange-units";
+import { nutritionWebsiteLink } from "./website-links";
 
 export type NutritionReportMeta = {
   subjectName?: string; subjectGroup?: string; clinicalCourse?: string;
@@ -254,6 +255,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   let sourceRow = FIRST;
   for (const food of [...new Map(rows.map(({ row }) => [row.food.id, row.food])).values()]) {
     sources.getRow(sourceRow++).values = ["Thực phẩm", `${food.name} [${food.id}]`, food.source.label + (food.source.url ? `; ${food.source.url}` : ""), `100 ${food.unit}`, food.qualityWarnings?.join("; ") || "Số liệu theo nguồn; phần thiếu giữ trống trong bảng dữ liệu."];
+    if (food.source.kind === "catalog") sources.getCell(sourceRow - 1, 2).value = { text: `${food.name} [${food.id}]`, hyperlink: nutritionWebsiteLink("food", food.id) };
   }
   for (const item of menu.targets.filter(target => target.value !== null)) sources.getRow(sourceRow++).values = ["Mốc đối chiếu / ngày", item.key, item.source || "Chưa ghi nguồn", item.isUpperLimit ? "Giới hạn trên" : "Mốc mục tiêu", item.value];
   const selectedIds = new Set(rows.map(({ row }) => row.foodId));
@@ -262,10 +264,10 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     sources.getRow(sourceRow++).values = [field.label, food.name, `${food.source.label}. ${field.note}`, `${field.unit}/100 ${food.unit}`, value ?? "—"];
   }
   for (const { row } of rows.filter(item => item.row.recipeSource.dishId || item.row.replacedFromFoodId)) sources.getRow(sourceRow++).values = ["Công thức / thay nguyên liệu", row.dish, row.recipeSource.label, row.recipeSource.dishId || "Bản riêng", `Dòng ${row.id}${row.replacedFromFoodId ? `; thay từ ${row.replacedFromFoodId} sang ${row.food.id}` : ""}`];
-  if (menu.savedRecord) sources.getRow(sourceRow++).values = ["Bản đã lưu", menu.savedRecord.id, "Tài khoản chủ sở hữu", `Phiên bản ${menu.savedRecord.revision}`, "Sửa Excel không tự đồng bộ; nhập lại qua bước xem trước để lưu."];
+  if (menu.savedRecord) sources.getRow(sourceRow++).values = ["Bản đã lưu", menu.savedRecord.id, "Đăng nhập tài khoản chủ sở hữu để mở", `Phiên bản ${menu.savedRecord.revision}`, { text: nutritionWebsiteLink("saved", menu.savedRecord.id), hyperlink: nutritionWebsiteLink("saved", menu.savedRecord.id) }];
   body(sources, sourceRow - 1);
   for (let r = FIRST; r < sourceRow; r++) {
-    const lines = Math.max(...[24, 38, 40, 18, 60].map((width, i) => Math.ceil(String(sources.getCell(r, i + 1).value ?? "").length / (width - 2))));
+    const lines = Math.max(...[24, 38, 40, 18, 60].map((width, i) => Math.ceil(sources.getCell(r, i + 1).text.length / (width - 2))));
     sources.getRow(r).height = Math.max(36, Math.min(400, lines * 16 + 8));
   }
 

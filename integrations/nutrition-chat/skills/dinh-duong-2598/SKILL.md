@@ -43,6 +43,13 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp ng
 - Excel là bản làm việc: các ô nhập và bảng phân tích cập nhật bằng công thức. Nhận xét AI xuất lúc đầu không tự viết lại. Đọc [references/excel.md](references/excel.md) khi hướng dẫn sửa và gửi lại file.
 - Không lấy số tính sẵn trong Excel tải lên làm kết quả chuẩn. File cần nhập lại qua trang kết nối hoặc REST upload, xem preview, chuẩn bị và xác nhận trước khi tính/lưu.
 
+## Xuất kèm bản lưu và dùng lại
+
+- Khi xuất, nói rõ lựa chọn lưu thêm bản riêng trong tài khoản. Nếu người dùng đồng ý và đã cấp `nutrition:write`, gọi `export_workbook` với `saveToAccount: true`; trả cả `savedMenuUrl` và link tải file. Chỉ tải file thì dùng false. Không tự mở rộng quyền của kết nối.
+- Link bản lưu chứa ID, không chứa token; yêu cầu đăng nhập đúng chủ sở hữu. Link tải file hết hạn sau 10 phút. Tên thực phẩm trong Excel mở trang tra cứu hiện tại; dữ liệu offline vẫn là bản tại lúc xuất.
+- Dùng `list_saved_menus` hoặc `get_saved_menu` theo ID trong link để tái sử dụng, hỏi phần muốn đổi rồi prepare/chốt/tính. Không bắt người dùng gửi Excel lên cho bước này. Trên web cũng có điều chỉnh ngày/lượng/số suất và lưu thành bản dùng lại.
+- Chỉ cần nhập lại Excel khi muốn đưa những thay đổi đã sửa riêng trong file về hệ thống; file trên máy không tự đồng bộ với bản lưu.
+
 ## Quyền và lỗi
 
 - Không yêu cầu dán mật khẩu, token hoặc khóa chung vào chat. OAuth diễn ra trên website đúng tên miền. QR/link chỉ mở hướng dẫn.

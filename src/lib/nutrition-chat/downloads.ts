@@ -9,6 +9,7 @@ import { NutritionInputError } from "./validation";
 import type { NutritionIdentity, ResolvedMenu } from "./contracts";
 import {prisma} from "@/lib/prisma";
 import {NutritionSecurityError} from "./security";
+import { nutritionWebsiteLink } from "./website-links";
 import {cleanupNutritionDownloads,storeNutritionDownload,readStoredNutritionDownload,NUTRITION_DOWNLOAD_TTL_SECONDS} from "./download-store";
 export {cleanupNutritionDownloads,NUTRITION_DOWNLOAD_TTL_SECONDS} from "./download-store";
 export async function withNutritionWorkbookSlot<T>(build: () => Promise<T>): Promise<T> {
@@ -31,7 +32,7 @@ export async function exportNutritionMenu(menu: ResolvedMenu,identity: Nutrition
     const key=randomBytes(24).toString("hex");
     await storeNutritionDownload(key,bytes);
     const ticket=createNutritionTicket("download",key,identity,NUTRITION_DOWNLOAD_TTL_SECONDS);
-    return {downloadUrl:`${getNutritionPublicUrl()}/api/nutrition/v1/download/${key}?ticket=${encodeURIComponent(ticket)}`,expiresAt:new Date(Date.now()+NUTRITION_DOWNLOAD_TTL_SECONDS*1000).toISOString(),filename:"Dinh-duong-2598.xlsx"};
+    return {downloadUrl:`${getNutritionPublicUrl()}/api/nutrition/v1/download/${key}?ticket=${encodeURIComponent(ticket)}`,expiresAt:new Date(Date.now()+NUTRITION_DOWNLOAD_TTL_SECONDS*1000).toISOString(),filename:"Dinh-duong-2598.xlsx",savedMenuUrl:saved?nutritionWebsiteLink("saved",saved.id):null,savedRecord:saved?{id:saved.id,revision:saved.conversationRevision}:null};
   });
 }
 export async function readNutritionDownload(key:string,ticket:unknown) {

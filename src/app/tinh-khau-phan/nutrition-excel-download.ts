@@ -26,11 +26,11 @@ export function webNutritionReportInput(days: MenuDay[], profile: Profile | null
   };
 }
 
-export async function downloadNutritionExcel(days: MenuDay[], profile: Profile | null, options: { mode?: RationMode; meta?: NutritionReportMeta; medications?: NutritionMedicationLine[] } = {}) {
+export async function downloadNutritionExcel(days: MenuDay[], profile: Profile | null, options: { mode?: RationMode; meta?: NutritionReportMeta; medications?: NutritionMedicationLine[]; saveToAccount?: boolean } = {}) {
   const input = webNutritionReportInput(days, profile, options.mode);
   const missing = days.flatMap(day => day.rows.filter(row => !row.foodId && row.dish).map(row => `${day.label} / ${row.meal} / ${row.dish}`));
   const meta = { ...options.meta, menuNote: [options.meta?.menuNote, missing.length ? `Món chưa nhập thực phẩm: ${[...new Set(missing)].join("; ")}` : ""].filter(Boolean).join(". ") };
-  const response = await fetch("/api/nutrition-report/export", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, meta, medications: options.medications ?? [] }) });
+  const response = await fetch("/api/nutrition-report/export", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, meta, medications: options.medications ?? [], saveToAccount: options.saveToAccount === true }) });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(typeof error.message === "string" ? error.message : "Chưa xuất được Excel. Vui lòng thử lại.");
@@ -38,4 +38,9 @@ export async function downloadNutritionExcel(days: MenuDay[], profile: Profile |
   const url = URL.createObjectURL(await response.blob());
   const link = document.createElement("a"); link.href = url; link.download = "bao-cao-dinh-duong.xlsx"; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const saved = response.headers.get("X-Nutrition-Saved-Url");
+  if (!saved) return null;
+  const savedUrl = new URL(saved, window.location.origin);
+  if (savedUrl.origin !== window.location.origin || !/^\/ket-noi-ai\/ban-luu\/[A-Za-z0-9_-]{1,100}$/.test(savedUrl.pathname) || savedUrl.search || savedUrl.hash) throw new Error("Đã tải file nhưng link bản lưu chưa hợp lệ. Mở mục Thực đơn đã lưu trong tài khoản.");
+  return savedUrl.href;
 }
