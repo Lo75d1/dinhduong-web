@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata = { title: "Xác nhận kết nối AI | Dinh dưỡng 2598", robots: { index: false, follow: false }, referrer: "no-referrer" };
 
 const descriptions: Record<string, string> = {
-  "nutrition:read": "Tra cứu thực phẩm, công thức và mở các bản khẩu phần riêng của bạn.",
+  "nutrition:read": "Tra cứu kho chung, thư viện thực phẩm/món riêng và mở các bản khẩu phần của bạn.",
   "nutrition:calculate": "Kiểm tra bản nháp và tính dinh dưỡng từ đầu vào bạn cung cấp.",
   "nutrition:write": "Lưu hoặc cập nhật bản khẩu phần cá nhân sau khi bạn chốt đầu vào.",
   "nutrition:export": "Xuất Excel chỉnh được và xem trước file Excel được gửi lại.",

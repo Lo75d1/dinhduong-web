@@ -5,13 +5,15 @@ import { useRef, useState } from "react";
 import type { MenuInput, ResolvedMenu } from "@/lib/nutrition-chat/contracts";
 import NutritionMenuAnalysis from "../../NutritionMenuAnalysis";
 import { readNutritionResponse } from "../../client-api";
+import LibraryIngredientPicker from "@/app/tai-khoan/LibraryIngredientPicker";
 
 type Prepared = { input: MenuInput; preview: ResolvedMenu; confirmationToken: string };
 const control = "mt-1 w-full min-w-0 rounded border border-[#8fa99e] px-3 py-2 text-neutral-900";
 const button = "rounded bg-[#123c36] px-4 py-2 font-semibold text-white disabled:opacity-50";
 
-export default function ReuseSavedMenu({ menu }: { menu: ResolvedMenu }) {
-  const [draft, setDraft] = useState<MenuInput>(() => structuredClone(menu.input));
+export default function ReuseSavedMenu({ menu, initialInput, initialNames = {} }: { menu?: ResolvedMenu; initialInput?: MenuInput; initialNames?: Record<string, string> }) {
+  const [draft, setDraft] = useState<MenuInput>(() => structuredClone(menu?.input ?? initialInput!));
+  const [names, setNames] = useState<Record<string, string>>(() => ({ ...Object.fromEntries(menu?.days.flatMap(day => day.rows.map(row => [row.id, row.food.name])) ?? []), ...initialNames }));
   const [prepared, setPrepared] = useState<Prepared | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -43,13 +45,15 @@ export default function ReuseSavedMenu({ menu }: { menu: ResolvedMenu }) {
     finally { setBusy(false); }
   }
   return <section className="mt-5 space-y-4" aria-label="Điều chỉnh và dùng lại thực đơn">
-    <p className="text-sm text-neutral-700">Đổi tên, ngày, lượng hoặc số suất, xem lại kết quả rồi lưu thành bản riêng. Bản đang mở được giữ để đối chiếu.</p>
+    <p className="text-sm text-neutral-700">Chọn món, thực phẩm, ngày và định lượng; xem kết quả rồi lưu thành bản riêng. Các bản đã lưu trước đó được giữ để đối chiếu.</p>
     <label className="block text-sm font-semibold">Tên bản dùng lại<input value={draft.title} disabled={busy} maxLength={200} onChange={event => change({ ...draft, title: event.target.value })} className={control} /></label>
     {draft.days.map((day, di) => <details key={day.id} className="rounded-lg border border-[#b1c8bd] p-3" open={draft.days.length === 1}>
       <summary className="cursor-pointer font-semibold">{day.label} · {day.rows.length} dòng</summary>
       <label className="mt-3 block text-sm">Ngày dùng lại<input type="date" value={day.date} disabled={busy} onChange={event => { const next = structuredClone(draft); next.days[di].date = event.target.value; change(next); }} className={control} /></label>
-      <div className="mt-3 space-y-3">{day.rows.map((row, ri) => { const name = row.actualFoodName || row.customFood?.name || menu.days[di]?.rows[ri]?.food.name || row.dish; return <div key={row.id} className="grid gap-3 border-t border-[#dcebe5] pt-3 sm:grid-cols-2"><p className="text-sm sm:col-span-2"><strong>{row.meal} · {row.dish}</strong> · {name}</p><label className="text-sm">Lượng ({row.unit}) · {name}<input type="number" min={0} max={1000000} step="any" value={row.quantity ?? ""} disabled={busy} onChange={event => amount(di, ri, "quantity", event.target.value)} className={control} /></label><label className="text-sm">Số suất · {name}<input type="number" min={0.000001} max={10000} step="any" value={row.servings} disabled={busy} onChange={event => amount(di, ri, "servings", event.target.value)} className={control} /></label></div>; })}</div>
+      <div className="mt-3 space-y-3">{day.rows.map((row, ri) => { const name = row.actualFoodName || row.customFood?.name || names[row.id] || row.dish; return <div key={row.id} className="grid gap-3 border-t border-[#dcebe5] pt-3 sm:grid-cols-2"><p className="text-sm sm:col-span-2"><strong>{row.meal} · {row.dish}</strong> · {name}</p>{(["meal", "dish"] as const).map(field => <label key={field} className="text-sm">{field === "meal" ? "Bữa" : "Món"} · {name}<input maxLength={160} value={row[field]} disabled={busy} onChange={event => { const next = structuredClone(draft); next.days[di].rows[ri][field] = event.target.value; change(next); }} className={control} /></label>)}<label className="text-sm">Lượng ({row.unit}) · {name}<input type="number" min={0} max={1000000} step="any" value={row.quantity ?? ""} disabled={busy} onChange={event => amount(di, ri, "quantity", event.target.value)} className={control} /></label><label className="text-sm">Số suất · {name}<input type="number" min={0.000001} max={10000} step="any" value={row.servings} disabled={busy} onChange={event => amount(di, ri, "servings", event.target.value)} className={control} /></label><button type="button" disabled={busy} onClick={() => { const next = structuredClone(draft); next.days[di].rows.splice(ri, 1); change(next); }} className="text-left text-sm text-red-800 underline">Bỏ dòng thực phẩm</button></div>; })}</div>
+      <div className="mt-4"><LibraryIngredientPicker disabled={busy} onPick={(rows, addedNames) => { const next = structuredClone(draft); next.days[di].rows.push(...rows); setNames(current => ({ ...current, ...addedNames })); change(next); }} /></div>
     </details>)}
+    <button type="button" disabled={busy || draft.days.length >= 90} onClick={() => change({ ...draft, days: [...draft.days, { id: crypto.randomUUID(), label: `Ngày ${draft.days.length + 1}`, date: "", rows: [] }] })} className="text-sm font-semibold underline">Thêm ngày</button>
     <button type="button" disabled={busy} onClick={() => void preview()} className={button}>{busy ? "Đang xử lý…" : "Xem trước bản dùng lại"}</button>
     {error ? <p role="alert" className="text-sm text-red-800">{error}</p> : null}
     {prepared ? <div className="border-t border-[#b1c8bd] pt-4"><NutritionMenuAnalysis menu={prepared.preview} />{prepared.preview.missingInputs.length ? <ul className="mt-3 list-disc pl-5 text-sm text-amber-900">{prepared.preview.missingInputs.map((item, i) => <li key={i}>{item.message}</li>)}</ul> : null}<label className="mt-4 flex gap-2 text-sm"><input type="checkbox" checked={confirmed} disabled={busy || !!saved} onChange={event => setConfirmed(event.target.checked)} className="accent-[#123c36]" /><span>Tôi xác nhận đầu vào và nguồn của bản dùng lại.</span></label><button type="button" disabled={busy || !confirmed || !!prepared.preview.missingInputs.length || !!saved} onClick={() => void save()} className={`mt-3 ${button}`}>{saved ? "Đã lưu bản dùng lại" : "Lưu bản dùng lại vào tài khoản"}</button></div> : null}

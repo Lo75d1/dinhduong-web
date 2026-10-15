@@ -55,7 +55,7 @@ const button =
 const secondary =
   "rounded-md border border-[#8fa99e] px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4ef] disabled:opacity-50";
 const scopes = [
-  ["nutrition:read", "Tra cứu và mở khẩu phần riêng"],
+  ["nutrition:read", "Tra kho, thư viện riêng và khẩu phần"],
   ["nutrition:calculate", "Tính thành phần dinh dưỡng"],
   ["nutrition:write", "Lưu / cập nhật khẩu phần riêng"],
   ["nutrition:export", "Xuất Excel"],
@@ -341,11 +341,13 @@ export default function AccountSettings({
               kết nối ChatGPT / Claude.
             </p>
             <Link
-              href="/ket-noi-ai/ban-luu"
+              href="/tai-khoan/thuc-don"
               className="mt-3 block underline"
             >
-              Thực đơn và khẩu phần đã lưu từ chat / Excel →
+              Thực đơn của tôi →
             </Link>
+            <Link href="/tai-khoan/thuc-pham" className="mt-3 block underline">Thực phẩm của tôi →</Link>
+            <Link href="/tai-khoan/mon-an" className="mt-3 block underline">Món ăn của tôi →</Link>
             <Link
               href="/tinh-khau-phan"
               className="mt-3 inline-block underline"

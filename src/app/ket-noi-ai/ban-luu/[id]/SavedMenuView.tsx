@@ -7,6 +7,7 @@ import type { MenuInput, ResolvedMenu } from "@/lib/nutrition-chat/contracts";
 import NutritionMenuAnalysis, { NutritionMenuInput } from "../../NutritionMenuAnalysis";
 import { readNutritionResponse, sameSiteNutritionDownload, type NutritionDownload } from "../../client-api";
 import ReuseSavedMenu from "./ReuseSavedMenu";
+import SavedLibraryLinks from "@/app/tai-khoan/SavedLibraryLinks";
 
 type Saved = { ration: { id: string; title: string; revision: number }; input: MenuInput; preview: ResolvedMenu; confirmationToken: string; sourceChanged?: boolean };
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]";
@@ -72,6 +73,7 @@ export default function SavedMenuView({ rationId }: { rationId: string }) {
       <details className="mt-5"><summary className={`cursor-pointer font-semibold ${focus}`}>Đầu vào đã lưu</summary><NutritionMenuInput menu={result.preview} /></details>
       {result.preview.warnings.length || result.preview.missingInputs.length ? <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900"><p className="font-semibold">Cảnh báo của bản này</p><ul className="mt-2 list-disc space-y-1 pl-5 text-sm">{[...new Set([...result.preview.warnings, ...result.preview.missingInputs.map(item => item.message)])].map(warning => <li key={warning}>{warning}</li>)}</ul></div> : null}
       <NutritionMenuAnalysis menu={result.preview} />
+      <SavedLibraryLinks menu={result.preview} rationId={result.ration.id} />
       <details className="mt-5 rounded-lg border border-[#b1c8bd] p-4"><summary className={`cursor-pointer font-semibold ${focus}`}>Điều chỉnh và dùng lại trên web</summary><ReuseSavedMenu key={result.preview.digest} menu={result.preview} /></details>
       <label className="mt-6 flex items-start gap-3"><input type="checkbox" checked={confirmed} disabled={exporting} onChange={event => setConfirmed(event.target.checked)} className={`mt-1 h-5 w-5 shrink-0 accent-[#123c36] ${focus}`} /><span>Tôi đã xem đầu vào và nguồn của bản này, đồng ý xuất Excel để tiếp tục làm việc.</span></label>
       {result.preview.missingInputs.length ? <p className="mt-3 text-sm text-amber-900">Cần làm rõ đầu vào còn thiếu trong hội thoại trước khi xuất bản mới.</p> : null}
