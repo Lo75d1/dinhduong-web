@@ -41,7 +41,7 @@ export default function SavedMenuList() {
 
   function refresh() { setError(""); setBusy(true); setItems([]); setNextOffset(null); setReload(value => value + 1); }
   return <div className="mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-7">
-    {error ? <div role="alert" className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-red-800"><p>{error}</p><Link href="/dang-nhap" className={`mt-2 inline-block underline ${focus}`}>Đăng nhập tài khoản</Link></div> : null}
+    {error ? <div role="alert" className="mb-4 rounded-lg border border-red-300 bg-red-50 p-3 text-red-800"><p>{error}</p><Link href="/dang-nhap?next=%2Fket-noi-ai%2Fban-luu" className={`mt-2 inline-block underline ${focus}`}>Đăng nhập tài khoản</Link></div> : null}
     {!busy && !error && !items.length ? <p className="text-neutral-700">Chưa có thực đơn nào ở đây. Chọn “Lưu và tải Excel” khi xuất trên web, hoặc yêu cầu lưu kèm Excel trong chat. Sau đó mở lại bằng tài khoản hoặc link trong file.</p> : null}
     <ul className="space-y-3">{items.map(item => <li key={item.id}><Link href={`/ket-noi-ai/ban-luu/${encodeURIComponent(item.id)}`} className={`block rounded-lg border border-[#dcebe5] p-4 hover:bg-[#eaf3ee] ${focus}`}><span className="block text-lg font-semibold">{item.title}</span><span className="mt-1 block text-sm text-neutral-700">Phiên bản {item.revision}{item.updatedAt && Number.isFinite(Date.parse(item.updatedAt)) ? ` · Cập nhật ${new Date(item.updatedAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}` : ""}</span></Link></li>)}</ul>
     {busy ? <p role="status" className="mt-4 text-neutral-700">Đang đọc danh sách…</p> : null}

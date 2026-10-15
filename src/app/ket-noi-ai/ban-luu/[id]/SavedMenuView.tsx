@@ -65,7 +65,7 @@ export default function SavedMenuView({ rationId }: { rationId: string }) {
 
   return <div className="mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-7">
     {loading ? <p role="status" className="text-neutral-700">Đang mở bản lưu của tài khoản…</p> : null}
-    {error ? <div role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-800"><p>{error}</p><Link href="/dang-nhap" className={`mt-2 inline-block underline ${focus}`}>Đăng nhập tài khoản</Link></div> : null}
+    {error ? <div role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-800"><p>{error}</p><Link href={`/dang-nhap?next=${encodeURIComponent(`/ket-noi-ai/ban-luu/${encodeURIComponent(rationId)}`)}`} className={`mt-2 inline-block underline ${focus}`}>Đăng nhập tài khoản</Link></div> : null}
     {result ? <>
       <h2 className="text-2xl font-semibold">{result.ration.title}</h2><p className="mt-1 text-sm text-neutral-700">Phiên bản {result.ration.revision}. Bản này thuộc tài khoản đang đăng nhập.</p>
       {result.sourceChanged ? <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Dữ liệu nguồn đã đổi so với lần lưu. Phân tích dưới đây đã tính lại theo nguồn hiện tại; hãy xem lại trước khi xuất.</p> : null}
