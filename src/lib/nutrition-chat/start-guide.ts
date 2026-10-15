@@ -79,6 +79,7 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 
 - Xác định thực đơn hoặc ghi lại ăn 24 giờ, một hoặc nhiều ngày (giới hạn ${NUTRITION_WORKFLOW.limits.days} ngày), các bữa/món/thực phẩm và lượng đã biết.
 - Chỉ tính thành phần: comparison none. Người dùng muốn so nhu cầu: hỏi chọn mục tiêu có nguồn hoặc hồ sơ; chỉ thu thông tin cần cho lựa chọn đó.
+- Khi lập thực đơn, ưu tiên tra và trình bày MÓN ĂN có sẵn: search_dishes cho công thức RNI và search_foods với type=MA cho món VDD. Đọc get_dish để lấy nguyên liệu công thức; món VDD hoàn chỉnh dùng Food ID trực tiếp vì không có công thức trong kho. Không chỉ đưa danh sách gạo/thịt/rau khi người dùng muốn tên món. Sau khi chọn món mới hỏi lượng và chốt nguyên liệu.
 - Tra search_foods/get_food và search_dishes/get_dish để lấy Food ID, công thức và nguồn thật. Không đoán ID hay coi định lượng công thức gốc mặc định bằng một suất.
 - Món suy từ AI phải ghi là ước lượng và chờ người dùng chấp nhận. Thay nguyên liệu cần Food ID/lượng/nguồn/quy đổi riêng; không tự coi tương đương.
 - Ngoài kho: ưu tiên nhãn/tài liệu có cơ sở 100 g, 100 ml hoặc lượng mỗi phần và đơn vị rõ. Dùng thực phẩm tham chiếu chỉ khi người dùng chấp nhận; không có số thì giữ null và ghi thiếu.

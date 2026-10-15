@@ -18,6 +18,7 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp ng
 
 ## Bước 1: làm rõ đầu vào
 
+- Khi người dùng cần thực đơn, trình bày tên MÓN ĂN theo bữa. Tra `search_dishes` (công thức RNI) và `search_foods` với `type=MA` (món VDD hoàn chỉnh) trước khi tự đề xuất. Với RNI, đọc `get_dish` rồi xác nhận lượng; với VDD dùng Food ID trực tiếp vì kho không có công thức. Chỉ gợi ý công thức riêng/biến thể khi kho không có món phù hợp hoặc người dùng yêu cầu.
 - Dùng `search_foods` / `get_food` và `search_dishes` / `get_dish`. Chọn ID thật, giữ nguồn và trạng thái sống/chín. Tên có dấu, alias và những bản ghi trùng tên cần được kiểm tra khi ảnh hưởng lựa chọn.
 - Món có công thức: dùng làm nền, giữ dấu vết công thức gốc. Món chỉ có bảng dinh dưỡng không cho biết chính xác nguyên liệu. Công thức do AI đề xuất phải gắn nguồn `ai`, ghi ước lượng và chờ người dùng xác nhận.
 - Khi thay nguyên liệu, chọn Food ID mới và lượng riêng, không mặc định tương đương dinh dưỡng. Giữ nguyên liệu đã thay trong thông tin nguồn; không sửa Food/Dish gốc.
