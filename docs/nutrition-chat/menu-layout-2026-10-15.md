@@ -45,4 +45,7 @@
 - `Nhap khau phan` giu du nhan ngay/bua/mon de tinh va nhap lai. Khong merge o than bang, khong doi bo tinh/parser/manifest. Chieu cao hang dua tren nhan thuc su hien thi.
 - `test:nutrition-complete`, Prisma generate, TypeScript, ESLint file sua va diff check dat. Them ca nhom lap, mon khong lien tiep quay lai, cung mon sang ngay khac va nhap lai van du nhan.
 - Excel desktop: 31 checks dat, gom nhan dau nhom, doi bua/ngay tu hien lai, tra ve nhom cu tu an nhan, nhan dau vao van du va cac kiem tra so lieu cu. Ban in Thuc don 1 trang; anh ignore `plan-grouped.png`.
-- Nghiem thu VPS: cho trien khai.
+- App **be06415** da build Linux/TypeScript va healthy; backup image/config `/opt/dinhduong-release-backups/nutrition-plan-grouping-20261015-183148-codex`. Khong migration, van nhanh/PR #4 chua merge main.
+- File HTTPS 1/2 ngay: **39 checks** dat, gom nhan Ngay/Mon trong cac dong sau dau nhom, moi ngay hien lai va nhan dau vao van du. Excel desktop tren file that: **35 checks** dat; bo qua nhan lap, phuc hoi nhan ngay moi, so lieu va tat ca hyperlink/quet loi giu dung.
+- Native SaveAs/parser **4 checks** dat; so dong 3/1, nhan cong thuc va 438,85 kcal sau doi luong giu dung. Ban in 1 trang; anh ignore `plan-grouped-vps.png`. Khong dang nhap/tao user/menu fixture hoac ghi kho canonical.
+- Canonical count/digest (Food 3.719, Dish 7.369, nguyen lieu 41.457), 25 migration va SHA env/layout/Caddy/Google khop. Timer active/enabled, khong OOM, swap build da go.

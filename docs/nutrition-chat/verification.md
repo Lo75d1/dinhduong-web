@@ -1,5 +1,6 @@
 # Kiểm chứng Nutrition Chat API — 14/10/2026
 
+- Nhãn Ngày/Món ăn theo nhóm đã chạy VPS app **be06415**: complete-report + native fixture31, HTTPS39/file thật Excel35/native import4 đạt; nhãn tính từ bảng nhập đầy đủ, không xóa dữ liệu hoặc merge ô thân bảng. Xem phần bổ sung [bố cục thực đơn](menu-layout-2026-10-15.md).
 - Bố cục Thực đơn mới theo lựa chọn người dùng đã chạy VPS app **5994ff2**: HTTPS30, Excel desktop file thật28 và native SaveAs/parser4 đạt. Tiếp tục nhập ở Nhap khau phan; mục tiêu ở báo cáo, nguồn/ghi chú một cột, không đổi engine/import/migration/canonical. Xem [biên bản bố cục thực đơn](menu-layout-2026-10-15.md).
 - Link nguồn VDD/RNI bổ sung theo yêu cầu đã chạy VPS app **ba2829d**: HTTPS42 và browser quản trị/nguồn/chi tiết thật đạt; không migration/fixture/sửa canonical. Xem [biên bản nguồn dữ liệu](data-sources-2026-10-15.md). Nhánh vẫn chưa merge main.
 - Thư viện cá nhân 15/10 đã lên VPS theo yêu cầu trực tiếp chủ dự án: app46f2659 healthy, DB25/25; HTTPS69/public17 và browser thật đạt, fixture đã dọn, canonical/cấu hình giữ nguyên. Xem [nghiệm thu VPS thư viện](vps-personal-library-2026-10-15.md) và [đặc tả](personal-library-2026-10-15.md). Chưa merge main.
