@@ -1,11 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { defaultSiteSettings } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const query = await searchParams;
+  if (Object.keys(query).some(key => key === "fbclid" || key === "mibextid" || key.startsWith("utm_"))) {
+    redirect("/");
+  }
   const [foodCount, dishCount, settings] = await Promise.all([
     prisma.food.count(),
     prisma.dish.count(),
