@@ -16,7 +16,7 @@ Ngày: 15/10/2026. Mở rộng theo yêu cầu người dùng, gồm cả cá nh
 
 1. Đăng nhập → Tài khoản → Kết nối ứng dụng → Kết nối thủ công.
 2. Đặt tên, chọn ChatGPT/Claude và quyền; xác nhận mật khẩu hiện tại.
-3. Sao chép URL MCP, Client ID và Client Secret vào cài đặt OAuth của plugin. Nếu giao diện yêu cầu riêng, dùng authorize/token URL được hiển thị; phương thức `client_secret_post`.
+3. Sao chép URL MCP, Client ID và Client Secret vào cài đặt OAuth của plugin. Nếu giao diện yêu cầu riêng, dùng authorize/token URL được hiển thị; ưu tiên `client_secret_basic`, cũng chấp nhận `client_secret_post` với cùng secret cho client thủ công. DCR vẫn kiểm đúng phương thức đã đăng ký.
 4. Hoàn tất đăng nhập/cấp quyền, kiểm tra công cụ và tra thực phẩm. Đây là phương án thay bước đăng ký client tự động, không sửa được lỗi host không nạp công cụ.
 
 - Secret ngẫu nhiên chỉ trả một lần sau khi tạo, lưu hash; không nhúng trong HTML tải lại, localStorage, URL, log hoặc gói plugin. Mất secret → thu hồi và tạo mới. Đây là credential do chính người dùng yêu cầu tạo, không phải APP_SECRET/API key của VPS.

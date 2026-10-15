@@ -325,11 +325,17 @@ async function main() {
         body: new URLSearchParams(body),
       });
     }
-    const tokens = await (
-      await app.exchangeNutritionToken(tokenRequest(tokenBody))
-    ).json();
+    const basicRequest = tokenRequest({ ...tokenBody, client_secret: "" });
+    const basicForm = new URLSearchParams(tokenBody);
+    basicForm.delete("client_secret");
+    basicRequest.headers.set("Authorization", `Basic ${Buffer.from(`${issued.client.id}:${issued.clientSecret}`).toString("base64")}`);
+    let tokens = await (await app.exchangeNutritionToken(new Request(basicRequest, { body: basicForm }))).json();
     assert.equal(tokens.access_token.length, 43);
     checks++;
+    const refreshBody = { grant_type: "refresh_token", refresh_token: tokens.refresh_token, client_id: issued.client.id, resource: getNutritionResourceUrl() };
+    await assert.rejects(() => app.exchangeNutritionToken(tokenRequest(refreshBody))); checks++;
+    tokens = await (await app.exchangeNutritionToken(tokenRequest({ ...refreshBody, client_secret: issued.clientSecret }))).json();
+    assert.equal(tokens.access_token.length, 43); checks++;
     const identity = () =>
       app.getNutritionIdentity(
         new Request(getNutritionResourceUrl(), {

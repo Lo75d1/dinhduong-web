@@ -677,7 +677,7 @@ export default function AccountSettings({
                   </div>
                 ))}
                 <p className="mt-3 text-sm">
-                  Phương thức xác thực token: client_secret_post. Cấu hình hết
+                  Xác thực token: HTTP Basic (hoặc client_secret_post). Cấu hình hết
                   hạn sau 30 ngày không sử dụng.
                 </p>
                 <button

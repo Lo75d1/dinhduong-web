@@ -188,7 +188,11 @@ async function authenticateTokenClient(request: Request, params: URLSearchParams
     authMethod = "client_secret_basic";
   }
   const client = await registeredClient(clientId ?? "");
-  if (client.authMethod !== authMethod || (authMethod !== "none" && (!secret || !client.secretHash || !equalSecret(hashNutritionToken(secret), client.secretHash)))) throw new NutritionSecurityError("invalid_client", 401);
+  // Predefined/manual clients do not get a DCR method hint. Hosts may choose
+  // Basic (MCP SDK default) or POST from the advertised metadata; both still
+  // require the same secret. Dynamically registered clients keep their exact method.
+  const manualSecretMethod = !!client.ownerId && !!client.secretHash && ["client_secret_basic", "client_secret_post"].includes(authMethod);
+  if ((!manualSecretMethod && client.authMethod !== authMethod) || (authMethod !== "none" && (!secret || !client.secretHash || !equalSecret(hashNutritionToken(secret), client.secretHash)))) throw new NutritionSecurityError("invalid_client", 401);
   await enforceNutritionRateLimit(`oauth:token:client:${client.id}`, { limit: 300, windowSeconds: 3600 });
   return client;
 }

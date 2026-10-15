@@ -416,7 +416,7 @@ export async function manageAccount(request: Request, action: string) {
               NUTRITION_PLATFORM_REDIRECTS[platform as "chatgpt" | "claude"],
             ],
             scopes,
-            authMethod: "client_secret_post",
+            authMethod: "client_secret_basic",
             secretHash: hashNutritionToken(secret),
             expiresAt: new Date(Date.now() + CLIENT_SECONDS * 1000),
           },
@@ -436,7 +436,7 @@ export async function manageAccount(request: Request, action: string) {
           mcpUrl: getNutritionResourceUrl(),
           authorizationUrl: `${getNutritionPublicUrl()}/api/nutrition/v1/oauth/authorize`,
           tokenUrl: `${getNutritionPublicUrl()}/api/nutrition/v1/oauth/token`,
-          authMethod: "client_secret_post",
+          authMethod: "client_secret_basic",
         };
       }
       if (action === "manual-revoke") {
