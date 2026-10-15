@@ -2,6 +2,7 @@
 
 ## Bổ sung Nutrition Chat và dữ liệu cá nhân — 15/10/2026
 
+- Link trang chủ có `fbclid`/`mibextid`/`utm_*` đã tự chuyển về `/` sạch trên VPS app **09424ce**: HTTPS16 và trình duyệt thật đạt, không chuyển vòng lặp. Chỉ xử lý trang chủ, giữ link tra cứu/QR/API/OAuth; không sửa canonical/migration/cấu hình. Biên bản `docs/nutrition-chat/facebook-home-2026-10-15.md`.
 - Phân biệt món VDD/nguyên liệu RNI đã lên VPS app **59dc690**: RNI giữ đủ từng dòng nguyên liệu; VDD MA hiện tên cả món và ghi không có dữ liệu thành phần. Sửa Food ID tự đổi cách hiển thị, không đổi bộ tính/import. Native fixture38 + HTTPS45/file thật Excel43/native import4 đạt; canonical/cấu hình giữ nguyên. Biên bản nối tiếp `docs/nutrition-chat/menu-layout-2026-10-15.md`.
 - Nhãn Ngày/Món ăn theo nhóm đã lên VPS app **be06415**: chỉ hiện ở đầu mỗi nhóm liên tiếp, tự hiện lại khi sang nhóm khác; bảng nhập vẫn đủ nhãn. HTTPS39, Excel file thật35 và native import4 đạt; dữ liệu/cấu hình giữ nguyên. Chi tiết nối tiếp trong `docs/nutrition-chat/menu-layout-2026-10-15.md`.
 - Bố cục sheet Thực đơn mới đã chạy VPS app **5994ff2**: tách Ngày/Bữa/Món/Thực phẩm, thêm 4 chỉ số liên kết từ bảng nhập, chữ 15/lưới thường, nguồn-ghi chú một cột cuối. Tiếp tục nhập ở Nhap khau phan; mục tiêu chỉ ở báo cáo. HTTPS30 + Excel thật28 + native SaveAs/import4 đạt, không đổi engine/import/canonical. Biên bản `docs/nutrition-chat/menu-layout-2026-10-15.md`.
