@@ -102,6 +102,29 @@ try {
   }
   $taskBook.Worksheets.Item('Bao cao').Activate()
   $taskBook.SaveAs((Join-Path $taskEvidence 'complete-report-native-verified.xlsx'),51)
+  $taskBook.Close($false); $taskBook = $null
+  $taskBook = $taskExcel.Workbooks.Open((Join-Path $taskEvidence 'complete-report-kind-test.xlsx'),0,$false)
+  $taskExcel.CalculateFullRebuild()
+  $taskInput = $taskBook.Worksheets.Item('Nhap khau phan'); $taskPlan = $taskBook.Worksheets.Item('Thuc don')
+  if($taskPlan.Range('C7').Value2 -ne 'Cơm (trùng tên thử nghiệm)' -or $taskPlan.Range('D7').Value2 -ne 'Không có dữ liệu thành phần') {throw 'VDD whole dish shown as its own ingredient'}
+  $taskChecks.Add(@{check='canonical VDD MA has whole-dish name and no ingredient claim';pass=$true})
+  if($taskPlan.Range('C8').Value2 -ne 'Cơm với thịt' -or $taskPlan.Range('D8').Value2 -ne 'Thịt giả lập') {throw 'RNI ingredient hidden after whole dish'}
+  $taskChecks.Add(@{check='RNI ingredient and group retained after VDD';pass=$true})
+  if($taskPlan.Range('D9').Value2 -ne 'Sữa nhãn giả lập' -or $taskPlan.Range('D10').Value2 -ne 'Cơm (trùng tên thử nghiệm)') {throw 'Noncanonical VDD label or RNI food misclassified'}
+  $taskChecks.Add(@{check='custom VDD label and RNI MA are not canonical VDD whole dishes';pass=$true})
+  $taskInput.Range('E7').Value2 = 'test-beef'; $taskExcel.CalculateFullRebuild()
+  if($taskPlan.Range('C7').Value2 -ne 'Cơm với thịt' -or $taskPlan.Range('D7').Value2 -ne 'Thịt giả lập' -or [string]$taskPlan.Range('C8').Value2 -ne '') {throw 'Changing Food ID did not restore ingredient grouping'}
+  $taskChecks.Add(@{check='Food ID change from VDD to RNI restores ingredient and grouping';pass=$true})
+  $taskInput.Range('E7').Value2 = 'test-rice-a'; $taskExcel.CalculateFullRebuild()
+  if($taskPlan.Range('C7').Value2 -ne 'Cơm (trùng tên thử nghiệm)' -or $taskPlan.Range('D7').Value2 -ne 'Không có dữ liệu thành phần' -or $taskPlan.Range('C8').Value2 -ne 'Cơm với thịt') {throw 'Changing Food ID back did not restore whole-dish display'}
+  $taskChecks.Add(@{check='Food ID change back restores whole dish and following group';pass=$true})
+  Check-Number $taskPlan.Range('G7').Value2 260 'classification does not alter nutrient calculation'
+  foreach($taskSheet in $taskBook.Worksheets) {
+    foreach($value in $taskSheet.UsedRange.Value2) {
+      if($value -is [int] -and $value -ge -2146826300 -and $value -le -2146826240) {throw "Excel error $value in $($taskSheet.Name)"}
+    }
+  }
+  $taskChecks.Add(@{check='all classified workbook sheets native formula error scan';pass=$true})
   [IO.File]::WriteAllText((Join-Path $taskEvidence 'complete-native-checks.json'),($taskChecks|ConvertTo-Json -Depth 5),[Text.UTF8Encoding]::new($false))
   $taskChecks | ConvertTo-Json -Depth 5
 } finally {

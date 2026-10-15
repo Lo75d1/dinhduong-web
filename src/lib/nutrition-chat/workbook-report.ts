@@ -10,6 +10,9 @@ export type NutritionReportMeta = {
 };
 export type NutritionMedicationLine = { meal: string; name: string; dose: string; timing: string; note: string };
 export type NutritionWorkbookOptions = { complete?: boolean; meta?: NutritionReportMeta; medications?: NutritionMedicationLine[] };
+export function isVddWholeDish(food: NutritionFood) {
+  return food.source.kind === "catalog" && food.source.label === "VDD" && food.foodType === "MA";
+}
 const FIRST = 7;
 const TOTAL = 98;
 const AVERAGE = 99;
@@ -186,7 +189,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   }
   summary.pageSetup.printArea = `A1:H${mainRow - 1}`;
 
-  const planHeaders = ["Ngày", "Bữa", "Món ăn", "Thực phẩm", "Định lượng", "Đơn vị", "Năng lượng\n(kcal)", "Đạm\n(g)", "Béo\n(g)", "Bột đường\n(g)", "Nguồn / ghi chú"];
+  const planHeaders = ["Ngày", "Bữa", "Món ăn", "Thực phẩm\nthành phần", "Định lượng", "Đơn vị", "Năng lượng\n(kcal)", "Đạm\n(g)", "Béo\n(g)", "Bột đường\n(g)", "Nguồn / ghi chú"];
   const planWidths = [10, 10, 25, 34, 12, 8, 17, 11, 11, 13, 34];
   reportSheet(plan, "THỰC ĐƠN VÀ THÀNH PHẦN DINH DƯỠNG", planHeaders, planWidths);
   plan.views = [{ state: "normal", showGridLines: true, zoomScale: 100 }];
@@ -197,6 +200,11 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   context(plan, 5, planNotice);
   calc(plan.getCell("A5"), `IF(${structureNotice},"Đã thay đổi số dòng/ngày; cần xuất lại để bảng thực đơn bao phủ đủ đầu vào mới.","${planNotice}")`, planNotice);
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
+  const wholeDishRange = `'_lists'!$F$${FIRST}:$F$${FIRST + Math.max(1, catalogue.length) - 1}`;
+  const selectedNameAt = (r: number) => `IF('Nhap khau phan'!O${r}<>"",'Nhap khau phan'!O${r},'Nhap khau phan'!S${r})`;
+  const wholeDishAt = (r: number) => `IF('Nhap khau phan'!R${r}="catalog",IF('Nhap khau phan'!Q${r}="",FALSE,INDEX(${wholeDishRange},'Nhap khau phan'!Q${r})),FALSE)`;
+  const dishNameAt = (r: number) => `IF(${wholeDishAt(r)},${selectedNameAt(r)},'Nhap khau phan'!D${r})`;
+  const noIngredients = "Không có dữ liệu thành phần";
   rows.forEach(({ day, row }, index) => {
     const targetRow = FIRST + index;
     const inputRow = FIRST + index;
@@ -204,12 +212,16 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     const previousRef = (c: string) => `'Nhap khau phan'!${c}${inputRow - 1}`;
     const previous = rows[index - 1];
     const sameDay = previous?.day.id === day.id;
-    const sameDish = sameDay && previous.row.meal === row.meal && previous.row.dish === row.dish;
+    const wholeDish = isVddWholeDish(row.food);
+    const dishName = wholeDish ? row.actualFoodName || row.food.name : row.dish;
+    const previousWholeDish = previous ? isVddWholeDish(previous.row.food) : false;
+    const previousDishName = previousWholeDish ? previous.row.actualFoodName || previous.row.food.name : previous?.row.dish;
+    const sameDish = sameDay && previous.row.meal === row.meal && previousWholeDish === wholeDish && previousDishName === dishName;
     const dayRef = `INDEX('Ngay va muc tieu'!$C$7:$C$96,${ref("B")})`;
     calc(plan.getCell(targetRow, 1), index ? `IF(${ref("B")}=${previousRef("B")},"",${dayRef})` : dayRef, sameDay ? "" : day.label);
     calc(plan.getCell(targetRow, 2), ref("C"), row.meal);
-    calc(plan.getCell(targetRow, 3), index ? `IF(AND(${ref("B")}=${previousRef("B")},EXACT(${ref("C")},${previousRef("C")}),EXACT(${ref("D")},${previousRef("D")})),"",${ref("D")})` : ref("D"), sameDish ? "" : row.dish);
-    calc(plan.getCell(targetRow, 4), `IF(${ref("O")}<>"",${ref("O")},${ref("S")})`, row.actualFoodName || row.food.name);
+    calc(plan.getCell(targetRow, 3), index ? `IF(AND(${ref("B")}=${previousRef("B")},EXACT(${ref("C")},${previousRef("C")}),${wholeDishAt(inputRow)}=${wholeDishAt(inputRow - 1)},EXACT(${dishNameAt(inputRow)},${dishNameAt(inputRow - 1)})),"",${dishNameAt(inputRow)})` : dishNameAt(inputRow), sameDish ? "" : dishName);
+    calc(plan.getCell(targetRow, 4), `IF(${wholeDishAt(inputRow)},"${noIngredients}",${selectedNameAt(inputRow)})`, wholeDish ? noIngredients : row.actualFoodName || row.food.name);
     calc(plan.getCell(targetRow, 5), `IF(AND(ISNUMBER(${ref("G")}),ISNUMBER(${ref("I")})),${ref("G")}*${ref("I")},"—")`, row.quantity === null ? "—" : row.quantity * row.servings);
     calc(plan.getCell(targetRow, 6), ref("H"), row.unit);
     for (const [i, key] of ["energyKcal", "proteinG", "lipidG", "glucidG"].entries()) {
@@ -231,7 +243,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   plan.getRow(6).height = 48;
   rows.forEach(({ day, row }, i) => {
     const r = FIRST + i, line = plan.getRow(r);
-    const texts = [String(plan.getCell(r, 1).result ?? ""), row.meal, String(plan.getCell(r, 3).result ?? ""), row.actualFoodName || row.food.name, "", row.unit, "", "", "", "", String(plan.getCell(r, 11).result ?? "")];
+    const texts = [String(plan.getCell(r, 1).result ?? ""), row.meal, String(plan.getCell(r, 3).result ?? ""), String(plan.getCell(r, 4).result ?? ""), "", row.unit, "", "", "", "", String(plan.getCell(r, 11).result ?? "")];
     const minimumLines = row.quantity === null || row.referenceAmount === null ? 2 : 1;
     line.height = Math.max(30, Math.max(minimumLines, ...texts.map((text, c) => planTextLines(text, planWidths[c]))) * 19 + 8);
     const previous = rows[i - 1];

@@ -49,3 +49,11 @@
 - File HTTPS 1/2 ngay: **39 checks** dat, gom nhan Ngay/Mon trong cac dong sau dau nhom, moi ngay hien lai va nhan dau vao van du. Excel desktop tren file that: **35 checks** dat; bo qua nhan lap, phuc hoi nhan ngay moi, so lieu va tat ca hyperlink/quet loi giu dung.
 - Native SaveAs/parser **4 checks** dat; so dong 3/1, nhan cong thuc va 438,85 kcal sau doi luong giu dung. Ban in 1 trang; anh ignore `plan-grouped-vps.png`. Khong dang nhap/tao user/menu fixture hoac ghi kho canonical.
 - Canonical count/digest (Food 3.719, Dish 7.369, nguyen lieu 41.457), 25 migration va SHA env/layout/Caddy/Google khop. Timer active/enabled, khong OOM, swap build da go.
+
+## Phan biet mon RNI va VDD — cung ngay 15/10
+
+- Xac nhan lai quy uoc du lieu: Dish RNI co tung DishIngredient; giu du moi dong nguyen lieu, luong va dinh duong. Chi ten mon/ngay lap duoc an tren bang trinh bay. Food VDD loai MA chi co dinh duong ca mon, khong suy them thanh phan.
+- Cot D doi thanh `Thuc pham thanh phan`. VDD MA hien ten Food thuc te o cot Mon an, cot thanh phan ghi `Khong co du lieu thanh phan`; RNI van hien moi ten nguyen lieu. Nhom tinh ca loai ca-mon/thanh-phan de khong an nham nhan RNI sau mon VDD.
+- Tai dung `_lists` cot F con trong de danh dau canonical VDD MA theo dung thu tu `Du lieu`; Q/R hien co quyet dinh nguon dang chon. Sua Food ID trong bang nhap tu cap nhat cach hien thi. Khong coi nguon tu nhap ghi chu VDD hoac Food RNI type MA la VDD ca mon. Khong doi engine, manifest, parser, Food/Dish hay migration.
+- Prisma generate, TypeScript, ESLint file sua, complete-report/import dat. Excel desktop **38 checks** dat: ca VDD, RNI, nhan nguon tu nhap, doi Food ID hai chieu, nhom lien tiep, dinh luong/so suat/vi chat va quet loi tat ca sheet. Kiem native phat hien cot B `_lists` da dung cho don vi, nen dung cot F de tranh ghi de.
+- VPS preflight doc that: checkout03ba496, appbe06415 healthy, DB25/25, settings SHA khop; chua thay app tai thoi diem ghi muc nay. Nghiem thu HTTPS/file that bo sung sau trien khai.

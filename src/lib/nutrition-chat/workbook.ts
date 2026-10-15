@@ -4,7 +4,7 @@ import type { CustomFoodInput, FoodSource, MenuInput, MenuRowInput, NutritionFoo
 import { CONTRACT_VERSION } from "./contracts";
 import { ALL_NUTRIENT_FIELDS } from "../nutrient-fields";
 import { resolveMenu, sanitizeNutritionFood } from "./core";
-import { addNutritionReportSheets, type NutritionWorkbookOptions } from "./workbook-report";
+import { addNutritionReportSheets, isVddWholeDish, type NutritionWorkbookOptions } from "./workbook-report";
 import { NUTRIENT_KEYS, parseMenuInput } from "./validation";
 import { addNativeWorkbookCharts } from "./workbook-charts";
 import { assertNutritionWorkbookExportBudget, inspectWorkbookArchive, NutritionWorkbookError, WORKBOOK_LIMITS } from "./workbook-security";
@@ -122,6 +122,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   if (fields.length > (complete ? ALL_NUTRIENT_FIELDS.length : MAX_NUTRIENTS) || !fields.length || fields.some(field => !KEY_PATTERN.test(field.key))) throw new NutritionWorkbookError("WORKBOOK_FIELDS", "Danh sách chất xuất Excel không hợp lệ.");
   const sourceFields = [...fields, ...ALL_NUTRIENT_FIELDS.filter(field => ["energyKcal", "proteinG", "lipidG", "glucidG"].includes(field.key) && !fields.some(selected => selected.key === field.key))];
   const foods = allFoods.map(sanitizeNutritionFood);
+  const wholeDishRows = complete ? foods.flatMap((food, i) => isVddWholeDish(food) ? [FIRST + i] : []) : [];
   if (foods.length > WORKBOOK_LIMITS.catalogue) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Danh mục Excel vượt 6.000 thực phẩm.");
   const customs = [...new Map(rows.filter(item => item.row.customFood).map(item => [item.row.customFood!.id, item.row.customFood!])).values()];
   if (customs.length > WORKBOOK_LIMITS.customFoods) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Excel hỗ trợ tối đa 100 nguồn tự nhập.");
@@ -130,7 +131,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   if (complete) {
     // Bound live object/formula allocation before constructing ExcelJS cells on the 2 GB VPS.
     const dataCells = foods.reduce((sum, food) => sum + 10 + sourceFields.filter(field => food.nutrients[field.key] != null).length, 0);
-    const estimatedCells = dataCells + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2;
+    const estimatedCells = dataCells + wholeDishRows.length + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2;
     if (estimatedCells > 400_000) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Báo cáo đầy đủ vượt dung lượng xử lý an toàn. Chia thành các đợt ít ngày hoặc ít dòng hơn rồi xuất lại.");
   }
   const lastInput = FIRST + inputCapacity - 1;
@@ -154,6 +155,8 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   const sourceBuild = workbook.addWorksheet("_source", { state: "veryHidden" });
   const lists = workbook.addWorksheet("_lists", { state: "veryHidden" });
   ALL_NUTRIENT_FIELDS.forEach((field, index) => { lists.getCell(index + 1, 1).value = field.key; });
+  // Same row order as Du lieu: classification only, never another calculation source.
+  wholeDishRows.forEach(row => { lists.getCell(row, 6).value = true; });
   workbook.definedNames.add(`'_lists'!$A$1:$A$${ALL_NUTRIENT_FIELDS.length}`, "NutrientKeys");
   const nutrientHeaders = fields.map(field => `${field.label} (${field.unit})`);
   const persistenceLabel = menu.savedRecord ? `Bản nền đã lưu: ${menu.savedRecord.id} · phiên bản ${menu.savedRecord.revision}. Sửa Excel không tự đồng bộ. ` : "Chưa lưu hệ thống. ";
