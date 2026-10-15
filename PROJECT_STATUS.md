@@ -62,7 +62,8 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 
 - Người dùng tạo plugin OAuth nhưng chat không có get_workflow và chưa thấy trang cấp quyền. Đọc VPS xác nhận DCR đã có client ChatGPT, code/token đều 0; không sửa/xóa client đó. SDK MCP chính thức 1.32.1 tái hiện khởi tạo bị chặn invalid_token trước khi đọc tools.
 - Server 1.0.1 mở discovery/schema và get_workflow public có hạn mức; mười công cụ dữ liệu vẫn kiểm OAuth/owner. Thêm securitySchemes cấp tool + mirror metadata, lỗi auth có challenge trong JSON-RPC và HTTP 401/403, envelope modern giữ challenge. Plugin manifest khai báo mixed/DCR; hướng dẫn bổ sung Refresh, kiểm 11 tool, cấp quyền khi dùng dữ liệu.
-- Local HTTP fixture 167 checks, core/protocol 67, Prisma generate/TypeScript/lint file sửa/diff check đạt. Nghiệm thu SDK/HTTPS sau triển khai và tài khoản ChatGPT thật còn phải ghi tiếp; không coi đã tạo plugin là đã dùng được công cụ.
+- Local HTTP fixture 167 checks, core/protocol 67, Prisma generate/TypeScript/lint file sửa/diff check đạt. App `fca8747` đã build Linux/TypeScript và healthy trên VPS. SDK chính thức 1.32.1 kết nối, đọc 11 tools và gọi get_workflow anonymous đạt; HTTPS thêm 68 checks: mười tool dữ liệu từ chối thiếu token, challenge đúng, token sai/origin lạ vẫn chặn.
+- Hướng dẫn Refresh/cấp quyền hiện trên browser thật, 1280 px/document 1265 px không tràn ngang; ảnh ignore `evidence/nutrition-chat/vps-plugin-discovery-guide.jpg`. Cần người dùng Refresh và thử lại plugin thật; chưa xác nhận liên kết OAuth hoặc chat tính/xuất thành công. Không tạo grant giả để tăng lượt; client người dùng được giữ nguyên.
 
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script

@@ -23,7 +23,7 @@
 
 | Công cụ | Quyền | Vai trò |
 | --- | --- | --- |
-| `get_workflow` | `nutrition:read` | Quy trình, giới hạn, schema đầu vào. |
+| `get_workflow` | Public qua MCP; `nutrition:read` qua REST | Quy trình, giới hạn, schema đầu vào. |
 | `search_foods`, `get_food` | `nutrition:read` | Food ID, nguồn và dữ liệu trên cơ sở 100 g/ml. |
 | `search_dishes`, `get_dish` | `nutrition:read` | Công thức gốc và liên kết nguyên liệu; định lượng nguồn không mặc định bằng một suất. |
 | `prepare_menu` | `nutrition:calculate` | Chuẩn hóa đầu vào, preview, token xác nhận 600 giây. |
