@@ -5,7 +5,7 @@
 - Nhánh triển khai: `codex/nutrition-chat-api`, PR #4; chưa merge main. Trạng thái/kiểm chứng hiện tại ở `docs/nutrition-chat/verification.md`, không suy trạng thái VPS từ các snapshot cũ bên dưới.
 - Excel có công thức, đủ chất/nguồn và link thực phẩm/bản lưu đã kiểm VPS riêng tại `docs/nutrition-chat/saved-menu-links-2026-10-15.md`.
 - Người dùng yêu cầu ba mục tài khoản và chọn thêm/sửa/lưu độc lập thực phẩm/món để dùng nhiều lần. Code mới tái dùng Ration/engine; thêm PersonalFood/PersonalDish cho phần thư viện chưa có, không dùng FoodSubmission hoặc sửa kho Food/Dish. Chi tiết ở `docs/nutrition-chat/personal-library-2026-10-15.md`.
-- Migration `20261015140000_personal_nutrition_library` mới chỉ thử DB fixture riêng; chưa áp migration/deploy phần thư viện lên VPS. Theo quy trình, migration sau merge bằng image migrate no-cache; không reset/seed hoặc xóa bảng để rollback.
+- Chủ dự án đã yêu cầu trực tiếp lên VPS: app **46f2659** healthy, migration thư viện đã áp bằng image migrate no-cache sau backup/restore thử; DB **25/25**. HTTPS69 + public17 và browser thật đạt; fixture đã dọn, canonical/cấu hình giữ nguyên. Vẫn nhánh riêng, chưa merge main. Biên bản: `docs/nutrition-chat/vps-personal-library-2026-10-15.md`.
 
 Đọc file này TRƯỚC khi làm bất cứ việc gì trong `D:\datanutrition\web`. Đây là
 bản tóm tắt để phiên chat mới (theo đúng khuyến nghị: chia nhỏ hội thoại, ghim
@@ -18,7 +18,7 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - App `151ec6b` healthy trên VPS, nhánh thử chưa merge main. Excel có link Food và link bản lưu theo tài khoản; web đăng nhập chọn lưu thêm khi xuất, có thể bỏ chọn; chat thêm cờ `saveToAccount` cần quyền write, export-only vẫn hoạt động khi không lưu. Retry cùng digest không tạo bản trùng. Tái dùng Ration/JSON/service/quota/builder, không migration/seed/Food/Dish write.
 - Tài khoản có lối mở danh sách; bản lưu đổi tên/ngày/lượng/suất, prepare/xem trước/chốt thành bản dùng lại. Nhập Excel thu gọn làm dự phòng cho sửa riêng offline; đăng nhập từ link quay lại đúng bản. Bản offline không tự đồng bộ. Metadata/thuốc riêng của report web chưa thêm vào snapshot Ration.
 - Hồi quy core67/report37/security89/OAuth261/storage82/HTTP187/workbook; native fixture23 + file thật19, native SaveAs/import200, HTTPS22 và UI thao tác100→200 g/198→396 kcal đạt. Đã dọn 4 Ration/2 phiên còn lại/2 user kiểm thử, source/cấu hình giữ nguyên, timer active, không OOM/swap. Chi tiết `docs/nutrition-chat/saved-menu-links-2026-10-15.md`.
-- Người dùng vừa chỉ ra còn thiếu bộ ba “Thực đơn của tôi / Thực phẩm của tôi / Món ăn của tôi”. Đang rà để gom cả Ration kiểu cũ và xác định thư viện riêng độc lập hay tổng hợp từ bản lưu; chưa tạo model/kho riêng hoặc giả rằng FoodSubmission là thư viện cá nhân.
+- Bộ ba “Thực đơn của tôi / Thực phẩm của tôi / Món ăn của tôi” đã bổ sung sau đợt này: gom Ration cũ/mới, thư viện độc lập theo yêu cầu đã chốt, chạy VPS46f2659. FoodSubmission vẫn chỉ là đề xuất kiểm duyệt, không phải thư viện cá nhân.
 
 ### Thống nhất báo cáo Excel web/hội thoại (15/10/2026)
 
