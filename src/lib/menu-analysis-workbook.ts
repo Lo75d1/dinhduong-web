@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { PassThrough } from "node:stream";
 import { ALL_NUTRIENT_FIELDS, SOURCE_ONLY_NUTRIENT_FIELDS } from "./nutrient-fields";
 
 type CellValue = string | number | Date | null | undefined;
@@ -71,6 +72,7 @@ const foodColumns: ColumnDefinition[] = [
 ];
 
 const existingFoodColumns = new Set(foodColumns.map(column => column.key));
+foodColumns.forEach(column => { column.header = column.header.replace("/100g", "/100 đơn vị"); });
 foodColumns.push(...[...ALL_NUTRIENT_FIELDS, ...SOURCE_ONLY_NUTRIENT_FIELDS].filter(field => !existingFoodColumns.has(field.key)).map(field => ({ header: field.label + " (" + field.unit + "/100 đơn vị)", key: field.key, width: 25, numFmt: "0.00" })));
 
 const dishColumns: ColumnDefinition[] = [
@@ -184,14 +186,13 @@ const dietCodeColumns: ColumnDefinition[] = [
   { header: "Ghi chú", key: "note", width: 48 },
 ];
 
-function addDataSheet(workbook: ExcelJS.Workbook, name: string, columns: ColumnDefinition[], rows: Record<string, CellValue>[]) {
-  const sheet = workbook.addWorksheet(name, { views: [{ state: "frozen", ySplit: 1 }] });
+function addDataSheet(workbook: ExcelJS.Workbook, name: string, columns: ColumnDefinition[], rows: Record<string, CellValue>[], streaming = false) {
+  const sheet = workbook.addWorksheet(name, { views: [{ state: "normal", showGridLines: false }] });
   sheet.properties.defaultRowHeight = 19;
   sheet.columns = columns.map((column) => ({ ...column }));
-  rows.forEach((row) => sheet.addRow(row));
 
   const header = sheet.getRow(1);
-  header.height = 32;
+  header.height = 48;
   header.font = { bold: true, color: { argb: COLORS.white }, size: 11 };
   header.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.green } };
   header.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
@@ -203,12 +204,30 @@ function addDataSheet(workbook: ExcelJS.Workbook, name: string, columns: ColumnD
     excelColumn.width = column.width;
     if (column.numFmt) excelColumn.numFmt = column.numFmt;
   });
+  if (streaming) {
+    header.font = { name: "Times New Roman", size: 12, bold: true, color: { argb: "000000" } };
+    header.fill = { type: "pattern", pattern: "none" };
+    header.border = { bottom: { style: "thin", color: { argb: "999999" } } };
+    header.commit();
+  }
+  rows.forEach(record => {
+    const row = sheet.addRow(record);
+    if (!streaming) return;
+    let lines = 1;
+    row.eachCell((cell, i) => {
+      cell.font = { name: "Times New Roman", size: 12, color: { argb: "000000" } };
+      cell.alignment = { vertical: "top", wrapText: true };
+      cell.border = { bottom: { style: "hair", color: { argb: "999999" } } };
+      if (typeof cell.value === "string") lines = Math.max(lines, Math.ceil(cell.value.length / Math.max(10, columns[i - 1].width - 2)));
+    });
+    row.height = Math.max(19, Math.min(409, lines * 15));
+    row.commit();
+  });
   return sheet;
 }
 
 function addGuideSheet(workbook: ExcelJS.Workbook, data: MenuAnalysisData) {
-  const sheet = workbook.addWorksheet("Huong_dan");
-  sheet.views = [{ showGridLines: false }];
+  const sheet = workbook.addWorksheet("Huong_dan", { views: [{ state: "normal", showGridLines: false }] });
   sheet.getColumn("A").width = 28;
   sheet.getColumn("B").width = 82;
   sheet.mergeCells("A1:B1");
@@ -249,11 +268,11 @@ function addGuideSheet(workbook: ExcelJS.Workbook, data: MenuAnalysisData) {
     sheet.getCell(9, column).font = { bold: true, color: { argb: COLORS.white } };
     sheet.getCell(9, column).fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.green } };
   }
+  return sheet;
 }
 
 function addMenuTemplate(workbook: ExcelJS.Workbook, foodRowCount: number) {
-  const sheet = workbook.addWorksheet("Khung_thuc_don", { views: [{ state: "frozen", ySplit: 2 }] });
-  sheet.views = [{ state: "frozen", ySplit: 2, showGridLines: false }];
+  const sheet = workbook.addWorksheet("Khung_thuc_don", { views: [{ state: "normal", showGridLines: false }] });
   const headers = [
     "Ngày", "Bữa ăn", "Tên món", "Mã thực phẩm", "Tên thực phẩm", "Khối lượng ăn được (g)",
     "Năng lượng (kcal)", "Protein (g)", "Lipid (g)", "Glucid (g)", "Chất xơ (g)", "Natri (mg)", "Ghi chú",
@@ -275,7 +294,9 @@ function addMenuTemplate(workbook: ExcelJS.Workbook, foodRowCount: number) {
     sheet.getCell(`E${row}`).value = { formula: `IFERROR(VLOOKUP(D${row},'Thuc_pham'!$A$2:$AL$${lastFoodRow},2,FALSE),"")` };
     const lookupColumns = { G: 9, H: 10, I: 12, J: 13, K: 14, L: 21 };
     Object.entries(lookupColumns).forEach(([target, sourceIndex]) => {
-      sheet.getCell(`${target}${row}`).value = { formula: `IFERROR(VLOOKUP(D${row},'Thuc_pham'!$A$2:$AL$${lastFoodRow},${sourceIndex},FALSE)*F${row}/100,0)` };
+      const sourceColumn = String.fromCharCode(64 + sourceIndex);
+      const source = `INDEX('Thuc_pham'!$${sourceColumn}$2:$${sourceColumn}$${lastFoodRow},MATCH(D${row},'Thuc_pham'!$A$2:$A$${lastFoodRow},0))`;
+      sheet.getCell(`${target}${row}`).value = { formula: `IF(OR(D${row}="",NOT(ISNUMBER(F${row})),F${row}<0),"",IFERROR(IF(VLOOKUP(D${row},'Thuc_pham'!$A$2:$AL$${lastFoodRow},7,FALSE)<>"g","",IF(F${row}=0,0,IF(COUNT(${source})=0,"",${source}*F${row}/100))),""))` };
       sheet.getCell(`${target}${row}`).numFmt = "0.00";
     });
     sheet.getCell(`A${row}`).numFmt = "yyyy-mm-dd";
@@ -303,38 +324,47 @@ function addMenuTemplate(workbook: ExcelJS.Workbook, foodRowCount: number) {
 
   const widths = [13, 14, 24, 26, 32, 24, 20, 16, 15, 16, 16, 16, 32];
   widths.forEach((width, index) => { sheet.getColumn(index + 1).width = width; });
+  return sheet;
 }
 
 export async function buildMenuAnalysisWorkbook(data: MenuAnalysisData): Promise<Uint8Array> {
-  const workbook = new ExcelJS.Workbook();
+  // The full catalogue includes 41k ingredient records. Commit each data row so
+  // its cell objects are released instead of retaining the complete workbook.
+  const streaming = data.foods.length + data.ingredients.length + data.dishes.length > 1000;
+  const outputStream = new PassThrough();
+  const chunks: Buffer[] = [];
+  if (streaming) outputStream.on("data", chunk => chunks.push(Buffer.from(chunk)));
+  const writer = streaming ? new ExcelJS.stream.xlsx.WorkbookWriter({ stream: outputStream, useStyles: true, useSharedStrings: false, zip: { zlib: { level: 6 } } }) : null;
+  const workbook = writer ? writer as unknown as ExcelJS.Workbook : new ExcelJS.Workbook();
   workbook.creator = "Dinh dưỡng 2598";
   workbook.company = "Dinh dưỡng 2598";
   workbook.subject = "Bộ dữ liệu phân tích thực đơn";
   workbook.title = "Bộ dữ liệu phân tích thực đơn — Dinh dưỡng 2598";
   workbook.created = data.generatedAt ?? new Date();
   workbook.modified = data.generatedAt ?? new Date();
-  workbook.calcProperties.fullCalcOnLoad = true;
+  if (workbook.calcProperties) workbook.calcProperties.fullCalcOnLoad = true;
 
-  addGuideSheet(workbook, data);
-  addDataSheet(workbook, "Thuc_pham", foodColumns, data.foods);
-  const dishSheet = addDataSheet(workbook, "Mon_an", dishColumns, data.dishes);
-  dishSheet.getColumn("K").alignment = { vertical: "top", wrapText: true };
-  addDataSheet(workbook, "Nguyen_lieu_mon", ingredientColumns, data.ingredients);
-  addDataSheet(workbook, "Nhu_cau", recommendationColumns, data.recommendations);
-  const dietSheet = addDataSheet(workbook, "Ma_che_do_an", dietCodeColumns, data.dietCodes);
-  dietSheet.getColumn("U").alignment = { vertical: "top", wrapText: true };
-  addMenuTemplate(workbook, data.foods.length);
+  const guide = addGuideSheet(workbook, data);
+  const foods = addDataSheet(workbook, "Thuc_pham", foodColumns, data.foods, streaming);
+  const dishSheet = addDataSheet(workbook, "Mon_an", dishColumns, data.dishes, streaming);
+  if (!streaming) dishSheet.getColumn("K").alignment = { vertical: "top", wrapText: true };
+  const ingredients = addDataSheet(workbook, "Nguyen_lieu_mon", ingredientColumns, data.ingredients, streaming);
+  const recommendations = addDataSheet(workbook, "Nhu_cau", recommendationColumns, data.recommendations, streaming);
+  const dietSheet = addDataSheet(workbook, "Ma_che_do_an", dietCodeColumns, data.dietCodes, streaming);
+  if (!streaming) dietSheet.getColumn("U").alignment = { vertical: "top", wrapText: true };
+  const template = addMenuTemplate(workbook, data.foods.length);
 
-  for (const sheet of workbook.worksheets) {
-    sheet.views = [{ state: "normal", showGridLines: false }];
+  for (const sheet of [guide, foods, dishSheet, ingredients, recommendations, dietSheet, template]) {
+    if (!streaming) sheet.views = [{ state: "normal", showGridLines: false }];
     sheet.eachRow(row => row.eachCell(cell => {
       cell.font = { name: "Times New Roman", size: cell.font?.size && cell.font.size > 12 ? 15 : 12, color: { argb: "000000" }, ...(cell.font?.bold ? { bold: true } : {}) };
       cell.fill = { type: "pattern", pattern: "none" };
       cell.border = { bottom: { style: "hair", color: { argb: "999999" } } };
     }));
-    sheet.pageSetup = { paperSize: 9, orientation: "landscape", fitToPage: false, scale: 85, margins: { left: 0.55, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 }, printTitlesRow: sheet.name === "Khung_thuc_don" ? "1:2" : "1:1" };
+    Object.assign(sheet.pageSetup, { paperSize: 9, orientation: "landscape", fitToPage: false, scale: 85, margins: { left: 0.55, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 }, printTitlesRow: sheet.name === "Khung_thuc_don" ? "1:2" : "1:1" });
     sheet.headerFooter.oddFooter = "&CDinh dưỡng 2598&RTrang &P / &N";
   }
+  if (writer) { await writer.commit(); return new Uint8Array(Buffer.concat(chunks)); }
   const output = await workbook.xlsx.writeBuffer();
   return new Uint8Array(output as ArrayBuffer);
 }

@@ -2,6 +2,8 @@ import { requireSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { buildMenuAnalysisWorkbook } from "@/lib/menu-analysis-workbook";
 import { prisma } from "@/lib/prisma";
 import { ALL_NUTRIENT_FIELDS, SOURCE_ONLY_NUTRIENT_FIELDS } from "@/lib/nutrient-fields";
+import { withNutritionWorkbookSlot } from "@/lib/nutrition-chat/downloads";
+import { enforceNutritionRateLimit, NutritionSecurityError, nutritionErrorResponse } from "@/lib/nutrition-chat/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +12,8 @@ export async function GET() {
   try {
     const user = await requireSessionUser();
     if (user.role !== "ADMIN") return Response.json({ error: "Bạn không có quyền xuất bộ dữ liệu này." }, { status: 403 });
+    await enforceNutritionRateLimit(`admin-data-export:${user.id}`, { limit: 2, windowSeconds: 60 });
+    return await withNutritionWorkbookSlot(async () => {
 
     const [foods, dishes, recommendations, dietCodes] = await Promise.all([
       prisma.food.findMany({
@@ -84,7 +88,9 @@ export async function GET() {
         "Cache-Control": "no-store",
       },
     });
+    });
   } catch (error) {
+    if (error instanceof NutritionSecurityError) return nutritionErrorResponse(error);
     if (error instanceof Error && error.message === "UNAUTHORIZED") return unauthorizedResponse();
     console.error("menu-analysis-export", error);
     return Response.json({ error: "Chưa thể tạo bộ dữ liệu phân tích thực đơn." }, { status: 500 });
