@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NutritionDataSources from "@/components/NutritionDataSources";
 import { prisma } from "@/lib/prisma";
 import { searchTokens } from "@/lib/search";
 import type { Prisma } from "@/generated/prisma/client";
@@ -66,6 +67,8 @@ export default async function ThucPhamPage({
         <h1 className="mt-1 text-3xl font-semibold">Tra cứu thực phẩm</h1>
         <p className="mt-2 max-w-4xl text-neutral-900">Giá trị dinh dưỡng đều tính trên 100 g phần ăn được. Danh mục này bao gồm cả các bản ghi <strong>món ăn</strong> đã có số liệu dinh dưỡng.</p>
       </section>
+
+      <NutritionDataSources />
 
       <section className="grid gap-px overflow-hidden rounded-lg border-2 border-[#123c36] bg-[#123c36] sm:grid-cols-3">
         <div className="bg-white p-4"><p className="text-xs font-semibold tracking-wide text-[#123c36]">KẾT QUẢ TRA CỨU</p><p className="mt-1 text-2xl font-semibold">{total.toLocaleString("vi-VN")}</p><p className="text-sm text-neutral-900">bản ghi phù hợp</p></div>

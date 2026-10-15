@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NutritionRecordSource } from "@/components/NutritionDataSources";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
@@ -90,6 +91,7 @@ export default async function MonAnDetailPage({
         {dish.categoryRaw && (
           <p className="mt-2 text-xs text-neutral-400">Nhãn gốc RNI: {dish.categoryRaw}</p>
         )}
+        <NutritionRecordSource source={dish.source} sourceCode={dish.sourceCode} />
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-white p-4">

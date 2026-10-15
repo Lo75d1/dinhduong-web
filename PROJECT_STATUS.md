@@ -2,6 +2,7 @@
 
 ## Bổ sung Nutrition Chat và dữ liệu cá nhân — 15/10/2026
 
+- Bổ sung theo yêu cầu link nguồn dinh dưỡng VDD/RNI tại quản trị dữ liệu, danh mục/chi tiết thực phẩm-món ăn và tài liệu tham khảo. Link là trang tra cứu chung; VDD tách thực phẩm/món ăn, RNI ghi rõ cần đăng nhập; giữ mã nguồn, không sửa Food/Dish. Theo dõi kiểm chứng tại `docs/nutrition-chat/data-sources-2026-10-15.md`.
 - Nhánh triển khai: `codex/nutrition-chat-api`, PR #4; chưa merge main. Trạng thái/kiểm chứng hiện tại ở `docs/nutrition-chat/verification.md`, không suy trạng thái VPS từ các snapshot cũ bên dưới.
 - Excel có công thức, đủ chất/nguồn và link thực phẩm/bản lưu đã kiểm VPS riêng tại `docs/nutrition-chat/saved-menu-links-2026-10-15.md`.
 - Người dùng yêu cầu ba mục tài khoản và chọn thêm/sửa/lưu độc lập thực phẩm/món để dùng nhiều lần. Code mới tái dùng Ration/engine; thêm PersonalFood/PersonalDish cho phần thư viện chưa có, không dùng FoodSubmission hoặc sửa kho Food/Dish. Chi tiết ở `docs/nutrition-chat/personal-library-2026-10-15.md`.

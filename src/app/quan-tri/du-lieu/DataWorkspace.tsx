@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import NutritionDataSources from "@/components/NutritionDataSources";
 import BulkClassifyEditor from "./BulkClassifyEditor";
 import DataManager from "./DataManager";
 import ImageSourceSync from "./ImageSourceSync";
@@ -26,6 +27,8 @@ export default function DataWorkspace() {
           <div className="border-b border-[#d7e3de] px-4 py-3"><b className="text-violet-800">Long Châu</b><span className="ml-1 text-[#55736a]">thuốc / TPBS tham khảo</span></div>
         </div>
       </section>
+
+      <NutritionDataSources />
 
       <section className="rounded-2xl border-2 border-[#0b6957] bg-white p-4 shadow-[0_8px_20px_rgba(18,60,54,.04)] sm:p-5">
         <p className="text-xs font-bold tracking-[.16em] text-[#0f5a4e]">XUẤT DỮ LIỆU OFFLINE</p>
