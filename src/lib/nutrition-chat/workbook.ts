@@ -478,7 +478,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     addNutritionReportSheets(workbook, menu, allFoods, options, { inputCapacity, sourceFields: sourceFields.length });
     const plain = { name: "Times New Roman", size: 12, color: { argb: "000000" } };
     for (const sheet of [analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data]) {
-      sheet.views = [{ state: "normal", showGridLines: false, zoomScale: 85 }];
+      sheet.views = [{ state: "normal", showGridLines: sheet === input, zoomScale: sheet === input ? 100 : 85 }];
       sheet.properties.tabColor = { argb: "FFFFFF" };
       sheet.eachRow(row => row.eachCell(cell => {
         cell.font = { ...plain, ...(cell.font?.bold ? { bold: true } : {}) };

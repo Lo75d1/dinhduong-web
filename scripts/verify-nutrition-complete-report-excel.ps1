@@ -1,4 +1,4 @@
-﻿param([string]$EvidenceDirectory = (Join-Path $PSScriptRoot "../evidence/nutrition-chat"))
+﻿param([string]$EvidenceDirectory = (Join-Path $PSScriptRoot "../evidence/nutrition-chat"), [switch]$PlanOnlyExport)
 $ErrorActionPreference = 'Stop'
 $taskEvidence = [IO.Path]::GetFullPath($EvidenceDirectory)
 $taskPath = Join-Path $taskEvidence 'complete-report-test.xlsx'
@@ -15,6 +15,7 @@ try {
   $taskExcel.CalculateFullRebuild()
   $taskReport = $taskBook.Worksheets.Item('Bao cao')
   $taskInput = $taskBook.Worksheets.Item('Nhap khau phan')
+  $taskPlan = $taskBook.Worksheets.Item('Thuc don')
   Check-Number $taskInput.Range('Q7').Value2 241 'catalogue index exceeds custom source capacity'
   $taskEnergyRow = 0; $taskDRow = 0; $taskKRow = 0
   for($i=7;$i -le $taskReport.UsedRange.Rows.Count;$i++) {
@@ -29,15 +30,33 @@ try {
   Check-Number $taskReport.Cells.Item($taskKRow,3).Value2 0 'real zero retained'
   if($taskReport.Cells.Item($taskDRow,6).Value2 -ne '—') {throw 'Missing vitamin D target falsely assessed'}
   $taskChecks.Add(@{check='no target remains dash';pass=$true})
+  if($taskPlan.Range('A6').Value2 -ne 'Ngày' -or $taskPlan.Range('B6').Value2 -ne 'Bữa') {throw 'Plan day/meal not separated'}
+  if($taskPlan.Range('A7').Value2 -ne 'Ngày 1' -or $taskPlan.Range('B7').Value2 -ne 'Trưa') {throw 'Plan day/meal data shifted'}
+  Check-Number $taskPlan.Range('G7').Font.Size 15 'plan uses 15 pt text'
+  Check-Number $taskPlan.Range('G7').Value2 260 'plan energy follows source data'
+  Check-Number $taskPlan.Range('J8').Value2 0 'plan real zero retained'
+  if($taskPlan.Range('G7').WrapText -or $taskPlan.Range('G7').ShrinkToFit) {throw 'Plan numeric text wraps or shrinks'}
+  if(-not $taskPlan.Range('E7').Locked -or $taskInput.Range('G7').Locked) {throw 'Plan/input editing ownership changed'}
+  $taskPlan.Activate()
+  if(-not $taskBook.Windows.Item(1).DisplayGridlines) {throw 'Plan gridlines hidden'}
+  $taskChecks.Add(@{check='plan distinct columns, normal grid and input ownership';pass=$true})
   $taskInput.Range('G7').Value2 = 300; $taskInput.Range('I7').Value2 = 2
   $taskExcel.CalculateFullRebuild()
   Check-Number $taskReport.Cells.Item($taskEnergyRow,3).Value2 1180 'report recalculates quantity and servings'
   Check-Number $taskReport.Cells.Item($taskDRow,3).Value2 18 'vitamin D recalculates quantity and servings'
-  Check-Number $taskBook.Worksheets.Item('Thuc don').Range('D7').Value2 300 'plan quantity linked'
-  Check-Number $taskBook.Worksheets.Item('Thuc don').Range('F7').Value2 2 'plan servings linked'
-  Check-Number $taskBook.Worksheets.Item('Thuc don').Range('G7').Value2 600 'plan edible amount linked'
+  Check-Number $taskPlan.Range('E7').Value2 600 'plan total quantity includes servings'
+  Check-Number $taskPlan.Range('G7').Value2 780 'plan energy includes same servings'
+  Check-Number $taskPlan.Range('H7').Value2 15 'plan protein recalculates'
+  Check-Number $taskPlan.Range('J7').Value2 168 'plan carbohydrate recalculates'
   if($taskReport.Range('A5').Value2 -notlike 'Đã sửa Excel*') {throw 'Stale report notice failed'}
   $taskChecks.Add(@{check='dirty notice refreshes';pass=$true})
+  $taskInput.Range('G7').Value2 = 0
+  $taskExcel.CalculateFullRebuild()
+  Check-Number $taskPlan.Range('G7').Value2 0 'plan zero quantity means zero energy'
+  $taskInput.Range('G7').ClearContents()
+  $taskExcel.CalculateFullRebuild()
+  if($taskPlan.Range('E7').Value2 -ne '—' -or $taskPlan.Range('G7').Value2 -ne '—') {throw 'Missing plan quantity became zero'}
+  $taskChecks.Add(@{check='missing quantity stays unavailable';pass=$true})
   $taskInput.Range('G7').Value2 = 200; $taskInput.Range('I7').Value2 = 1
   $taskInput.Range('E7').Value2 = 'test-no-waste'
   $taskExcel.CalculateFullRebuild()
@@ -46,6 +65,12 @@ try {
   Check-Number $taskShopping.Range('E7').Value2 200 'shopping follows food ID outside original selection'
   Check-Number $taskShopping.Range('H7').Value2 1 'unknown waste remains flagged in shopping'
   $taskInput.Range('E7').Value2 = 'test-rice-a'
+  $taskInput.Range('G9').Value2 = 400
+  $taskExcel.CalculateFullRebuild()
+  Check-Number $taskPlan.Range('E9').Value2 400 'plan ml quantity retained'
+  Check-Number $taskPlan.Range('G9').Value2 200 'plan portion source recalculates'
+  if($taskPlan.Range('F9').Value2 -ne 'ml') {throw 'Plan ml silently changed to g'}
+  $taskInput.Range('G9').Value2 = 200
   $taskExcel.CalculateFullRebuild()
   Check-Number $taskBook.Worksheets.Item('Doi chieu').Range('F7').Value2 0.165 'complete comparison native ratio'
   if($taskBook.Worksheets.Item('Doi chieu').Range('A7').Value2 -ne 'Năng lượng') {throw 'Raw nutrient key shown instead of label'}
@@ -56,7 +81,8 @@ try {
     }
   }
   $taskChecks.Add(@{check='all sheets native formula error scan';pass=$true})
-  foreach($name in @('Bao cao','Thuc don','Thanh phan day du','Dinh duong theo ngay','Nguon doi soat','Nhom thuc pham')) {
+  $taskPrintSheets = if($PlanOnlyExport){@('Thuc don')}else{@('Bao cao','Thuc don','Thanh phan day du','Dinh duong theo ngay','Nguon doi soat','Nhom thuc pham')}
+  foreach($name in $taskPrintSheets) {
     $taskSheet = $taskBook.Worksheets.Item($name)
     if($taskSheet.PageSetup.PaperSize -ne 9) {throw "Not A4: $name"}
     $taskSheet.ExportAsFixedFormat(0,(Join-Path $taskEvidence ($name.Replace(' ','-')+'-complete.pdf')),0,$true,$false)

@@ -59,6 +59,23 @@ function context(sheet: ExcelJS.Worksheet, row: number, text: string) {
   sheet.getRow(row).height = 30;
 }
 
+// Fit whole words at 15 pt; numeric columns never wrap into separate digits.
+function planTextLines(text: string, width: number) {
+  const capacity = Math.max(1, width * 1.05);
+  let lines = 0;
+  for (const paragraph of text.split("\n")) {
+    let used = 0;
+    lines++;
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      const size = Array.from(word).length;
+      if (used && used + size + 1 > capacity) { lines++; used = 0; }
+      if (size > capacity) { lines += Math.ceil(size / capacity) - 1; used = size % capacity; }
+      else used += (used ? 1 : 0) + size;
+    }
+  }
+  return lines;
+}
+
 export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: ResolvedMenu, catalogue: NutritionFood[], options: NutritionWorkbookOptions, build: { inputCapacity: number; sourceFields: number }) {
   const report = workbook.getWorksheet("Thanh phan day du")!;
   const summary = workbook.getWorksheet("Bao cao")!;
@@ -169,26 +186,59 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   }
   summary.pageSetup.printArea = `A1:H${mainRow - 1}`;
 
-  reportSheet(plan, "CHI TIẾT THỰC ĐƠN VÀ KHẨU PHẦN", ["Ngày / bữa", "Món ăn", "Thực phẩm", "Lượng / suất", "Đơn vị", "Số suất", "Ăn được (g)", "Nguồn / ghi chú"], [22, 29, 37, 14, 10, 10, 16, 40]);
+  const planHeaders = ["Ngày", "Bữa", "Món ăn", "Thực phẩm", "Định lượng", "Đơn vị", "Năng lượng\n(kcal)", "Đạm\n(g)", "Béo\n(g)", "Bột đường\n(g)", "Nguồn / ghi chú"];
+  const planWidths = [10, 10, 25, 34, 12, 8, 17, 11, 11, 13, 34];
+  reportSheet(plan, "THỰC ĐƠN VÀ THÀNH PHẦN DINH DƯỠNG", planHeaders, planWidths);
+  plan.views = [{ state: "normal", showGridLines: true, zoomScale: 100 }];
+  plan.properties.defaultRowHeight = 28;
   context(plan, 3, menu.title);
-  context(plan, 4, "Sửa lượng, số suất hoặc mã thực phẩm tại Nhap khau phan. Bảng này tự cập nhật theo dữ liệu nhập.");
-  context(plan, 5, "Định lượng công thức gốc và lượng thực dùng là hai thông tin riêng. Quy đổi thiếu nguồn được ghi —.");
-  calc(plan.getCell("A5"), `IF(${structureNotice},"Đã thay đổi số dòng/ngày; cần xuất lại để bảng chi tiết bao phủ đủ đầu vào mới.","Định lượng công thức gốc và lượng thực dùng là hai thông tin riêng. Quy đổi thiếu nguồn được ghi —.")`, "Định lượng công thức gốc và lượng thực dùng là hai thông tin riêng. Quy đổi thiếu nguồn được ghi —.");
+  context(plan, 4, "Định lượng = lượng nhập × số suất. Chỉnh tại Nhap khau phan; dinh dưỡng tự cập nhật từ dữ liệu.");
+  const planNotice = "Món VDD loại MA có số liệu tổng hợp của cả món, không có danh sách nguyên liệu. Dấu — là thiếu dữ liệu.";
+  context(plan, 5, planNotice);
+  calc(plan.getCell("A5"), `IF(${structureNotice},"Đã thay đổi số dòng/ngày; cần xuất lại để bảng thực đơn bao phủ đủ đầu vào mới.","${planNotice}")`, planNotice);
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
   rows.forEach(({ day, row }, index) => {
     const targetRow = FIRST + index;
     const inputRow = FIRST + index;
     const ref = (c: string) => `'Nhap khau phan'!${c}${inputRow}`;
     const dayRef = `INDEX('Ngay va muc tieu'!$C$7:$C$96,${ref("B")})`;
-    calc(plan.getCell(targetRow, 1), `${dayRef}&" / "&${ref("C")}`, `${day.label} / ${row.meal}`);
-    calc(plan.getCell(targetRow, 2), ref("D"), row.dish);
-    calc(plan.getCell(targetRow, 3), `IF(${ref("O")}<>"",${ref("O")},${ref("S")})`, row.actualFoodName || row.food.name);
-    for (const [c, inputColumn, value] of [[4, "G", row.quantity], [5, "H", row.unit], [6, "I", row.servings], [7, "X", row.edibleGrams]] as const) calc(plan.getCell(targetRow, c), `IF(ISNUMBER(${ref(inputColumn)}),${ref(inputColumn)},${inputColumn === "H" ? ref(inputColumn) : '"—"'})`, value);
-    calc(plan.getCell(targetRow, 8), `${ref("T")}&IF(${ref("Z")}="","","; "&${ref("Z")})&IF(${ref("AB")}="","","; "&${ref("AB")})`, [row.food.source.label, ...row.warnings, row.note].filter(Boolean).join("; "));
-    plan.getRow(targetRow).height = Math.max(36, Math.ceil(Math.max(row.food.name.length / 35, row.dish.length / 27, (row.food.source.label.length + (row.note?.length ?? 0)) / 38)) * 17);
+    calc(plan.getCell(targetRow, 1), dayRef, day.label);
+    calc(plan.getCell(targetRow, 2), ref("C"), row.meal);
+    calc(plan.getCell(targetRow, 3), ref("D"), row.dish);
+    calc(plan.getCell(targetRow, 4), `IF(${ref("O")}<>"",${ref("O")},${ref("S")})`, row.actualFoodName || row.food.name);
+    calc(plan.getCell(targetRow, 5), `IF(AND(ISNUMBER(${ref("G")}),ISNUMBER(${ref("I")})),${ref("G")}*${ref("I")},"—")`, row.quantity === null ? "—" : row.quantity * row.servings);
+    calc(plan.getCell(targetRow, 6), ref("H"), row.unit);
+    for (const [i, key] of ["energyKcal", "proteinG", "lipidG", "glucidG"].entries()) {
+      const valueRef = ref(column(29 + menu.fields.findIndex(field => field.key === key)));
+      const value = row.referenceAmount === 0 ? 0 : row.referenceAmount !== null && row.food.nutrients[key] != null ? row.referenceAmount * row.food.nutrients[key]! / 100 : "—";
+      calc(plan.getCell(targetRow, 7 + i), `IF(ISNUMBER(${valueRef}),${valueRef},"—")`, value);
+    }
+    const basis = row.basis === "raw" ? "lượng sống" : row.basis === "cooked" ? "lượng chín" : "";
+    const recipeNote = row.recipeSource.kind === "ai" ? "; công thức ước tính" : "";
+    const referenceNote = row.actualFoodName ? "dùng thực phẩm tham chiếu" : "";
+    const missingNote = row.quantity === null ? "Thiếu định lượng" : row.referenceAmount === null ? "Thiếu dữ liệu quy đổi" : "";
+    calc(plan.getCell(targetRow, 11), `${ref("T")}&"${recipeNote}"&IF(${ref("J")}="raw","; lượng sống",IF(${ref("J")}="cooked","; lượng chín",""))&IF(${ref("O")}="","","; dùng thực phẩm tham chiếu")&IF(${ref("Z")}="","","; "&${ref("Z")})&IF(${ref("AB")}="","","; "&${ref("AB")})`, [row.food.source.label + recipeNote, basis, referenceNote, missingNote, row.note].filter(Boolean).join("; "));
   });
   body(plan, FIRST + rows.length - 1);
-  rows.forEach(({ row }, i) => { plan.getRow(FIRST + i).height = Math.max(36, Math.ceil(Math.max(row.food.name.length / 35, row.dish.length / 27, (row.food.source.label.length + (row.note?.length ?? 0)) / 38)) * 17); });
+  for (let r = 1; r <= plan.rowCount; r++) {
+    plan.getRow(r).eachCell(cell => { cell.font = { ...font, size: 15, ...(cell.font?.bold ? { bold: true } : {}) }; });
+  }
+  plan.getRow(1).height = 24; plan.getRow(2).height = 30;
+  plan.getRow(6).height = 48;
+  rows.forEach(({ day, row }, i) => {
+    const r = FIRST + i, line = plan.getRow(r);
+    const texts = [day.label, row.meal, row.dish, row.actualFoodName || row.food.name, "", row.unit, "", "", "", "", String(plan.getCell(r, 11).result ?? "")];
+    const minimumLines = row.quantity === null || row.referenceAmount === null ? 2 : 1;
+    line.height = Math.max(30, Math.max(minimumLines, ...texts.map((text, c) => planTextLines(text, planWidths[c]))) * 19 + 8);
+    const previous = rows[i - 1];
+    line.eachCell((cell, c) => {
+      const numeric = c === 5 || c >= 7 && c <= 10;
+      cell.alignment = { vertical: "middle", horizontal: numeric ? "right" : "left", wrapText: !numeric, shrinkToFit: false };
+      if (numeric) cell.numFmt = "#,##0.0;(#,##0.0);0";
+      if (!previous || previous.day.id !== day.id) cell.border = { ...border, top: { style: "medium", color: { argb: "000000" } } };
+      else if (previous.row.meal !== row.meal) cell.border = { ...border, top: { style: "thin", color: { argb: "000000" } } };
+    });
+  });
   const exchanges = workbook.addWorksheet("Nhom thuc pham");
   reportSheet(exchanges, "NHÓM THỰC PHẨM VÀ ĐƠN VỊ ĂN", ["Nhóm thực phẩm", "Số dòng", "Ăn được (g)", "Năng lượng (kcal)", "Đạm (g)", "Béo (g)", "Bột đường (g)", "Đơn vị ăn", "Ghi chú quy đổi"], [34, 10, 16, 19, 14, 14, 17, 15, 42]);
   context(exchanges, 3, "Nhóm thực phẩm theo phân loại đang có trong kho; có nhóm được suy luận theo tên, cần kiểm tra khi sử dụng.");
