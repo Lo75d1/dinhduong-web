@@ -18,6 +18,7 @@
     "test:meal-photo": "tsx scripts/test-meal-photo.ts",
     "test:meal-labels": "tsx scripts/test-meal-labels.ts",
     "test:nutrition-chat": "node scripts/run-nutrition-chat-tests.mjs",
+    "test:nutrition-complete": "tsx scripts/test-nutrition-complete-report.ts",
     "test:accounts": "tsx scripts/test-account-management.ts",
     "package:nutrition-chat": "node scripts/package-nutrition-chat-plugin.mjs",
     "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts"

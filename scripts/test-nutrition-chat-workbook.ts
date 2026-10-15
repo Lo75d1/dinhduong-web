@@ -3,13 +3,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
-import { buildNutritionWorkbook, parseNutritionWorkbook } from "../src/lib/nutrition-chat/workbook";
+import { buildNutritionWorkbook as buildCompleteWorkbook, parseNutritionWorkbook } from "../src/lib/nutrition-chat/workbook";
 import { assertNutritionWorkbookExportBudget, inspectWorkbookArchive, NutritionWorkbookError, WORKBOOK_LIMITS } from "../src/lib/nutrition-chat/workbook-security";
 import { analyzeMenuPeriod } from "../src/app/tinh-khau-phan/multi-day-analysis";
 import { resolveMenu } from "../src/lib/nutrition-chat/core";
 import { ALL_NUTRIENT_FIELDS } from "../src/lib/nutrient-fields";
 import type { MenuInput, NutritionFood, ResolvedMenu, ResolvedRow } from "../src/lib/nutrition-chat/contracts";
 
+// Preserve the original v1 fixture to exercise backward-compatible imports.
+const buildNutritionWorkbook = (menu: ResolvedMenu, foods: NutritionFood[]) => buildCompleteWorkbook(menu, foods, { complete: false });
 const fields = [
   { key: "energyKcal", label: "Năng lượng", unit: "kcal" },
   { key: "proteinG", label: "Đạm", unit: "g" },

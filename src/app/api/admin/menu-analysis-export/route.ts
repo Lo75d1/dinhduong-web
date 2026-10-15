@@ -1,6 +1,7 @@
 import { requireSessionUser, unauthorizedResponse } from "@/lib/auth";
 import { buildMenuAnalysisWorkbook } from "@/lib/menu-analysis-workbook";
 import { prisma } from "@/lib/prisma";
+import { ALL_NUTRIENT_FIELDS, SOURCE_ONLY_NUTRIENT_FIELDS } from "@/lib/nutrient-fields";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ export async function GET() {
           vitARaeMcg: true, vitCMg: true, vitB1Mg: true, vitB2Mg: true, vitB3Mg: true, vitB6Mg: true, folateTotalMcg: true,
           vitB12Mcg: true, vitDMcg: true, vitEMg: true, vitKMcg: true, cholesterolMg: true, purinMg: true, epaC205G: true,
           dhaC226G: true, sugarsTotalG: true,
+          ...Object.fromEntries([...ALL_NUTRIENT_FIELDS, ...SOURCE_ONLY_NUTRIENT_FIELDS].map(field => [field.key, true])),
         },
       }),
       prisma.dish.findMany({

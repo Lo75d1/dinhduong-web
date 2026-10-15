@@ -1,10 +1,22 @@
 # Excel chỉnh được
 
+## Báo cáo đầy đủ dùng chung web và hội thoại (15/10/2026)
+
+- Nút Excel ở chế độ một ngày và nhiều ngày dùng cùng `buildNutritionWorkbook` với hội thoại. Tải `.xlsx` thật qua `/api/nutrition-report/export`; không còn dùng hai bản XML `.xls` khác nhau tại các nút này. Route chỉ đọc dữ liệu và tạo file, không lưu khẩu phần hoặc sửa Food/Dish.
+- `Bao cao`: tổng, trung bình ngày có nhập, mục tiêu, tỷ lệ, số dòng thiếu; nhóm đủ 160 trường thành phần có thể tính. `Thuc don`: tên món, nguyên liệu, định lượng, số suất, nguồn. Nhiều ngày có `Dinh duong theo ngay` với từng chỉ tiêu/ngày. `Nguon doi soat` giữ nguồn và dấu vết công thức/thay nguyên liệu. Nhóm thực phẩm/đơn vị ăn, đi chợ và thuốc/TPBS một ngày vẫn được giữ.
+- Mẫu in: Times New Roman, chữ đen/nền trắng, bảng đơn giản, A4 và lặp tiêu đề. Bỏ khung đóng băng; dòng/ngày dự phòng được nhóm hoặc ẩn. Dòng thiếu nguồn ghi `—` và số dòng thiếu; không biến thành 0. Không có mục tiêu thì nói rõ chưa đặt mốc, không để một bảng đối chiếu trắng.
+- Đối chiếu schema: 162 trường thành phần dinh dưỡng dạng Float; 160 trường có metadata/đơn vị để tính, hai trường `vitAMgVdd` và `rniUnknownFattyAcidG` chỉ đối soát nguồn. Tỷ lệ thải bỏ là trường quy đổi riêng. Không gộp Đồng mg VDD với Đồng µg RNI; không tự coi Vitamin A RAE/RE/RNI hoặc các dạng folate là tương đương.
+- `fields` trong API vẫn giới hạn 40 chất để giữ gọn hội thoại. Excel tự bổ sung toàn bộ trường báo cáo từ kho, không bắt AI liệt kê 160 tên. File nhập lại giữ nguyên danh sách chất của hội thoại, nhưng đọc được cả các cột nguồn tự nhập bổ sung; số sửa vẫn cần xác nhận lại nguồn như trước.
+- Số tổng/đối chiếu/nhóm/đi chợ có kết quả lưu sẵn trong XLSX để trình xem không phải đợi Excel tính. Công thức vẫn được giữ; Excel tự tính lại khi sửa lượng, số suất, mã nguyên liệu hoặc mục tiêu. Thêm/bớt số dòng/ngày có thông báo yêu cầu xuất lại để cập nhật phạm vi các bản in chi tiết; tổng và các bảng tính nội bộ vẫn tính trên vùng nhập cho phép. Thay tên nhóm tự nhập ngoài danh sách cũng được báo chưa bao phủ đủ nhóm.
+- Nút xuất web lấy dữ liệu hiện tại của kho. Trường nguồn bị cảnh báo chất lượng hoặc thiếu quy đổi có thể cho kết quả một phần khác bản chụp cũ trong trình duyệt; file ghi nguồn, cảnh báo và phần thiếu thay vì lấp bằng 0/1:1.
+- Tái dùng rate limit PostgreSQL và cùng khóa xuất với hội thoại: tối đa 4 lần/phút theo nguồn web, 60 lần/giờ toàn hệ thống, chỉ một workbook tạo cùng lúc. Kiểm giới hạn bộ nhớ trước tạo ô, giữ giới hạn 5 MB/64 MB giải nén. Kỳ lớn có thể cần chia đợt để xuất đủ trường trên VPS 2 GB.
+- Bộ dữ liệu quản trị `/api/admin/menu-analysis-export` cũng lấy đủ 162 trường nguồn, cùng kiểu chữ đen/nền trắng. `Khung_thuc_don` trong bộ dữ liệu này là mẫu trống để nhập mới, không phải bản khẩu phần đã lập. Phần Word cũ giữ nguyên trong đợt chỉnh Excel này.
+
 ## Vùng nhập
 
 | Sheet | Người dùng sửa |
 | --- | --- |
-| `Nhap khau phan` | Ô vàng: ngày số, bữa/món, Food ID hoặc ID tự nhập, lượng g/ml, số suất, cơ sở khối lượng, hệ số/tỷ trọng và nguồn, chấp nhận tham chiếu, ghi chú. |
+| `Nhap khau phan` | Ô nhập: ngày số, bữa/món, Food ID hoặc ID tự nhập, lượng g/ml, số suất, cơ sở khối lượng, hệ số/tỷ trọng và nguồn, chấp nhận tham chiếu, ghi chú. |
 | `Ngay va muc tieu` | Nhãn/ngày ISO và mục tiêu có nguồn. Không có mục tiêu thì chỉ tính thành phần. |
 | `Tu nhap` | Nguyên liệu ngoài kho: ID/tên, nguồn, đơn vị/cơ sở và các chất xác minh được; chất chưa có giữ trống. |
 | `Du lieu` | Dữ liệu nguồn nhúng được bảo vệ; không sửa nutrient kho bằng cách sửa riêng ô này. |

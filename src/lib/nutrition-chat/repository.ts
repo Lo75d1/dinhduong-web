@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
-import { ALL_NUTRIENT_FIELDS, CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
+import { ALL_NUTRIENT_FIELDS, CORE_CALC_FIELDS, SOURCE_ONLY_NUTRIENT_FIELDS } from "@/lib/nutrient-fields";
 import { searchTokens } from "@/lib/search";
 import { normalizeVi } from "@/lib/normalize";
 import type { NutritionFood } from "./contracts";
@@ -9,12 +9,12 @@ import { NutritionInputError, NUTRIENT_KEYS, NUTRITION_LIMITS } from "./validati
 import { sanitizeNutritionFood } from "./core";
 
 function selectFood(fields: string[]): Prisma.FoodSelect {
-  return { id: true, name: true, source: true, sourceCode: true, foodType: true, unit: true, wastePercent: true, foodGroup: true, imageUrl: true, aliases: { orderBy:[{aliasNormalized:"asc"},{id:"asc"}],select: { alias: true, verified: true } }, ...Object.fromEntries([...new Set([...fields,...CORE_CALC_FIELDS.map(f => f.key)])].filter(k => NUTRIENT_KEYS.has(k)).map(k => [k,true])) };
+  return { id: true, name: true, source: true, sourceCode: true, foodType: true, unit: true, wastePercent: true, foodGroup: true, imageUrl: true, aliases: { orderBy:[{aliasNormalized:"asc"},{id:"asc"}],select: { alias: true, verified: true } }, ...Object.fromEntries([...new Set([...fields,...CORE_CALC_FIELDS.map(f => f.key)])].filter(k => NUTRIENT_KEYS.has(k)).map(k => [k,true])), ...Object.fromEntries(SOURCE_ONLY_NUTRIENT_FIELDS.map(field => [field.key, true])) };
 }
 export function mapNutritionFood(raw: Record<string,unknown>, fields: string[]): NutritionFood {
   if(raw.unit!=="g" && raw.unit!=="ml")throw new NutritionInputError("Cơ sở đơn vị trong kho chưa được hỗ trợ; cần xác minh nguồn.","food.unit",422);
   const aliases = Array.isArray(raw.aliases) ? raw.aliases as Array<{ alias: string; verified: boolean }> : [];
-  return sanitizeNutritionFood({ id: String(raw.id), name: String(raw.name), unit: raw.unit === "ml" ? "ml" : "g", source: { kind: "catalog", label: typeof raw.source === "string" ? raw.source : "Nguồn chưa ghi rõ", confirmed: true }, sourceCode: typeof raw.sourceCode === "string" ? raw.sourceCode : null, foodType: typeof raw.foodType === "string" ? raw.foodType : null, imageUrl: typeof raw.imageUrl === "string" ? raw.imageUrl : null, wastePercent: typeof raw.wastePercent === "number" && raw.wastePercent >= 0 && raw.wastePercent < 100 ? raw.wastePercent : null, foodGroup: typeof raw.foodGroup === "string" ? raw.foodGroup : null, nutrients: Object.fromEntries([...new Set([...fields,...CORE_CALC_FIELDS.map(f => f.key)])].map(k => [k, typeof raw[k] === "number" && Number.isFinite(raw[k]) ? raw[k] as number : null])), aliases: aliases.map(a => ({ name: a.alias, verified: a.verified })) });
+  return sanitizeNutritionFood({ id: String(raw.id), name: String(raw.name), unit: raw.unit === "ml" ? "ml" : "g", source: { kind: "catalog", label: typeof raw.source === "string" ? raw.source : "Nguồn chưa ghi rõ", confirmed: true }, sourceCode: typeof raw.sourceCode === "string" ? raw.sourceCode : null, foodType: typeof raw.foodType === "string" ? raw.foodType : null, imageUrl: typeof raw.imageUrl === "string" ? raw.imageUrl : null, wastePercent: typeof raw.wastePercent === "number" && raw.wastePercent >= 0 && raw.wastePercent < 100 ? raw.wastePercent : null, foodGroup: typeof raw.foodGroup === "string" ? raw.foodGroup : null, nutrients: Object.fromEntries([...new Set([...fields,...CORE_CALC_FIELDS.map(f => f.key)])].map(k => [k, typeof raw[k] === "number" && Number.isFinite(raw[k]) ? raw[k] as number : null])), sourceOnlyNutrients: Object.fromEntries(SOURCE_ONLY_NUTRIENT_FIELDS.map(field => [field.key, typeof raw[field.key] === "number" && Number.isFinite(raw[field.key]) ? raw[field.key] as number : null])), aliases: aliases.map(a => ({ name: a.alias, verified: a.verified })) });
 }
 export async function loadNutritionFoods(ids: string[], fields: string[]): Promise<NutritionFood[]> {
   if (!ids.length) return [];

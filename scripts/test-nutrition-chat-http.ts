@@ -8,6 +8,7 @@ import { resolve, join } from "node:path";
 import type * as Rest from "../src/app/api/nutrition/v1/[action]/route";
 import type * as Mcp from "../src/app/api/nutrition/v1/mcp/route";
 import type * as Upload from "../src/app/api/nutrition/v1/import/route";
+import type * as WebReport from "../src/app/api/nutrition-report/export/route";
 import type * as Service from "../src/lib/nutrition-chat/service";
 import type * as Workbook from "../src/lib/nutrition-chat/workbook";
 import type * as Database from "./fixtures/nutrition-oauth/database";
@@ -16,7 +17,7 @@ import type * as Repository from "./fixtures/nutrition-oauth/repository";
 import type * as Output from "../src/lib/nutrition-chat/mcp-output";
 import type { MenuInput } from "../src/lib/nutrition-chat/contracts";
 import { getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken, randomNutritionToken } from "../src/lib/nutrition-chat/oauth-validation";
-type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload };
+type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport };
 let checks = 0;
 
 async function main() {
@@ -30,7 +31,7 @@ async function main() {
     delete process.env.NUTRITION_ALLOWED_ORIGINS;
     delete process.env.NUTRITION_TRUST_PROXY;
     const sources = ["src/lib/nutrition-chat/service.ts", "src/lib/nutrition-chat/workbook.ts", "src/lib/nutrition-chat/mcp-output.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/repository.ts"];
-    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts" };
+    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts", webReportRoute: "src/app/api/nutrition-report/export/route.ts" };
     const outfile = join(directory, "http-fixture.cjs");
     await build({ stdin: { contents: sources.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n") + "\n" + Object.entries(routes).map(([label, path]) => `import * as ${label} from ${JSON.stringify(resolve(path))}; export {${label}};`).join("\n"), resolveDir: process.cwd(), loader: "ts" }, outfile,
       bundle: true, platform: "node", format: "cjs", logLevel: "silent", plugins: [{ name: "disposable-http", setup(builder) {
@@ -38,7 +39,7 @@ async function main() {
         builder.onLoad({ filter: /.*/, namespace: "empty" }, () => ({ contents: "export {};", loader: "js" }));
         builder.onResolve({ filter: /^@\/lib\/prisma$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/database.ts") }));
         builder.onResolve({ filter: /^(next\/headers|@\/lib\/auth)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/state.ts") }));
-        builder.onResolve({ filter: /^\.\/repository$/ }, args => /nutrition-chat[\\/]/.test(args.importer) ? { path: resolve("scripts/fixtures/nutrition-oauth/repository.ts") } : null);
+        builder.onResolve({ filter: /^(\.\/repository|@\/lib\/nutrition-chat\/repository)$/ }, args => /nutrition-chat[\\/]/.test(args.importer) || args.path.startsWith("@/") ? { path: resolve("scripts/fixtures/nutrition-oauth/repository.ts") } : null);
         builder.onResolve({ filter: /^(\.\/downloads|@\/lib\/nutrition-chat\/downloads)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/downloads.ts") }));
         builder.onResolve({ filter: /^(@electric-sql\/pglite|exceljs)$/ }, args => ({ path: require.resolve(args.path), external: true }));
       } }] });
@@ -221,8 +222,17 @@ async function main() {
     const multipart = new FormData();
     multipart.append("file", new File([new Uint8Array(workbook)], "fixture.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
     const imported = await api.importRoute.POST(new Request(`${base}/api/nutrition/v1/import`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: multipart }));
-    assert.equal(imported.status, 200); checks++;
+    assert.equal(imported.status, 200, await imported.clone().text()); checks++;
     assert.equal((await imported.json()).preview.totals.energyKcal.value, 130); checks++;
+    const webRequest = (value: unknown, origin = base) => new Request(`${base}/api/nutrition-report/export`, { method: "POST", headers: { Origin: origin, "Content-Type": "application/json" }, body: JSON.stringify(value) });
+    assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input }, "https://example.invalid"))).status, 403); checks++;
+    assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, meta: { role: "ADMIN" } }))).status, 400); checks++;
+    const webExport = await api.webReportRoute.POST(webRequest({ input: prepared.input, meta: { subjectName: "Mẫu thử" }, medications: [] }));
+    assert.equal(webExport.status, 200, webExport.status === 200 ? undefined : await webExport.clone().text()); checks++;
+    assert.match(webExport.headers.get("content-type")!, /spreadsheetml/); checks++;
+    const webImported = await api.parseNutritionWorkbook(new Uint8Array(await webExport.arrayBuffer()));
+    assert.equal(webImported.days[0].rows[0].foodId, "fixture-rice"); checks++;
+    assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, medications: [{ meal: "Trưa", name: "test", dose: "1", timing: "sau", note: "", isAdmin: true }] }))).status, 400); checks++;
     assert.equal((await api.importRoute.POST(request("import", {}, token))).status, 415); checks++;
     const wrongFile = new FormData(); wrongFile.append("file", new File(["text"], "wrong.csv"));
     assert.equal((await api.importRoute.POST(new Request(`${base}/api/nutrition/v1/import`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: wrongFile }))).status, 413); checks++;

@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { ALL_NUTRIENT_FIELDS, SOURCE_ONLY_NUTRIENT_FIELDS } from "./nutrient-fields";
 
 type CellValue = string | number | Date | null | undefined;
 
@@ -68,6 +69,9 @@ const foodColumns: ColumnDefinition[] = [
   { header: "DHA (g/100g)", key: "dhaC226G", width: 16, numFmt: "0.000" },
   { header: "Đường tổng (g/100g)", key: "sugarsTotalG", width: 21, numFmt: "0.00" },
 ];
+
+const existingFoodColumns = new Set(foodColumns.map(column => column.key));
+foodColumns.push(...[...ALL_NUTRIENT_FIELDS, ...SOURCE_ONLY_NUTRIENT_FIELDS].filter(field => !existingFoodColumns.has(field.key)).map(field => ({ header: field.label + " (" + field.unit + "/100 đơn vị)", key: field.key, width: 25, numFmt: "0.00" })));
 
 const dishColumns: ColumnDefinition[] = [
   { header: "Mã món", key: "id", width: 26 },
@@ -219,7 +223,7 @@ function addGuideSheet(workbook: ExcelJS.Workbook, data: MenuAnalysisData) {
     ["Ngày tạo", generatedAt],
     ["Phạm vi", "Chỉ gồm dữ liệu chuyên môn phục vụ phân tích thực đơn; không chứa tài khoản, bệnh nhân, khẩu phần cá nhân hoặc API key."],
     ["Nguồn dữ liệu", "Các bản ghi được giữ nguyên nhãn nguồn VDD/RNI trong từng sheet để đối chiếu."],
-    ["Đơn vị thực phẩm", "Thành phần dinh dưỡng trong sheet Thuc_pham tính trên 100 g phần ăn được, trừ khi cột ghi rõ khác."],
+    ["Đơn vị thực phẩm", "Thành phần tính trên 100 đơn vị g hoặc ml theo cột Đơn vị. Không tự coi g = ml. Hai cột Vitamin A VDD mg và RNI Arginine (g) chỉ để đối soát, chưa xác minh đơn vị/nhãn."],
     ["Lưu ý chuyên môn", "Khung tính chỉ hỗ trợ phân tích. Thực đơn bệnh lý cần được chuyên gia dinh dưỡng xem xét theo tình trạng lâm sàng cụ thể."],
     ["", ""],
     ["Sheet", "Nội dung"],
@@ -228,7 +232,7 @@ function addGuideSheet(workbook: ExcelJS.Workbook, data: MenuAnalysisData) {
     ["Nguyen_lieu_mon", `${data.ingredients.length.toLocaleString("vi-VN")} dòng nguyên liệu; dùng Mã món để nối với sheet Mon_an.`],
     ["Nhu_cau", `${data.recommendations.length.toLocaleString("vi-VN")} dòng nhu cầu khuyến nghị theo tuổi/giới/hoạt động.`],
     ["Ma_che_do_an", `${data.dietCodes.length.toLocaleString("vi-VN")} mã chế độ ăn và khoảng mục tiêu.`],
-    ["Khung_thuc_don", "Nhập mã thực phẩm và khối lượng ăn được; Excel tự tính năng lượng và các chất chính."],
+    ["Khung_thuc_don", "Đây là MẪU TRỐNG để nhập mới, không phải khẩu phần đã tính. Nhập mã và lượng ăn được (g); các chất chính tự tính. Muốn báo cáo vi chất đầy đủ, dùng nút Xuất Excel đầy đủ tại trang tính khẩu phần."],
   ];
   rows.forEach((row, index) => { sheet.getRow(index + 3).values = row; });
   sheet.getCell("B3").numFmt = "yyyy-mm-dd hh:mm";
@@ -321,6 +325,16 @@ export async function buildMenuAnalysisWorkbook(data: MenuAnalysisData): Promise
   dietSheet.getColumn("U").alignment = { vertical: "top", wrapText: true };
   addMenuTemplate(workbook, data.foods.length);
 
+  for (const sheet of workbook.worksheets) {
+    sheet.views = [{ state: "normal", showGridLines: false }];
+    sheet.eachRow(row => row.eachCell(cell => {
+      cell.font = { name: "Times New Roman", size: cell.font?.size && cell.font.size > 12 ? 15 : 12, color: { argb: "000000" }, ...(cell.font?.bold ? { bold: true } : {}) };
+      cell.fill = { type: "pattern", pattern: "none" };
+      cell.border = { bottom: { style: "hair", color: { argb: "999999" } } };
+    }));
+    sheet.pageSetup = { paperSize: 9, orientation: "landscape", fitToPage: false, scale: 85, margins: { left: 0.55, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 }, printTitlesRow: sheet.name === "Khung_thuc_don" ? "1:2" : "1:1" };
+    sheet.headerFooter.oddFooter = "&CDinh dưỡng 2598&RTrang &P / &N";
+  }
   const output = await workbook.xlsx.writeBuffer();
   return new Uint8Array(output as ArrayBuffer);
 }

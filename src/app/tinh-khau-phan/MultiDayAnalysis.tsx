@@ -20,7 +20,8 @@ import {
   type PeriodRecommendation,
   type StrictMetric,
 } from "./multi-day-analysis";
-import { buildMultiDayExcelXml, buildMultiDayWordHtml } from "./multi-day-export";
+import { buildMultiDayWordHtml } from "./multi-day-export";
+import { downloadNutritionExcel } from "./nutrition-excel-download";
 
 const TARGET_KEY = "khauphan_menu_meal_targets_v1";
 const round = (value: number) => Math.round(value * 10) / 10;
@@ -88,6 +89,14 @@ export default function MultiDayAnalysis({
     }
     return names;
   }, [days]);
+  const [exportingExcel, setExportingExcel] = useState(false);
+  const [excelError, setExcelError] = useState("");
+  const exportExcel = async () => {
+    setExportingExcel(true); setExcelError("");
+    try { await downloadNutritionExcel(days, profile); }
+    catch (error) { setExcelError(error instanceof Error ? error.message : "Chưa xuất được Excel."); }
+    finally { setExportingExcel(false); }
+  };
   const [shareText, setShareText] = useState<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
   const [kitchenMode, setKitchenMode] = useState(false);
@@ -165,9 +174,10 @@ export default function MultiDayAnalysis({
         </div>
         <div className="flex flex-wrap gap-2" data-no-print>
           <button type="button" onClick={() => download(buildMultiDayWordHtml(days, analysis, shopping, profile), "application/msword;charset=utf-8", "bao-cao-dinh-duong-toan-ky.doc")} className="rounded-md border-2 border-[#185FA5] bg-white px-3 py-1.5 text-sm font-semibold text-[#0C447C] hover:bg-[#E6F1FB]">⬇ Word</button>
-          <button type="button" onClick={() => download(buildMultiDayExcelXml(days, analysis, shopping, profile), "application/vnd.ms-excel;charset=utf-8", "bao-cao-dinh-duong-toan-ky.xls")} className="rounded-md bg-[#185FA5] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0C447C]">⬇ Excel</button>
+          <button type="button" disabled={exportingExcel} onClick={exportExcel} className="rounded-md bg-[#185FA5] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0C447C]">{exportingExcel ? "Đang tạo Excel…" : "Excel đầy đủ"}</button>
         </div>
       </header>
+      {excelError && <p role="alert" className="text-sm text-red-700">{excelError}</p>}
 
       {/* C · Loại thực đơn: cá nhân đủ ngày / bếp tập thể theo bữa */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#B5D4F4] bg-[#F4F9FE] px-3 py-2">

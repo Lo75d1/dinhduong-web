@@ -3,7 +3,8 @@ import { randomBytes } from "node:crypto";
 import type { CustomFoodInput, FoodSource, MenuInput, MenuRowInput, NutritionFood, ResolvedMenu, TargetInput } from "./contracts";
 import { CONTRACT_VERSION } from "./contracts";
 import { ALL_NUTRIENT_FIELDS } from "../nutrient-fields";
-import { sanitizeNutritionFood } from "./core";
+import { resolveMenu, sanitizeNutritionFood } from "./core";
+import { addNutritionReportSheets, type NutritionWorkbookOptions } from "./workbook-report";
 import { NUTRIENT_KEYS, parseMenuInput } from "./validation";
 import { addNativeWorkbookCharts } from "./workbook-charts";
 import { assertNutritionWorkbookExportBudget, inspectWorkbookArchive, NutritionWorkbookError, WORKBOOK_LIMITS } from "./workbook-security";
@@ -24,7 +25,7 @@ const isFormula = (cell: ExcelJS.Cell) => cell.type === ExcelJS.ValueType.Formul
 
 type Manifest = {
   version: string; title: string; mode: MenuInput["mode"]; fields: string[]; sourceFields: string[];
-  inputCapacity: number; customCapacity: number; dataRows: number;
+  inputCapacity: number; customCapacity: number; dataRows: number; reportFields?: string[];
   digest: string; dataVersion: string; generatedAt: string; aiComment: string;
   savedRecord?: { id: string; revision: number };
   days: Array<{ id: string; label: string; date: string }>;
@@ -54,7 +55,7 @@ function heading(sheet: ExcelJS.Worksheet, title: string, subtitle: string, head
   sheet.pageSetup.printTitlesRow = "1:6";
 }
 
-function styleRows(sheet: ExcelJS.Worksheet, last: number, editable: number[] = []) {
+function styleRows(sheet: ExcelJS.Worksheet, last: number, editable: number[] = [], sparse = false) {
   const columnCount = sheet.columnCount;
   const regularFont = { name: "Calibri", size: 11, color: { argb: "17201D" } };
   const editableFont = { name: "Calibri", size: 11, color: { argb: "175387" } };
@@ -66,6 +67,7 @@ function styleRows(sheet: ExcelJS.Worksheet, last: number, editable: number[] = 
   for (let row = FIRST; row <= last; row++) {
     sheet.getRow(row).height = 28;
     for (let column = 1; column <= columnCount; column++) {
+      if (sparse && sheet.getRow(row).findCell(column)?.value == null) continue;
       const cell = sheet.getCell(row, column);
       const canEdit = editable.includes(column);
       cell.font = canEdit ? editableFont : regularFont;
@@ -105,18 +107,31 @@ function copySnapshot(workbook: ExcelJS.Workbook, source: ExcelJS.Worksheet, nam
 }
 
 /** An editable, self-contained workbook. Only explicit user input is re-imported. */
-export async function buildNutritionWorkbook(menu: ResolvedMenu, catalogue: NutritionFood[]): Promise<Uint8Array> {
+export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: NutritionFood[], options: NutritionWorkbookOptions = {}): Promise<Uint8Array> {
+  const complete = options.complete !== false;
+  const selectedFields = original.fields;
+  const fullFields = [...selectedFields, ...ALL_NUTRIENT_FIELDS.filter(field => !selectedFields.some(selected => selected.key === field.key))];
+  const catalogued = new Set(catalogue.map(food => food.id));
+  const allFoods = [...new Map([...catalogue, ...original.days.flatMap(day => day.rows.filter(row => !row.customFood && !catalogued.has(row.food.id)).map(row => row.food))].map(food => [food.id, food])).values()];
+  const full = complete ? resolveMenu({ ...original.input, fields: fullFields.map(field => field.key), comparison: { mode: "none" } }, allFoods) : original;
+  const menu = complete ? { ...original, fields: fullFields, days: full.days, totals: full.totals, dayTotals: full.dayTotals, dataVersion: full.dataVersion } : original;
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
   if (rows.length > WORKBOOK_LIMITS.rows || menu.days.length > WORKBOOK_LIMITS.days) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Vượt giới hạn 90 ngày hoặc 1.000 dòng.");
-  const fields = menu.fields.slice(0, MAX_NUTRIENTS);
-  if (fields.length !== menu.fields.length || !fields.length || fields.some(field => !KEY_PATTERN.test(field.key))) throw new NutritionWorkbookError("WORKBOOK_FIELDS", "Excel hỗ trợ tối đa 40 chất đã chọn.");
+  const fields = menu.fields;
+  if (fields.length > (complete ? ALL_NUTRIENT_FIELDS.length : MAX_NUTRIENTS) || !fields.length || fields.some(field => !KEY_PATTERN.test(field.key))) throw new NutritionWorkbookError("WORKBOOK_FIELDS", "Danh sách chất xuất Excel không hợp lệ.");
   const sourceFields = [...fields, ...ALL_NUTRIENT_FIELDS.filter(field => ["energyKcal", "proteinG", "lipidG", "glucidG"].includes(field.key) && !fields.some(selected => selected.key === field.key))];
-  const foods = [...new Map([...catalogue, ...rows.filter(item => !item.row.customFood).map(item => item.row.food)].map(food => [food.id, sanitizeNutritionFood(food)])).values()];
+  const foods = allFoods.map(sanitizeNutritionFood);
   if (foods.length > WORKBOOK_LIMITS.catalogue) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Danh mục Excel vượt 6.000 thực phẩm.");
   const customs = [...new Map(rows.filter(item => item.row.customFood).map(item => [item.row.customFood!.id, item.row.customFood!])).values()];
   if (customs.length > WORKBOOK_LIMITS.customFoods) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Excel hỗ trợ tối đa 100 nguồn tự nhập.");
   const inputCapacity = Math.min(WORKBOOK_LIMITS.rows, Math.max(50, rows.length + 30));
   const customCapacity = Math.min(WORKBOOK_LIMITS.customFoods, Math.max(20, customs.length + 10));
+  if (complete) {
+    // Bound live object/formula allocation before constructing ExcelJS cells on the 2 GB VPS.
+    const dataCells = foods.reduce((sum, food) => sum + 10 + sourceFields.filter(field => food.nutrients[field.key] != null).length, 0);
+    const estimatedCells = dataCells + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2;
+    if (estimatedCells > 400_000) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Báo cáo đầy đủ vượt dung lượng xử lý an toàn. Chia thành các đợt ít ngày hoặc ít dòng hơn rồi xuất lại.");
+  }
   const lastInput = FIRST + inputCapacity - 1;
   const lastCustom = FIRST + customCapacity - 1;
   const lastData = FIRST + Math.max(1, foods.length) - 1;
@@ -125,6 +140,7 @@ export async function buildNutritionWorkbook(menu: ResolvedMenu, catalogue: Nutr
   workbook.title = menu.title;
   workbook.created = new Date(menu.generatedAt);
   workbook.calcProperties.fullCalcOnLoad = true;
+  if (complete) for (const name of ["Bao cao", "Thuc don", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
   const analysis = workbook.addWorksheet(SHEETS.analysis);
   const comparison = workbook.addWorksheet(SHEETS.comparison);
   const targetSheet = workbook.addWorksheet(SHEETS.targets);
@@ -208,6 +224,7 @@ export async function buildNutritionWorkbook(menu: ResolvedMenu, catalogue: Nutr
     formula(sourceBuild.getCell(row, sourceFields.length + 4), `${q(SHEETS.input)}!W${row}`);
     const portionSize = `INDEX(${range(SHEETS.custom, "H", lastCustom)},${sourceIndex})`;
     formula(sourceBuild.getCell(row, sourceFields.length + 5), `IF(${sourceIndex}="","",IF(AND(${sourceTable}="custom",INDEX(${range(SHEETS.custom, "G", lastCustom)},${sourceIndex})="portion"),IF(AND(ISNUMBER(${portionSize}),${portionSize}>0),100/${portionSize},""),1))`);
+    if (complete) formula(sourceBuild.getCell(row, sourceFields.length + 6), `IF(${sourceIndex}="","",IF(${sourceTable}="custom",IF(INDEX(${range(SHEETS.custom, "K", lastCustom)},${sourceIndex})="","Chưa phân nhóm",INDEX(${range(SHEETS.custom, "K", lastCustom)},${sourceIndex})),IF(INDEX(${range(SHEETS.data, "I", lastData)},${sourceIndex})="","Chưa phân nhóm",INDEX(${range(SHEETS.data, "I", lastData)},${sourceIndex}))))`, item?.food.foodGroup || (item ? "Chưa phân nhóm" : ""));
     sourceFields.forEach((field, index) => {
       const canonical = `INDEX(${range(SHEETS.data, col(10 + index), lastData)},${sourceIndex})`;
       const user = `INDEX(${range(SHEETS.custom, col(12 + index), lastCustom)},${sourceIndex})`;
@@ -230,7 +247,7 @@ export async function buildNutritionWorkbook(menu: ResolvedMenu, catalogue: Nutr
   input.getColumn(17).hidden = true; input.getColumn(18).hidden = true;
   styleRows(input, lastInput, [...Array.from({ length: 15 }, (_, i) => i + 2), 28]);
   styleRows(custom, lastCustom, Array.from({ length: custom.columnCount }, (_, i) => i + 1));
-  styleRows(data, lastData);
+  styleRows(data, lastData, [], complete);
   styleRows(targetSheet, FIRST + WORKBOOK_LIMITS.days - 1, [3, 4, 5, 6, 7, 8]);
   textColumns(input, [1, 3, 4, 5, 6, 8, 10, 12, 14, 15, 16, 18, 19, 20, 21, 26, 27, 28], lastInput);
   textColumns(custom, [1, 2, 3, 4, 5, 6, 7, 9, 11], lastCustom);
@@ -314,18 +331,21 @@ export async function buildNutritionWorkbook(menu: ResolvedMenu, catalogue: Nutr
     formula(comparison.getCell(row, 9), `IF(A${row}="","",IF(OR(${q(SHEETS.targets)}!F${row}<>${original},${q(SHEETS.targets)}!H${row}<>${originalUpper}),"Người dùng điều chỉnh từ "&${sourceRef},${sourceRef}))`, baselineTarget?.source ?? "");
     formula(comparison.getCell(row, 5), `IF(OR(A${row}="",NOT(ISNUMBER(${q(SHEETS.targets)}!F${row}))),"",${q(SHEETS.targets)}!F${row})`);
     formula(comparison.getCell(row, 8), `IF(A${row}="","",${q(SHEETS.targets)}!H${row})`);
-    let valueLookup = '""'; let missingLookup = '""'; let unitLookup = '""';
-    for (let index = fields.length - 1; index >= 0; index--) {
-      const field = fields[index];
-      valueLookup = `IF(A${row}="${field.key}",${q(SHEETS.analysis)}!${col(4 + index * 2)}${averageRow},${valueLookup})`;
-      missingLookup = `IF(A${row}="${field.key}",${q(SHEETS.analysis)}!${col(5 + index * 2)}${totalRow},${missingLookup})`;
-      unitLookup = `IF(A${row}="${field.key}","${field.unit}",${unitLookup})`;
-    }
+    const lookup = (column: string) => `IF(A${row}="","",IFERROR(INDEX('_lists'!$${column}$1:$${column}$${ALL_NUTRIENT_FIELDS.length},MATCH(A${row},NutrientKeys,0)),""))`;
+    const valueLookup = lookup("C"), missingLookup = lookup("D"), unitLookup = lookup("B");
     formula(comparison.getCell(row, 2), unitLookup); formula(comparison.getCell(row, 3), valueLookup); formula(comparison.getCell(row, 4), missingLookup);
     formula(comparison.getCell(row, 6), `IF(OR(NOT(ISNUMBER(C${row})),NOT(ISNUMBER(E${row})),E${row}<=0,D${row}>0),"",C${row}/E${row})`);
     formula(comparison.getCell(row, 7), `IF(OR(NOT(ISNUMBER(C${row})),NOT(ISNUMBER(E${row})),D${row}>0),"",C${row}-E${row})`);
     formula(comparison.getCell(row, 10), `IF(A${row}="","",IF(B${row}="","Chất chưa được chọn phân tích",IF(NOT(ISNUMBER(E${row})),"Chưa có mục tiêu",IF(OR(D${row}>0,NOT(ISNUMBER(C${row}))),"Chưa đủ dữ liệu để kết luận",IF(H${row}="Có",IF(C${row}>E${row},"Vượt giới hạn trên","Không vượt giới hạn trên"),IF(C${row}<E${row},"Dưới mục tiêu",IF(C${row}>E${row},"Trên mục tiêu","Bằng mục tiêu")))))))`);
   }
+  ALL_NUTRIENT_FIELDS.forEach((field, index) => {
+    const selected = fields.findIndex(item => item.key === field.key);
+    if (selected < 0) return;
+    lists.getCell(index + 1, 2).value = field.unit;
+    lists.getCell(index + 1, 5).value = field.label;
+    formula(lists.getCell(index + 1, 3), `${q(SHEETS.analysis)}!${col(4 + selected * 2)}${averageRow}`);
+    formula(lists.getCell(index + 1, 4), `${q(SHEETS.analysis)}!${col(5 + selected * 2)}${totalRow}`);
+  });
   styleRows(comparison, FIRST + WORKBOOK_LIMITS.days - 1);
   textColumns(comparison, [1, 2, 8, 9, 10], FIRST + WORKBOOK_LIMITS.days - 1);
   for (let row = FIRST; row < FIRST + WORKBOOK_LIMITS.days; row++) comparison.getCell(row, 6).numFmt = "0.0%";
@@ -357,7 +377,7 @@ export async function buildNutritionWorkbook(menu: ResolvedMenu, catalogue: Nutr
   analysis.mergeCells(noteRow + 1, 1, noteRow + 3, 12); analysis.getCell(noteRow + 1, 1).value = menu.aiComment || "Chưa có nhận xét AI.";
   analysis.getCell(noteRow + 1, 1).alignment = { wrapText: true, vertical: "top" };
   analysis.getCell(noteRow + 1, 1).font = { size: 11, color: { argb: "344C45" } };
-  const shoppingItems = [...foods.map(food => ({ id: food.id, name: food.name, source: food.source.label, kind: "catalog", inputColumn: "E" })), ...Array.from({ length: customCapacity }, (_, i) => ({ id: customs[i]?.id ?? "", name: customs[i]?.name ?? "", source: customs[i]?.source.label ?? "", kind: "custom", inputColumn: "F" }))];
+  const shoppingItems = complete ? [] : [...foods.map(food => ({ id: food.id, name: food.name, source: food.source.label, kind: "catalog", inputColumn: "E" })), ...Array.from({ length: customCapacity }, (_, i) => ({ id: customs[i]?.id ?? "", name: customs[i]?.name ?? "", source: customs[i]?.source.label ?? "", kind: "custom", inputColumn: "F" }))];
   shoppingItems.forEach((item, index) => {
     const row = FIRST + index;
     const customIndex = index - foods.length;
@@ -376,15 +396,112 @@ export async function buildNutritionWorkbook(menu: ResolvedMenu, catalogue: Nutr
   });
   styleRows(shopping, FIRST + shoppingItems.length - 1);
   textColumns(shopping, [1, 2, 3, 9, 10], FIRST + shoppingItems.length - 1);
+  if (complete) {
+    for (let i = 0; i < inputCapacity; i++) {
+      const r = FIRST + i, item = rows[i]?.row;
+      const ref = (c: string) => `${q(SHEETS.input)}!${c}${r}`;
+      const selected = `IF(${ref("R")}="custom",${ref("F")},${ref("E")})`;
+      const first = `IF(${ref("R")}="custom",COUNTIF(${q(SHEETS.input)}!$F$${FIRST}:F${r},${ref("F")}),COUNTIF(${q(SHEETS.input)}!$E$${FIRST}:E${r},${ref("E")}))=1`;
+      const duplicate = item && rows.slice(0, i).some(previous => item.customFood ? previous.row.customFood?.id === item.customFood.id : previous.row.foodId === item.foodId);
+      const id = item?.customFood?.id ?? item?.foodId ?? "";
+      const used = !item || duplicate ? [] : rows.filter(({ row }) => item.customFood ? row.customFood?.id === id : row.foodId === id);
+      formula(shopping.getCell(r, 2), `IF(AND(${selected}<>"",${first}),${selected},"")`, duplicate ? "" : id);
+      formula(shopping.getCell(r, 1), `IF(B${r}="","",${ref("R")})`, used.length ? item?.customFood ? "custom" : "catalog" : "");
+      formula(shopping.getCell(r, 3), `IF(B${r}="","",${ref("S")})`, used.length ? item!.food.name : "");
+      formula(shopping.getCell(r, 9), `IF(B${r}="","",${ref("T")})`, used.length ? item!.food.source.label : "");
+      const ids = `IF($A${r}="custom",${range(SHEETS.input, "F", lastInput)},${range(SHEETS.input, "E", lastInput)})`;
+      formula(shopping.getCell(r, 4), `IF(B${r}="","",SUMPRODUCT(--(${ids}=$B${r})))`, used.length || "");
+      for (const [key, inputColumn, c] of [["edibleGrams", "X", 5], ["rawGrams", "Y", 7]] as const) {
+        const values = range(SHEETS.input, inputColumn, lastInput);
+        const known = `SUMPRODUCT(--(${ids}=$B${r}),--ISNUMBER(${values}))`;
+        const knownRows = used.filter(({ row }) => row[key] !== null);
+        formula(shopping.getCell(r, c), `IF(OR(B${r}="",${known}=0),"",SUMPRODUCT(--(${ids}=$B${r}),${values}))`, knownRows.length ? knownRows.reduce((sum, { row }) => sum + row[key]!, 0) : "");
+        formula(shopping.getCell(r, c + 1), `IF(B${r}="","",D${r}-${known})`, used.length ? used.length - knownRows.length : "");
+      }
+      formula(shopping.getCell(r, 10), `IF(B${r}="","",IF(H${r}>0,"Thiếu thải bỏ/mật độ/đầu vào; chưa đủ lượng mua","Đủ dữ liệu quy đổi"))`, used.length ? used.some(({ row }) => row.rawGrams === null) ? "Thiếu thải bỏ/mật độ/đầu vào; chưa đủ lượng mua" : "Đủ dữ liệu quy đổi" : "");
+    }
+    styleRows(shopping, lastInput);
+    textColumns(shopping, [1, 2, 3, 9, 10], lastInput);
+    for (let i = rows.length; i < inputCapacity; i++) shopping.getRow(FIRST + i).hidden = true;
+    shopping.pageSetup.printArea = `A1:J${FIRST + rows.length - 1}`;
+  }
   input.addConditionalFormatting({ ref: `Z${FIRST}:Z${lastInput}`, rules: [{ type: "expression", formulae: [`LEN(Z${FIRST})>0`], style: { fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FDE8D7" } }, font: { color: { argb: "9B3C13" } } }, priority: 1 }] });
-  const manifest: Manifest = { version: CONTRACT_VERSION, title: menu.title, mode: menu.mode, fields: fields.map(field => field.key), sourceFields: sourceFields.map(field => field.key), inputCapacity, customCapacity, dataRows: foods.length, digest: menu.digest, dataVersion: menu.dataVersion, generatedAt: menu.generatedAt, aiComment: menu.aiComment, savedRecord: menu.savedRecord, customSources: customs, days: menu.days.map(day => ({ id: day.id, label: day.label, date: day.date })), rows: rows.map(item => ({ id: item.row.id, meal: item.row.meal, dish: item.row.dish, foodId: item.row.foodId, customFoodId: item.row.customFood?.id, quantity: item.row.quantity, unit: item.row.unit, servings: item.row.servings, basis: item.row.basis, recipeSource: item.row.recipeSource, replacedFromFoodId: item.row.replacedFromFoodId, actualFoodName: item.row.actualFoodName, estimateAccepted: item.row.estimateAccepted, note: item.row.note })), targets: menu.targets.filter(target => target.value !== null).map(target => ({ key: target.key, value: target.value!, source: target.source ?? "Mục tiêu đã chốt", isUpperLimit: target.isUpperLimit })) };
+  const manifest: Manifest = { version: CONTRACT_VERSION, title: menu.title, mode: menu.mode, fields: selectedFields.map(field => field.key), ...(complete ? { reportFields: fields.map(field => field.key) } : {}), sourceFields: sourceFields.map(field => field.key), inputCapacity, customCapacity, dataRows: foods.length, digest: menu.digest, dataVersion: menu.dataVersion, generatedAt: menu.generatedAt, aiComment: menu.aiComment, savedRecord: menu.savedRecord, customSources: customs, days: menu.days.map(day => ({ id: day.id, label: day.label, date: day.date })), rows: rows.map(item => ({ id: item.row.id, meal: item.row.meal, dish: item.row.dish, foodId: item.row.foodId, customFoodId: item.row.customFood?.id, quantity: item.row.quantity, unit: item.row.unit, servings: item.row.servings, basis: item.row.basis, recipeSource: item.row.recipeSource, replacedFromFoodId: item.row.replacedFromFoodId, actualFoodName: item.row.actualFoodName, estimateAccepted: item.row.estimateAccepted, note: item.row.note })), targets: menu.targets.filter(target => target.value !== null).map(target => ({ key: target.key, value: target.value!, source: target.source ?? "Mục tiêu đã chốt", isUpperLimit: target.isUpperLimit })) };
   const metadata = workbook.addWorksheet(SHEETS.meta, { state: "veryHidden" });
   metadata.getCell("A1").value = "DINHDUONG2598_NUTRITION_CHAT";
   const json = JSON.stringify(manifest);
   for (let offset = 0, row = 2; offset < json.length; offset += 30000, row++) metadata.getCell(row, 1).value = json.slice(offset, offset + 30000);
   copySnapshot(workbook, input, SHEETS.originalInput, lastInput); copySnapshot(workbook, custom, SHEETS.originalCustom, lastCustom); copySnapshot(workbook, targetSheet, SHEETS.originalTargets, FIRST + WORKBOOK_LIMITS.days - 1);
+  if (complete) {
+    formula(analysis.getCell("A4"), `IF((${editableFormulaComparison})>0,"Đã sửa Excel; kết quả tính lại từ đầu vào mới. Nhận xét lúc xuất cần xem lại.","Chưa sửa đầu vào; kết quả tại thời điểm xuất.")`, "Chưa sửa đầu vào; kết quả tại thời điểm xuất.");
+    const cache = (cell: ExcelJS.Cell, value: number | string) => formula(cell, cell.formula!, value);
+    menu.targets.forEach((target, index) => {
+      const r = FIRST + index, field = fields.find(field => field.key === target.key), total = menu.totals[target.key];
+      const average = total?.value == null || !menu.analysis.dataDayCount ? null : total.value / menu.analysis.dataDayCount;
+      for (let c = 2; c <= 10; c++) formula(comparison.getCell(r, c), comparison.getCell(r, c).formula!.replaceAll(`A${r}`, `K${r}`));
+      formula(comparison.getCell(r, 11), `${q(SHEETS.targets)}!E${r}`, target.key);
+      formula(comparison.getCell(r, 1), `IF(K${r}="","",IFERROR(INDEX('_lists'!$E$1:$E$${ALL_NUTRIENT_FIELDS.length},MATCH(K${r},NutrientKeys,0)),K${r}))`, field?.label ?? target.key);
+      cache(comparison.getCell(r, 2), field?.unit ?? ""); cache(comparison.getCell(r, 3), average ?? "");
+      cache(comparison.getCell(r, 4), total?.missingRows.length ?? 0); cache(comparison.getCell(r, 5), target.value ?? "");
+      cache(comparison.getCell(r, 6), average !== null && target.value && !total?.incomplete ? average / target.value : "");
+      cache(comparison.getCell(r, 7), average !== null && target.value !== null && !total?.incomplete ? average - target.value : "");
+      cache(comparison.getCell(r, 8), target.isUpperLimit ? "Có" : "Không"); cache(comparison.getCell(r, 9), target.source ?? "");
+      cache(comparison.getCell(r, 10), target.value === null ? "Chưa có mục tiêu" : average === null || total?.incomplete ? "Chưa đủ dữ liệu để kết luận" : target.isUpperLimit ? average > target.value ? "Vượt giới hạn trên" : "Không vượt giới hạn trên" : average < target.value ? "Dưới mục tiêu" : average > target.value ? "Trên mục tiêu" : "Bằng mục tiêu");
+    });
+    comparison.getColumn(11).hidden = true;
+    for (const [sheet, includeDish] of [[meals, false], [dishes, true]] as const) rows.forEach(({ day, row }, i) => {
+      const grouped = rows.filter(item => item.day.id === day.id && item.row.meal === row.meal && (!includeDish || item.row.dish === row.dish));
+      const first = rows.findIndex(item => item === grouped[0]);
+      if (first !== i) return;
+      const r = FIRST + i;
+      [menu.days.findIndex(item => item.id === day.id) + 1, day.label, row.meal, includeDish ? row.dish : "Tất cả món", grouped.length].forEach((value, j) => cache(sheet.getCell(r, j + 1), value));
+      groupFields.forEach((field, j) => {
+        const known = grouped.filter(({ row }) => row.referenceAmount === 0 || row.referenceAmount !== null && row.food.nutrients[field.key] != null);
+        const value = known.length ? known.reduce((sum, { row }) => sum + (row.referenceAmount === 0 ? 0 : row.referenceAmount! * row.food.nutrients[field.key]! / 100), 0) : "";
+        cache(sheet.getCell(r, 6 + j * 2), value); cache(sheet.getCell(r, 7 + j * 2), grouped.length - known.length);
+      });
+    });
+    shoppingItems.forEach((item, i) => {
+      const used = rows.filter(({ row }) => item.kind === "catalog" ? row.foodId === item.id : row.customFood?.id === item.id && Boolean(item.id));
+      if (!used.length) return;
+      const r = FIRST + i; cache(shopping.getCell(r, 4), used.length);
+      for (const [key, c] of [["edibleGrams", 5], ["rawGrams", 7]] as const) {
+        const known = used.filter(({ row }) => row[key] !== null);
+        cache(shopping.getCell(r, c), known.length ? known.reduce((sum, { row }) => sum + row[key]!, 0) : "");
+        cache(shopping.getCell(r, c + 1), used.length - known.length);
+      }
+      cache(shopping.getCell(r, 10), used.some(({ row }) => row.rawGrams === null) ? "Thiếu thải bỏ/mật độ/đầu vào; chưa đủ lượng mua" : "Đủ dữ liệu quy đổi");
+    });
+    addNutritionReportSheets(workbook, menu, allFoods, options, { inputCapacity, sourceFields: sourceFields.length });
+    const plain = { name: "Times New Roman", size: 12, color: { argb: "000000" } };
+    for (const sheet of [analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data]) {
+      sheet.views = [{ state: "normal", showGridLines: false, zoomScale: 85 }];
+      sheet.properties.tabColor = { argb: "FFFFFF" };
+      sheet.eachRow(row => row.eachCell(cell => {
+        cell.font = { ...plain, ...(cell.font?.bold ? { bold: true } : {}) };
+        cell.fill = { type: "pattern", pattern: "none" };
+        cell.border = { bottom: { style: "hair", color: { argb: "AAAAAA" } } };
+      }));
+      sheet.pageSetup.printTitlesRow = "1:6";
+      sheet.pageSetup.margins = { left: 0.55, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
+      for (const address of ["A1", "A2"]) if (typeof sheet.getCell(address).value === "string") sheet.getCell(address).value = String(sheet.getCell(address).value).replaceAll("ô vàng", "ô nhập").replaceAll("Ô vàng", "Ô nhập");
+    }
+    for (let i = 0; i < WORKBOOK_LIMITS.days; i++) {
+      if (i >= menu.days.length) analysis.getRow(FIRST + i).hidden = true;
+      if (i >= Math.max(menu.days.length, menu.targets.length)) targetSheet.getRow(FIRST + i).hidden = true;
+      if (i >= menu.targets.length) comparison.getRow(FIRST + i).hidden = true;
+    }
+    if (!menu.targets.length) { comparison.getRow(FIRST).hidden = false; comparison.getCell(FIRST, 1).value = "Chưa đặt mốc đối chiếu"; comparison.getCell(FIRST, 10).value = "Chỉ tính thành phần dinh dưỡng; không đánh giá đạt/thiếu nhu cầu."; }
+    for (let i = rows.length; i < inputCapacity; i++) { input.getRow(FIRST + i).hidden = true; input.getRow(FIRST + i).outlineLevel = 1; }
+    for (let i = customs.length; i < customCapacity; i++) { custom.getRow(FIRST + i).hidden = true; custom.getRow(FIRST + i).outlineLevel = 1; }
+    for (const sheet of [meals, dishes]) for (let i = rows.length; i < inputCapacity; i++) sheet.getRow(FIRST + i).hidden = true;
+    shoppingItems.forEach((item, i) => { shopping.getRow(FIRST + i).hidden = !rows.some(({ row }) => item.kind === "catalog" ? row.foodId === item.id : row.customFood?.id === item.id && Boolean(item.id)); });
+    input.pageSetup.printArea = `B1:AB${FIRST + rows.length - 1}`;
+    analysis.state = "hidden";
+    input.getCell("A2").value = `Chỉnh ngày, bữa/món, mã thực phẩm, lượng, đơn vị và số suất tại các cột nhập. Dòng dự phòng được ẩn theo nhóm; có thể hiện thêm dòng khi cần (tối đa ${inputCapacity} dòng). Tra mã tại Du lieu. Bản in gọn ở Thuc don.`;
+  }
   const protectionPassword = randomBytes(18).toString("base64url");
-  for (const sheet of [analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, insertRows: false, deleteRows: false, spinCount: 1000 });
+  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Bao cao", "Thuc don", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
   const chartStart = noteRow + 5;
   const charts = [];
   const labelRange = range(SHEETS.targets, "C", FIRST + WORKBOOK_LIMITS.days - 1);
@@ -439,7 +556,7 @@ export async function parseNutritionWorkbook(bytes: Uint8Array): Promise<MenuInp
     if (!/^xl\/worksheets\/[^/]+\.xml$/.test(entry.name)) continue;
     const xml = await entry.async("string");
     const sheetRows = [...xml.matchAll(/<row\b[^>]*\br=["'](\d+)["']/g)];
-    if (sheetRows.some(match => Number(match[1]) > WORKBOOK_LIMITS.catalogue + 100)) failure("Trang tính vượt giới hạn số dòng.");
+    if (sheetRows.some(match => Number(match[1]) > Math.max(WORKBOOK_LIMITS.catalogue + 100, WORKBOOK_LIMITS.days * ALL_NUTRIENT_FIELDS.length + FIRST + 1))) failure("Trang tính vượt giới hạn số dòng.");
     if (/<f\b[^>]*>[^<]*\[[^<]*<\/f>/i.test(xml)) failure("Không cho phép công thức tham chiếu workbook khác.");
   }
   const workbook = new ExcelJS.Workbook();
@@ -454,7 +571,7 @@ export async function parseNutritionWorkbook(bytes: Uint8Array): Promise<MenuInp
     if (isFormula(cell) || typeof cell.value !== "string") return failure("Metadata không hợp lệ.");
     return cell.value;
   }).join("")) as Manifest; } catch { return failure("Không đọc được metadata."); }
-  if (!manifest || manifest.version !== CONTRACT_VERSION || !Array.isArray(manifest.fields) || !manifest.fields.length || manifest.fields.length > MAX_NUTRIENTS || manifest.fields.some(key => typeof key !== "string" || !NUTRIENT_KEYS.has(key)) || !Array.isArray(manifest.sourceFields) || manifest.sourceFields.length > MAX_NUTRIENTS + 4 || manifest.sourceFields.some(key => typeof key !== "string" || !NUTRIENT_KEYS.has(key)) || manifest.fields.some((key, index) => manifest.sourceFields[index] !== key) || !Number.isInteger(manifest.inputCapacity) || manifest.inputCapacity < 1 || manifest.inputCapacity > WORKBOOK_LIMITS.rows || !Number.isInteger(manifest.customCapacity) || manifest.customCapacity < 1 || manifest.customCapacity > WORKBOOK_LIMITS.customFoods || !Array.isArray(manifest.rows) || manifest.rows.length > WORKBOOK_LIMITS.rows || !Array.isArray(manifest.days) || manifest.days.length > WORKBOOK_LIMITS.days || !Array.isArray(manifest.targets) || manifest.targets.length > MAX_NUTRIENTS || !["menu", "recall24h"].includes(manifest.mode) || typeof manifest.title !== "string" || manifest.title.length > 200) failure("Metadata ngoài giới hạn.");
+  if (!manifest || manifest.version !== CONTRACT_VERSION || !Array.isArray(manifest.fields) || !manifest.fields.length || manifest.fields.length > MAX_NUTRIENTS || manifest.fields.some(key => typeof key !== "string" || !NUTRIENT_KEYS.has(key)) || !Array.isArray(manifest.sourceFields) || manifest.sourceFields.length > ALL_NUTRIENT_FIELDS.length || manifest.sourceFields.some(key => typeof key !== "string" || !NUTRIENT_KEYS.has(key)) || manifest.fields.some((key, index) => manifest.sourceFields[index] !== key) || !Number.isInteger(manifest.inputCapacity) || manifest.inputCapacity < 1 || manifest.inputCapacity > WORKBOOK_LIMITS.rows || !Number.isInteger(manifest.customCapacity) || manifest.customCapacity < 1 || manifest.customCapacity > WORKBOOK_LIMITS.customFoods || !Array.isArray(manifest.rows) || manifest.rows.length > WORKBOOK_LIMITS.rows || !Array.isArray(manifest.days) || manifest.days.length > WORKBOOK_LIMITS.days || !Array.isArray(manifest.targets) || manifest.targets.length > MAX_NUTRIENTS || !["menu", "recall24h"].includes(manifest.mode) || typeof manifest.title !== "string" || manifest.title.length > 200) failure("Metadata ngoài giới hạn.");
   if (manifest.rows.some(row => !row || typeof row !== "object" || typeof row.id !== "string") || manifest.days.some(day => !day || typeof day !== "object" || typeof day.id !== "string") || manifest.targets.some(target => !target || typeof target !== "object" || typeof target.key !== "string" || typeof target.value !== "number")) failure("Metadata bản ghi không hợp lệ.");
   if (!Array.isArray(manifest.customSources) || manifest.customSources.length > WORKBOOK_LIMITS.customFoods || manifest.customSources.some(source => !source || typeof source !== "object" || typeof source.id !== "string") || new Set(manifest.sourceFields).size !== manifest.sourceFields.length || new Set(manifest.rows.map(row => row.id)).size !== manifest.rows.length) failure("Metadata nguồn hoặc ID không hợp lệ.");
   const input = get(SHEETS.input); const customSheet = get(SHEETS.custom); const targetsSheet = get(SHEETS.targets);

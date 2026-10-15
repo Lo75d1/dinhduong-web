@@ -1,6 +1,7 @@
 import JSZip from "jszip";
 import path from "node:path";
 import { NutritionWorkbookError, WORKBOOK_LIMITS } from "./workbook-security";
+import { ALL_NUTRIENT_FIELDS } from "../nutrient-fields";
 
 const REQUIRED = ["Nhap khau phan", "Tu nhap", "Ngay va muc tieu", "_meta"];
 const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
@@ -43,7 +44,7 @@ export async function workbookInputView(original: JSZip): Promise<Uint8Array> {
       const parsed = /^([A-Z]{1,3})([1-9]\d{0,6})$/.exec(address ?? "");
       if (!parsed || Number(parsed[2]) > WORKBOOK_LIMITS.catalogue + 100) return fail("Địa chỉ ô ngoài giới hạn.");
       const column = [...parsed[1]].reduce((value, character) => value * 26 + character.charCodeAt(0) - 64, 0);
-      const allowed = sheet.name === "Nhap khau phan" ? column <= 16 || column === 28 : sheet.name === "Tu nhap" ? column <= 55 : sheet.name === "Ngay va muc tieu" ? column <= 8 : column === 1;
+      const allowed = sheet.name === "Nhap khau phan" ? column <= 16 || column === 28 : sheet.name === "Tu nhap" ? column <= 11 + ALL_NUTRIENT_FIELDS.length : sheet.name === "Ngay va muc tieu" ? column <= 8 : column === 1;
       return allowed ? cell : "";
     });
     const filename = `xl/worksheets/sheet${index + 1}.xml`;

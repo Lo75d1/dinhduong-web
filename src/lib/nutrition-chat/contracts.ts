@@ -37,6 +37,7 @@ export type NutritionFood = {
   wastePercent: number | null; foodGroup: string | null;
   nutrients: Record<string, number | null>;
   aliases?: Array<{ name: string; verified: boolean }>;
+  sourceOnlyNutrients?: Record<string, number | null>;
   qualityWarnings?: string[];
 };
 export type ResolvedRow = MenuRowInput & {
