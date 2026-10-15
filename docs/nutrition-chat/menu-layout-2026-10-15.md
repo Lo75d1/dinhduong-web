@@ -28,4 +28,12 @@
 
 - Chu du an da cho phep trien khai cung nhanh o cac luot truoc; tiep tuc PR #4, chua merge main.
 - Preflight: checkout f9c1500, app healthy; DB25/25; env/layout/Caddy/Google rieng giu nguyen.
-- Trang thai: cho build/trien khai va tai file that de nghiem thu.
+- App **5994ff2** da build Linux/TypeScript va healthy. Backup image/config: `/opt/dinhduong-release-backups/nutrition-plan-layout-20261015-181911-codex`; khong ap migration.
+- HTTPS **30 checks** dat tren 2 file xuat that (1 ngay: 3 dong; 2 ngay: 4 dong), dung 1 Food VDD MA va tron ven 2 nguyen lieu da lien ket cua 1 Dish RNI. Tong doc lap 274,1 va 372,95 kcal khop bao cao. Export-only, khong luu tai khoan/tao user/session/menu fixture.
+- Excel desktop tren 2 file that: **28 checks** dat; ca mon VDD va moi nguyen lieu RNI tinh dung, zero giu so 0, sua 100 -> 200 g thanh 131,8 kcal va bao cao tu cap nhat. Giu 3.719 hyperlink Food; quet tat ca sheet khong loi. Ban in Thuc don 1 trang, chu cot/ten mon khong bi cat; anh ignore `plan-vps-layout.png`.
+- File SaveAs native doc lai: **4 checks** dat, dinh luong da sua 200, so dong 3/1 va nguon cong thuc RNI giu dung; engine tinh lai 438,85 kcal, khop Excel. Day la nghiem thu parser that, khong phai upload vao tai khoan that.
+- Count/digest Food (3.719), Dish (7.369), DishIngredient (41.457) va 25 migration khop truoc/sau ca export. Env/layout/Caddy/Google khop SHA; timer active/enabled, khong OOM, swap build da go. Nhanh/PR van chua merge main.
+
+## Ghi chu du lieu ngoai pham vi
+
+- Khi chon mau, `Com rang thap cam (Mixed fried rice)` tu VDD MA co tong P/L/G raw 128,4 tren co so 100 g. Guard chat luong hien co loai cac chat chinh nay khoi phep cong; giu theo quy uoc README-data, khong sua kho o dot bo cuc. Mau nghiem thu so lieu du chon Food MA khac da qua guard; khong coi doi bo cuc la sua duoc du lieu nguon can xac minh.
