@@ -15,6 +15,7 @@ try {
   $taskExcel.CalculateFullRebuild()
   $taskReport = $taskBook.Worksheets.Item('Bao cao')
   $taskInput = $taskBook.Worksheets.Item('Nhap khau phan')
+  Check-Number $taskInput.Range('Q7').Value2 241 'catalogue index exceeds custom source capacity'
   $taskEnergyRow = 0; $taskDRow = 0; $taskKRow = 0
   for($i=7;$i -le $taskReport.UsedRange.Rows.Count;$i++) {
     if($taskReport.Cells.Item($i,1).Value2 -eq 'Năng lượng' -and $taskReport.Cells.Item($i,2).Value2 -eq 'kcal') {$taskEnergyRow=$i}
@@ -55,7 +56,7 @@ try {
     }
   }
   $taskChecks.Add(@{check='all sheets native formula error scan';pass=$true})
-  foreach($name in @('Bao cao','Thuc don','Dinh duong theo ngay','Nguon doi soat','Nhom thuc pham')) {
+  foreach($name in @('Bao cao','Thuc don','Thanh phan day du','Dinh duong theo ngay','Nguon doi soat','Nhom thuc pham')) {
     $taskSheet = $taskBook.Worksheets.Item($name)
     if($taskSheet.PageSetup.PaperSize -ne 9) {throw "Not A4: $name"}
     $taskSheet.ExportAsFixedFormat(0,(Join-Path $taskEvidence ($name.Replace(' ','-')+'-complete.pdf')),0,$true,$false)

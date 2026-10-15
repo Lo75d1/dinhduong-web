@@ -20,7 +20,8 @@ async function main() {
   fixture.foods[0].nutrients.tocopherolBetaMg = 1.5;
   fixture.foods[0].sourceOnlyNutrients = { vitAMgVdd: 99, rniUnknownFattyAcidG: 8 };
   const menu = resolveMenu(fixture.menu.input, fixture.foods);
-  const bytes = await buildNutritionWorkbook(menu, fixture.foods, { meta: { subjectName: "MẪU KIỂM THỬ", authorName: "Người lập mẫu", clinicalCourse: "Dữ liệu giả lập, không dùng đánh giá dinh dưỡng." } });
+  const catalogue = [...Array.from({ length: 240 }, (_, i) => ({ ...fixture.foods[0], id: `padding-food-${i}` })), ...fixture.foods];
+  const bytes = await buildNutritionWorkbook(menu, catalogue, { meta: { subjectName: "MẪU KIỂM THỬ", authorName: "Người lập mẫu", clinicalCourse: "Dữ liệu giả lập, không dùng đánh giá dinh dưỡng." } });
   await fs.mkdir("evidence/nutrition-chat", { recursive: true });
   await fs.writeFile("evidence/nutrition-chat/complete-report-test.xlsx", bytes);
   const wb = new ExcelJS.Workbook(); await wb.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);

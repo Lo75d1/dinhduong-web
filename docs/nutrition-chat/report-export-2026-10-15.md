@@ -26,6 +26,12 @@
 
 ## Giới hạn rõ ràng
 
+### Lỗi nguồn làm Excel tính lại thành trống
+
+- Nghiệm thu bằng file thật của VPS phát hiện Food nằm tại vị trí 241 trong danh mục, trong khi vùng nguồn tự nhập chỉ có 20 hàng. `AND` của Excel vẫn tính `INDEX` nguồn tự nhập dù dòng đang dùng kho; lỗi `#REF!` ở cảnh báo/quy đổi kéo theo tổng trống. Giá trị lưu sẵn lúc tải đúng nên kiểm tra ZIP/cached result đơn thuần không phát hiện được.
+- Đã đặt `IF` chọn loại nguồn trước mọi `INDEX` phần tự nhập tại hai công thức liên quan. Fixture chính bổ sung 240 Food đệm để kiểm tra trường hợp chỉ số kho vượt vùng tự nhập; Excel desktop kiểm lại cả tổng, vi chất, số 0, đổi gram/suất, nguồn theo phần và quét lỗi công thức.
+- File đã tải từ bản cũ không tự đổi công thức; cần xuất lại. Các ô nhập của file cũ vẫn đọc lại được qua bước xem trước nếu cần giữ số người dùng đã sửa.
+
 - API vẫn chọn tối đa 40 chất cho hội thoại; export tự bổ sung 160 chất. Những cột chưa có số nguồn vẫn ghi thiếu. Mục tiêu dùng các mapping đã có; không tự gán mốc cho chất chưa có nguồn/mapping phù hợp.
 - Sửa lượng/suất/mã/mục tiêu tự tính offline. Thêm/bớt số dòng/ngày cần xuất lại để phạm vi bản in chi tiết cập nhật; file có thông báo riêng khi cấu trúc này thay đổi. Nhóm tự nhập mới cũng có cảnh báo phạm vi nhóm.
 - Ngân sách trước dựng ô, 5 MB nén/64 MB giải nén và một tác vụ xuất đồng thời giúp giới hạn tải trên VPS 2 GB. Kỳ lớn có thể phải chia đợt; không cam kết xuất 90 ngày × 1.000 dòng × đủ trường trong mọi trường hợp.
