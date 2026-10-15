@@ -58,10 +58,10 @@ Tài liệu cho người dùng và AI khi người dùng chủ động yêu cầ
 
 ### ChatGPT
 
-1. Mở Plugins → nút thêm → Add custom MCP server. Đặt tên Dinh dưỡng 2598, dùng URL MCP phía trên và chọn OAuth.
-2. Đăng nhập Dinh dưỡng 2598 ở đúng website, xem quyền rồi xác nhận. Không nhập mật khẩu vào hội thoại.
-3. Cài plugin cá nhân vừa tạo. Mở cuộc hội thoại Work, dùng @ chọn plugin Dinh dưỡng 2598 rồi gửi lời nhắn bắt đầu.
-4. AI gọi get_workflow để kiểm tra công cụ thật, sau đó dẫn tiếp theo các bước bên dưới. Gói skill/plugin tải sẵn là lựa chọn bổ sung; không bắt buộc upload ZIP để dùng lời nhắn này cùng MCP.
+1. Mở Plugins → nút thêm → Add custom MCP server. Đặt tên Dinh dưỡng 2598, dùng URL MCP phía trên. Chọn OAuth or no authentication nếu có, hoặc OAuth.
+2. Tạo plugin, kiểm tra có 11 công cụ gồm get_workflow, rồi cài plugin cá nhân. Mở cuộc hội thoại Work mới, dùng @ chọn plugin rồi yêu cầu gọi get_workflow. Hướng dẫn này không cần đăng nhập; các công cụ dữ liệu vẫn cần cấp quyền.
+3. Khi gọi công cụ dữ liệu, ChatGPT yêu cầu kết nối tài khoản: bấm kết nối, đăng nhập Dinh dưỡng 2598 ở đúng website, xem quyền rồi xác nhận. Không nhập mật khẩu vào hội thoại.
+4. Plugin đã cài nhưng không có công cụ: mở plugin → Refresh, kiểm lại danh sách rồi thử trong hội thoại mới. Không coi việc thêm tên plugin là đã cấp quyền OAuth. Gói skill/plugin tải sẵn là lựa chọn bổ sung; không bắt buộc upload ZIP để dùng lời nhắn này cùng MCP.
 
 Nguồn OpenAI: https://developers.openai.com/plugins/quickstart
 

@@ -10,9 +10,12 @@
 
 ## ChatGPT
 
-1. Mở Plugins, thêm custom MCP server bằng URL trên và chọn OAuth.
-2. Đăng nhập Dinh dưỡng 2598, kiểm tra tên ứng dụng và quyền rồi đồng ý.
-3. Cài plugin cá nhân vừa tạo, mở cuộc hội thoại Work, dùng @ chọn Dinh dưỡng 2598 rồi gửi lời nhắn bắt đầu. Gói skill/plugin ZIP là lựa chọn thêm, không bắt buộc để dùng lời nhắn với MCP.
+1. Mở Plugins, thêm custom MCP server bằng URL trên. Chọn **OAuth or no authentication** nếu có, hoặc OAuth.
+2. Tạo plugin và kiểm danh sách có **11 công cụ**, gồm `get_workflow`. Cài plugin cá nhân, mở hội thoại Work mới và dùng @ chọn plugin.
+3. Yêu cầu gọi `get_workflow` để kiểm tra; công cụ hướng dẫn và discovery public không cần token. Khi gọi công cụ dữ liệu, ChatGPT yêu cầu kết nối: đăng nhập Dinh dưỡng 2598, kiểm tên ứng dụng và quyền rồi đồng ý.
+4. Nếu đã thêm plugin nhưng phiên không có công cụ: vào plugin → **Refresh**, kiểm lại danh sách và thử trong hội thoại mới. Tên plugin trong chat không chứng minh đã cấp quyền; server phải có lần đổi code thành token thành công. Gói ZIP là lựa chọn thêm.
+
+Nguồn xử lý thiếu công cụ/cập nhật metadata: [Connect and test](https://developers.openai.com/plugins/deploy/connect-chatgpt); khai báo quyền và tín hiệu cấp quyền: [Authentication](https://developers.openai.com/plugins/build/auth).
 
 Gói ZIP portable không tự xuất hiện trong thư viện công khai. Đăng ký/thẩm định/public listing là việc riêng; không có ID ứng dụng đã đăng ký giả trong package. Nếu bề mặt hiện tại chưa hỗ trợ cài ZIP, dùng connector và hướng dẫn dưới đây; kiểm tra `get_workflow` trước khi gọi chức năng. [Nguồn cấu trúc và cài thử của OpenAI](https://developers.openai.com/plugins/build/plugins).
 

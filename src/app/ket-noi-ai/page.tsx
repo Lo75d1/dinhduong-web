@@ -66,8 +66,10 @@ export default async function ConnectAiPage() {
             <h3 className="text-xl font-semibold">ChatGPT</h3>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-neutral-700">
               <li>Mở Plugins, thêm custom MCP server với URL phía trên.</li>
-              <li>Chọn OAuth, đăng nhập Dinh dưỡng 2598 và xem quyền trước khi cấp.</li>
-              <li>Cài plugin cá nhân vừa tạo; mở hội thoại Work, dùng @ chọn Dinh dưỡng 2598 và gửi lời nhắn bắt đầu.</li>
+              <li>Chọn “OAuth or no authentication” nếu có, hoặc OAuth. Tạo plugin rồi kiểm tra danh sách có 11 công cụ, gồm get_workflow.</li>
+              <li>Cài plugin cá nhân; mở hội thoại Work mới, dùng @ chọn plugin và yêu cầu gọi get_workflow để kiểm tra.</li>
+              <li>Khi cần tra dữ liệu hoặc tính khẩu phần, bấm kết nối tài khoản khi ChatGPT yêu cầu; đăng nhập Dinh dưỡng 2598 và xem quyền trước khi cấp.</li>
+              <li>Đã cài nhưng không thấy công cụ: mở plugin → Refresh, kiểm lại danh sách công cụ rồi thử trong hội thoại mới. Không cần xóa tài khoản hoặc nhập lại dữ liệu trên website.</li>
             </ol>
             <a href="https://developers.openai.com/plugins/quickstart" target="_blank" rel="noopener noreferrer" className={`mt-3 inline-block text-sm underline underline-offset-4 ${focus}`}>Hướng dẫn chính thức của OpenAI</a>
           </div>

@@ -58,6 +58,12 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - Tái dùng trang/chức năng/liên kết có sẵn; chỉ đổi câu chữ và alt ảnh. Không thay layout/CSS, logic lấy dữ liệu, các giá trị cài đặt, lời cảm ơn hoặc thông tin liên hệ do quản trị nhập. Prisma generate/TypeScript/ESLint file sửa/diff check và build Linux/TypeScript đạt.
 - App image `a625517` đã healthy trên VPS: homepage/health/start/Google 200, menu và nút hội thoại cùng giữ đích start, bộ đếm 0/0. Trình duyệt thật 319 px/document 304 px không tràn ngang; bấm nút mới mở đúng trang. Cấu hình/nav/env/file Google riêng khớp hash trước/sau; không chạy migration/seed, swap build đã gỡ. Ảnh ignore `evidence/nutrition-chat/vps-home-copy-mobile.jpg`.
 
+#### Sửa phát hiện công cụ / bước OAuth ChatGPT (15/10/2026)
+
+- Người dùng tạo plugin OAuth nhưng chat không có get_workflow và chưa thấy trang cấp quyền. Đọc VPS xác nhận DCR đã có client ChatGPT, code/token đều 0; không sửa/xóa client đó. SDK MCP chính thức 1.32.1 tái hiện khởi tạo bị chặn invalid_token trước khi đọc tools.
+- Server 1.0.1 mở discovery/schema và get_workflow public có hạn mức; mười công cụ dữ liệu vẫn kiểm OAuth/owner. Thêm securitySchemes cấp tool + mirror metadata, lỗi auth có challenge trong JSON-RPC và HTTP 401/403, envelope modern giữ challenge. Plugin manifest khai báo mixed/DCR; hướng dẫn bổ sung Refresh, kiểm 11 tool, cấp quyền khi dùng dữ liệu.
+- Local HTTP fixture 167 checks, core/protocol 67, Prisma generate/TypeScript/lint file sửa/diff check đạt. Nghiệm thu SDK/HTTPS sau triển khai và tài khoản ChatGPT thật còn phải ghi tiếp; không coi đã tạo plugin là đã dùng được công cụ.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn

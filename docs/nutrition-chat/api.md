@@ -4,6 +4,13 @@
 - Source of truth: `src/lib/nutrition-chat/contracts.ts`, `validation.ts`, `tools.ts`, `protocol.ts`. Không copy thêm một schema độc lập vào plugin; `get_workflow` và tools/list trả schema phiên đang chạy.
 - Contract `1.0`; hỗ trợ MCP `2026-07-28` và compatibility `2025-11-25`, `2025-06-18`, `2025-03-26`. Client mới dùng envelope `_meta` và header method/name/version theo protocol; legacy dùng initialize. List/discover mới có `resultType`, `_meta` server info, `ttlMs`, `cacheScope: private`.
 
+## Discovery trước khi cấp quyền — server 1.0.1
+
+- MCP initialize/discover/tools-list/ping/initialized và `get_workflow` cho phép không có Authorization để client đọc schema/hướng dẫn trước khi kết nối. Không trả dữ liệu Food/Dish, bản lưu hoặc tài khoản trong các phản hồi public này. Dùng hạn mức global/per-IP hiện có, không tạo hệ thống quota mới.
+- Mười công cụ dữ liệu tiếp tục kiểm bearer/issuer/audience/expiry/scope/owner. Khi thiếu token/quyền, giữ HTTP 401/403 + WWW-Authenticate cho client MCP và trả JSON-RPC isError kèm `_meta["mcp/www_authenticate"]` cho giao diện liên kết tài khoản. Không tự thực hiện thao tác sau một lỗi auth.
+- Tool descriptors có `securitySchemes` ở cấp tool và mirror trong `_meta`; chỉ get_workflow là noauth, các tool còn lại oauth2 đúng scope. Envelope modern giữ nguyên metadata challenge khi thêm serverInfo. Token sai được gửi kèm vẫn bị từ chối, không fallback sang anonymous.
+- Gói plugin 1.0.1 khai báo mixed OAuth/DCR rõ ràng. Cần Refresh metadata và thử hội thoại mới cho plugin đã tạo; không coi kiểm SDK hoặc fixture là nghiệm thu ChatGPT thật.
+
 ## Thống kê công khai ở chân trang
 
 - Tái dùng `SiteSetting` singleton và API/footer hiện có, không dựng bảng analytics riêng. Hai bộ đếm bắt đầu từ 0 khi bật tính năng; không backfill các lượt thử trước đó.

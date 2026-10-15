@@ -15,7 +15,10 @@ const definitions = [
   ["get_saved_menu","Mở lại bản cá nhân theo ID, tính lại theo nguồn hiện tại và báo nếu nguồn thay đổi. Cần người dùng xác nhận trước khi sửa hoặc xuất.","nutrition:read",obj({id},["id"])],
   ["export_workbook","Xuất .xlsx sửa lượng/nguyên liệu/mục tiêu và tự tính lại biểu đồ offline. Link riêng hết hạn 10 phút; nhận xét AI là ảnh chụp tại lúc xuất, sẽ báo cũ khi sửa.","nutrition:export",obj(confirmed,["input","confirmationToken"])],
 ] as const;
-export const NUTRITION_TOOLS = definitions.map(([name,description,scope,inputSchema])=>({name,description,inputSchema,annotations:{readOnlyHint:!["save_menu","export_workbook"].includes(name),destructiveHint:false,idempotentHint:name!=="export_workbook",openWorldHint:false},_meta:{securitySchemes:[{type:"oauth2",scopes:[scope]}]}}));
+export const NUTRITION_TOOLS = definitions.map(([name,description,scope,inputSchema])=>{
+  const securitySchemes=name==="get_workflow"?[{type:"noauth"}]:[{type:"oauth2",scopes:[scope]}];
+  return {name,description,inputSchema,securitySchemes,annotations:{readOnlyHint:!["save_menu","export_workbook"].includes(name),destructiveHint:false,idempotentHint:name!=="export_workbook",openWorldHint:false},_meta:{securitySchemes}};
+});
 export function nutritionToolScope(name:string) { return definitions.find(d=>d[0]===name)?.[2]; }
 export const NUTRITION_WORKFLOW = {
   name:"Dinh dưỡng 2598",contractVersion:"1.0",limits:NUTRITION_LIMITS,

@@ -111,7 +111,35 @@ async function main() {
       const meta = modern ? { _meta: { "io.modelcontextprotocol/protocolVersion": version, "io.modelcontextprotocol/clientCapabilities": {} } } : {};
       return request("mcp", { jsonrpc: "2.0", id: ++rpcId, method, params: { ...params, ...meta } }, access, { Accept: "application/json, text/event-stream", "Mcp-Protocol-Version": version, ...(modern ? { "Mcp-Method": method, ...(method === "tools/call" ? { "Mcp-Name": String(params.name) } : {}) } : {}), ...extra });
     }
-    assert.equal((await api.mcpRoute.POST(rpcRequest("tools/list", {}, ""))).status, 401); checks++;
+    const anonymousList = await api.mcpRoute.POST(rpcRequest("tools/list", {}, ""));
+    assert.equal(anonymousList.status, 200); checks++;
+    const anonymousTools = (await anonymousList.json()).result.tools;
+    assert.equal(anonymousTools.length, 11); checks++;
+    assert.deepEqual(anonymousTools.find((tool: { name: string }) => tool.name === "get_workflow").securitySchemes, [{ type: "noauth" }]); checks++;
+    for (const tool of anonymousTools.filter((item: { name: string }) => item.name !== "get_workflow")) { assert.equal(tool.securitySchemes[0].type, "oauth2"); checks++; }
+    const anonymousInit = await api.mcpRoute.POST(rpcRequest("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "anonymous fixture", version: "1" } }, ""));
+    assert.equal(anonymousInit.status, 200); checks++;
+    assert.equal((await anonymousInit.json()).result.protocolVersion, "2025-06-18"); checks++;
+    const anonymousDiscovery = await api.mcpRoute.POST(rpcRequest("server/discover", {}, "", true));
+    assert.equal(anonymousDiscovery.status, 200); checks++;
+    const anonymousWorkflow = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "get_workflow", arguments: {} }, "", true));
+    assert.equal(anonymousWorkflow.status, 200); checks++;
+    assert.equal((await anonymousWorkflow.json()).result.structuredContent.name, "Dinh dưỡng 2598"); checks++;
+    const malformedWorkflow = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "get_workflow", arguments: { ownerId: "user-b" } }, "", true));
+    assert.equal((await malformedWorkflow.json()).result.isError, true); checks++;
+    assert.equal((await api.mcpRoute.POST(rpcRequest("tools/list", {}, "bad-token"))).status, 401); checks++;
+    for (const tool of anonymousTools.filter((item: { name: string }) => item.name !== "get_workflow")) {
+      const denied = await api.mcpRoute.POST(rpcRequest("tools/call", { name: tool.name, arguments: {} }, "", true));
+      assert.equal(denied.status, 401); checks++;
+      const deniedBody = (await denied.json()).result;
+      assert.equal(deniedBody.isError, true); checks++;
+      assert.ok(deniedBody._meta["mcp/www_authenticate"][0].includes('error="invalid_token"')); checks++;
+      assert.ok(deniedBody._meta["mcp/www_authenticate"][0].includes("error_description=")); checks++;
+      assert.equal(deniedBody._meta["io.modelcontextprotocol/serverInfo"].name, "dinh-duong-2598"); checks++;
+      assert.equal(deniedBody.structuredContent, undefined); checks++;
+    }
+    const legacyDenied = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "search_foods", arguments: { q: "cơm" } }, ""));
+    assert.ok((await legacyDenied.json()).result._meta["mcp/www_authenticate"][0].includes("nutrition:read")); checks++;
     const badOrigin = await api.mcpRoute.POST(rpcRequest("tools/list", {}, token, false, { Origin: "https://evil.test" }));
     const badOriginStatus = badOrigin.status; // Assert after other cases to expose independent regressions.
     const list = await api.mcpRoute.POST(rpcRequest("tools/list", {}));
@@ -135,7 +163,9 @@ async function main() {
     const wrongArgs = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "prepare_menu", arguments: { input: menu, extra: true } }));
     assert.equal(wrongArgs.status, 200); checks++;
     assert.equal((await wrongArgs.json()).result.isError, true); checks++;
-    assert.equal((await api.mcpRoute.POST(rpcRequest("tools/call", { name: "save_menu", arguments: { ...confirmedArgs, idempotencyKey: "mcp-write-denied" } }, readToken))).status, 403); checks++;
+    const scopeDenied = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "save_menu", arguments: { ...confirmedArgs, idempotencyKey: "mcp-write-denied" } }, readToken));
+    assert.equal(scopeDenied.status, 403); checks++;
+    assert.ok((await scopeDenied.json()).result._meta["mcp/www_authenticate"][0].includes('error="insufficient_scope"')); checks++;
     const mcpPrepared = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "prepare_menu", arguments: { input: menu } }, token, true));
     assert.equal(mcpPrepared.status, 200); checks++;
     const mcpPreview = (await mcpPrepared.json()).result.structuredContent as Awaited<ReturnType<typeof Service.prepareNutritionMenu>>;
@@ -225,6 +255,14 @@ async function main() {
     finally { await api.fixtureQuery("COMMIT"); }
     assert.equal(pingStatuses.filter(status => status === 200).length, 120); checks++;
     assert.equal(pingStatuses[120], 429); checks++;
+    const publicPingStatuses: number[] = [];
+    let publicRetryAfter: string | null = null;
+    await api.fixtureQuery("BEGIN");
+    try { for (let i = 0; i < 61; i++) { const response = await api.mcpRoute.POST(rpcRequest("ping", {}, "")); publicPingStatuses.push(response.status); publicRetryAfter = response.headers.get("retry-after"); } }
+    finally { await api.fixtureQuery("COMMIT"); }
+    assert.equal(publicPingStatuses.filter(status => status === 200).length, 60); checks++;
+    assert.equal(publicPingStatuses[60], 429); checks++;
+    assert.ok(Number(publicRetryAfter) > 0); checks++;
     assert.equal(badOriginStatus, 403, "MCP must preserve forbidden Origin403 rather than rewrite it as a JSON parse error"); checks++;
     console.log(`Nutrition actual HTTP route-handler fixtures: ${checks} checks passed. REST + legacy/modern MCP + OAuth bearer lookup + owner/CSRF/origin/scope errors + real workbook import parser verified.`);
     console.log("No HTTP socket, browser, real platform, live DB or real export/download; routes called directly with PGlite and isolated data/export fixtures.");

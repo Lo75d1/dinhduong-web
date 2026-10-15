@@ -1,6 +1,6 @@
 /** Pure JSON-RPC/HTTP validation, shared by the handler and protocol tests. */
 export const NUTRITION_MCP_VERSIONS=["2026-07-28","2025-11-25","2025-06-18","2025-03-26"] as const;
-export const NUTRITION_SERVER_INFO={name:"dinh-duong-2598",version:"1.0.0"};
+export const NUTRITION_SERVER_INFO={name:"dinh-duong-2598",version:"1.0.1"};
 export class NutritionProtocolError extends Error {
   constructor(public code:number,message:string,public status=400,public data?:unknown){super(message);}
 }
@@ -34,5 +34,6 @@ export function parseNutritionRpc(value:unknown,headers:Headers):NutritionRpc {
   return {jsonrpc:"2.0",id:body.id as string|number|undefined,method:body.method,params,version:requested,modern};
 }
 export function nutritionRpcResult(rpc:NutritionRpc,result:Record<string,unknown>,cacheable=false) {
-  return {jsonrpc:"2.0",id:rpc.id,result:rpc.modern?{...result,resultType:"complete",_meta:{"io.modelcontextprotocol/serverInfo":NUTRITION_SERVER_INFO},...(cacheable?{ttlMs:60_000,cacheScope:"private"}:{})}:result};
+  const meta=result._meta && typeof result._meta==="object" && !Array.isArray(result._meta)?result._meta as Record<string,unknown>:{};
+  return {jsonrpc:"2.0",id:rpc.id,result:rpc.modern?{...result,resultType:"complete",_meta:{...meta,"io.modelcontextprotocol/serverInfo":NUTRITION_SERVER_INFO},...(cacheable?{ttlMs:60_000,cacheScope:"private"}:{})}:result};
 }

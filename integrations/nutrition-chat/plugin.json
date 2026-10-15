@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "dinh-duong-2598",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tra cứu thực phẩm, thống nhất khẩu phần trong hội thoại và nhận Excel chỉnh được từ Dinh dưỡng 2598.",
   "author": { "name": "Dinh dưỡng 2598", "url": "https://dinhduong2598.food" },
   "homepage": "https://dinhduong2598.food/ket-noi-ai",
