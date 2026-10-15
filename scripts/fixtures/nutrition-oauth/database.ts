@@ -15,6 +15,7 @@ type FixtureModel = {
   updateMany(args: Args): Promise<{ count: number }>; deleteMany(args: Args): Promise<{ count: number }>;
 };
 type FixturePrisma = {
+  user: FixtureModel; session: FixtureModel; patient: FixtureModel; dataChangeLog: FixtureModel;
   nutritionOAuthClient: FixtureModel; nutritionOAuthCode: FixtureModel; nutritionOAuthToken: FixtureModel; nutritionApiWindow: FixtureModel; ration: FixtureModel;
   $queryRaw<T>(parts: TemplateStringsArray, ...values: unknown[]): Promise<T[]>;
   $transaction<T>(callback: (tx: FixturePrisma) => Promise<T>): Promise<T>;
@@ -51,9 +52,12 @@ function whereSql(where: Where | undefined, parameters: unknown[]): string {
     if (key === "OR" || key === "AND") return `(${(value as Where[]).map(part => whereSql(part, parameters)).join(key === "OR" ? " OR " : " AND ")})`;
     if (key === "ownerId_conversationRequestKey") return `(${whereSql(value as Where, parameters)})`;
     const column = name(key);
+    if (key === "client") return `EXISTS (SELECT 1 FROM nutrition_oauth_clients WHERE id = "clientId" AND ${whereSql(value as Where, parameters)})`;
     if (value === null) return `${column} IS NULL`;
     if (typeof value === "object" && !(value instanceof Date) && !Array.isArray(value)) {
       return Object.entries(value as Row).map(([operator, operand]) => {
+        if (operator === "mode") return "TRUE";
+        if (operator === "contains") return `${column} ILIKE ${bind('%' + String(operand).replace(/[\\%_]/g, '\\$&') + '%')}`;
         if (operator === "not" && operand === null) return `${column} IS NOT NULL`;
         if (operator === "in") return (operand as unknown[]).length ? `${column} = ANY(${bind(operand)})` : "FALSE";
         const symbol = { gt: ">", lt: "<", gte: ">=", lte: "<=", not: "<>" }[operator];
@@ -74,7 +78,7 @@ function fixture(executor: Executor): FixturePrisma {
     function updateValues(data: Row) {
       return Object.entries(data).map(([key, value]) => {
         if (value && typeof value === "object" && "increment" in value) return value.increment;
-        if (["conversationJson", "profileJson"].includes(key) && value !== null) return JSON.stringify(value);
+        if (["conversationJson", "profileJson", "beforeJson", "afterJson"].includes(key) && value !== null) return JSON.stringify(value);
         return value;
       });
     }
@@ -87,7 +91,18 @@ function fixture(executor: Executor): FixturePrisma {
       if (args.include?.client || (args.select?.client && typeof args.select.client === "object")) {
         result.client = (await executor.query<Row>('SELECT * FROM "nutrition_oauth_clients" WHERE "id" = $1', [row.clientId])).rows[0];
       }
+      if (args.include?.user || args.select?.user) result.user = (await executor.query<Row>('SELECT * FROM "app_users" WHERE "id" = $1', [row.userId])).rows[0];
       if (!args.select) return result;
+      if (args.select?._count) {
+        result._count = {};
+        const relations = { rations: ["rations", "ownerId"], patients: ["patients", "ownerId"], sessions: ["app_sessions", "userId"], nutritionOAuthTokens: ["nutrition_oauth_tokens", "userId"] };
+        for (const [relation, config] of Object.entries((args.select._count as { select: Row }).select)) {
+          const [relatedTable, foreignKey] = relations[relation as keyof typeof relations];
+          const values: unknown[] = [];
+          const where = { [foreignKey]: row.id, ...(typeof config === "object" && config ? (config as { where?: Where }).where : {}) };
+          (result._count as Row)[relation] = Number((await executor.query<{ count: number }>(`SELECT count(*) AS count FROM ${name(relatedTable)} WHERE ${whereSql(where, values)}`, values)).rows[0].count);
+        }
+      }
       return Object.fromEntries(Object.entries(args.select).filter(([, value]) => !!value).map(([key]) => [key, result[key]]));
     }
     async function findMany(args: Args = {}): Promise<Row[]> {
@@ -150,6 +165,7 @@ function fixture(executor: Executor): FixturePrisma {
     return executor.query<T>(sql, values).then(result => result.rows);
   }
   return {
+    user: model("app_users"), session: model("app_sessions"), patient: model("patients"), dataChangeLog: model("data_change_logs"),
     nutritionOAuthClient: model("nutrition_oauth_clients"), nutritionOAuthCode: model("nutrition_oauth_codes"),
     nutritionOAuthToken: model("nutrition_oauth_tokens"), nutritionApiWindow: model("nutrition_api_windows"),
     ration: model("rations"),
@@ -173,7 +189,10 @@ export async function initializeOAuthFixture(migrationPath: string) {
     GRANT CREATE ON SCHEMA public TO nutrition_fixture_application;
     SET ROLE nutrition_fixture_application;
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO PUBLIC, anon, authenticated;`);
-  await database.exec(`CREATE TABLE "app_users" ("id" TEXT PRIMARY KEY);
+  await database.exec(`CREATE TABLE "app_users" ("id" TEXT PRIMARY KEY, "email" TEXT UNIQUE NOT NULL DEFAULT md5(random()::text), "displayName" TEXT NOT NULL DEFAULT 'Fixture', "passwordHash" TEXT NOT NULL DEFAULT 'fixture', "role" TEXT NOT NULL DEFAULT 'CLINICIAN', "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE "app_sessions" ("id" TEXT PRIMARY KEY, "tokenHash" TEXT UNIQUE NOT NULL, "userId" TEXT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE, "expiresAt" TIMESTAMP(3) NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE "patients" ("id" TEXT PRIMARY KEY, "ownerId" TEXT NOT NULL);
+    CREATE TABLE "data_change_logs" ("id" TEXT PRIMARY KEY, "entityType" TEXT NOT NULL, "entityId" TEXT NOT NULL, "action" TEXT NOT NULL, "actorId" TEXT NOT NULL, "actorName" TEXT NOT NULL, "beforeJson" JSONB, "afterJson" JSONB, "reason" TEXT NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE "rations" ("id" TEXT PRIMARY KEY, "ownerId" TEXT NOT NULL, "title" TEXT NOT NULL DEFAULT 'Fixture', "patientId" TEXT,
       "profileJson" JSONB, "observedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
@@ -184,6 +203,7 @@ export async function initializeOAuthFixture(migrationPath: string) {
   beforePrivateAccess = await fixturePrivateTablePrivileges();
   await database.exec(await readFile(join(dirname(dirname(migrationPath)), "20261014213000_nutrition_chat_private_access", "migration.sql"), "utf8"));
   await database.exec(await readFile(join(dirname(dirname(migrationPath)), "20261014230000_nutrition_connection_counts", "migration.sql"), "utf8"));
+  await database.exec(await readFile(join(dirname(dirname(migrationPath)), "20261015100000_account_management", "migration.sql"), "utf8"));
 }
 export async function fixtureQuery<T = Row>(sql: string, parameters?: unknown[]) { return (await database.query<T>(sql, parameters?.map(value => value instanceof Date ? value.toISOString() : value))).rows; }
 export async function closeOAuthFixture() { if (database) await database.close(); }

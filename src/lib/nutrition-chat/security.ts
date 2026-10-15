@@ -59,10 +59,10 @@ export async function getNutritionIdentity(request: Request, requiredScope: stri
   }
   const token = await prisma.nutritionOAuthToken.findUnique({
     where: { accessHash: hashNutritionToken(authorization.slice(7)) },
-    include: { client: { select: { disabledAt: true, expiresAt: true } } },
+    include: { client: { select: { disabledAt: true, expiresAt: true, ownerId: true } }, user: { select: { disabledAt: true } } },
   });
   const now = new Date();
-  if (!token || token.revokedAt || token.accessExpiresAt <= now || token.client.disabledAt || token.client.expiresAt <= now ||
+  if (!token || token.revokedAt || token.accessExpiresAt <= now || token.client.disabledAt || token.client.expiresAt <= now || token.user.disabledAt || (token.client.ownerId && token.client.ownerId !== token.userId) ||
     token.issuer !== getNutritionPublicUrl() || token.audience !== getNutritionResourceUrl()) {
     throw new NutritionSecurityError("invalid_token", 401, "Access token hết hạn hoặc không dành cho hệ thống này.", scopes.join(" "));
   }

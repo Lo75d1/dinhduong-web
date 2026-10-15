@@ -59,6 +59,7 @@ export default async function ConnectAiPage() {
 
       <section id="cai-ket-noi" aria-labelledby="setup-title" className="scroll-mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-8">
         <h2 id="setup-title" className="text-2xl font-semibold">Kết nối một lần cho mỗi tài khoản</h2>
+        <p className="mt-3 text-sm text-neutral-700">Nếu đăng ký tự động không hoạt động: <Link href="/tai-khoan?section=connections#ket-noi-thu-cong" className="font-semibold text-[#123c36] underline">tạo cấu hình OAuth thủ công trong Tài khoản</Link>. Xem và thu hồi quyền tại <Link href="/tai-khoan?section=connections" className="underline">Kết nối ứng dụng</Link>.</p>
         <p className="mt-2 text-neutral-700">Đường dẫn công cụ dùng chung cho cả hai nền tảng:</p>
         <code className="mt-3 block break-all rounded-lg bg-[#edf4f0] p-3 text-sm text-[#123c36]">{resourceUrl}</code>
         <div className="mt-7 grid gap-8 md:grid-cols-2">

@@ -1,6 +1,9 @@
 import { clearSession } from "@/lib/auth";
-
-export async function POST() {
+import { accountHandler } from "@/lib/account-management";
+import { validateNutritionOrigin } from "@/lib/nutrition-chat/oauth-validation";
+import { nutritionJson } from "@/lib/nutrition-chat/security";
+export function POST(request: Request) { return accountHandler(async () => {
+  validateNutritionOrigin(request, true);
   await clearSession();
-  return Response.json({ ok: true });
-}
+  return nutritionJson({ ok: true });
+}); }

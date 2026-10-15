@@ -73,11 +73,11 @@ export async function verifyFixturePrivateAccess(api: typeof Database, migration
   for (const row of [...rows].reverse()) {
     assert.equal((await api.fixtureQuery(`DELETE FROM "${row.table}" WHERE "${row.key}" = $1 RETURNING "${row.key}"`, [row.id])).length, 1); checks++;
   }
-  // Out-of-scope account exposure is intentionally preserved, not silently fixed.
+  // The account-management migration now closes the separately recorded legacy exposure.
   const [users] = await api.fixtureQuery<{ rls: boolean; anon: boolean; authenticated: boolean }>(`SELECT relrowsecurity AS rls,
     has_table_privilege('anon', oid, 'SELECT') AS anon, has_table_privilege('authenticated', oid, 'SELECT') AS authenticated
     FROM pg_class WHERE oid = 'public.app_users'::regclass`);
-  assert.deepEqual(users, { rls: false, anon: true, authenticated: true }); checks++;
+  assert.deepEqual(users, { rls: true, anon: false, authenticated: false }); checks++;
   await api.fixtureQuery('CREATE TABLE "nutrition_fixture_default_acl_probe" ("id" TEXT)');
   const [defaults] = await api.fixtureQuery<{ anon: boolean; authenticated: boolean; public: boolean }>(`SELECT
     has_table_privilege('anon', 'public.nutrition_fixture_default_acl_probe', 'SELECT') AS anon,
@@ -96,5 +96,5 @@ export async function verifyFixturePrivateAccess(api: typeof Database, migration
     const protectedTables = (await portable.query<{ count: number }>("SELECT count(*)::int AS count FROM pg_class WHERE relname = ANY($1::text[]) AND relrowsecurity AND NOT relforcerowsecurity", [api.fixturePrivateTables])).rows[0].count;
     assert.equal(protectedTables, 5); checks++;
   } finally { await portable.close(); }
-  return { checks, before, after, security, application, plainPostgresWithoutSupabaseRoles: "passed", preexistingAppUsersExposure: "unchanged; outside this migration scope" };
+  return { checks, before, after, security, application, plainPostgresWithoutSupabaseRoles: "passed", preexistingAppUsersExposure: "closed by account-management migration" };
 }

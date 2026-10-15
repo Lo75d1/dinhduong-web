@@ -125,6 +125,7 @@ export async function nutritionConsentPageData() {
   const client = await registeredClient(interaction.clientId);
   validateRedirectUri(interaction.redirectUri, client.redirectUris);
   const user = await getSessionUser();
+  if (user && client.ownerId && client.ownerId !== user.id) throw new NutritionSecurityError("access_denied", 403, "Cấu hình thủ công thuộc tài khoản khác. Đăng nhập đúng tài khoản đã tạo cấu hình.");
   return { client, interaction, user, csrf: user ? consentCsrf(interaction, user.id) : null };
 }
 
@@ -146,12 +147,18 @@ export async function confirmNutritionAuthorization(request: Request): Promise<R
   } else {
     const code = randomNutritionToken();
     try {
-      await prisma.nutritionOAuthCode.create({ data: {
+      await prisma.$transaction(async tx => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${'nutrition-user-grants:' + user.id}, 0))::text`;
+      const currentUser = await getSessionUser(tx);
+      const currentClient = await tx.nutritionOAuthClient.findUnique({ where: { id: client.id } });
+      if (!currentUser || currentUser.id !== user.id || !currentClient || currentClient.disabledAt || currentClient.expiresAt <= new Date() || (currentClient.ownerId && currentClient.ownerId !== user.id)) throw new NutritionSecurityError("access_denied", 403, "Đăng nhập đúng tài khoản và kết nối lại ứng dụng.");
+      await tx.nutritionOAuthCode.create({ data: {
         codeHash: hashNutritionToken(code), interactionId: interaction.interactionId, userId: user.id,
         clientId: client.id, redirectUri: interaction.redirectUri, codeChallenge: interaction.codeChallenge,
         scopes: interaction.scopes, issuer: interaction.issuer, audience: interaction.audience,
         expiresAt: new Date(Date.now() + CODE_SECONDS * 1000),
       } });
+      });
     } catch (error) {
       if (error && typeof error === "object" && "code" in error && error.code === "P2002") throw new NutritionSecurityError("invalid_request", 400, "Phiên xác nhận đã được sử dụng. Kết nối lại từ ứng dụng AI.");
       throw error;
@@ -224,6 +231,12 @@ export async function exchangeNutritionToken(request: Request): Promise<Response
       }
       if (code.expiresAt <= now) return null;
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${'nutrition-user-grants:' + code.userId}, 0))::text`;
+      const currentUser = await tx.user.findUnique({ where: { id: code.userId } });
+      const currentClient = await tx.nutritionOAuthClient.findUnique({ where: { id: client.id } });
+      // Recheck after the shared user lock: account/password revocation may have
+      // deleted this code while the request was waiting.
+      const stillPresent = await tx.nutritionOAuthCode.findUnique({ where: { id: code.id } });
+      if (!currentUser || currentUser.disabledAt || !stillPresent || !currentClient || currentClient.disabledAt || currentClient.expiresAt <= now || (currentClient.ownerId && currentClient.ownerId !== code.userId)) return null;
       const active = await tx.nutritionOAuthToken.count({ where: { userId: code.userId, rotatedAt: null, revokedAt: null, refreshExpiresAt: { gt: now } } });
       if (active >= 30) throw new NutritionSecurityError("temporarily_unavailable", 503, "Bạn đã có 30 phiên kết nối. Thu hồi các phiên không còn dùng trước khi kết nối thêm.");
       const consumed = await tx.nutritionOAuthCode.updateMany({ where: { id: code.id, usedAt: null, expiresAt: { gt: now } }, data: { usedAt: now } });
@@ -254,8 +267,12 @@ export async function exchangeNutritionToken(request: Request): Promise<Response
     const requested = oneParam(params, "scope", false, 128);
     const result = await prisma.$transaction(async tx => {
       await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${existing.familyId}, 0))::text`;
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${'nutrition-user-grants:' + existing.userId}, 0))::text`;
       const token = await tx.nutritionOAuthToken.findUnique({ where: { refreshHash: tokenHash } });
       const now = new Date();
+      const currentUser = await tx.user.findUnique({ where: { id: existing.userId } });
+      const currentClient = await tx.nutritionOAuthClient.findUnique({ where: { id: client.id } });
+      if (!currentUser || currentUser.disabledAt || !currentClient || currentClient.disabledAt || currentClient.expiresAt <= now || (currentClient.ownerId && currentClient.ownerId !== existing.userId)) return null;
       if (!token || token.revokedAt || token.refreshExpiresAt <= now || token.issuer !== getNutritionPublicUrl() || token.audience !== getNutritionResourceUrl()) return null;
       if (token.rotatedAt) {
         await tx.nutritionOAuthToken.updateMany({ where: { familyId: token.familyId, revokedAt: null }, data: { revokedAt: now } });

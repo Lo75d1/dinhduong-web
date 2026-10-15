@@ -1,4 +1,43 @@
-"use client";
-import { FormEvent,useEffect,useState } from "react";
-type User={displayName:string;email:string;role:string};
-export default function AccountPage(){const [u,setU]=useState<User|null>(null);const [name,setName]=useState("");const [password,setPassword]=useState("");const [msg,setMsg]=useState("");useEffect(()=>{void fetch("/api/auth/profile",{cache:"no-store"}).then(r=>r.json()).then(d=>{setU(d.user??null);setName(d.user?.displayName??"")})},[]);async function save(e:FormEvent){e.preventDefault();const r=await fetch("/api/auth/profile",{method:"PATCH",headers:{"content-type":"application/json"},body:JSON.stringify({displayName:name,password})});const d=await r.json();setMsg(r.ok?"Đã lưu cài đặt tài khoản.":d.error??"Không thể lưu.");if(r.ok){setU(d.user);setPassword("")}}if(!u)return <p>Đang tải tài khoản…</p>;return <section className="mx-auto max-w-2xl rounded-xl border-2 border-[#123c36] bg-white p-6"><p className="text-xs font-semibold tracking-[.16em] text-[#123c36]">CÀI ĐẶT CÁ NHÂN</p><h1 className="mt-1 text-3xl font-semibold">Tài khoản của tôi</h1><p className="mt-2">{u.email} · {u.role==="ADMIN"?"Quản trị viên":u.role==="EDITOR"?"Biên tập dữ liệu":"Người dùng chuyên môn"}</p><form onSubmit={save} className="mt-6 space-y-4"><label className="block font-semibold">Tên hiển thị<input value={name} onChange={e=>setName(e.target.value)} className="mt-1 w-full rounded border-2 border-[#8fa99e] px-3 py-2"/></label><label className="block font-semibold">Mật khẩu mới <span className="font-normal text-sm">(để trống nếu không đổi)</span><input type="password" minLength={10} value={password} onChange={e=>setPassword(e.target.value)} className="mt-1 w-full rounded border-2 border-[#8fa99e] px-3 py-2"/></label><button className="rounded bg-[#123c36] px-5 py-2.5 font-semibold text-white">Lưu cài đặt</button></form>{msg&&<p className="mt-4 rounded border p-3">{msg}</p>}</section>}
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth";
+import { accountSnapshot } from "@/lib/account-management";
+import AccountSettings, { type AccountData } from "./AccountSettings";
+export const metadata = {
+  title: "Tài khoản của tôi | Dinh dưỡng 2598",
+  robots: { index: false, follow: false },
+  referrer: "no-referrer",
+};
+export const dynamic = "force-dynamic";
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ section?: string }>;
+}) {
+  const section = (await searchParams).section;
+  if (!(await getSessionUser()))
+    redirect(
+      `/dang-nhap?next=${encodeURIComponent(section === "connections" ? "/tai-khoan?section=connections#ket-noi-thu-cong" : "/tai-khoan")}`,
+    );
+  const data = await accountSnapshot().catch(() => null);
+  if (!data) {
+    return (
+      <section className="mx-auto max-w-3xl p-6">
+        <h1 className="text-3xl font-semibold text-[#123c36]">
+          Tài khoản của tôi
+        </h1>
+        <p role="alert" className="mt-4">
+          Chưa thể tải cài đặt tài khoản. Vui lòng tải lại trang sau ít phút.
+        </p>
+        <a href="/tai-khoan" className="mt-4 inline-block underline">
+          Thử lại
+        </a>
+      </section>
+    );
+  }
+  return (
+    <AccountSettings
+      initial={JSON.parse(JSON.stringify(data)) as AccountData}
+      initialTab={section}
+    />
+  );
+}

@@ -18,6 +18,7 @@ export default async function NutritionConnectionsPage() {
   }
   return <section className="mx-auto max-w-2xl rounded-xl border border-[#8fa99e] bg-white p-6">
     <h1 className="text-2xl font-semibold text-[#123c36]">Kết nối AI của {data.user.displayName}</h1>
+    <a href="/tai-khoan?section=connections" className="mt-3 inline-block font-semibold underline">Mở quản lý kết nối và cấu hình thủ công trong Tài khoản →</a>
     <p className="mt-3 text-sm text-neutral-700">Thu hồi quyền làm các access token và refresh token của phiên đó mất hiệu lực ngay. Khẩu phần đã lưu vẫn thuộc tài khoản của bạn.</p>
     {!data.connections.length && <p className="mt-6 rounded bg-[#edf4ef] p-4">Chưa có phiên kết nối AI còn hiệu lực.</p>}
     <ul className="mt-6 space-y-4">{data.connections.map(connection => <li key={connection.familyId} className="rounded-lg border border-[#b7ccc0] p-4">

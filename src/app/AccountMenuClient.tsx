@@ -126,6 +126,7 @@ export default function AccountMenuClient({
             >
               Tài khoản của tôi
             </Link>
+            <Link href="/tai-khoan?section=connections" onClick={() => setOpen(false)} className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]" role="menuitem">Kết nối ứng dụng</Link>
             {user.role === "CLINICIAN" && enableDietOrders && (
               <Link
                 href="/chi-dinh-che-do-an"

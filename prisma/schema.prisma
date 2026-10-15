@@ -487,6 +487,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   sessions                 Session[]
+  disabledAt               DateTime?
+  manualNutritionClients   NutritionOAuthClient[] @relation("ManualNutritionClientOwner")
   patients                 Patient[]
   rations                  Ration[]
   submissions              FoodSubmission[]       @relation("SubmissionAuthor")
@@ -512,6 +514,7 @@ model Session {
   userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
+  userAgent String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -573,11 +576,14 @@ model NutritionOAuthClient {
   createdAt    DateTime @default(now())
   expiresAt    DateTime
   disabledAt   DateTime?
+  ownerId      String?
+  owner        User?    @relation("ManualNutritionClientOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   codes  NutritionOAuthCode[]
   tokens NutritionOAuthToken[]
 
   @@index([expiresAt])
+  @@index([ownerId, disabledAt])
   @@map("nutrition_oauth_clients")
 }
 
@@ -786,7 +792,7 @@ model AppErrorLog {
   @@map("app_error_logs")
 }
 
-// Nhật ký bất biến cho thao tác biên tập dữ liệu nguồn. Không dùng để tính khẩu phần.
+// Nhật ký bất biến cho biên tập dữ liệu nguồn và quản lý tài khoản. Không chứa credential.
 model DataChangeLog {
   id         String   @id @default(cuid())
   entityType String
