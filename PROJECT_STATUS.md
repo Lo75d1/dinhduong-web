@@ -2,6 +2,7 @@
 
 ## Bổ sung Nutrition Chat và dữ liệu cá nhân — 15/10/2026
 
+- Phân biệt món VDD/nguyên liệu RNI đã lên VPS app **59dc690**: RNI giữ đủ từng dòng nguyên liệu; VDD MA hiện tên cả món và ghi không có dữ liệu thành phần. Sửa Food ID tự đổi cách hiển thị, không đổi bộ tính/import. Native fixture38 + HTTPS45/file thật Excel43/native import4 đạt; canonical/cấu hình giữ nguyên. Biên bản nối tiếp `docs/nutrition-chat/menu-layout-2026-10-15.md`.
 - Nhãn Ngày/Món ăn theo nhóm đã lên VPS app **be06415**: chỉ hiện ở đầu mỗi nhóm liên tiếp, tự hiện lại khi sang nhóm khác; bảng nhập vẫn đủ nhãn. HTTPS39, Excel file thật35 và native import4 đạt; dữ liệu/cấu hình giữ nguyên. Chi tiết nối tiếp trong `docs/nutrition-chat/menu-layout-2026-10-15.md`.
 - Bố cục sheet Thực đơn mới đã chạy VPS app **5994ff2**: tách Ngày/Bữa/Món/Thực phẩm, thêm 4 chỉ số liên kết từ bảng nhập, chữ 15/lưới thường, nguồn-ghi chú một cột cuối. Tiếp tục nhập ở Nhap khau phan; mục tiêu chỉ ở báo cáo. HTTPS30 + Excel thật28 + native SaveAs/import4 đạt, không đổi engine/import/canonical. Biên bản `docs/nutrition-chat/menu-layout-2026-10-15.md`.
 - Link nguồn dinh dưỡng VDD/RNI đã lên VPS app **ba2829d**: quản trị dữ liệu, danh mục/chi tiết thực phẩm-món ăn và tài liệu tham khảo. Link là trang tra cứu chung; VDD tách thực phẩm/món ăn, RNI ghi rõ cần đăng nhập; giữ mã nguồn, không sửa Food/Dish. HTTPS42 + browser thật đạt, canonical/cấu hình khớp. Biên bản `docs/nutrition-chat/data-sources-2026-10-15.md`.
