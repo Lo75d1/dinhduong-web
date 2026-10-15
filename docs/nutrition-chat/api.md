@@ -7,7 +7,7 @@
 ## Discovery trước khi cấp quyền — server 1.0.1
 
 - MCP initialize/discover/tools-list/ping/initialized và `get_workflow` cho phép không có Authorization để client đọc schema/hướng dẫn trước khi kết nối. Không trả dữ liệu Food/Dish, bản lưu hoặc tài khoản trong các phản hồi public này. Dùng hạn mức global/per-IP hiện có, không tạo hệ thống quota mới.
-- Mười công cụ dữ liệu tiếp tục kiểm bearer/issuer/audience/expiry/scope/owner. Khi thiếu token/quyền, giữ HTTP 401/403 + WWW-Authenticate cho client MCP và trả JSON-RPC isError kèm `_meta["mcp/www_authenticate"]` cho giao diện liên kết tài khoản. Không tự thực hiện thao tác sau một lỗi auth.
+- Các công cụ dữ liệu tiếp tục kiểm bearer/issuer/audience/expiry/scope/owner. Khi thiếu token/quyền, giữ HTTP 401/403 + WWW-Authenticate cho client MCP và trả JSON-RPC isError kèm `_meta["mcp/www_authenticate"]` cho giao diện liên kết tài khoản. Không tự thực hiện thao tác sau một lỗi auth.
 - Tool descriptors có `securitySchemes` ở cấp tool và mirror trong `_meta`; chỉ get_workflow là noauth, các tool còn lại oauth2 đúng scope. Envelope modern giữ nguyên metadata challenge khi thêm serverInfo. Token sai được gửi kèm vẫn bị từ chối, không fallback sang anonymous.
 - Gói plugin 1.0.1 khai báo mixed OAuth/DCR rõ ràng. Cần Refresh metadata và thử hội thoại mới cho plugin đã tạo; không coi kiểm SDK hoặc fixture là nghiệm thu ChatGPT thật.
 
@@ -26,6 +26,7 @@
 | `get_workflow` | Public qua MCP; `nutrition:read` qua REST | Quy trình, giới hạn, schema đầu vào. |
 | `search_foods`, `get_food` | `nutrition:read` | Food ID, nguồn và dữ liệu trên cơ sở 100 g/ml. |
 | `search_dishes`, `get_dish` | `nutrition:read` | Công thức gốc và liên kết nguyên liệu; định lượng nguồn không mặc định bằng một suất. |
+| `list_personal_library`, `get_personal_library_item` | `nutrition:read` | Tìm/đọc thực phẩm hoặc công thức riêng thuộc tài khoản; nguồn theo phiên bản khi sử dụng. |
 | `prepare_menu` | `nutrition:calculate` | Chuẩn hóa đầu vào, preview, token xác nhận 600 giây. |
 | `calculate_menu` | `nutrition:calculate` | Tính đúng bản người dùng đã xem/chốt, trả partial/null và nguồn. |
 | `save_menu` | `nutrition:write` | Bản riêng Ration, chống trùng; cập nhật cần ID/revision. |
@@ -54,7 +55,7 @@
 | `GET /api/nutrition/v1/saved` | `offset` tùy chọn | `{items,nextOffset}`, chỉ chủ sở hữu; 20 bản mỗi trang. |
 | `GET /api/nutrition/v1/saved?id=...` | ID chính xác | `{ration,input,preview,confirmationToken,sourceChanged,savedDataVersion,history,historyTruncated}`. |
 | `DELETE /api/nutrition/v1/saved` | JSON `{id,expectedRevision}` | `{deleted:true}`, đúng chủ và revision; UI có xác nhận xóa. |
-| `POST /api/nutrition/v1/export` | JSON `{input,confirmationToken}` | `{downloadUrl,expiresAt,filename}`. |
+| `POST /api/nutrition/v1/export` | JSON `{input,confirmationToken,saveToAccount?}` | `{downloadUrl,expiresAt,filename,savedMenuUrl,...}`; true cần thêm nutrition:write. |
 
 - REST chấp nhận session web cùng origin hoặc OAuth theo scope. Mutations bằng session có kiểm tra Origin; không chuyển token xác nhận từ một client sang client khác.
 - Link tải ký là capability ngắn hạn để nền tảng tải không cần cookie. Người có link có thể tải trong thời hạn; không đưa link vào log, analytics hoặc nơi công khai.

@@ -1,5 +1,12 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Bổ sung Nutrition Chat và dữ liệu cá nhân — 15/10/2026
+
+- Nhánh triển khai: `codex/nutrition-chat-api`, PR #4; chưa merge main. Trạng thái/kiểm chứng hiện tại ở `docs/nutrition-chat/verification.md`, không suy trạng thái VPS từ các snapshot cũ bên dưới.
+- Excel có công thức, đủ chất/nguồn và link thực phẩm/bản lưu đã kiểm VPS riêng tại `docs/nutrition-chat/saved-menu-links-2026-10-15.md`.
+- Người dùng yêu cầu ba mục tài khoản và chọn thêm/sửa/lưu độc lập thực phẩm/món để dùng nhiều lần. Code mới tái dùng Ration/engine; thêm PersonalFood/PersonalDish cho phần thư viện chưa có, không dùng FoodSubmission hoặc sửa kho Food/Dish. Chi tiết ở `docs/nutrition-chat/personal-library-2026-10-15.md`.
+- Migration `20261015140000_personal_nutrition_library` mới chỉ thử DB fixture riêng; chưa áp migration/deploy phần thư viện lên VPS. Theo quy trình, migration sau merge bằng image migrate no-cache; không reset/seed hoặc xóa bảng để rollback.
+
 Đọc file này TRƯỚC khi làm bất cứ việc gì trong `D:\datanutrition\web`. Đây là
 bản tóm tắt để phiên chat mới (theo đúng khuyến nghị: chia nhỏ hội thoại, ghim
 tài liệu nền tảng) không phải dò lại từ đầu.

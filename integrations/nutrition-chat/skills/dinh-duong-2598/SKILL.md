@@ -45,6 +45,8 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp ng
 
 ## Xuất kèm bản lưu và dùng lại
 
+- Với thư viện cá nhân: gọi `list_personal_library` (kind food/dish), rồi `get_personal_library_item`. Food dùng content làm customFood; món dùng content.days[0].rows, cấp ID dòng riêng và đặt ngày/bữa/lượng. Giữ nguồn, đơn vị, phiên bản rồi prepare/chốt trước khi tính. Thêm/sửa/xóa mục ở Tài khoản trên web; không nói đã lưu thư viện khi chỉ mới lưu một thực đơn.
+
 - Khi xuất, nói rõ lựa chọn lưu thêm bản riêng trong tài khoản. Nếu người dùng đồng ý và đã cấp `nutrition:write`, gọi `export_workbook` với `saveToAccount: true`; trả cả `savedMenuUrl` và link tải file. Chỉ tải file thì dùng false. Không tự mở rộng quyền của kết nối.
 - Link bản lưu chứa ID, không chứa token; yêu cầu đăng nhập đúng chủ sở hữu. Link tải file hết hạn sau 10 phút. Tên thực phẩm trong Excel mở trang tra cứu hiện tại; dữ liệu offline vẫn là bản tại lúc xuất.
 - Dùng `list_saved_menus` hoặc `get_saved_menu` theo ID trong link để tái sử dụng, hỏi phần muốn đổi rồi prepare/chốt/tính. Không bắt người dùng gửi Excel lên cho bước này. Trên web cũng có điều chỉnh ngày/lượng/số suất và lưu thành bản dùng lại.

@@ -11,7 +11,7 @@
 ## ChatGPT
 
 1. Mở Plugins, thêm custom MCP server bằng URL trên. Chọn **OAuth or no authentication** nếu có, hoặc OAuth.
-2. Tạo plugin và kiểm danh sách có **11 công cụ**, gồm `get_workflow`. Cài plugin cá nhân, mở hội thoại Work mới và dùng @ chọn plugin.
+2. Tạo plugin và kiểm danh sách có **13 công cụ**, gồm `get_workflow`. Cài plugin cá nhân, mở hội thoại Work mới và dùng @ chọn plugin.
 3. Yêu cầu gọi `get_workflow` để kiểm tra; công cụ hướng dẫn và discovery public không cần token. Khi gọi công cụ dữ liệu, ChatGPT yêu cầu kết nối: đăng nhập Dinh dưỡng 2598, kiểm tên ứng dụng và quyền rồi đồng ý.
 4. Nếu đã thêm plugin nhưng phiên không có công cụ: vào plugin → **Refresh**, kiểm lại danh sách và thử trong hội thoại mới. Tên plugin trong chat không chứng minh đã cấp quyền; server phải có lần đổi code thành token thành công. Gói ZIP là lựa chọn thêm.
 
@@ -39,6 +39,9 @@ Quyền thêm connector/skill phụ thuộc tài khoản và quản trị tổ c
 Muốn lưu cần kết nối có `nutrition:write`. Nếu đã cấp thiếu quyền, kết nối lại với quyền cần dùng. Không yêu cầu quyền ghi khi chỉ tra/tính/xuất.
 
 ## Cách làm việc
+
+- **Tài khoản → Dữ liệu của tôi** có **Thực đơn của tôi**, **Thực phẩm của tôi**, **Món ăn của tôi**. Thực phẩm/công thức riêng thêm, sửa độc lập và dùng lại trong nhiều thực đơn.
+- Chat tra bằng `list_personal_library` / `get_personal_library_item`; thêm/sửa/xóa thư viện trên web. Sửa thư viện không tự thay những thực đơn đã lưu.
 
 1. **Làm rõ:** AI tra data, tách công thức và hỏi lượng/số suất/khối lượng sống hay chín. Món chưa có công thức hoặc nguyên liệu tham chiếu phải ghi là ước lượng. Nhãn ngoài kho chỉ nhập những chất có số và đơn vị được xác minh.
 2. **Chốt:** xem bản chuẩn bị và cảnh báo, xác nhận trước khi tính. Lưu chỉ khi yêu cầu; món thay đổi thuộc bản riêng, không thay kho gốc.

@@ -1,5 +1,8 @@
 # Kiểm chứng Nutrition Chat API — 14/10/2026
 
+- Bổ sung thư viện cá nhân 15/10: [đặc tả và kiểm chứng](personal-library-2026-10-15.md), ba mục tài khoản, CRUD thực phẩm/món riêng, dùng lại qua bộ tính cũ và hai tool đọc thư viện. Migration mới chỉ được thử trên DB fixture riêng, **chưa áp VPS/deploy phần này**.
+- Excel/link bản lưu đã nghiệm thu riêng tại [biên bản link và bản lưu](saved-menu-links-2026-10-15.md), app VPS tại `151ec6b`; không gộp trạng thái đó với phần thư viện mới.
+
 - Cập nhật báo cáo 15/10: bộ xuất `2aa88d3`, app đóng gói cùng plugin/skill `656646c` healthy trên VPS; Excel web/chat chung, đủ 160 chất tính được + 2 trường nguồn đối soát, xuất quản trị đủ dữ liệu. Đã kiểm file tải thật bằng Excel desktop, sửa định lượng tự tính và quét lỗi mọi sheet; vá nguyên nhân công thức làm trống ở Food có chỉ số vượt vùng tự nhập. Xem [nghiệm thu báo cáo Excel](report-export-2026-10-15.md) để biết số đo, giới hạn, nợ lint cũ và yêu cầu xuất lại file cũ. Các snapshot kiểm chứng cũ bên dưới không thay thế biên bản này.
 
 - Cập nhật 15/10: quản lý tài khoản/OAuth thủ công đã chạy VPS `c9c74fb`, account62 + HTTPS74, migration24 up to date; đóng quyền Data API trên bảng tài khoản/phiên/audit cũ. Xem [nghiệm thu tài khoản](vps-account-2026-10-15.md). Các mục snapshot cũ bên dưới giữ để đối chiếu thời điểm; chưa nghiệm thu platform thật.
