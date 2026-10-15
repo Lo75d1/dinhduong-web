@@ -93,9 +93,10 @@ export default async function ConnectAiPage() {
       </section>
 
       <section id="nhap-excel" aria-labelledby="import-title" className="scroll-mt-6 py-10">
-        <h2 id="import-title" className="text-2xl font-semibold">Gửi lại bản Excel cuối</h2>
-        <p className="mt-2 max-w-3xl text-neutral-700">Sửa trên máy theo nhu cầu. Khi muốn lưu hoặc nhận phân tích mới, tải file lên để xem lại đầu vào và xác nhận.</p>
-        <WorkbookImport />
+        <h2 id="import-title" className="text-2xl font-semibold">Mở lại thực đơn để dùng tiếp</h2>
+        <p className="mt-2 max-w-3xl text-neutral-700">Mở bản đã lưu trong tài khoản hoặc link trong Excel để xem, điều chỉnh và dùng lại. Không cần gửi file lên cho bước này.</p>
+        <Link href="/ket-noi-ai/ban-luu" className={`mt-3 inline-block font-semibold underline underline-offset-4 ${focus}`}>Mở thực đơn và khẩu phần đã lưu →</Link>
+        <details className="mt-5"><summary className={`cursor-pointer font-semibold ${focus}`}>Đã sửa riêng file Excel trên máy? Nhập các thay đổi tại đây</summary><p className="mt-2 text-sm text-neutral-700">Chỉ dùng khi cần đưa những số đã sửa trong file về hệ thống. Bạn sẽ xem trước và xác nhận trước khi lưu.</p><WorkbookImport /></details>
       </section>
 
       <section id="quyen-rieng-tu" aria-labelledby="privacy-title" className="border-t border-[#b1c8bd] pt-8">

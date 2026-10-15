@@ -72,7 +72,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   const profile = menu.input.profile;
   const profileText = profile ? `${profile.gender}; ${profile.age} ${profile.ageUnit === "thang" ? "tháng" : "tuổi"}; ${profile.weight || "—"} kg; ${profile.height || "—"} cm` : "Chưa cung cấp hồ sơ";
   context(report, 3, `${menu.title}. ${meta.subjectName ? `Người được đánh giá: ${meta.subjectName}. ` : ""}${profileText}.`);
-  context(report, 4, `${meta.authorName ? `Người lập: ${meta.authorName}${meta.authorRole ? ` (${meta.authorRole})` : ""}. ` : ""}${meta.authorOrganization || ""}${meta.reportDate ? `; ngày lập: ${meta.reportDate}` : ""}`.trim() || `Ngày xuất: ${menu.generatedAt.slice(0, 10)}.`);
+  context(report, 4, [meta.authorName ? `Người lập: ${meta.authorName}${meta.authorRole ? ` (${meta.authorRole})` : ""}` : "", meta.authorOrganization, meta.reportDate ? `Ngày lập: ${meta.reportDate}` : ""].filter(Boolean).join(". ") || `Ngày xuất: ${menu.generatedAt.slice(0, 10)}.`);
   calc(report.getCell("A5"), `'Phan tich'!A4`, "Chưa sửa đầu vào; kết quả tại thời điểm xuất.");
   report.mergeCells("A5:H5"); report.getCell("A5").alignment = { wrapText: true }; report.getRow(5).height = 28;
   const dataDays = menu.days.filter(day => day.rows.length).length;
