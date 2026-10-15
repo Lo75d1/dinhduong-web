@@ -1,5 +1,7 @@
 # Kiểm chứng Nutrition Chat API — 14/10/2026
 
+- Cập nhật 15/10: quản lý tài khoản/OAuth thủ công đã chạy VPS `c9c74fb`, account62 + HTTPS74, migration24 up to date; đóng quyền Data API trên bảng tài khoản/phiên/audit cũ. Xem [nghiệm thu tài khoản](vps-account-2026-10-15.md). Các mục snapshot cũ bên dưới giữ để đối chiếu thời điểm; chưa nghiệm thu platform thật.
+
 - Nhánh: `codex/nutrition-chat-api`, tách từ `origin/main` `5314cea`. Checkout gốc và các thay đổi đang dở được giữ nguyên.
 - Các mục dưới là snapshot kiểm chứng phát triển trước deploy. **Đã chạy thử VPS ngày 14/10** theo [báo cáo thực tế](vps-2026-10-14.md); kết nối tài khoản ChatGPT/Claude thật vẫn chưa nghiệm thu.
 

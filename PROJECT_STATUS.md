@@ -65,6 +65,15 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - Local HTTP fixture 167 checks, core/protocol 67, Prisma generate/TypeScript/lint file sửa/diff check đạt. App `fca8747` đã build Linux/TypeScript và healthy trên VPS. SDK chính thức 1.32.1 kết nối, đọc 11 tools và gọi get_workflow anonymous đạt; HTTPS thêm 68 checks: mười tool dữ liệu từ chối thiếu token, challenge đúng, token sai/origin lạ vẫn chặn.
 - Hướng dẫn Refresh/cấp quyền hiện trên browser thật, 1280 px/document 1265 px không tràn ngang; ảnh ignore `evidence/nutrition-chat/vps-plugin-discovery-guide.jpg`. Cần người dùng Refresh và thử lại plugin thật; chưa xác nhận liên kết OAuth hoặc chat tính/xuất thành công. Không tạo grant giả để tăng lượt; client người dùng được giữ nguyên.
 
+#### Quản lý tài khoản và OAuth thủ công (15/10/2026)
+
+- Theo yêu cầu người dùng, mở rộng cả `/tai-khoan` và `/quan-tri/nguoi-dung`: hồ sơ, mật khẩu hiện tại, phiên website, kết nối OAuth, cấu hình thủ công, lịch sử; quản trị tìm/lọc/phân trang, tạo/sửa vai trò, khóa/mở, reset mật khẩu và thu hồi quyền. Tái dùng User/Session/OAuth/DataChangeLog, không tạo hệ tài khoản hay API key song song.
+- Client thủ công gắn chủ sở hữu, secret chỉ hiện một lần và lưu hash; hỗ trợ Basic/POST với cùng secret, DCR vẫn giữ phương thức đã đăng ký. Không coi tạo client là grant thành công; plugin ChatGPT/Claude thật vẫn cần người dùng nghiệm thu.
+- App `c9c74fb` đã healthy trên VPS; migration `20261015100000_account_management` đã áp bằng image migrate no-cache, 24 migration up to date. Thêm disabledAt/userAgent/ownerId nullable; RLS/revoke đóng đọc trực tiếp app_users/app_sessions/data_change_logs. Tài khoản cũ không bị khóa; role app đã xác minh owner/BYPASSRLS trước áp.
+- Backup DB và restore/migration PostgreSQL riêng đạt. Local 62 kiểm tra tài khoản, hồi quy Nutrition Chat/OAuth 254/HTTP167/core67/report37/storage82/workbook đạt; Prisma generate/TypeScript/lint file sửa và build Linux đạt. HTTPS thật 74 checks đạt; đổi/reset mật khẩu, khóa/mở và thu hồi chặn session/token cũ, giữ khẩu phần.
+- Browser thật: lưu hồ sơ đổi ngay tên menu; tìm và chọn user, thao tác/audit/form quản trị hiển thị đúng. Viewport 390 px/document375 và 1280 px/document1265 không tràn ngang. Ảnh ignore `evidence/nutrition-chat/vps-account-mobile.jpg`, `vps-account-admin-mobile.jpg`, `vps-account-admin-desktop.jpg`.
+- Bốn user kiểm thử, một client bearer và dữ liệu/audit liên quan đã dọn; credential kiểm thử đã xóa. Food/Dish/nguyên liệu khớp count+digest; bộ đếm ChatGPT/Claude vẫn 0/0; env/Caddy/layout/file Google và maintenance timer giữ nguyên; swap build đã gỡ. Chưa có tự khôi phục mật khẩu qua email/MFA/xóa tài khoản; hỗ trợ qua quản trị, dùng khóa để giữ dữ liệu. Chi tiết `docs/nutrition-chat/account-management.md` và `vps-account-2026-10-15.md`.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn
