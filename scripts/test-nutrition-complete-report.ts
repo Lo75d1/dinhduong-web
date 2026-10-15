@@ -44,6 +44,11 @@ async function main() {
   assert.equal(plan.getCell("B6").value, "Bữa");
   assert.equal(plan.getCell("A7").result, "Ngày 1");
   assert.equal(plan.getCell("B7").result, "Trưa");
+  assert.equal(plan.getCell("A8").result ?? "", "", "day label only at the start of its consecutive group");
+  assert.equal(plan.getCell("C8").result ?? "", "", "same dish ingredients do not repeat the dish name");
+  assert.equal(plan.getCell("A9").result ?? "", "", "a new meal does not repeat the day label");
+  assert.equal(plan.getCell("C9").result, "Sữa", "a different dish starts a new label");
+  assert.equal(plan.getCell("A10").result, "Ngày 2");
   assert.equal(plan.getCell("E7").result, 200);
   assert.equal(plan.getCell("F9").result, "ml");
   assert.equal(plan.getCell("G7").result, 260, "plan energy uses the resolved source amount");
@@ -83,6 +88,9 @@ async function main() {
   changedInput.days.unshift({ id: "empty-day", label: "Ngày chưa nhập", date: "", rows: [] });
   changedInput.days[1].rows[0].servings = 2;
   changedInput.days[1].rows[1].quantity = null;
+  changedInput.days[1].rows.push({ ...changedInput.days[1].rows[0], id: "return-to-dish" });
+  changedInput.days[2].rows[0].dish = changedInput.days[1].rows[0].dish;
+  changedInput.days[2].rows[0].meal = changedInput.days[1].rows[0].meal;
   const changedMenu = resolveMenu(changedInput, fixture.foods);
   const changedBook = new ExcelJS.Workbook(); await changedBook.xlsx.load(Buffer.from(await buildNutritionWorkbook(changedMenu, fixture.foods)) as unknown as ExcelJS.Buffer);
   const changedPlan = changedBook.getWorksheet("Thuc don")!;
@@ -91,7 +99,12 @@ async function main() {
   assert.equal(changedPlan.getCell("G7").result, 520, "displayed nutrition covers the same servings");
   assert.equal(changedPlan.getCell("E8").result, "—");
   assert.equal(changedPlan.getCell("G8").result, "—", "missing quantity is not zero nutrition");
-  assert.deepEqual((await parseNutritionWorkbook(new Uint8Array(await changedBook.xlsx.writeBuffer()))).days.map(day => day.rows.length), [0, 3, 1], "presentation does not alter the input/import contract");
+  assert.equal(changedPlan.getCell("C10").result, "Cơm với thịt", "a nonconsecutive return to a dish repeats its label");
+  assert.equal(changedPlan.getCell("A11").result, "Ngày 2");
+  assert.equal(changedPlan.getCell("C11").result, "Cơm với thịt", "same dish in another day starts a new group");
+  const regrouped = await parseNutritionWorkbook(new Uint8Array(await changedBook.xlsx.writeBuffer()));
+  assert.deepEqual(regrouped.days.map(day => day.rows.length), [0, 4, 1], "presentation does not alter the input/import contract");
+  assert.equal(regrouped.days[1].rows[1].dish, "Cơm với thịt", "input retains the repeated dish needed for calculations and import");
   const webRow = { uid: "a", meal: "Trưa", dish: "Cơm", foodId: "test-rice-a", foodName: "Cơm", grams: 200, inputGrams: 100, inputBasis: "edible" as const, conversionFactor: 2, wastePercent: 0, note: "", nutrients: {}, classify: { foodGroup: null, proteinOrigin: null, giLevel: null, purinLevel: null, cholesterolLevel: null } };
   const input = webNutritionReportInput([{ id: "day", label: "Ngày 1", date: "", rows: [webRow, { ...webRow, foodId: "" }] }], null);
   assert.equal(input.days[0].rows.length, 1, "empty web placeholders never masquerade as food lines");

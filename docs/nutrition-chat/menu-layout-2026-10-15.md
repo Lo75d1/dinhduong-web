@@ -37,3 +37,12 @@
 ## Ghi chu du lieu ngoai pham vi
 
 - Khi chon mau, `Com rang thap cam (Mixed fried rice)` tu VDD MA co tong P/L/G raw 128,4 tren co so 100 g. Guard chat luong hien co loai cac chat chinh nay khoi phep cong; giu theo quy uoc README-data, khong sua kho o dot bo cuc. Mau nghiem thu so lieu du chon Food MA khac da qua guard; khong coi doi bo cuc la sua duoc du lieu nguon can xac minh.
+
+## Bo sung hien nhan theo nhom — cung ngay 15/10
+
+- Yeu cau tiep: cot Ngay va Mon an chi hien o dong dau nhom lien tiep; cac dong sau de trong. Bua/Thuc pham va so lieu van giu tung dong.
+- Chi doi hai cong thuc trinh bay A/C cua `Thuc don`: Ngay doi theo so ngay dau vao; Mon doi theo ngay + bua + ten mon. Mon quay lai sau mon khac hoac sang bua/ngay khac deu hien lai. So sanh ten chinh xac, khong suy nhom tu o hien thi da de trong.
+- `Nhap khau phan` giu du nhan ngay/bua/mon de tinh va nhap lai. Khong merge o than bang, khong doi bo tinh/parser/manifest. Chieu cao hang dua tren nhan thuc su hien thi.
+- `test:nutrition-complete`, Prisma generate, TypeScript, ESLint file sua va diff check dat. Them ca nhom lap, mon khong lien tiep quay lai, cung mon sang ngay khac va nhap lai van du nhan.
+- Excel desktop: 31 checks dat, gom nhan dau nhom, doi bua/ngay tu hien lai, tra ve nhom cu tu an nhan, nhan dau vao van du va cac kiem tra so lieu cu. Ban in Thuc don 1 trang; anh ignore `plan-grouped.png`.
+- Nghiem thu VPS: cho trien khai.

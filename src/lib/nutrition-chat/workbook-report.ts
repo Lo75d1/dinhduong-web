@@ -201,10 +201,14 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     const targetRow = FIRST + index;
     const inputRow = FIRST + index;
     const ref = (c: string) => `'Nhap khau phan'!${c}${inputRow}`;
+    const previousRef = (c: string) => `'Nhap khau phan'!${c}${inputRow - 1}`;
+    const previous = rows[index - 1];
+    const sameDay = previous?.day.id === day.id;
+    const sameDish = sameDay && previous.row.meal === row.meal && previous.row.dish === row.dish;
     const dayRef = `INDEX('Ngay va muc tieu'!$C$7:$C$96,${ref("B")})`;
-    calc(plan.getCell(targetRow, 1), dayRef, day.label);
+    calc(plan.getCell(targetRow, 1), index ? `IF(${ref("B")}=${previousRef("B")},"",${dayRef})` : dayRef, sameDay ? "" : day.label);
     calc(plan.getCell(targetRow, 2), ref("C"), row.meal);
-    calc(plan.getCell(targetRow, 3), ref("D"), row.dish);
+    calc(plan.getCell(targetRow, 3), index ? `IF(AND(${ref("B")}=${previousRef("B")},EXACT(${ref("C")},${previousRef("C")}),EXACT(${ref("D")},${previousRef("D")})),"",${ref("D")})` : ref("D"), sameDish ? "" : row.dish);
     calc(plan.getCell(targetRow, 4), `IF(${ref("O")}<>"",${ref("O")},${ref("S")})`, row.actualFoodName || row.food.name);
     calc(plan.getCell(targetRow, 5), `IF(AND(ISNUMBER(${ref("G")}),ISNUMBER(${ref("I")})),${ref("G")}*${ref("I")},"—")`, row.quantity === null ? "—" : row.quantity * row.servings);
     calc(plan.getCell(targetRow, 6), ref("H"), row.unit);
@@ -227,7 +231,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   plan.getRow(6).height = 48;
   rows.forEach(({ day, row }, i) => {
     const r = FIRST + i, line = plan.getRow(r);
-    const texts = [day.label, row.meal, row.dish, row.actualFoodName || row.food.name, "", row.unit, "", "", "", "", String(plan.getCell(r, 11).result ?? "")];
+    const texts = [String(plan.getCell(r, 1).result ?? ""), row.meal, String(plan.getCell(r, 3).result ?? ""), row.actualFoodName || row.food.name, "", row.unit, "", "", "", "", String(plan.getCell(r, 11).result ?? "")];
     const minimumLines = row.quantity === null || row.referenceAmount === null ? 2 : 1;
     line.height = Math.max(30, Math.max(minimumLines, ...texts.map((text, c) => planTextLines(text, planWidths[c]))) * 19 + 8);
     const previous = rows[i - 1];

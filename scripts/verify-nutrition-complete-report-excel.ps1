@@ -40,6 +40,18 @@ try {
   $taskPlan.Activate()
   if(-not $taskBook.Windows.Item(1).DisplayGridlines) {throw 'Plan gridlines hidden'}
   $taskChecks.Add(@{check='plan distinct columns, normal grid and input ownership';pass=$true})
+  if([string]$taskPlan.Range('A8').Value2 -ne '' -or [string]$taskPlan.Range('A9').Value2 -ne '' -or [string]$taskPlan.Range('C8').Value2 -ne '') {throw 'Plan repeats consecutive day/dish labels'}
+  if($taskPlan.Range('A10').Value2 -ne 'Ngày 2' -or $taskPlan.Range('C9').Value2 -ne 'Sữa') {throw 'Plan omitted a new group label'}
+  $taskChecks.Add(@{check='day and dish shown only at group start';pass=$true})
+  $taskInput.Range('C8').Value2 = 'Tối'; $taskExcel.CalculateFullRebuild()
+  if($taskPlan.Range('C8').Value2 -ne 'Cơm với thịt' -or [string]$taskPlan.Range('A8').Value2 -ne '') {throw 'New meal did not reset the dish label'}
+  $taskChecks.Add(@{check='editing meal resets dish group';pass=$true})
+  $taskInput.Range('C8').Value2 = 'Trưa'; $taskInput.Range('B8').Value2 = 2; $taskExcel.CalculateFullRebuild()
+  if($taskPlan.Range('A8').Value2 -ne 'Ngày 2' -or $taskPlan.Range('C8').Value2 -ne 'Cơm với thịt') {throw 'New day did not reset group labels'}
+  $taskChecks.Add(@{check='editing day resets day and dish groups';pass=$true})
+  $taskInput.Range('B8').Value2 = 1; $taskExcel.CalculateFullRebuild()
+  if([string]$taskPlan.Range('C8').Value2 -ne '' -or $taskInput.Range('D8').Value2 -ne 'Cơm với thịt') {throw 'Grouping removed the input dish label'}
+  $taskChecks.Add(@{check='group display preserves repeated input labels';pass=$true})
   $taskInput.Range('G7').Value2 = 300; $taskInput.Range('I7').Value2 = 2
   $taskExcel.CalculateFullRebuild()
   Check-Number $taskReport.Cells.Item($taskEnergyRow,3).Value2 1180 'report recalculates quantity and servings'
