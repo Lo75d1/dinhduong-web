@@ -69,7 +69,7 @@ function recipe(value: unknown, path: string): RecipeSource {
   const d = object(value, ["kind", "label", "dishId", "url"], path);
   return { kind: choice(d.kind, ["catalog", "user", "ai"] as const, `${path}.kind`), label: text(d.label, 500, `${path}.label`), ...(d.dishId !== undefined ? { dishId: text(d.dishId, 100, `${path}.dishId`) } : {}), ...(d.url ? { url: url(d.url, `${path}.url`) } : {}) };
 }
-function custom(value: unknown, path: string): CustomFoodInput {
+export function parseCustomFoodInput(value: unknown, path = "food"): CustomFoodInput {
   const d = object(value, ["id", "name", "source", "basis", "portionAmount", "portionUnit", "nutrients", "wastePercent", "foodGroup"], path);
   const s = source(d.source, `${path}.source`);
   if (s.kind === "catalog" || s.kind === "reference") throw new NutritionInputError("Nguyên liệu ngoài kho cần nguồn riêng; tham chiếu kho phải dùng Food ID.", path);
@@ -90,7 +90,7 @@ function row(value: unknown, path: string): MenuRowInput {
   if ((d.foodId !== undefined) === (d.customFood !== undefined)) throw new NutritionInputError("Mỗi nguyên liệu phải chọn đúng một Food ID hoặc nguồn ngoài kho.", path);
   const r: MenuRowInput = { id: text(d.id, 100, `${path}.id`), meal: text(d.meal, 160, `${path}.meal`), dish: text(d.dish, 160, `${path}.dish`), quantity: d.quantity === null ? null : number(d.quantity, 0, 1000000, `${path}.quantity`), unit: choice(d.unit, ["g", "ml"] as const, `${path}.unit`), servings: number(d.servings, 0, 10000, `${path}.servings`, true), basis: choice(d.basis, ["edible", "raw", "cooked"] as const, `${path}.basis`), recipeSource: recipe(d.recipeSource, `${path}.recipeSource`) };
   if (d.foodId !== undefined) r.foodId = text(d.foodId, 100, `${path}.foodId`);
-  if (d.customFood !== undefined) r.customFood = custom(d.customFood, `${path}.customFood`);
+  if (d.customFood !== undefined) r.customFood = parseCustomFoodInput(d.customFood, `${path}.customFood`);
   for (const k of ["conversionSource", "densitySource", "actualFoodName", "replacedFromFoodId", "note"] as const) if (d[k] !== undefined) r[k] = text(d[k], k === "note" ? 1000 : k === "replacedFromFoodId" ? 100 : 500, `${path}.${k}`, k === "note");
   if (d.conversionFactor !== undefined) r.conversionFactor = number(d.conversionFactor, 0, 1000, `${path}.conversionFactor`, true);
   if (d.densityGPerMl !== undefined) r.densityGPerMl = number(d.densityGPerMl, 0, 100, `${path}.densityGPerMl`, true);

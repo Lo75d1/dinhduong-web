@@ -491,6 +491,8 @@ model User {
   manualNutritionClients   NutritionOAuthClient[] @relation("ManualNutritionClientOwner")
   patients                 Patient[]
   rations                  Ration[]
+  personalFoods            PersonalFood[]
+  personalDishes           PersonalDish[]
   submissions              FoodSubmission[]       @relation("SubmissionAuthor")
   reviewedSubmissions      FoodSubmission[]       @relation("SubmissionReviewer")
   departmentMemberships    DepartmentMembership[]
@@ -506,6 +508,39 @@ model User {
   nutritionOAuthTokens     NutritionOAuthToken[]
 
   @@map("app_users")
+}
+
+// User-owned library. Canonical Food/Dish records are never modified here.
+model PersonalFood {
+  id        String   @id @default(cuid())
+  ownerId   String
+  name      String
+  content   Json
+  requestKey String
+  revision  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, updatedAt])
+  @@unique([ownerId, requestKey])
+  @@map("personal_foods")
+}
+
+model PersonalDish {
+  id        String   @id @default(cuid())
+  ownerId   String
+  name      String
+  content   Json
+  requestKey String
+  revision  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([ownerId, updatedAt])
+  @@unique([ownerId, requestKey])
+  @@map("personal_dishes")
 }
 
 model Session {

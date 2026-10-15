@@ -115,7 +115,7 @@ async function main() {
     const anonymousList = await api.mcpRoute.POST(rpcRequest("tools/list", {}, ""));
     assert.equal(anonymousList.status, 200); checks++;
     const anonymousTools = (await anonymousList.json()).result.tools;
-    assert.equal(anonymousTools.length, 11); checks++;
+    assert.equal(anonymousTools.length, 13); checks++;
     assert.deepEqual(anonymousTools.find((tool: { name: string }) => tool.name === "get_workflow").securitySchemes, [{ type: "noauth" }]); checks++;
     for (const tool of anonymousTools.filter((item: { name: string }) => item.name !== "get_workflow")) { assert.equal(tool.securitySchemes[0].type, "oauth2"); checks++; }
     const anonymousInit = await api.mcpRoute.POST(rpcRequest("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "anonymous fixture", version: "1" } }, ""));

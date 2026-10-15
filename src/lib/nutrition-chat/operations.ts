@@ -7,6 +7,7 @@ import { exportNutritionMenu } from "./downloads";
 import { NUTRITION_WORKFLOW, nutritionToolScope } from "./tools";
 import { enforceNutritionRateLimit, NutritionSecurityError } from "./security";
 import { nutritionChatReport } from "./chat-report";
+import { listPersonalLibrary, getPersonalLibraryItem, personalLibraryKind } from "@/lib/personal-library";
 
 export async function executeNutritionTool(name:string,value:unknown,identity:NutritionIdentity) {
   const scope=nutritionToolScope(name);
@@ -16,6 +17,14 @@ export async function executeNutritionTool(name:string,value:unknown,identity:Nu
   if(["prepare_menu","calculate_menu","save_menu"].includes(name))await enforceNutritionRateLimit(`nutrition-compute:${identity.userId}`,{limit:20,windowSeconds:60});
   if(name==="export_workbook")await enforceNutritionRateLimit(`nutrition-export:${identity.userId}`,{limit:4,windowSeconds:60});
   if(name==="get_workflow"){validateOperationObject(value,[]);return NUTRITION_WORKFLOW;}
+  if(name==="list_personal_library") {
+    const a=validateOperationObject(value,["kind","q","page"],["kind"]);
+    return listPersonalLibrary(personalLibraryKind(a.kind),a.q===undefined?"":a.q as string,a.page===undefined?0:a.page as number,identity);
+  }
+  if(name==="get_personal_library_item") {
+    const a=validateOperationObject(value,["kind","id"],["kind","id"]);
+    return getPersonalLibraryItem(personalLibraryKind(a.kind),operationId(a.id,"id"),identity);
+  }
   if(name==="search_foods") {
     const a=validateOperationObject(value,["q","type","source","group","limit","offset","fields"],["q"]);
     if(typeof a.q!=="string" || (a.group!==undefined && (typeof a.group!=="string" || a.group.length>100)))throw new NutritionInputError("Bộ lọc không hợp lệ.");

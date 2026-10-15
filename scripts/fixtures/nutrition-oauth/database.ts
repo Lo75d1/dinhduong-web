@@ -16,6 +16,7 @@ type FixtureModel = {
 };
 type FixturePrisma = {
   user: FixtureModel; session: FixtureModel; patient: FixtureModel; dataChangeLog: FixtureModel;
+  personalFood: FixtureModel; personalDish: FixtureModel;
   nutritionOAuthClient: FixtureModel; nutritionOAuthCode: FixtureModel; nutritionOAuthToken: FixtureModel; nutritionApiWindow: FixtureModel; ration: FixtureModel;
   $queryRaw<T>(parts: TemplateStringsArray, ...values: unknown[]): Promise<T[]>;
   $transaction<T>(callback: (tx: FixturePrisma) => Promise<T>): Promise<T>;
@@ -78,7 +79,7 @@ function fixture(executor: Executor): FixturePrisma {
     function updateValues(data: Row) {
       return Object.entries(data).map(([key, value]) => {
         if (value && typeof value === "object" && "increment" in value) return value.increment;
-        if (["conversationJson", "profileJson", "beforeJson", "afterJson"].includes(key) && value !== null) return JSON.stringify(value);
+        if (["conversationJson", "profileJson", "beforeJson", "afterJson", "content"].includes(key) && value !== null) return JSON.stringify(value);
         return value;
       });
     }
@@ -128,7 +129,7 @@ function fixture(executor: Executor): FixturePrisma {
         return Number((await executor.query<{ count: number }>(`SELECT count(*) AS count FROM ${name(table)} WHERE ${whereSql(args.where, values)}`, values)).rows[0].count);
       },
       create: async (args: Args) => {
-        const data = { id: randomUUID(), ...args.data };
+        const data = { id: randomUUID(), ...(["personal_foods", "personal_dishes"].includes(table) ? { updatedAt: new Date() } : {}), ...args.data };
         const columns = Object.keys(data);
         try {
           const row = (await executor.query<Row>(`INSERT INTO ${name(table)} (${columns.map(name).join(",")}) VALUES (${columns.map((_, i) => `$${i + 1}`).join(",")}) RETURNING *`, updateValues(data))).rows[0];
@@ -166,6 +167,7 @@ function fixture(executor: Executor): FixturePrisma {
   }
   return {
     user: model("app_users"), session: model("app_sessions"), patient: model("patients"), dataChangeLog: model("data_change_logs"),
+    personalFood: model("personal_foods"), personalDish: model("personal_dishes"),
     nutritionOAuthClient: model("nutrition_oauth_clients"), nutritionOAuthCode: model("nutrition_oauth_codes"),
     nutritionOAuthToken: model("nutrition_oauth_tokens"), nutritionApiWindow: model("nutrition_api_windows"),
     ration: model("rations"),
@@ -206,4 +208,5 @@ export async function initializeOAuthFixture(migrationPath: string) {
   await database.exec(await readFile(join(dirname(dirname(migrationPath)), "20261015100000_account_management", "migration.sql"), "utf8"));
 }
 export async function fixtureQuery<T = Row>(sql: string, parameters?: unknown[]) { return (await database.query<T>(sql, parameters?.map(value => value instanceof Date ? value.toISOString() : value))).rows; }
+export async function applyFixtureMigration(path: string) { await database.exec(await readFile(path, "utf8")); }
 export async function closeOAuthFixture() { if (database) await database.close(); }
