@@ -5,6 +5,7 @@ import {
   oauthAuthorizationRedirect, oneParam, parseNutritionScopes, randomNutritionToken,
   readConsentInteraction, registrationInput, signConsentInteraction, validateConnectionCsrf, validateConsentCsrf,
   validateNutritionOrigin, validatePkceChallenge, validateRedirectUri, validateResource, verifyPkce, type ConsentInteraction,
+  validateNutritionFormOrigin,
 } from "../src/lib/nutrition-chat/oauth-validation";
 import { readNutritionForm, readNutritionJson, readNutritionText } from "../src/lib/nutrition-chat/http";
 
@@ -118,6 +119,18 @@ async function main() {
     process.env.NUTRITION_ALLOWED_ORIGINS = "https://chatgpt.com";
     validateNutritionOrigin(new Request(getNutritionResourceUrl(), { headers: { Origin: "https://chatgpt.com" } })); checks++;
     expectError(() => validateNutritionOrigin(new Request(getNutritionResourceUrl(), { headers: { Origin: "https://chatgpt.com" } }), true), "invalid_request");
+    const nativeHeaders = { Origin: "null", "Content-Type": "application/x-www-form-urlencoded", "Sec-Fetch-Site": "same-origin", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Dest": "document" };
+    validateNutritionFormOrigin(bodyRequest("decision=deny", nativeHeaders)); checks++;
+    // The native exception must never change the JSON/bearer API origin policy.
+    expectError(() => validateNutritionOrigin(bodyRequest("decision=deny", nativeHeaders), true), "invalid_request");
+    for (const [key, value] of [["Origin", "https://evil.test"], ["Origin", ""], ["Sec-Fetch-Site", "cross-site"], ["Sec-Fetch-Site", "same-site"], ["Sec-Fetch-Site", "none"], ["Sec-Fetch-Mode", "cors"], ["Sec-Fetch-Dest", "iframe"], ["Content-Type", "application/json"]]) {
+      expectError(() => validateNutritionFormOrigin(bodyRequest("decision=deny", { ...nativeHeaders, [key]: value })), "invalid_request");
+    }
+    for (const key of ["Origin", "Sec-Fetch-Site", "Sec-Fetch-Mode", "Sec-Fetch-Dest", "Content-Type"]) {
+      const headers = new Headers(nativeHeaders); headers.delete(key);
+      expectError(() => validateNutritionFormOrigin(new Request(getNutritionResourceUrl(), { method: "POST", headers, body: "decision=deny" })), "invalid_request");
+    }
+    expectError(() => validateNutritionFormOrigin(new Request(getNutritionResourceUrl(), { headers: nativeHeaders })), "invalid_request");
 
     assert.deepEqual(await readNutritionJson(bodyRequest('{"name":"Cơm"}', { "Content-Type": "application/json; charset=utf-8" })), { name: "Cơm" }); checks++;
     await expectAsyncError(() => readNutritionJson(bodyRequest("{}", { "Content-Type": "text/plain" })), "unsupported_media_type");

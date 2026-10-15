@@ -63,6 +63,11 @@ async function main() {
     function form(path: string, values: Record<string, string>, basic?: string) {
       return new Request(`${publicUrl}/api/nutrition/v1/oauth/${path}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: publicUrl, ...(basic ? { Authorization: basic } : {}) }, body: new URLSearchParams(values) });
     }
+    function nativeForm(path: string, values: Record<string, string>) {
+      const request = form(path, values);
+      for (const [name, value] of Object.entries({ Origin: "null", "Sec-Fetch-Site": "same-origin", "Sec-Fetch-Mode": "navigate", "Sec-Fetch-Dest": "document" })) request.headers.set(name, value);
+      return request;
+    }
     async function register(method = "none"): Promise<Registered> {
       const response = await api.nutritionOAuthHandler(api.registerNutritionClient, new Request(`${publicUrl}/api/nutrition/v1/oauth/register`, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ client_name: "Claude (fixture)", redirect_uris: ["https://claude.ai/api/mcp/auth_callback"], token_endpoint_auth_method: method }),
@@ -88,10 +93,12 @@ async function main() {
       assert.equal(response.status, 302); checks++;
       const consent = await api.nutritionConsentPageData();
       assert.equal(consent.user!.id, "user-a"); checks++;
-      const badCsrf = await api.nutritionOAuthHandler(api.confirmNutritionAuthorization, form("authorize", { csrf: "wrong", decision: "approve" }));
+      const badCsrf = await api.nutritionOAuthHandler(api.confirmNutritionAuthorization, nativeForm("authorize", { csrf: "wrong", decision: "approve" }));
       assert.equal(badCsrf.status, 403); checks++;
       const savedCookie = api.fixtureCookies.get(CONSENT_COOKIE)!;
-      const confirmed = await api.nutritionOAuthHandler(api.confirmNutritionAuthorization, form("authorize", { csrf: consent.csrf!, decision: "approve" }));
+      const foreign = nativeForm("authorize", { csrf: consent.csrf!, decision: "approve" }); foreign.headers.set("Sec-Fetch-Site", "cross-site");
+      assert.equal((await api.nutritionOAuthHandler(api.confirmNutritionAuthorization, foreign)).status, 403); checks++;
+      const confirmed = await api.nutritionOAuthHandler(api.confirmNutritionAuthorization, nativeForm("authorize", { csrf: consent.csrf!, decision: "approve" }));
       assert.equal(confirmed.status, 303); checks++;
       const redirect = new URL(confirmed.headers.get("location")!);
       assert.equal(redirect.searchParams.get("iss"), publicUrl); checks++;
@@ -198,11 +205,11 @@ async function main() {
     api.setFixtureUser({ id: "user-b", email: "fixture-b@example.test", displayName: "Người dùng B", role: "CLINICIAN" });
     const bConnections = await api.nutritionConnectionsPageData();
     assert.equal(bConnections.connections.length, 0); checks++;
-    assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionConnection, form("connections", { csrf: connections.csrf, family_id: family }))).status, 403); checks++;
-    assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionConnection, form("connections", { csrf: bConnections.csrf, family_id: family }))).status, 303); checks++;
+    assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionConnection, nativeForm("connections", { csrf: connections.csrf, family_id: family }))).status, 403); checks++;
+    assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionConnection, nativeForm("connections", { csrf: bConnections.csrf, family_id: family }))).status, 303); checks++;
     assert.equal((await api.getNutritionIdentity(protectedRequest(personal.access_token), "nutrition:read")).userId, "user-a"); checks++;
     api.setFixtureUser({ id: "user-a", email: "fixture-a@example.test", displayName: "Người dùng A", role: "CLINICIAN" });
-    assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionConnection, form("connections", { csrf: connections.csrf, family_id: family }))).status, 303); checks++;
+    assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionConnection, nativeForm("connections", { csrf: connections.csrf, family_id: family }))).status, 303); checks++;
     await identityFails(personal.access_token);
     api.setFixtureUser(null);
     assert.equal((await api.nutritionOAuthHandler(api.listNutritionConnections, form("connections", {}))).status, 401); checks++;

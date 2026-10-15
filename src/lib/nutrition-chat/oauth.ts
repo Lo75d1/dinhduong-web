@@ -10,6 +10,7 @@ import {
   NutritionSecurityError, oauthAuthorizationRedirect, oneParam, parseNutritionScopes, randomNutritionToken,
   readConsentInteraction, registrationInput, signConsentInteraction, validateConsentCsrf,
   validatePkceChallenge, validateRedirectUri, validateResource, validateConnectionCsrf, verifyPkce, type ConsentInteraction,
+  validateNutritionFormOrigin,
 } from "./oauth-validation";
 import {
   enforceNutritionRateLimit, NUTRITION_NO_STORE_HEADERS, nutritionAnonymousKey, nutritionErrorResponse,
@@ -130,7 +131,7 @@ export async function nutritionConsentPageData() {
 }
 
 export async function confirmNutritionAuthorization(request: Request): Promise<Response> {
-  validateNutritionOrigin(request, true);
+  validateNutritionFormOrigin(request);
   const user = await requireSessionUser().catch(() => { throw new NutritionSecurityError("login_required", 401, "Đăng nhập trước khi xác nhận kết nối."); });
   await enforceNutritionRateLimit(`oauth:consent:user:${user.id}`, { limit: 30, windowSeconds: 3600 });
   const params = await readNutritionForm(request);
@@ -343,7 +344,7 @@ export async function listNutritionConnections(): Promise<Response> {
 }
 
 export async function revokeNutritionConnection(request: Request): Promise<Response> {
-  validateNutritionOrigin(request, true);
+  validateNutritionFormOrigin(request);
   const user = await requireSessionUser().catch(() => { throw new NutritionSecurityError("login_required", 401); });
   await enforceNutritionRateLimit(`oauth:manage:user:${user.id}`, { limit: 60, windowSeconds: 3600 });
   const params = await readNutritionForm(request);

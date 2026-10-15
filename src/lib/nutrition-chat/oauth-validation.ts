@@ -187,6 +187,21 @@ export function validateNutritionOrigin(request: Request, sameSiteOnly = false):
   if (!allowed.includes(value)) throw new NutritionSecurityError("invalid_request", 403, "Nguồn trình duyệt không được phép.");
 }
 
+/** Native form navigation under no-referrer serializes Origin as "null".
+ * Only these same-origin document POSTs may use Fetch Metadata instead.
+ * Callers MUST still verify their signed CSRF token and authenticated session.
+ * JSON APIs, cross-site/same-site requests and requests without metadata stay strict.
+ */
+export function validateNutritionFormOrigin(request: Request): void {
+  const nativeSameOrigin = request.method === "POST" && request.headers.get("origin") === "null" &&
+    request.headers.get("sec-fetch-site") === "same-origin" &&
+    request.headers.get("sec-fetch-mode") === "navigate" &&
+    request.headers.get("sec-fetch-dest") === "document" &&
+    request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() === "application/x-www-form-urlencoded";
+  if (nativeSameOrigin) return;
+  validateNutritionOrigin(request, true);
+}
+
 export function registrationInput(input: unknown) {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new NutritionSecurityError("invalid_client_metadata");
   const data = input as Record<string, unknown>;
