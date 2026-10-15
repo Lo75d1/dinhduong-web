@@ -74,6 +74,13 @@ tài liệu nền tảng) không phải dò lại từ đầu.
 - Browser thật: lưu hồ sơ đổi ngay tên menu; tìm và chọn user, thao tác/audit/form quản trị hiển thị đúng. Viewport 390 px/document375 và 1280 px/document1265 không tràn ngang. Ảnh ignore `evidence/nutrition-chat/vps-account-mobile.jpg`, `vps-account-admin-mobile.jpg`, `vps-account-admin-desktop.jpg`.
 - Bốn user kiểm thử, một client bearer và dữ liệu/audit liên quan đã dọn; credential kiểm thử đã xóa. Food/Dish/nguyên liệu khớp count+digest; bộ đếm ChatGPT/Claude vẫn 0/0; env/Caddy/layout/file Google và maintenance timer giữ nguyên; swap build đã gỡ. Chưa có tự khôi phục mật khẩu qua email/MFA/xóa tài khoản; hỗ trợ qua quản trị, dùng khóa để giữ dữ liệu. Chi tiết `docs/nutrition-chat/account-management.md` và `vps-account-2026-10-15.md`.
 
+#### Sửa native form cấp quyền bị Origin null (15/10/2026)
+
+- Ảnh người dùng cho thấy tới được trang cấp quyền nhưng POST bị invalid_request. Xung đột no-referrer với HTML form navigation: Origin null bị chặn; request fetch CORS trước đó không bắt được ca này.
+- App `eeef35d` đã healthy trên VPS. Chỉ hai form confirm/revoke nhận ngoại lệ Origin null khi POST URL-encoded + Fetch Metadata same-origin/navigate/document, vẫn kiểm session và CSRF ký. JSON/bearer API giữ kiểm nguồn cũ; không đổi Caddy/callback/DB/secret.
+- Local security89/OAuth261/account62, Prisma/TypeScript/lint và Linux build đạt. HTTPS28 checks đạt cho approve/deny/revoke, nguồn/CSRF xấu và JSON vẫn chặn. Không theo callback/đổi code thử sang token, không tăng số kết nối giả; user/client thử đã dọn, nguồn+server settings giữ nguyên, swap gỡ.
+- IAB chỉ xác nhận DOM/trạng thái sau HTTP revoke; click native không điều hướng được trong phiên, không có Chrome trong inventory. Cần người dùng mở kết nối mới từ ChatGPT và xác nhận để nghiệm thu platform. Chi tiết `docs/nutrition-chat/vps-native-form-2026-10-15.md`.
+
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
 CHỈ LÀ MẪU THAM KHẢO — không sửa, không deploy nó.** Dữ liệu thực phẩm/món ăn
