@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Bảng Excel từng thực phẩm và đầy đủ vi chất — 16/10/2026
+
+- App **981579e** healthy trên VPS; `Phan tich chi tiet` là tab đầu của Excel đầy đủ dùng chung web/hội thoại. Một bảng gồm ngày/bữa/món, từng thực phẩm, lượng g/ml/suất và lượng nguồn dùng tính, **160 cột dinh dưỡng**, nguồn cuối bảng; có cộng món/bữa/ngày/toàn khẩu phần. Không chỉ bốn chất hoặc tổng dọc theo chất.
+- Tái dùng số/công thức `Nhap khau phan` và `Phan tich`, registry160; không thêm bộ tính/model/migration, không sửa kho. Tổng không cộng trùng subtotal; thiếu `—`, zero giữ zero, tổng một phần đánh `≥` nhưng vẫn là số. Sửa lượng/suất/nguồn tự cập nhật; đổi ngày/bữa/món/số dòng cần xuất lại để sắp nhóm, tổng khẩu phần vẫn tính trên vùng nhập. Không ép160 cột lên một trang, không freeze/ẩn vi chất; bảng hành chính Times New Roman/lưới.
+- Prisma/TypeScript/ESLint file sửa/full suite và Linux build đạt. Excel thật fixture **668** kiểm; **HTTPS76**/11assets và chính file1.566.164byte mở Excel **971** kiểm: từng nguyên liệu×160 chất đối chiếu API nguồn, bốn cấp tổng và thay lượng/suất đúng, không lỗi công thức. Đã xem PDF phần cột đầu; chưa kiểm trình đọc khác Excel hoặc AI thật. Token/file thử dọn, account counts/canonical5bảng/25migration/cấu hình giữ nguyên; timer active/enabled, không OOM/swap. Guide/plugin1.0.10/16tool giữ nguyên, PR#4 draft/chưa merge. File cũ cần xuất lại. Chi tiết `docs/nutrition-chat/detail-matrix-2026-10-16.md`.
+
 ## Đủ nguyên liệu khi duyệt, link vào Tính khẩu phần và Excel — 16/10/2026
 
 - App **6299385** healthy, guide/plugin **1.0.10**/16tool. Bản nháp đầu tiên phải hiện tất cả nguyên liệu/lượng dưới món ngay trong chat; approvalPresentation theo từng phản hồi prepare/get_saved_menu, không chỉ hướng dẫn cài. Link mở Tính khẩu phần với hai bước Nhập khẩu phần/Kết quả, ngày/bữa/món và bảng nguyên liệu; link cũ tương thích, bản nhập thủ công giữ riêng. Tái dùng Calculator/editor/engine/API, không ép về Row gram làm mất ml/suất/nguồn/quy đổi.

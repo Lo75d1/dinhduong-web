@@ -1,5 +1,14 @@
 # Excel chỉnh được
 
+## Bảng phân tích chính theo từng thực phẩm (16/10/2026)
+
+- Tab đầu **`Phan tich chi tiet`** của bản xuất đầy đủ: ngày, bữa, món, từng thực phẩm/món có số liệu, lượng nhập×số suất, đơn vị nhập, lượng nguồn ăn được, đơn vị nguồn, **toàn bộ 160 trường dinh dưỡng trên cùng một bảng** và một cột nguồn ở cuối. Có cộng món, cộng bữa, tổng ngày và tổng khẩu phần; tổng chỉ cộng dòng thực phẩm, không cộng lại các subtotal. VDD dùng số liệu món gốc không tự sinh nguyên liệu; nguyên liệu VDD thuộc công thức RNI giữ đúng tên và số riêng.
+- Bảng liên kết trực tiếp kết quả đang tính ở `Nhap khau phan`; tổng khẩu phần đọc `Phan tich`. Giữ công thức và cache cho trình xem. Sửa lượng/số suất/nguồn tính lại; không nhân hoặc quy đổi dinh dưỡng ở một engine thứ hai. Lượng nguồn có thể là g hoặc ml, không mặc định là gam sống sạch.
+- Thiếu nguồn là `—`, giá trị0 giữ số0. Tổng một phần có dấu `≥` bằng định dạng số động, vẫn là số để phân tích. Không tự gộp các đơn vị/dạng vitamin khác nhau; hai trường nguồn chưa xác minh tiếp tục chỉ nằm ở đối soát và không tính.
+- Times New Roman12/lưới/chữ đen, tiêu đề nhóm chất, không freeze/ẩn vi chất/ép160 cột vào một trang. Bản in A4 ngang85%, lặp hàng5:6 và cộtA:D khi trải ngang nhiều trang. `Thuc don` vẫn là bản in gọn với font15; báo cáo/mục tiêu giữ ở các tab riêng có sẵn.
+- Đổi ngày/bữa/món hoặc số dòng: bảng báo xuất lại để sắp nhóm; subtotal nhóm tạm để `—` tránh gắn sai nhóm, tổng khẩu phần vẫn tự tính trên vùng nhập cho phép. Đổi lượng/suất/nguồn không cần xuất lại để tính trong Excel. Tải file mới để có bảng này; file cũ không tự thay đổi.
+- Giới hạn phân bổ ô trước khi dựng workbook đã bao gồm bảng rộng và số dòng subtotal, giữ hạn nén/giải nén đang có. Kiểm chứng: [biên bản](detail-matrix-2026-10-16.md).
+
 ## Báo cáo đầy đủ dùng chung web và hội thoại (15/10/2026)
 
 - Nút Excel ở chế độ một ngày và nhiều ngày dùng cùng `buildNutritionWorkbook` với hội thoại. Tải `.xlsx` thật qua `/api/nutrition-report/export`; không còn dùng hai bản XML `.xls` khác nhau tại các nút này. Route chỉ đọc dữ liệu và tạo file, không lưu khẩu phần hoặc sửa Food/Dish.
