@@ -1,5 +1,12 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Hướng dẫn plugin và token API chỉ tính — 16/10/2026
+
+- App **23457e0** healthy: hướng dẫn1.0.4 dùng chung cho15tool, QR/TXT/web/ZIP; sửa lời nhắn mặc định lưu, phân biệt chỉ tính/chỉ Excel/lưu. Onboarding và2skill/6file có thể import qua MCP extension/digest; host cần Scan Tools/cập nhật snapshot, không tự giả định đã cài skill.
+- Tài khoản → Kết nối ứng dụng có token API1giờ/24giờ/7ngày, read/calculate và export tùy chọn, không write; chỉ lưu hash/không refresh, có thu hồi. Tái dùng OAuth client/token, không bảng/migration mới và không tăng bộ đếm kết nối nền tảng. Chỉ tính/xuất không tạo Ration.
+- Khắc phục trang tài khoản RSC lỗi driverXX000 dù API profile200: PrismaClient dùng chung trên process, pool3/thời gian chờ10giây. HTML form/API và hai lượt đọc song song đã đạt, log lỗi bản cuối0. Login giữ đúng mục token.
+- Full suite trước mở rộng, HTTP252/guide74/account94, Prisma/TypeScript/lint file sửa/Linux build; HTTPS100 + smoke16/React11 đạt. Đã dọn2user/2session/2client/2token/4audit,0Ration; canonical5bảng/count/digest,25migration/cấu hình giữ nguyên, timer active, không OOM/swap. Browser không kết nối nên chưa kiểm tương tác/AI thật. Biên bản: `docs/nutrition-chat/plugin-guide-and-api-token-2026-10-16.md`; PR#4 vẫn draft/chưa merge.
+
 ## Chế độ ăn bệnh lý trong Nutrition Chat — 16/10/2026
 
 - App **5901e2f** healthy trên VPS: thêm `search_diet_codes`/`get_diet_code`, tổng15tool; dùng lại246 mã MCDA, không thêm bảng/migration hoặc sửa kho. Chat có hướng dẫn hỏi dữ kiện còn thiếu, đọc ghi chú, trình mã để xác nhận rồi lưu cùng thực đơn. Mã chưa chốt/sai đối tượng bị chặn; thay context hoặc nguồn phải duyệt lại.
