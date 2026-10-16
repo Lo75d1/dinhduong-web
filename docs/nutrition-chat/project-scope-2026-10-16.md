@@ -23,3 +23,10 @@
 - Source ứng dụng **aae66a7b7f45f7ae0b096763e53bd4ecb80176e1** healthy trên VPS; Prisma generate, TypeScript, ESLint file sửa và Linux build đạt. Backup `/opt/dinhduong-release-backups/nutrition-meal-link-20261016-140215-codex`.
 - **HTTPS24 đạt**: có đúng một link/đích/nhãn/tab mới/rel an toàn; đặt trước tài liệu tham khảo; canonical Dinh dưỡng giữ nguyên; redirect Facebook/UTM vẫn307 về `/`; ba URL suất ăn nội bộ404; health/OAuth/OpenAPI/trang bắt đầu chat200, tổ chức cũ vẫn trống/bộ đếm còn số. Canonical count/digest,25migration và SHA env/layout/Caddy/Google khớp; timer active/enabled, không OOM/swap.
 - Trang đích `suatanbv.io.vn` timeout: curl Windows15s; DNS VPS trả162.4.177.119 và fetch HTTPS báo `UND_ERR_CONNECT_TIMEOUT`. Không đổi địa chỉ người dùng cung cấp, không sửa máy chủ/DNS của ứng dụng khác; chưa xác nhận website đích mở được. Công cụ browser không có phiên kết nối nên chưa thử bấm/ảnh trực tiếp; không coi SSR/HTTPS là kiểm browser.
+
+## Làm rõ lối vào ứng dụng suất ăn
+
+- Theo phản hồi khó thấy của chủ dự án: bỏ thẻ trắng thấp dưới phần chức năng, chuyển thành dải xanh rêu đậm ngay trước phần giới thiệu đầu trang, chữ lớn và nút vàng “Mở hệ thống suất ăn”. Thêm nút vàng “Suất ăn bệnh viện” trên thanh điều hướng chung.
+- Giữ đúng URL/tab mới/rel/nhãn truy cập; dùng lớp Tailwind hiện có, có focus/hover/pressed, nút tối thiểu48px và bố cục dọc trên điện thoại. Chỉ đổi hai file giao diện; không đổi engine, API, package hoặc dữ liệu.
+- Layout VPS có override thêm “Thông tin mới”; triển khai phải backup và kiểm đúng patch sáu dòng này, tạm đảo patch để fast-forward source rồi áp lại. Layout SHA thay đổi theo source mới; env/Caddy/Google giữ nguyên SHA, không coi toàn layout phải giữ SHA cũ.
+- Prisma generate, TypeScript và ESLint hai file đạt; bổ sung kiểm HTTPS sau deploy. Không viết test riêng cho chỉnh bố cục có thể đảo ngược.

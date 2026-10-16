@@ -110,6 +110,15 @@ export default function RootLayout({
               >
                 Tính khẩu phần
               </Link>
+              <a
+                href="https://suatanbv.io.vn/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Mở Suất ăn bệnh viện tại suatanbv.io.vn (tab mới)"
+                className="rounded-md border-2 border-[#d7aa43] bg-[#f4cd70] px-4 py-1.5 font-bold text-[#123c36] transition-colors hover:bg-[#ffe3a1] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]"
+              >
+                Suất ăn bệnh viện <span aria-hidden="true">↗</span>
+              </a>
               <Link
                 href="/ket-noi-ai/bat-dau"
                 className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"

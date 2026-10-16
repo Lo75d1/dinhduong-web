@@ -26,6 +26,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
   const zaloUrl = settings?.zaloUrl || defaultSiteSettings.zaloUrl;
   const offlineUrl = settings?.offlineDownloadUrl || "";
   return <div className="-mx-5 -my-8 overflow-hidden bg-[#f1f6f4] sm:-mx-8">
+    <aside aria-labelledby="hospital-meals-title" className="border-b-4 border-[#d7aa43] bg-[#123c36] px-5 py-6 text-white sm:px-10 lg:px-16">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p id="hospital-meals-title" className="text-2xl font-bold sm:text-3xl">Suất ăn bệnh viện</p>
+          <p className="mt-1 text-base text-[#e2ede6]">Hệ thống quản lý suất ăn · suatanbv.io.vn</p>
+        </div>
+        <a href="https://suatanbv.io.vn/" target="_blank" rel="noopener noreferrer" aria-label="Mở Suất ăn bệnh viện tại suatanbv.io.vn (tab mới)" className="inline-flex min-h-12 items-center justify-center gap-3 self-start rounded-md border-2 border-[#f4cd70] bg-[#f4cd70] px-6 py-3 text-lg font-bold text-[#123c36] transition-colors hover:border-white hover:bg-white active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:shrink-0">
+          Mở hệ thống suất ăn <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </aside>
     <section className="relative min-h-[510px] overflow-hidden border-b-4 border-[#123c36] bg-[#e6f1f2] px-5 py-12 sm:px-10 sm:py-16 lg:px-16">
       <Image src="/dinh-duong-2597-cover.jpg" alt="Thực phẩm và biểu mẫu đánh giá dinh dưỡng" fill priority sizes="100vw" className="object-cover object-center" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#eef8fb]/[.97] via-[#eef8fb]/[.87] to-white/20" />
@@ -37,16 +48,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
     <section className="relative overflow-hidden px-5 py-10 sm:px-10 lg:px-16">
       <Image src="/dinh-duong-2597-cover.jpg" alt="" fill aria-hidden className="object-cover object-center opacity-[0.14]" />
       <div className="relative mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">CHỨC NĂNG</p><h2 className="mt-1 text-2xl font-semibold text-[#123c36]">Tra cứu và tính khẩu phần</h2></div></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Link href="/thuc-pham" className="clinical-card group rounded-xl border-2 border-[#7f948d] bg-white p-6 hover:-translate-y-0.5 hover:border-[#123c36]"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">01 · TRA CỨU</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Tra cứu thành phần dinh dưỡng</h3><p className="mt-3 text-neutral-900">Tìm thực phẩm, món ăn hoặc sản phẩm theo tên; xem thành phần dinh dưỡng, đơn vị và nguồn dữ liệu.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Tra cứu thực phẩm →</span></Link><Link href="/tinh-khau-phan" className="clinical-card group rounded-xl border-2 border-[#123c36] bg-[#f8fcfa] p-6 hover:-translate-y-0.5 hover:bg-white"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">02 · PHÂN TÍCH</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Tính và phân tích khẩu phần</h3><p className="mt-3 text-neutral-900">Nhập thực phẩm và lượng ăn theo bữa. Xem năng lượng, tỷ lệ đạm–béo–bột đường, đối chiếu nhu cầu theo hồ sơ và xuất báo cáo.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Lập khẩu phần →</span></Link></div></div>
-    </section>
-    <section aria-labelledby="hospital-meals-title" className="px-5 pb-10 sm:px-10 lg:px-16">
-      <a href="https://suatanbv.io.vn/" target="_blank" rel="noopener noreferrer" aria-label="Mở Suất ăn bệnh viện tại suatanbv.io.vn (tab mới)" className="mx-auto flex max-w-6xl flex-col gap-4 rounded-xl border-2 border-[#7f948d] bg-white p-6 text-[#123c36] hover:border-[#123c36] hover:bg-[#f8fcfa] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36] sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.14em]">LIÊN KẾT ỨNG DỤNG</p>
-          <h2 id="hospital-meals-title" className="mt-1 text-2xl font-semibold">Suất ăn bệnh viện</h2>
-          <p className="mt-2 text-neutral-900">Truy cập hệ thống quản lý suất ăn bệnh viện.</p>
-        </div>
-        <span className="shrink-0 font-semibold">Mở suatanbv.io.vn ↗</span>
-      </a>
     </section>
     <section className="border-y-4 border-[#123c36] bg-white px-5 py-10 sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
