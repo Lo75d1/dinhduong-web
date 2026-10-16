@@ -6,4 +6,12 @@
 - Bỏ tổ chức PC07 khỏi giá trị mặc định. Trước triển khai, VPS có organization là dấu chấm và address là địa chỉ bệnh viện tại Đà Nẵng; chỉ xóa giá trị tổ chức cũ/placeholder với điều kiện chặt, giữ thông tin liên hệ thực tế và bộ đếm. Backup trước và ghi DataChangeLog cho thay đổi thiết lập.
 - Không sửa Food/Dish/nguyên liệu, schema hay lịch sử migration; không xóa dữ liệu nghiệp vụ của module cũ. Thay đổi này gỡ giao diện khỏi website Dinh dưỡng 2598, không phải migration phá dữ liệu giữa các dự án.
 - Prisma generate, TypeScript và ESLint bảy file sửa đạt. Không viết test mới cho việc gỡ liên kết; kiểm trang và thiết lập qua HTTPS sau triển khai.
-- Nghiệm thu VPS và giới hạn trình duyệt sẽ bổ sung sau khi kiểm tra xong.
+
+## Nghiệm thu VPS
+
+- Source app **b60b934723b9411f2bb94538eaa80f6e4982db20**, nhánh `codex/nutrition-chat-api`, chưa merge main. Backup/rollback image: `/opt/dinhduong-release-backups/nutrition-project-scope-20261016-135612-codex`. Build Linux/TypeScript và health đạt; không migration mới.
+- Thiết lập `public.organization` từ placeholder `.` thành null trong transaction, backup trước và ghi DataChangeLog với tác nhân bảo trì theo yêu cầu chủ dự án. Digest mọi trường còn lại (trừ updatedAt) khớp ngay trong transaction; giữ địa chỉ bệnh viện, tên/điện thoại/Zalo và bộ đếm. Không thay bằng một đơn vị tự suy đoán.
+- **HTTPS48**: settings no-store, không PC07, địa chỉ bệnh viện giữ đúng, bộ đếm còn số; home/hướng dẫn/liên hệ/quản trị không nhãn/link suất ăn; cả10client assets tải thật không còn PC07 hoặc các nhãn menu đã gỡ. Ba URL cũ404 và không render module; health/OAuth discovery/OpenAPI/trang bắt đầu chat200.
+- Công cụ browser trả inventory rỗng nên chưa kiểm tương tác/ảnh desktop-mobile trực tiếp; không coi HTTPS và đọc bundle là kiểm trình duyệt.
+- Canonical count/digest trước/sau khớp (Food3719/Dish7369/nguyên liệu41457), migration25 giữ nguyên. SHA env/layout/Caddy/Google khớp, timer active/enabled, app healthy/OOMKilled=false, không còn swap build. Không tạo fixture tài khoản.
+- Bước đầu wrapper deploy có lỗi cú pháp ở allowlist và dừng trước checkout/build; đã sửa và chạy lại với pin commit cùng tám file được phép. Bản cũ không bị thay trong lần lỗi đó.

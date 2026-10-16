@@ -1,5 +1,10 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Gỡ nội dung dự án khác — 16/10/2026
+
+- Theo yêu cầu chủ dự án, app **b60b934** healthy trên VPS: gỡ lối vào quản lý/báo suất ăn/ca trực bếp trong menu tài khoản và quản trị, bỏ hướng dẫn gán khoa; ba URL cũ trả404. Bỏ tổ chức PC07 khỏi giá trị mặc định, xóa placeholder tổ chức trên VPS bằng cập nhật có backup/audit, giữ địa chỉ bệnh viện và các liên hệ/bộ đếm.
+- Prisma generate/TypeScript/ESLint file sửa/Linux build đạt; **HTTPS48** gồm10client assets, ba404 và API dinh dưỡng/discovery. Canonical/cấu hình/25migration giữ nguyên, timer active/enabled, không OOM/swap. Không kiểm browser trực tiếp do công cụ hiện không có phiên kết nối. Nhánh PR#4 chưa merge main; chi tiết `docs/nutrition-chat/project-scope-2026-10-16.md`.
+
 ## Hướng dẫn hội thoại và phiếu 24h — 16/10/2026
 
 - App **e85a281** healthy trên VPS, nhánh `codex/nutrition-chat-api`, PR #4 chưa merge main. Trả tóm tắt + link bản riêng trước; Excel chỉ tạo khi cần tải. `prepare.review.text` duyệt đúng đầu vào, mọi số AI tự điền có dấu `*` qua metadata, vẫn giữ kiểu số để tính.
