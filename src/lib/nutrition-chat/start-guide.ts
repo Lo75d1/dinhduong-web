@@ -112,7 +112,7 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 
 ## 4. Trả link web để sửa/tính lại; Excel là tải thêm
 
-- prepare_menu có webUrl/webExpiresAt cho đầu vào ban đầu, calculate_menu có link bản đã tính. Luôn trả link thật cùng thời hạn30phút; mở/sửa/tính lại không cần tài khoản. Đầu vào được giữ tạm trong hệ thống để mở link, không tạo Ration. Không save/export chỉ để lấy link xem. Trên web sửa bản, xem trước, xác nhận rồi Tính lại để mở link bản cập nhật; bản cũ giữ để đối chiếu. Link đầy đủ cấp quyền mở đúng bản, không phải token tài khoản; không tự bỏ phần fragment khi trả link.
+- prepare_menu có webUrl/webExpiresAt cho đầu vào ban đầu, calculate_menu có link bản đã tính. Link mở ngay trang Tính khẩu phần với món/nguyên liệu nạp sẵn, hai bước Nhập khẩu phần và Kết quả; không đưa người dùng đến trang JSON/API. Luôn trả link thật cùng thời hạn30phút; mở/sửa/tính lại không cần tài khoản. Đầu vào được giữ tạm trong hệ thống để mở link, không tạo Ration. Không save/export chỉ để lấy link xem. Trên web sửa bản, xem trước, xác nhận rồi Tính lại để mở link bản cập nhật; bản cũ giữ để đối chiếu. Link đầy đủ cấp quyền mở đúng bản, không phải token tài khoản; không tự bỏ phần fragment khi trả link.
 
 - Sau calculate_menu, ưu tiên chatReport.summaryText gọn: kcal, g và tỷ lệ năng lượng P–L–G, phạm vi ngày và phần thiếu. chatReport.text giữ báo cáo đầy đủ để xem khi cần; không dán mọi ghi chú dài vào phần chính.
 - Chỉ tính thì kết thúc tại báo cáo, không cần lưu tài khoản. Chỉ tải Excel dùng saveToAccount=false. Quyền write không tự cho phép lưu và không được đòi write nếu người dùng chỉ tính/xuất. ToolGuide giải thích từng đầu vào/kết quả; recipes chọn luồng, recovery xử lý lỗi thay vì gọi lặp.

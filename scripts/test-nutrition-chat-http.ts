@@ -213,7 +213,7 @@ async function main() {
     const compactBody = await compactCalculation.json();
     assert.equal(compactBody.result.structuredContent.outputCompacted, true); checks++;
     assert.equal(compactBody.result.structuredContent.guidance.stage,"calculated"); checks++;
-    assert.ok(compactBody.result.structuredContent.webUrl.includes("/ket-noi-ai/ban-tam#"));checks++;
+    assert.ok(compactBody.result.structuredContent.webUrl.includes("/tinh-khau-phan?banTam=1#"));checks++;
     assert.equal(compactBody.result.structuredContent.totals.energyKcal.value, 45500); checks++;
     assert.ok(compactBody.result.structuredContent.chatReport.text.includes("**45.500 kcal**")); checks++;
     assert.ok(compactBody.result.structuredContent.chatReport.text.includes("Chưa có mục tiêu nhu cầu")); checks++;
@@ -337,8 +337,8 @@ async function main() {
       const missingMenu=structuredClone(menu);missingMenu.days[0].rows[0].quantity=null;
       // A separate browser capability opens exactly one temporary input snapshot.
       const webKey=new URL(gp.webUrl).hash.slice(1);webKeys.add(webKey);
-      assert.match(gp.webUrl,/^https:\/\/dinhduong2598\.food\/ket-noi-ai\/ban-tam#[A-Za-z0-9_-]{43}$/);checks++;
-      assert.equal(new URL(gp.webUrl).search,"");checks++;
+      assert.match(gp.webUrl,/^https:\/\/dinhduong2598\.food\/tinh-khau-phan\?banTam=1#[A-Za-z0-9_-]{43}$/);checks++;
+      assert.equal(new URL(gp.webUrl).search,"?banTam=1");checks++;
       assert.ok(!gp.webUrl.includes(guest.accessToken));checks++;
       const exchange=(key:string,origin=base)=>api.webRoute.POST(request("web-menu",{key},undefined,{Origin:origin}));
       assert.equal((await exchange(webKey,"https://evil.test")).status,403);checks++;

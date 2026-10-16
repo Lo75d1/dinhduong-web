@@ -13,7 +13,7 @@ const unavailable=()=>new NutritionSecurityError("web_menu_expired",410,"Bản t
 export function webMenuId(key:string){if(!/^[A-Za-z0-9_-]{43}$/.test(key))throw unavailable();return createHash("sha256").update(key).digest("hex");}
 function path(id:string){if(!/^[a-f0-9]{64}$/.test(id))throw unavailable();return join(directory,`${id}.json`);}
 export function webMenuCookie(id:string){path(id);return `nutrition_web_${id}`;}
-export function webMenuUrl(key:string){webMenuId(key);return `${getNutritionPublicUrl()}/ket-noi-ai/ban-tam#${key}`;}
+export function webMenuUrl(key:string){webMenuId(key);return `${getNutritionPublicUrl()}/tinh-khau-phan?banTam=1#${key}`;}
 export async function cleanupWebMenus(){
   await mkdir(directory,{recursive:true,mode:0o700});let files=0,bytes=0,removed=0;
   for(const name of (await readdir(directory)).filter(n=>/^[a-f0-9]{64}\.json$/.test(n))){

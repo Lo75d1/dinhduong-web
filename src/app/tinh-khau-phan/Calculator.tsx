@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
@@ -49,7 +49,13 @@ function profileGroup(profile: Profile | null): "adult" | "child" | "special" | 
   return "adult";
 }
 
-export default function Calculator() {
+function CalculatorHeading() {
+  return <section className="clinical-page-heading"><p className="text-xs font-semibold tracking-[0.16em] text-[#123c36]">PHIẾU PHÂN TÍCH DINH DƯỠNG</p><h1 className="mt-1 text-3xl font-semibold text-neutral-950">Phân tích khẩu phần</h1><div className="mt-2 flex flex-wrap items-center gap-3"><Link href="/huong-dan" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]">? Xem hướng dẫn</Link></div></section>;
+}
+export default function Calculator({linkedMenu}:{linkedMenu?:ReactNode}) {
+  return linkedMenu ? <div className="calculation-workspace flex min-w-0 flex-col gap-6"><CalculatorHeading/>{linkedMenu}</div> : <ManualCalculator/>;
+}
+function ManualCalculator() {
   const [rows, setRows] = useState<Row[]>([]);
   const [meds, setMeds] = useState<MedicationRow[]>([]);
   const [rationMode, setRationMode] = useState<RationMode>("recall24h");
@@ -115,13 +121,7 @@ export default function Calculator() {
   const totalGrams = foodRows.reduce((sum, row) => sum + (row.grams || 0), 0);
 
   return <div className="calculation-workspace flex flex-col gap-6">
-    <section className="clinical-page-heading">
-      <p className="text-xs font-semibold tracking-[0.16em] text-[#123c36]">PHIẾU PHÂN TÍCH DINH DƯỠNG</p>
-      <h1 className="mt-1 text-3xl font-semibold text-neutral-950">Phân tích khẩu phần</h1>
-      <div className="mt-2 flex flex-wrap items-center gap-3">
-        <Link href="/huong-dan" className="rounded-md border-2 border-[#123c36] bg-white px-3 py-1 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]">? Xem hướng dẫn</Link>
-      </div>
-    </section>
+    <CalculatorHeading/>
 
     {headerSlot && createPortal(
       <div data-no-print className="flex w-full flex-wrap items-center justify-center gap-2 sm:flex-nowrap">

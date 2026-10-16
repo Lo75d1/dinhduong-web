@@ -78,5 +78,6 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bư�
 
 ## Link xem và sửa trên web; nước chấm
 
+- Link mở ngay trang Tính khẩu phần với ngày/bữa/món/nguyên liệu nạp sẵn, hai bước Nhập khẩu phần và Kết quả. Không đưa người dùng đến URL API/JSON; giữ số suất, đơn vị và hệ số quy đổi khi chỉnh sửa.
 - prepare_menu trả webUrl/webExpiresAt ngay cho đầu vào ban đầu; calculate_menu trả link bản đã tính. Ưu tiên tóm tắt + link thật để mở/sửa/tính lại trên web không đăng nhập. Dữ liệu đầu vào giữ tạm30phút, không phải lưu tài khoản; không save/export chỉ để có link. Giữ đầy đủ fragment trong link. Excel là tải thêm, không tải file về chat để xem kết quả. Trên web sửa, xem trước, xác nhận rồi Tính lại để mở bản cập nhật; bản cũ giữ để đối chiếu. Lưu lâu dài theo accountUse.
 - Có món luộc/hấp: đề xuất vài nước chấm thật phù hợp món/khẩu vị và hạn chế đã cung cấp, hỏi chọn loại hoặc không dùng và lượng thực ăn; dùng Food/Dish ID/nguồn thật, tính cả nước pha/nguyên liệu, không cộng gia vị hai lần. Số AI đề xuất đánh *, không bịa vi chất. Hỏi ghi24giờ chỉ ghi nước chấm đã dùng, không tự thêm vào lịch sử.

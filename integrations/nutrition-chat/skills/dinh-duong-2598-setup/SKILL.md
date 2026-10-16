@@ -5,6 +5,7 @@ description: Bắt đầu sau khi cài plugin Dinh dưỡng2598, giải thích c
 
 # Bắt đầu Dinh dưỡng2598
 
+- Link kết quả mở trang Tính khẩu phần, hai bước Nhập khẩu phần/Kết quả với dữ liệu nạp sẵn; không gửi URL API/JSON thay cho giao diện người dùng.
 - Trả lời tiếng Việt bằng gạch đầu dòng; chỉ thực hiện yêu cầu người dùng đã chọn.
 - Gọi get_workflow một lần nếu công cụ có trong phiên. Đọc start, toolGuide, recipes và recovery; không giả vờ đã gọi nếu công cụ chưa được cung cấp.
 - Giải thích ngắn: một plugin có16 công cụ để mở phiên tạm, tra món/thực phẩm/mã chế độ ăn, duyệt đầu vào rồi tính. Chỉ tra/tính/Excel không cần tài khoản: start_guest_session rồi truyền accessToken bằng arguments.sessionToken; không hiển thị token. Lưu và thư viện riêng cần OAuth.

@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+import {createElement,type ReactNode} from "react";
+import {renderToStaticMarkup} from "react-dom/server";
+import {AppRouterContext} from "next/dist/shared/lib/app-router-context.shared-runtime";
+import Page,{generateMetadata} from "../src/app/tinh-khau-phan/page";
+import LegacyLinkPage from "../src/app/ket-noi-ai/ban-tam/page";
+import MenuDraftEditor from "../src/app/tinh-khau-phan/MenuDraftEditor";
+import ReuseSavedMenu from "../src/app/ket-noi-ai/ban-luu/[id]/ReuseSavedMenu";
+import {workbookFixture} from "./test-nutrition-chat-workbook";
+
+async function main(){let checks=0;const check=(value:unknown,message:string)=>{assert.ok(value,message);checks++;};
+  const navigation=()=>{throw new Error("SSR must not navigate");};
+  const render=(element:ReactNode)=>renderToStaticMarkup(createElement(AppRouterContext.Provider,{value:{back:navigation,forward:navigation,push:navigation,replace:navigation,refresh:navigation,prefetch:navigation,bfcacheId:"ssr-fixture"}},element));
+  const normalProps={searchParams:Promise.resolve({})},linkedProps={searchParams:Promise.resolve({banTam:"1"})};
+  const normal=render(await Page(normalProps)),linked=render(await Page(linkedProps)),compat=render(createElement(LegacyLinkPage));
+  check(normal.includes("Phân tích khẩu phần")&&normal.includes("PHIẾU PHÂN TÍCH DINH DƯỠNG"),"ordinary calculator retains the existing entry workflow");
+  check(!normal.includes("Đang nạp khẩu phần từ hội thoại"),"ordinary URL does not invoke private link loading");
+  check(linked.includes("Phân tích khẩu phần")&&linked.includes("Đang nạp khẩu phần từ hội thoại"),"conversation opens inside Calculator");
+  check(!linked.includes("MẪU KIỂM THỬ"),"unauthorized initial HTML contains no private input");
+  check(compat.includes("Phân tích khẩu phần")&&compat.includes("Đang nạp khẩu phần từ hội thoại"),"previous link route uses the same calculator interface");
+  const metadata=await generateMetadata(linkedProps);assert.deepEqual(metadata.robots,{index:false,follow:false});checks++;check(metadata.referrer==="no-referrer","private link page suppresses referrer");
+  check(!(await generateMetadata(normalProps)).robots,"ordinary calculator retains index policy");
+  const {menu}=workbookFixture(),input=structuredClone(menu.input);input.days[0].rows.forEach(row=>{row.dish="Món nhiều nguyên liệu";row.meal="Trưa";});
+  const names=Object.fromEntries(menu.days.flatMap(day=>day.rows).map(row=>[row.id,row.food.name]));
+  const markup=renderToStaticMarkup(createElement(MenuDraftEditor,{input,menu,names,disabled:false,onChange:()=>undefined,onNames:()=>undefined,onAmount:()=>undefined}));
+  for(const name of [names["row-rice"],names["row-beef"],names["row-milk"]])check(markup.includes(name),"selected dish shows every ingredient");
+  check(markup.includes('value="200"')&&markup.includes('value="50"'),"original quantities remain editable");
+  check(markup.includes(">ml</span>"),"millilitres remain ml rather than silently converted to g");
+  check(markup.includes("Ngày 2"),"all days remain reachable");
+  check(markup.includes("Số suất")&&markup.includes("Cơ sở · nguồn"),"portions and source basis remain visible");
+  check(!markup.includes("Thực phẩm của tôi"),"temporary picker only exposes public catalog");
+  const reused=renderToStaticMarkup(createElement(ReuseSavedMenu,{menu,temporary:{id:"a".repeat(64),expiresAt:new Date(Date.now()+1800000).toISOString()},layout:"calculator"}));
+  check(reused.includes("Xem trước và tính lại")&&reused.includes("Thành phần món ăn"),"reuses existing prepare/calculate/save editor in native layout");
+  check(reused.includes("Đăng nhập / Đăng ký trong tab mới"),"long-term account handoff remains available");
+  console.log(`Calculator link: ${checks} React SSR/metadata checks passed; no browser interaction claim.`);
+}
+main().catch(error=>{console.error(error);process.exitCode=1});
