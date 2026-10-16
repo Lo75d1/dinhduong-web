@@ -54,6 +54,7 @@ function whereSql(where: Where | undefined, parameters: unknown[]): string {
     if (key === "ownerId_conversationRequestKey") return `(${whereSql(value as Where, parameters)})`;
     const column = name(key);
     if (key === "client") return `EXISTS (SELECT 1 FROM nutrition_oauth_clients WHERE id = "clientId" AND ${whereSql(value as Where, parameters)})`;
+    if (key === "tokens") return `EXISTS (SELECT 1 FROM nutrition_oauth_tokens WHERE "clientId" = nutrition_oauth_clients.id AND ${whereSql((value as {some:Where}).some, parameters)})`;
     if (value === null) return `${column} IS NULL`;
     if (typeof value === "object" && !(value instanceof Date) && !Array.isArray(value)) {
       return Object.entries(value as Row).map(([operator, operand]) => {

@@ -332,7 +332,7 @@ export async function nutritionOAuthHandler(action: (request: Request) => Promis
 export async function nutritionConnectionsPageData() {
   const user = await requireSessionUser().catch(() => { throw new NutritionSecurityError("login_required", 401, "Đăng nhập để quản lý kết nối."); });
   const tokens = await prisma.nutritionOAuthToken.findMany({
-    where: { userId: user.id, rotatedAt: null, revokedAt: null, refreshExpiresAt: { gt: new Date() } },
+    where: { userId: user.id, rotatedAt: null, revokedAt: null, refreshExpiresAt: { gt: new Date() }, client: { authMethod: { not: "api_token" } } },
     select: { familyId: true, scopes: true, createdAt: true, refreshExpiresAt: true, client: { select: { name: true, redirectUris: true } } },
     orderBy: { createdAt: "desc" }, take: 30,
   });

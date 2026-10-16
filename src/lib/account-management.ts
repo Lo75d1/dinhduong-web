@@ -180,6 +180,7 @@ export async function accountSnapshot() {
     sessions,
     connections,
     manualClients,
+    apiTokens,
     rations,
     patients,
     activity,
@@ -206,7 +207,7 @@ export async function accountSnapshot() {
         rotatedAt: null,
         revokedAt: null,
         refreshExpiresAt: { gt: new Date() },
-        client: { disabledAt: null, expiresAt: { gt: new Date() } },
+        client: { disabledAt: null, expiresAt: { gt: new Date() }, authMethod: { not: "api_token" } },
       },
       select: {
         familyId: true,
@@ -219,7 +220,7 @@ export async function accountSnapshot() {
       take: 30,
     }),
     prisma.nutritionOAuthClient.findMany({
-      where: { ownerId: actor.id },
+      where: { ownerId: actor.id, authMethod: { not: "api_token" } },
       select: {
         id: true,
         name: true,
@@ -231,6 +232,11 @@ export async function accountSnapshot() {
       },
       orderBy: { createdAt: "desc" },
       take: 30,
+    }),
+    prisma.nutritionOAuthClient.findMany({
+      where: { ownerId: actor.id, authMethod: "api_token", disabledAt: null, expiresAt: { gt: new Date() }, tokens: { some: { revokedAt: null, accessExpiresAt: { gt: new Date() } } } },
+      select: { id: true, name: true, scopes: true, createdAt: true, expiresAt: true },
+      orderBy: { createdAt: "desc" }, take: 3,
     }),
     prisma.ration.count({ where: { ownerId: actor.id } }),
     prisma.patient.count({ where: { ownerId: actor.id } }),
@@ -257,6 +263,7 @@ export async function accountSnapshot() {
     })),
     connections,
     manualClients,
+    apiTokens: apiTokens.map(token => ({...token,active:true})),
     summary: { rations, patients },
     activity,
     mcpUrl: getNutritionResourceUrl(),
@@ -289,12 +296,13 @@ export async function updateAccountProfile(request: Request) {
 }
 export async function manageAccount(request: Request, action: string) {
   const { actor, body } = await mutation(request);
-  if (action === "manual-create")
-    await enforceNutritionRateLimit(`account:manual-create:${actor.id}`, {
+  if (action === "manual-create" || action === "api-token-create")
+    await enforceNutritionRateLimit(`account:${action}:${actor.id}`, {
       limit: 10,
       windowSeconds: 86400,
     });
   let secret: string | undefined;
+  let apiToken: string | undefined;
   const result = await prisma.$transaction(
     async (tx) => {
       await lockUser(tx, actor.id);
@@ -376,6 +384,20 @@ export async function manageAccount(request: Request, action: string) {
         );
         return { ok: true };
       }
+      if (action === "api-token-create") {
+        fields(body, ["name", "currentPassword", "hours", "exportExcel"]);
+        await passwordCheck(tx, actor.id, body.currentPassword);
+        const name=text(body.name,80,"Tên token");
+        if (![1,24,168].includes(body.hours as number) || (body.exportExcel!==undefined && typeof body.exportExcel!=="boolean")) fail("Chọn hạn dùng và quyền xuất hợp lệ.");
+        const count=await tx.nutritionOAuthClient.count({where:{ownerId:actor.id,authMethod:"api_token",disabledAt:null,expiresAt:{gt:new Date()},tokens:{some:{revokedAt:null,accessExpiresAt:{gt:new Date()}}}}});
+        if(count>=3)fail("Đã có 3 token API còn hiệu lực. Thu hồi token không dùng trước.",409);
+        const scopes=["nutrition:read","nutrition:calculate",...(body.exportExcel===true?["nutrition:export"]:[])],expiresAt=new Date(Date.now()+Number(body.hours)*3600_000);
+        const client=await tx.nutritionOAuthClient.create({data:{id:`np_${randomNutritionToken()}`,name,ownerId:actor.id,redirectUris:[],scopes,authMethod:"api_token",expiresAt},select:{id:true,name:true,expiresAt:true}});
+        apiToken=randomNutritionToken();
+        await tx.nutritionOAuthToken.create({data:{familyId:`pat_${randomNutritionToken()}`,userId:actor.id,clientId:client.id,accessHash:hashNutritionToken(apiToken),refreshHash:null,scopes,issuer:getNutritionPublicUrl(),audience:getNutritionResourceUrl(),accessExpiresAt:expiresAt,refreshExpiresAt:expiresAt}});
+        await audit(tx,actor,actor.id,"API_TOKEN_CREATE","Tạo token API chỉ tính, không có quyền lưu",undefined,{clientId:client.id,name,scopes,expiresAt:expiresAt.toISOString()});
+        return {client,scopes,expiresAt,tokenType:"Bearer",mcpUrl:getNutritionResourceUrl(),apiUrl:`${getNutritionPublicUrl()}/api/nutrition/v1`,canSave:false};
+      }
       if (action === "manual-create") {
         fields(body, ["name", "platform", "currentPassword", "scopes"]);
         await passwordCheck(tx, actor.id, body.currentPassword);
@@ -397,6 +419,7 @@ export async function manageAccount(request: Request, action: string) {
         const count = await tx.nutritionOAuthClient.count({
           where: {
             ownerId: actor.id,
+            authMethod: { not: "api_token" },
             disabledAt: null,
             expiresAt: { gt: new Date() },
           },
@@ -439,11 +462,11 @@ export async function manageAccount(request: Request, action: string) {
           authMethod: "client_secret_basic",
         };
       }
-      if (action === "manual-revoke") {
+      if (action === "manual-revoke" || action === "api-token-revoke") {
         fields(body, ["clientId"]);
         const clientId = text(body.clientId, 128, "Cấu hình");
         const client = await tx.nutritionOAuthClient.findFirst({
-          where: { id: clientId, ownerId: actor.id },
+          where: { id: clientId, ownerId: actor.id, authMethod: action === "api-token-revoke" ? "api_token" : { not: "api_token" } },
         });
         if (!client) fail("Không tìm thấy cấu hình.", 404);
         await tx.nutritionOAuthClient.update({
@@ -459,8 +482,8 @@ export async function manageAccount(request: Request, action: string) {
           tx,
           actor,
           actor.id,
-          "MANUAL_CLIENT_REVOKE",
-          "Thu hồi cấu hình OAuth thủ công",
+          action === "api-token-revoke" ? "API_TOKEN_REVOKE" : "MANUAL_CLIENT_REVOKE",
+          action === "api-token-revoke" ? "Thu hồi token API" : "Thu hồi cấu hình OAuth thủ công",
           undefined,
           { clientId },
         );
@@ -474,6 +497,7 @@ export async function manageAccount(request: Request, action: string) {
   return nutritionJson({
     ...result,
     ...(secret ? { clientSecret: secret } : {}),
+    ...(apiToken ? { apiToken } : {}),
   });
 }
 

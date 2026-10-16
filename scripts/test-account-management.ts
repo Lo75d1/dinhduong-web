@@ -360,6 +360,43 @@ async function main() {
       ),
     );
     checks++;
+    // Personal API tokens reuse the verified bearer/owner checks without granting save.
+    await manage("api-token-create",{name:"API",hours:1,currentPassword:"wrong"},403);
+    await manage("api-token-create",{name:"API",hours:1,currentPassword:password,scopes:["nutrition:write"]},400);
+    await manage("api-token-create",{name:"API",hours:0,currentPassword:password},400);
+    const personal=await manage("api-token-create",{name:"API fixture",hours:1,currentPassword:password});
+    assert.equal(personal.apiToken.length,43);checks++;
+    assert.equal(personal.canSave,false);checks++;
+    assert.deepEqual(personal.scopes,["nutrition:read","nutrition:calculate"]);checks++;
+    const apiIdentity=(scope:string)=>app.getNutritionIdentity(new Request(getNutritionResourceUrl(),{headers:{Authorization:`Bearer ${personal.apiToken}`}}),scope);
+    assert.equal((await apiIdentity("nutrition:calculate")).userId,"user-a");checks++;
+    await assert.rejects(()=>apiIdentity("nutrition:write"),(e:unknown)=>e instanceof Error && "code" in e && e.code==="insufficient_scope");checks++;
+    await assert.rejects(()=>apiIdentity("nutrition:export"));checks++;
+    const storedPersonal=(await app.fixtureQuery<{accessHash:string;refreshHash:null;clientId:string}>('SELECT "accessHash","refreshHash","clientId" FROM nutrition_oauth_tokens WHERE "clientId"=$1',[personal.client.id]))[0];
+    assert.equal(storedPersonal.accessHash,hashNutritionToken(personal.apiToken));checks++;
+    assert.equal(storedPersonal.refreshHash,null);checks++;
+    let personalSnapshot=await app.accountSnapshot();
+    assert.equal(personalSnapshot.apiTokens.length,1);checks++;
+    assert.equal(personalSnapshot.apiTokens[0].active,true);checks++;
+    assert.equal(personalSnapshot.manualClients.some(c=>c.id===personal.client.id),false);checks++;
+    assert.equal(personalSnapshot.connections.some(c=>c.client.name==="API fixture"),false);checks++;
+    assert.equal(JSON.stringify(personalSnapshot).includes(personal.apiToken),false);checks++;
+    assert.equal(JSON.stringify(personalSnapshot).includes("accessHash"),false);checks++;
+    const exportPersonal=await manage("api-token-create",{name:"API export",hours:24,exportExcel:true,currentPassword:password});
+    const exportIdentity=()=>app.getNutritionIdentity(new Request(getNutritionResourceUrl(),{headers:{Authorization:`Bearer ${exportPersonal.apiToken}`}}),"nutrition:export");
+    assert.equal((await exportIdentity()).userId,"user-a");checks++;
+    const thirdPersonal=await manage("api-token-create",{name:"API third",hours:168,currentPassword:password});
+    await manage("api-token-create",{name:"API over quota",hours:1,currentPassword:password},409);
+    select("user-b");await manage("api-token-revoke",{clientId:personal.client.id},404,"user-b");select("user-a");
+    await manage("manual-revoke",{clientId:personal.client.id},404);
+    await manage("api-token-revoke",{clientId:issued.client.id},404);
+    await app.fixtureQuery('UPDATE nutrition_oauth_tokens SET "accessExpiresAt"=now()-interval \'1 minute\' WHERE "clientId"=$1',[personal.client.id]);
+    await assert.rejects(()=>apiIdentity("nutrition:read"));checks++;
+    await manage("api-token-revoke",{clientId:personal.client.id});
+    await manage("api-token-revoke",{clientId:exportPersonal.client.id});await assert.rejects(exportIdentity);checks++;
+    await manage("api-token-revoke",{clientId:thirdPersonal.client.id});
+    personalSnapshot=await app.accountSnapshot();assert.equal(personalSnapshot.apiTokens.some(token=>token.active),false);checks++;
+    const privateAudit=await app.fixtureQuery<{afterJson:unknown}>('SELECT "afterJson" FROM data_change_logs WHERE action=$1',["API_TOKEN_CREATE"]);assert.equal(JSON.stringify(privateAudit).includes(personal.apiToken),false);checks++;
     for (let i = 0; i < 5; i++)
       await manage("manual-create", {
         name: `Config ${i}`,

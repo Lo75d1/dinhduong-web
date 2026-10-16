@@ -42,4 +42,6 @@ export const ACCOUNT_ACTION_LABELS: Record<string, string> = {
   CONNECTIONS_REVOKE: "Thu hồi kết nối ứng dụng",
   MANUAL_CLIENT_CREATE: "Tạo cấu hình thủ công",
   MANUAL_CLIENT_REVOKE: "Thu hồi cấu hình thủ công",
+  API_TOKEN_CREATE: "Tạo token API",
+  API_TOKEN_REVOKE: "Thu hồi token API",
 };

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { accountRoleLabel, ACCOUNT_ACTION_LABELS } from "@/lib/account-options";
+import ApiTokenPanel, {type PersonalApiToken} from "./ApiTokenPanel";
 
 type Activity = {
   id: string;
@@ -46,6 +47,7 @@ export type AccountData = {
     disabledAt: string | null;
   }[];
   summary: { rations: number; patients: number };
+  apiTokens?: PersonalApiToken[];
   activity: Activity[];
 };
 const input =
@@ -548,6 +550,7 @@ export default function AccountSettings({
               </button>
             )}
           </section>
+          <ApiTokenPanel tokens={data.apiTokens??[]} csrf={data.csrf} mcpUrl={data.mcpUrl} onChanged={reload}/>
           <section
             id="ket-noi-thu-cong"
             className="scroll-mt-6 rounded-lg border border-[#b7ccc0] bg-white p-5 sm:p-7"
