@@ -1,87 +1,89 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { MenuInput, ResolvedMenu } from "@/lib/nutrition-chat/contracts";
-import NutritionMenuAnalysis, { NutritionMenuInput } from "../../NutritionMenuAnalysis";
-import { readNutritionResponse, sameSiteNutritionDownload, type NutritionDownload } from "../../client-api";
-import ReuseSavedMenu from "./ReuseSavedMenu";
+import type { CustomFoodInput, MenuInput, ResolvedMenu } from "@/lib/nutrition-chat/contracts";
+import { savedCalculatorUrl, libraryCalculatorUrl } from "@/lib/nutrition-chat/calculator-links";
+import { libraryMenuInput } from "@/lib/nutrition-chat/library-menu-input";
+import { readNutritionResponse } from "../../client-api";
+import ReuseSavedMenu, { type Prepared, type SavedTarget } from "./ReuseSavedMenu";
 import SavedLibraryLinks from "@/app/tai-khoan/SavedLibraryLinks";
+import CalculatorNavigation, { useCalculatorHeader } from "@/app/tinh-khau-phan/CalculatorNavigation";
+import { LinkedCalculatorResults } from "../../ban-tam/WebMenuView";
 
-type Saved = { ration: { id: string; title: string; revision: number }; input: MenuInput; preview: ResolvedMenu; confirmationToken: string; sourceChanged?: boolean };
+type Saved = Prepared & { ration: SavedTarget; sourceChanged?: boolean };
+type Initial = { input: MenuInput; names: Record<string, string> };
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]";
 
-export default function SavedMenuView({ rationId }: { rationId: string }) {
-  const router = useRouter();
-  const [result, setResult] = useState<Saved | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refresh, setRefresh] = useState(0);
-  const [error, setError] = useState("");
-  const [confirmed, setConfirmed] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [download, setDownload] = useState<NutritionDownload | null>(null);
-  const [deleting, setDeleting] = useState(false);
-  const deleteDialog = useRef<HTMLDialogElement>(null);
+export function AccountMenuWorkspace({ result, initial, onSaved, onDelete, onRefresh }: { result?: Saved; initial?: Initial; onSaved?: (ration: SavedTarget, prepared: Prepared) => void; onDelete?: () => void; onRefresh?: () => void }) {
+  const headerSlot = useCalculatorHeader();
+  const [view, setView] = useState<"entry" | "analysis">(result ? "analysis" : "entry");
+  const [preview, setPreview] = useState<ResolvedMenu | null>(result?.preview ?? null);
+  const [dirty, setDirty] = useState(false), [draftResult, setDraftResult] = useState(false);
+  const days = preview?.days ?? initial?.input.days ?? [];
+  const navigation = <CalculatorNavigation pageMode={days.length > 1 ? "multi" : "single"} activeView={view} foodCount={days.reduce((sum, day) => sum + day.rows.length, 0)} onViewChange={setView}/>;
+  return <>
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#9bb6ab] bg-[#f4f8f5] px-4 py-3 text-sm">
+      <div className="min-w-0 flex-1"><p className="font-semibold">{result ? result.ration.title : "Thực đơn mới của bạn"}</p><p className="mt-1 text-neutral-600">{result ? `Đã lưu trong tài khoản · phiên bản ${result.ration.revision}` : "Chọn món và thực phẩm, kiểm tra rồi lưu vào tài khoản."}</p></div>
+      <Link href="/tai-khoan/thuc-don" className={`font-semibold underline underline-offset-4 ${focus}`}>Thực đơn của tôi</Link>
+      {onRefresh ? <button type="button" onClick={() => { if (!dirty || window.confirm("Đọc lại bản đã lưu sẽ bỏ các chỉnh sửa chưa lưu. Tiếp tục?")) onRefresh(); }} className={`underline underline-offset-4 ${focus}`}>Đọc lại bản lưu</button> : null}
+      {onDelete ? <button type="button" onClick={onDelete} className={`text-red-800 underline underline-offset-4 ${focus}`}>Xóa thực đơn</button> : null}
+    </div>
+    {headerSlot ? createPortal(navigation, headerSlot) : navigation}
+    {result?.sourceChanged ? <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Nguồn đã đổi từ lần lưu trước. Báo cáo được tính lại theo dữ liệu hiện tại; kiểm tra và xác nhận trước khi lưu thay đổi.</p> : null}
+    {dirty ? <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Đã sửa đầu vào. Bấm Xem trước và tính lại để cập nhật kết quả trước khi lưu.</p> : null}
+    {!dirty && preview?.warnings.length ? <details className="rounded border border-[#d4dfd8] bg-white p-3 text-sm"><summary className="cursor-pointer font-semibold">Lưu ý về nguồn và số liệu ({preview.warnings.length})</summary><ul className="mt-3 list-disc space-y-1 pl-5 text-neutral-700">{[...new Set(preview.warnings)].map(warning=><li key={warning}>{warning}</li>)}</ul></details> : null}
+    <section className={view === "entry" ? "clinical-panel flex min-w-0 flex-col lg:h-[calc(100vh-10rem)]" : "clinical-panel min-w-0"}>
+      <ReuseSavedMenu menu={result?.preview} initialInput={initial?.input} initialNames={initial?.names} initialPrepared={result} savedTarget={result?.ration} layout="calculator" view={view} onDraftChange={() => setDirty(true)} onPrepared={value => { setPreview(value); setDirty(false); setDraftResult(true); setView("analysis"); }} onSaved={(ration, prepared) => { setDraftResult(false); onSaved?.(ration, prepared); }}/>
+    </section>
+    {view === "analysis" && !dirty && preview ? <LinkedCalculatorResults menu={preview} draft={draftResult}/> : null}
+    {view === "analysis" && !preview ? <p className="clinical-panel text-sm text-neutral-700">Chưa có kết quả. Nhập món và thực phẩm rồi bấm Xem trước và tính lại.</p> : null}
+    {result && !dirty && !draftResult ? <SavedLibraryLinks menu={preview ?? result.preview} rationId={result.ration.id}/> : null}
+  </>;
+}
 
+export default function SavedMenuView({ rationId, library, createNew }: { rationId?: string; library?: { kind: "food" | "dish"; id: string }; createNew?: boolean }) {
+  const router = useRouter(), deleteDialog = useRef<HTMLDialogElement>(null);
+  const [result, setResult] = useState<Saved | undefined>(), [initial, setInitial] = useState<Initial | undefined>();
+  const [loading, setLoading] = useState(true), [refresh, setRefresh] = useState(0), [error, setError] = useState(""), [deleting, setDeleting] = useState(false);
+  const kind = library?.kind, itemId = library?.id;
+  const next = rationId ? savedCalculatorUrl(rationId) : libraryCalculatorUrl(kind, itemId);
   useEffect(() => {
     const controller = new AbortController();
-    void fetch(`/api/nutrition/v1/saved?id=${encodeURIComponent(rationId)}`, { cache: "no-store", signal: controller.signal })
-      .then(response => readNutritionResponse<Saved>(response))
-      .then(value => {
-        if (typeof value.ration?.id !== "string" || !Array.isArray(value.preview?.days) || typeof value.confirmationToken !== "string") throw new Error("Chưa đọc được bản lưu hợp lệ.");
+    async function load() {
+      if (rationId) {
+        const value = await readNutritionResponse<Saved>(await fetch(`/api/nutrition/v1/saved?id=${encodeURIComponent(rationId)}`, { cache: "no-store", signal: controller.signal }));
+        if (value.ration?.id !== rationId || !Array.isArray(value.preview?.days) || typeof value.confirmationToken !== "string") throw new Error("Chưa đọc được bản lưu hợp lệ.");
         if (!controller.signal.aborted) setResult(value);
-      })
-      .catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Chưa mở được bản lưu."); })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+      } else if (kind && itemId) {
+        const item = await readNutritionResponse<{ content: CustomFoodInput | MenuInput; preview?: ResolvedMenu }>(await fetch(`/api/personal-library/${kind}?id=${encodeURIComponent(itemId)}`, { cache: "no-store", signal: controller.signal }));
+        if (!controller.signal.aborted) setInitial(libraryMenuInput(kind, item));
+      } else if (createNew) {
+        const account = await readNutritionResponse<{ user: unknown }>(await fetch("/api/auth/me", { cache: "no-store", signal: controller.signal }));
+        if (!account.user) throw new Error("Đăng nhập để lưu và dùng lại thực đơn của bạn.");
+        if (!controller.signal.aborted) setInitial(libraryMenuInput());
+      }
+    }
+    void load().catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Chưa mở được thực đơn."); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [rationId, refresh]);
-
-  function readAgain() {
-    setResult(null); setError(""); setConfirmed(false); setDownload(null); setLoading(true); setRefresh(value => value + 1);
-  }
-  async function exportFile() {
-    if (!result || !confirmed || result.preview.missingInputs.length || exporting || deleting) return;
-    setExporting(true); setError("");
-    try {
-      const value = await readNutritionResponse<NutritionDownload>(await fetch("/api/nutrition/v1/export", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: result.preview.input, confirmationToken: result.confirmationToken }),
-      }));
-      setDownload(sameSiteNutritionDownload(value));
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa xuất được Excel."); }
-    finally { setExporting(false); }
-  }
+  }, [rationId, kind, itemId, createNew, refresh]);
+  function readAgain() { setResult(undefined); setInitial(undefined); setError(""); setLoading(true); setRefresh(value => value + 1); }
   async function deleteMenu() {
-    if (!result || deleting || exporting) return;
+    if (!result || deleting) return;
     setDeleting(true); setError("");
     try {
-      const value = await readNutritionResponse<{ deleted: boolean }>(await fetch("/api/nutrition/v1/saved", {
-        method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: result.ration.id, expectedRevision: result.ration.revision }),
-      }));
-      if (value.deleted !== true) throw new Error("Chưa xác nhận được việc xóa. Đọc lại bản để kiểm tra.");
-      deleteDialog.current?.close(); router.push("/ket-noi-ai/ban-luu");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa xóa được bản."); deleteDialog.current?.close(); }
+      const value = await readNutritionResponse<{ deleted: boolean }>(await fetch("/api/nutrition/v1/saved", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: result.ration.id, expectedRevision: result.ration.revision }) }));
+      if (value.deleted !== true) throw new Error("Chưa xác nhận được việc xóa; đọc lại bản lưu để kiểm tra.");
+      deleteDialog.current?.close(); router.push("/tai-khoan/thuc-don");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa xóa được thực đơn."); deleteDialog.current?.close(); }
     finally { setDeleting(false); }
   }
-
-  return <div className="mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-7">
-    {loading ? <p role="status" className="text-neutral-700">Đang mở bản lưu của tài khoản…</p> : null}
-    {error ? <div role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-800"><p>{error}</p><Link href={`/dang-nhap?next=${encodeURIComponent(`/ket-noi-ai/ban-luu/${encodeURIComponent(rationId)}`)}`} className={`mt-2 inline-block underline ${focus}`}>Đăng nhập tài khoản</Link></div> : null}
-    {result ? <>
-      <h2 className="text-2xl font-semibold">{result.ration.title}</h2><p className="mt-1 text-sm text-neutral-700">Phiên bản {result.ration.revision}. Bản này thuộc tài khoản đang đăng nhập.</p>
-      {result.sourceChanged ? <p role="status" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Dữ liệu nguồn đã đổi so với lần lưu. Phân tích dưới đây đã tính lại theo nguồn hiện tại; hãy xem lại trước khi xuất.</p> : null}
-      <section className="mt-5"><h3 className="text-xl font-semibold">Khẩu phần đã lưu</h3><NutritionMenuInput menu={result.preview} /></section>
-      {result.preview.missingInputs.length ? <div role="alert" className="mt-4 border border-amber-400 p-3 text-amber-900"><ul className="list-disc pl-5 text-sm">{[...new Set(result.preview.missingInputs.map(item => item.message))].map(message => <li key={message}>{message}</li>)}</ul></div> : null}
-      {result.preview.warnings.length ? <details className="mt-4 border border-neutral-300 p-3"><summary className={`cursor-pointer font-semibold ${focus}`}>Lưu ý và dữ liệu cần xác minh ({result.preview.warnings.length})</summary><ul className="mt-2 list-disc space-y-1 pl-5 text-sm">{[...new Set(result.preview.warnings)].map(warning => <li key={warning}>{warning}</li>)}</ul></details> : null}
-      <NutritionMenuAnalysis menu={result.preview} />
-      <SavedLibraryLinks menu={result.preview} rationId={result.ration.id} />
-      <details className="mt-5 rounded-lg border border-[#b1c8bd] p-4"><summary className={`cursor-pointer font-semibold ${focus}`}>Điều chỉnh và dùng lại trên web</summary><ReuseSavedMenu key={result.preview.digest} menu={result.preview} /></details>
-      <label className="mt-6 flex items-start gap-3"><input type="checkbox" checked={confirmed} disabled={exporting} onChange={event => setConfirmed(event.target.checked)} className={`mt-1 h-5 w-5 shrink-0 accent-[#123c36] ${focus}`} /><span>Tôi đã xem đầu vào và nguồn của bản này, đồng ý xuất Excel để tiếp tục làm việc.</span></label>
-      {result.preview.missingInputs.length ? <p className="mt-3 text-sm text-amber-900">Cần làm rõ đầu vào còn thiếu trong hội thoại trước khi xuất bản mới.</p> : null}
-      <div className="mt-4 flex flex-wrap gap-4"><button type="button" disabled={!confirmed || !!result.preview.missingInputs.length || exporting || deleting} onClick={() => void exportFile()} className={`rounded-lg bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0f5c51] disabled:cursor-not-allowed disabled:opacity-50 ${focus}`}>{exporting ? "Đang xuất…" : "Xuất Excel chỉnh được"}</button><button type="button" disabled={exporting || deleting} onClick={() => deleteDialog.current?.showModal()} className={`px-2 py-2 text-sm text-red-800 underline underline-offset-4 disabled:opacity-50 ${focus}`}>Xóa bản này</button></div>
-      {download ? <div role="status" className="mt-4 rounded-lg bg-[#eaf3ee] p-3"><a href={download.downloadUrl} download={download.filename} className={`font-semibold underline ${focus}`}>Tải {download.filename}</a><p className="mt-1 text-sm text-neutral-700">Link hết hạn: {new Date(download.expiresAt).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}.</p></div> : null}
-    </> : null}
-    {!loading ? <button type="button" disabled={exporting || deleting} onClick={readAgain} className={`mt-5 text-sm underline underline-offset-4 disabled:opacity-50 ${focus}`}>Đọc lại bản và làm mới quyền xuất</button> : null}
-    <dialog ref={deleteDialog} aria-labelledby="delete-menu-title" aria-describedby="delete-menu-description" onCancel={event => { if (deleting) event.preventDefault(); }} className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-xl border border-[#b1c8bd] bg-white p-6 text-[#123c36] backdrop:bg-black/30"><h2 id="delete-menu-title" className="text-xl font-semibold">Xóa bản khẩu phần này?</h2><p id="delete-menu-description" className="mt-3 text-neutral-700">Bản “{result?.ration.title}” sẽ bị xóa khỏi tài khoản và không thể mở lại trên hệ thống. File Excel đã tải trên máy được giữ riêng.</p><div className="mt-5 flex flex-wrap gap-3"><button type="button" disabled={deleting} onClick={() => deleteDialog.current?.close()} className={`rounded-lg border border-[#123c36] px-4 py-2 font-semibold disabled:opacity-50 ${focus}`}>Giữ bản này</button><button type="button" disabled={deleting} onClick={() => void deleteMenu()} className={`rounded-lg bg-red-800 px-4 py-2 font-semibold text-white disabled:opacity-50 ${focus}`}>{deleting ? "Đang xóa…" : "Xác nhận xóa"}</button></div></dialog>
-  </div>;
+  return <>
+    {loading ? <p role="status" className="clinical-panel text-neutral-700">Đang mở thực đơn của tài khoản…</p> : null}
+    {error ? <div role="alert" className="rounded border border-red-300 bg-red-50 p-4 text-red-800"><p>{error}</p><Link href={`/dang-nhap?next=${encodeURIComponent(next)}`} className={`mt-2 inline-block underline ${focus}`}>Đăng nhập tài khoản</Link><button type="button" onClick={readAgain} className={`ml-4 underline ${focus}`}>Thử mở lại</button></div> : null}
+    {result || initial ? <AccountMenuWorkspace key={`${rationId ?? `${kind ?? "new"}:${itemId ?? ""}`}:${refresh}`} result={result} initial={initial} onRefresh={result ? readAgain : undefined} onDelete={result ? () => deleteDialog.current?.showModal() : undefined} onSaved={(ration, prepared) => setResult({ ...prepared, ration })}/> : null}
+    <dialog ref={deleteDialog} aria-labelledby="delete-menu-title" className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-lg border border-[#9bb6ab] bg-white p-6 text-[#123c36] backdrop:bg-black/30" onCancel={event => { if (deleting) event.preventDefault(); }}><h2 id="delete-menu-title" className="text-xl font-semibold">Xóa thực đơn này?</h2><p className="mt-3">Bản “{result?.ration.title}” sẽ bị xóa khỏi tài khoản và không thể mở lại.</p><div className="mt-5 flex flex-wrap gap-3"><button type="button" disabled={deleting} onClick={() => deleteDialog.current?.close()} className="rounded border border-[#123c36] px-4 py-2">Giữ bản này</button><button type="button" disabled={deleting} onClick={() => void deleteMenu()} className="rounded bg-red-800 px-4 py-2 font-semibold text-white disabled:opacity-50">{deleting ? "Đang xóa…" : "Xác nhận xóa"}</button></div></dialog>
+  </>;
 }

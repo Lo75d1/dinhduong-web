@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import SavedMenuView from "./SavedMenuView";
+import { notFound, redirect } from "next/navigation";
+import { savedCalculatorUrl } from "@/lib/nutrition-chat/calculator-links";
 
-export const metadata: Metadata = { title: "Bản khẩu phần đã lưu | Dinh dưỡng 2598", robots: { index: false, follow: false } };
-
+export const metadata: Metadata = { title: "Thực đơn đã lưu | Dinh dưỡng 2598", robots: { index: false, follow: false }, referrer:"no-referrer" };
 export default async function SavedMenuPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <div className="mx-auto max-w-5xl text-[#123c36]"><Link href="/ket-noi-ai/ban-luu" className="text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]">Danh sách bản đã lưu</Link><h1 className="mt-4 text-3xl font-semibold">Bản khẩu phần đã lưu</h1><p className="mt-2 text-neutral-700">Xem đầu vào, nguồn và kết quả; điều chỉnh ngày, lượng hoặc số suất trên web để dùng lại, hoặc tải Excel.</p><SavedMenuView rationId={id} /></div>;
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(id)) notFound();
+  redirect(savedCalculatorUrl(id));
 }
