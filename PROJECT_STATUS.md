@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Đủ trường dinh dưỡng trên trang Tính khẩu phần — 17/10/2026
+
+- App **e3177c7** healthy trên VPS (sau ff4741d): prepare nạp registry160, tổng/bảng nguồn giữ đủ160 dù chat yêu cầu ít trường; phân tích normalized có156 chất ngoài kcal/P/L/G. Bảng chi tiết manual/linked mặc định đủ160, nút toàn bộ/rút gọn5/chọn từng chất dùng chung; bỏ tầng gập vi chất phụ. Không bịa mốc hoặc số: thiếu—/≥,0 giữ0; vá reducer manual từng hiện≥0 khi hoàn toàn thiếu nguồn.
+- Tái dùng registry/repository/engine/MultiDayAnalysis/RationDetail/MCP compactor, không model/migration/kho hoặc đổi16tool/gói1.0.11. Full suite đạt; HTTP393/native708, TypeScript/lint/diff/ration-report đạt. HTTPS590 đối chiếu160nguồn/tổng, guard và XLSX đạt. Browser thật đã thử156dòng/160cột, rút gọn/chọn B12 và viewport390×844 không tràn trang; ảnh mobile có trong evidence. Test manual nhiều ngày cũ vẫn fail600!==null ở dòng29, engine/test không đổi; chưa nghiệm thu hội thoại AI thật.
+- Canonical5bảng/25migration/cấu hình giữ nguyên; timer active/enabled, app không OOM, swap0. Phiên kỹ thuật đạt đã dọn, bản browser xóa sau QA; một bản kỹ thuật lượt quota trước chờ TTL30phút. PR#4 draft/chưa merge. Chi tiết `docs/nutrition-chat/full-nutrients-web-2026-10-17.md`.
+
 ## Bản tính nháp dùng giao diện Tính khẩu phần hiện có — 16/10/2026
 
 - App **4339c73** healthy trên VPS. Link chat mở ngay bước Kết quả, bản nháp có nhãn chưa chốt; dùng chính bảng/thẻ của MultiDayAnalysis và RationDetail nguồn server. Phần nhập chia sẻ cây bữa/món, khung món và thanh bước với trang tính thường; mobile một pane cây hoặc nguyên liệu, không còn danh sách thẻ dài nằm trên bảng nhập. Không chỉ bọc form riêng bằng URL/tiêu đề Calculator.
