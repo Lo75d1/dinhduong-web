@@ -15,3 +15,9 @@
 - Công cụ browser trả inventory rỗng nên chưa kiểm tương tác/ảnh desktop-mobile trực tiếp; không coi HTTPS và đọc bundle là kiểm trình duyệt.
 - Canonical count/digest trước/sau khớp (Food3719/Dish7369/nguyên liệu41457), migration25 giữ nguyên. SHA env/layout/Caddy/Google khớp, timer active/enabled, app healthy/OOMKilled=false, không còn swap build. Không tạo fixture tài khoản.
 - Bước đầu wrapper deploy có lỗi cú pháp ở allowlist và dừng trước checkout/build; đã sửa và chạy lại với pin commit cùng tám file được phép. Bản cũ không bị thay trong lần lỗi đó.
+
+## Liên kết sang ứng dụng suất ăn
+
+- Theo yêu cầu tiếp theo của chủ dự án, thêm một thẻ “Suất ăn bệnh viện” ở trang chủ, ngay sau phần chức năng tra cứu/tính khẩu phần; dẫn chính xác tới `https://suatanbv.io.vn/` trong tab mới, có nhãn truy cập và `noopener noreferrer`.
+- Tái dùng bố cục, màu và lớp giao diện trang chủ; không thêm package, API hay dữ liệu. Các URL suất ăn nội bộ đã gỡ vẫn trả404; đây là liên kết sang ứng dụng riêng của chủ dự án.
+- Prisma generate, TypeScript và ESLint file sửa đạt; kiểm HTTPS sau khi cập nhật ứng dụng.
