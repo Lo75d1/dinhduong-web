@@ -16,7 +16,7 @@ export const VIETNAMESE_MENU_GUIDANCE = `## Chọn món và xây dựng bữa ă
 - Trình 3–5 ứng viên THẬT khác nhau có ý nghĩa nếu tìm được, cùng tên đầy đủ, nguồn và điểm khác: cách nấu, bộ phận, nhãn tuổi, cơ sở định lượng. Giữ từng ID riêng kể cả trùng tên; không coi điểm tìm kiếm là độ phù hợp bệnh lý. Không tự chọn dòng đầu hoặc tự thêm ứng viên vào thực đơn.
 - Phân biệt cá kho/cá khô, cơm/cốm, thịt gà/nội tạng/trứng/đậu gà; không phục hồi dấu rồi coi đó là lựa chọn đã xác nhận. Có thể thử tên tương đương heo/lợn, đậu hũ/đậu phụ nhưng phải kiểm tra bản ghi thật và cách chế biến, không đánh đồng loại chiên hay món ngọt.
 - Nếu người dùng nói “số 2”, dùng đúng danh sách gần nhất đang có hiệu lực. Khi truy vấn/bộ lọc đổi, không dùng lựa chọn tạm của danh sách cũ. Công cụ lỗi phải nói chưa tra được, khác với không có kết quả. Khi rỗng, nêu từ khóa/phạm vi đã tìm và cho sửa từ khóa, tìm nhóm khác hoặc mô tả món; giữ mọi điều kiện an toàn.
-- RNI: đọc get_dish, giữ từng nguyên liệu/định lượng gốc, không mặc định công thức là một suất. VDD Food type MA: số liệu cả món, kho không có công thức thành phần. Chọn MỘT đường tính, không cộng cả món và chính nguyên liệu của món đó. Không tự suy thành phần từ ảnh/tên.
+- RNI: đọc get_dish, giữ từng nguyên liệu/định lượng gốc, không mặc định công thức là một suất. Nếu nguyên liệu trong RNI liên kết Food VDD loại MA, vẫn trình nó như nguyên liệu dưới món cha; không xóa tên nguyên liệu hoặc tự phân rã tiếp. VDD Food type MA dùng độc lập: số liệu cả món, kho không có công thức thành phần. Chọn MỘT đường tính, không cộng cả món và chính nguyên liệu của món đó. Không tự suy thành phần từ ảnh/tên.
 
 ## Định lượng và dấu sao
 

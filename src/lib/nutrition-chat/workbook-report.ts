@@ -200,7 +200,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   plan.properties.defaultRowHeight = 28;
   context(plan, 3, menu.title);
   context(plan, 4, "Định lượng = lượng nhập × số suất. Chỉnh tại Nhap khau phan; dinh dưỡng tự cập nhật từ dữ liệu.");
-  const planNotice = `Món VDD loại MA: số liệu cả món, không có danh sách nguyên liệu. ${AI_NUMBER_LEGEND}`;
+  const planNotice = `Món VDD loại MA dùng độc lập: số liệu cả món, không có danh sách nguyên liệu. ${AI_NUMBER_LEGEND}`;
   context(plan, 5, planNotice);
   calc(plan.getCell("A5"), `IF(${structureNotice},"Đã thay đổi số dòng/ngày; cần xuất lại để bảng thực đơn bao phủ đủ đầu vào mới.","${planNotice}")`, planNotice);
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
