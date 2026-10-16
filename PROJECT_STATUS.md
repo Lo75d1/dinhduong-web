@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## QR/hướng dẫn dành cho bác sĩ và dùng lâu dài — 16/10/2026
+
+- App7d3ecf1 healthy: trang chủ có QR/ba bước/nút bắt đầu, trang QR có lời nhắn ngắn và hướng dẫn bật kết nối lần đầu. Chat được chỉ tự mở phiên tạm, không bắt bác sĩ lấy token; manual token nằm trong phần mở rộng. QR/link không tự cài plugin vào chat chưa có công cụ.
+- Mục dùng lâu dài hướng dẫn Đăng ký mới/Đăng nhập → quay lại chat kết nối tài khoản → yêu cầu lưu → duyệt lại → mở Thực đơn của tôi; giữ input, không dùng ticket guest để save tài khoản. Bỏ câu cũ bắt xuất Excel để lưu. Workflow/accountUse/QR/TXT/ZIP/skill1.0.6,16tool; không đổi auth/bộ tính/migration/kho.
+- Prisma/TypeScript/lint/HTTP308/guide86/React20/Linux build, HTTPS86 + smoke19/9client assets đạt; account/session/Ration/OAuth count không đổi, token thử dọn. Canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm browser/AI thật do công cụ không kết nối. Chi tiết `docs/nutrition-chat/doctor-start-2026-10-16.md`; PR#4 vẫn draft/chưa merge.
+
 ## Phiên tạm không tài khoản — 16/10/2026
 
 - Bổ sung start_guest_session và token khách30phút, không tạo tài khoản hoặc lưu thực đơn; chỉ kho chung/tính/Excel, không thư viện/bản lưu riêng. Có tạo/kết thúc trên `/ket-noi-ai#phien-tam`;16tool/gói1.0.5. Mỗi kết quả/lỗi API có guidance hỏi phần thiếu/chờ duyệt/bước tiếp, giữ cả khi MCP rút gọn.
