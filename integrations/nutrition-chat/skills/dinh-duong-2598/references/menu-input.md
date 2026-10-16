@@ -20,6 +20,13 @@ Schema công cụ đang kết nối là nguồn sự thật. Bảng này giải 
 
 Không gửi tên/số ID tự suy đoán cho thực phẩm trong kho. Không nhét giá trị nutrient tự tính vào dòng có `foodId`: server đọc dữ liệu nguồn.
 
+## Hồ sơ cơ thể và phần còn thiếu
+
+- `profile` tùy chọn khi chỉ tính thành phần (`comparison.mode=none`) hoặc đối chiếu mục tiêu có nguồn (`manual`). Không cần có tuổi/giới để cộng dinh dưỡng từ thực phẩm.
+- Nếu gửi `profile`, phải có `age`, `ageUnit` (`tuoi`/`thang`), `gender` (`Nam`/`Nữ`), `activityLevel` và `physiology` đúng schema. Tuổi/cân nặng/chiều cao là chuỗi số, ví dụ `"60"`, không phải số JSON. Không tự gán giới hoặc trạng thái sinh lý mặc định khi chưa biết.
+- Có cân nặng/chiều cao/vận động nhưng chưa biết tuổi/giới: hỏi đúng phần chưa có nếu muốn tính nhu cầu. Lỗi trả `field` và `guidance.stage=needs_input`; giữ dữ kiện đã có, không gửi lại nguyên hồ sơ thiếu.
+- Nếu người dùng chỉ muốn tính thành phần, giải thích chọn `none` và bỏ `profile` chưa đầy đủ; nếu có mục tiêu xác nhận kèm nguồn thì dùng `manual`. Không âm thầm bỏ hồ sơ/đổi chế độ để qua lỗi. Hồ sơ đã biết giữ trong hội thoại để bổ sung sau.
+
 ## Xác nhận, lưu và dùng lại
 
 - `prepare_menu` tạo preview, `review.text` và token. Trình review để duyệt; rút gọn phải chia kỳ xem đủ. Token gắn với đầu vào, dữ liệu, tài khoản và thời hạn; không đưa token cho người dùng sao chép.

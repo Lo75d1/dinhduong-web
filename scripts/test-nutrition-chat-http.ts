@@ -338,6 +338,25 @@ async function main() {
       assert.equal((await get("saved",guest.accessToken)).status,403);checks++;
       const badToken=guest.accessToken.slice(0,-1)+(guest.accessToken.endsWith("A")?"B":"A");assert.equal((await rest("search_foods",{q:"rice"},badToken)).status,401);checks++;
       const badHeader=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"search_foods",arguments:{q:"rice",sessionToken:guest.accessToken}},"bad-oauth",true));assert.equal(badHeader.status,401);checks++;
+      for(const header of ["",guest.accessToken,readToken]){
+        const lookup=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"search_diet_codes",arguments:{q:"TEST",sessionToken:guest.accessToken}},header,true));
+        assert.equal(lookup.status,200);checks++;const data=(await lookup.json()).result;assert.notEqual(data.isError,true);checks++;assert.equal(data.structuredContent.items[0].code,"TEST-01");checks++;
+        assert.equal(data.structuredContent.guidance.session?.kind,header===readToken?undefined:"guest");checks++;
+        assert.ok(!JSON.stringify(data).includes(guest.accessToken));checks++;
+      }
+      const oauthWithStaleGuest=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"get_diet_code",arguments:{id:"fixture-diet",sessionToken:`ng_${"Z".repeat(43)}`}},readToken,true));assert.equal(oauthWithStaleGuest.status,200);checks++;assert.notEqual((await oauthWithStaleGuest.json()).result.isError,true);checks++;
+      const noDowngrade=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"prepare_menu",arguments:{input:menu,sessionToken:guest.accessToken}},readToken,true));assert.equal(noDowngrade.status,403);checks++;
+      const privateArgument=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"list_saved_menus",arguments:{sessionToken:guest.accessToken}},token,true));assert.equal(JSON.parse((await privateArgument.json()).result.content[0].text).field,"sessionToken");checks++;
+      const fullProfile={age:"45",ageUnit:"tuoi",gender:"Nữ",weight:"60",height:"170",activityLevel:"light",physiology:"normal"};
+      const missingAge={weight:"60",height:"170",activityLevel:"light"};
+      const invalidProfileRest=await rest("prepare",{input:{...menu,profile:missingAge}},guest.accessToken);assert.equal(invalidProfileRest.status,422);checks++;
+      const invalidProfileBody=await invalidProfileRest.json();assert.equal(invalidProfileBody.field,"profile.age");checks++;assert.equal(invalidProfileBody.guidance.stage,"needs_input");checks++;
+      assert.ok(invalidProfileBody.guidance.instruction.includes("không đoán tuổi"));checks++;
+      const missingGender={...fullProfile,gender:undefined};
+      for(const [profile,field] of [[missingAge,"profile.age"],[missingGender,"profile.gender"]] as const){
+        const invalidProfileMcp=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"prepare_menu",arguments:{input:{...menu,profile},sessionToken:guest.accessToken}},"",true));assert.equal(invalidProfileMcp.status,200);checks++;const body=(await invalidProfileMcp.json()).result;assert.equal(body.isError,true);checks++;const error=JSON.parse(body.content[0].text);assert.equal(error.status,422);checks++;assert.equal(error.field,field);checks++;assert.equal(error.guidance.stage,"needs_input");checks++;
+      }
+      const validProfileMcp=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"prepare_menu",arguments:{input:{...menu,profile:fullProfile},sessionToken:guest.accessToken}},token,true));assert.equal(validProfileMcp.status,200);checks++;const validBody=(await validProfileMcp.json()).result;assert.notEqual(validBody.isError,true);checks++;assert.equal(validBody.structuredContent.input.profile.age,"45");checks++;assert.equal(validBody.structuredContent.guidance.session,undefined);checks++;webKeys.add(new URL(validBody.structuredContent.webUrl).hash.slice(1));
       const badArgument=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"search_foods",arguments:{q:"rice",sessionToken:token}},"",true));assert.equal(badArgument.status,400);checks++;
       const empty=await rest("search_dishes",{q:"no-such-dish"},guest.accessToken);assert.equal((await empty.json()).guidance.stage,"no_matches");checks++;
       const privateMcp=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"list_saved_menus",arguments:{sessionToken:guest.accessToken}},"",true));assert.equal(privateMcp.status,403);checks++;assert.equal(JSON.parse((await privateMcp.json()).result.content[0].text).guidance.stage,"blocked");checks++;

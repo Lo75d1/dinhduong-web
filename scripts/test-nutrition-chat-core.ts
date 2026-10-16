@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { parseMenuInput, NutritionInputError } from "../src/lib/nutrition-chat/validation";
+import { parseMenuInput, NutritionInputError, MENU_INPUT_SCHEMA } from "../src/lib/nutrition-chat/validation";
+import { nutritionErrorGuidance } from "../src/lib/nutrition-chat/response-guidance";
 import { resolveMenu, assertMenuComplete, nutritionDigest } from "../src/lib/nutrition-chat/core";
 import { createNutritionTicket, verifyNutritionTicket } from "../src/lib/nutrition-chat/approval";
 import { parseNutritionRpc, nutritionRpcResult, NutritionProtocolError } from "../src/lib/nutrition-chat/protocol";
@@ -11,6 +12,14 @@ const base={title:"Fixture",mode:"menu",days:[{id:"d1",label:"Ngày 1",date:"202
 let checks=0;
 function equal(actual:unknown,expected:unknown){assert.deepEqual(actual,expected);checks++;}
 function bad(value:unknown){assert.throws(()=>parseMenuInput(value),NutritionInputError);checks++;}
+const completeProfile={age:"45",ageUnit:"tuoi",gender:"Nữ",weight:"60",height:"170",activityLevel:"light",physiology:"normal"};
+equal(MENU_INPUT_SCHEMA.properties.profile.required,["age","ageUnit","gender","activityLevel","physiology"]);
+for(const field of MENU_INPUT_SCHEMA.properties.profile.required){const missing:Record<string,unknown>={...completeProfile};delete missing[field];assert.throws(()=>parseMenuInput({...base,profile:missing}),(error:unknown)=>error instanceof NutritionInputError && error.status===422 && error.field===`profile.${field}` && error.message.includes("không tự điền"));checks++;equal(nutritionErrorGuidance(422,`profile.${field}`).stage,"needs_input");}
+for(const invalidProfile of [{...completeProfile,age:45},{...completeProfile,gender:"unknown"},{...completeProfile,age:"NaN"},{...completeProfile,weight:"-1"}])bad({...base,profile:invalidProfile});
+equal(parseMenuInput({...base,profile:completeProfile}).profile?.age,"45");
+equal(parseMenuInput(base).profile,undefined);
+equal(parseMenuInput({...base,comparison:{mode:"manual",targets:[{key:"energyKcal",value:1800,source:"Fixture target"}]}}).profile,undefined);
+assert.throws(()=>parseMenuInput({...base,comparison:{mode:"profile"}}),(error:unknown)=>error instanceof NutritionInputError && error.field==="profile" && error.status===422);checks++;
 const parsed=parseMenuInput(base),menu=resolveMenu(parsed,foods);
 equal(menu.totals.energyKcal.value,100);equal(menu.days[0].rows[0].rawGrams,125);equal(menu.targets,[]);equal(menu.analysis.periodEnergyStatus,"unknown");assertMenuComplete(menu);checks++;
 equal(nutritionDigest({a:1,b:2}),nutritionDigest({b:2,a:1}));

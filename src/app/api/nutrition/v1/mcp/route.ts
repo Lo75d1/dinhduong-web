@@ -37,7 +37,9 @@ export async function POST(request:Request) {
     const authRequest=!hasAuthorization && typeof sessionToken==="string"?new Request(request.url,{headers:{...Object.fromEntries(request.headers),authorization:`Bearer ${sessionToken}`}}):request;
     const identity=hasAuthorization || !publicRequest?await getNutritionIdentity(authRequest,rpc.method==="tools/call"?nutritionToolScope(name)??"nutrition:read":"nutrition:read"):undefined;
     let toolArgs=rawArgs??{};
-    if(!hasAuthorization && sessionToken!==undefined && toolArgs && typeof toolArgs==="object" && !Array.isArray(toolArgs)){const rest={...toolArgs as Record<string,unknown>};delete rest.sessionToken;toolArgs=rest;}
+    // sessionToken is transport metadata on guest-capable tools. Consume it even
+    // when the client also attaches a header; the validated header identity wins.
+    if(GUEST_TOOL_NAMES.includes(name) && sessionToken!==undefined && toolArgs && typeof toolArgs==="object" && !Array.isArray(toolArgs)){const rest={...toolArgs as Record<string,unknown>};delete rest.sessionToken;toolArgs=rest;}
     if(rpc.id===undefined) {
       if(!rpc.modern && rpc.method==="notifications/initialized")return new Response(null,{status:202,headers:{"Cache-Control":"no-store"}});
       throw new NutritionProtocolError(-32601,"Notification not supported",404);

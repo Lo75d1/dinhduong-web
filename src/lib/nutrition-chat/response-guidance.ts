@@ -27,6 +27,9 @@ export function nutritionResponseGuidance(name: string, result: unknown, identit
   return guidance;
 }
 export function nutritionErrorGuidance(status: number, field?: string) {
+  if ((status === 400 || status === 422) && (field === "profile" || field?.startsWith("profile."))) return {
+    stage: "needs_input", field, instruction: "Hỏi đúng phần hồ sơ còn thiếu hoặc sai trong field/message, không hỏi lại cân nặng/chiều cao/vận động đã có và không đoán tuổi, giới hay tình trạng sinh lý. Muốn tính nhu cầu: bổ sung hồ sơ theo menuSchema rồi prepare_menu lại. Nếu người dùng chỉ cần thành phần hoặc đã có mục tiêu có nguồn: giải thích lựa chọn comparison.mode=none hoặc manual và bỏ profile chưa đầy đủ; giữ dữ kiện đã có trong hội thoại, không âm thầm đổi chế độ.", nextTools: ["prepare_menu"], requiresUserConfirmation: false,
+  };
   const actions: Record<number, string> = {
     400: "Sửa đúng field/message theo schema rồi thử lại một lần; không gửi lại nguyên yêu cầu lỗi.",
     401: "Token/phiên không hợp lệ hoặc hết hạn. Phiên không tài khoản: start_guest_session rồi prepare lại đầu vào đã giữ. Dữ liệu riêng: kết nối OAuth. Không hỏi mật khẩu/token cá nhân trong chat.",

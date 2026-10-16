@@ -18,7 +18,13 @@ export const MENU_INPUT_SCHEMA = {
     fields: { type: "array", uniqueItems: true, maxItems: NUTRITION_LIMITS.fields, items: { type: "string", enum: [...NUTRIENT_KEYS] } },
     aiComment: { type: "string", maxLength: 8000 },
     clinicalContext: { type: "object", additionalProperties: false, properties: { conditions: { type: "array", maxItems: 10, uniqueItems: true, items: { type: "string", minLength: 1, maxLength: 200 } }, notes: { type: "string", maxLength: 1500 }, targetGroup: { type: "string", enum: ["NguoiLon", "TreEm"] }, dietCodeId: { type: "string", minLength: 1, maxLength: 100, pattern: "^[A-Za-z0-9_-]+$" }, selection: { type: "string", enum: ["proposed", "user_confirmed", "prescribed"] } } },
-    profile: { type: "object", additionalProperties: false, properties: Object.fromEntries(["age", "ageUnit", "gender", "height", "weight", "activityLevel", "physiology", "pregnancyWeek", "prePregnancyWeight", "pregnancyNote"].map(k => [k, { type: "string", maxLength: k === "pregnancyNote" ? 1000 : 100 }])) },
+    profile: { type: "object", additionalProperties: false, description: "Tùy chọn khi chỉ tính thành phần hoặc dùng mục tiêu manual. Chỉ gửi khi biết đủ các trường bắt buộc; không tự đoán tuổi, giới hay tình trạng sinh lý. Nếu cần tính nhu cầu, hỏi phần còn thiếu trước khi gửi.", required: ["age", "ageUnit", "gender", "activityLevel", "physiology"], properties: {
+      age: { type: "string", maxLength: 20, pattern: "^\\d+(?:\\.\\d+)?$", description: "Tuổi người dùng cung cấp, chuỗi số; đọc cùng ageUnit." },
+      ageUnit: { type: "string", enum: ["tuoi", "thang"] }, gender: { type: "string", enum: ["Nam", "Nữ"] },
+      height: { type: "string", maxLength: 20, description: "Chiều cao cm; chưa biết dùng chuỗi rỗng hoặc bỏ trường." }, weight: { type: "string", maxLength: 20, description: "Cân nặng kg; chưa biết dùng chuỗi rỗng hoặc bỏ trường." },
+      activityLevel: { type: "string", enum: ["sedentary", "light", "moderate", "heavy", "very_heavy"] }, physiology: { type: "string", enum: ["normal", "pregnant_1", "pregnant_2", "pregnant_3", "lactating_1", "lactating_2"] },
+      pregnancyWeek: { type: "string", maxLength: 20 }, prePregnancyWeight: { type: "string", maxLength: 20 }, pregnancyNote: { type: "string", maxLength: 1000 },
+    } },
     comparison: { type: "object", additionalProperties: false, required: ["mode"], properties: { mode: { type: "string", enum: ["none", "profile", "manual"] }, targets: { type: "array", maxItems: 40, items: { type: "object", additionalProperties: false, required: ["key", "value", "source"], properties: { key: { type: "string", enum: [...NUTRIENT_KEYS] }, value: numeric, source: { type: "string", minLength: 1, maxLength: 500 }, isUpperLimit: { type: "boolean" } } } } } },
     days: { type: "array", minItems: 1, maxItems: NUTRITION_LIMITS.days, items: { type: "object", additionalProperties: false, required: ["id", "label", "date", "rows"], properties: {
       id: { type: "string", minLength: 1, maxLength: 100 }, label: { type: "string", minLength: 1, maxLength: 100 }, date: { type: "string", maxLength: 10 },
@@ -115,6 +121,9 @@ function row(value: unknown, path: string): MenuRowInput {
 }
 function profile(value: unknown): Profile {
   const d = object(value, ["age", "ageUnit", "gender", "height", "weight", "activityLevel", "physiology", "pregnancyWeek", "prePregnancyWeight", "pregnancyNote"], "profile");
+  for (const [key, label] of [["age", "tuổi"], ["ageUnit", "đơn vị tuổi (tuoi/thang)"], ["gender", "giới tính"], ["activityLevel", "mức vận động"], ["physiology", "tình trạng sinh lý"]] as const) {
+    if (d[key] === undefined || typeof d[key] === "string" && !d[key].trim()) throw new NutritionInputError(`Hồ sơ còn thiếu ${label}. Hỏi người dùng, không tự điền. Chỉ tính thành phần: chọn comparison.mode=none và bỏ profile; mục tiêu có nguồn đã biết: chọn manual và bỏ profile. Giữ các dữ kiện đã biết để bổ sung sau.`, `profile.${key}`, 422);
+  }
   for (const [key, max, required] of [["age",150,true],["height",300,false],["weight",600,false],["pregnancyWeek",45,false],["prePregnancyWeight",600,false]] as const) {
     const raw = d[key];
     if (!required && (raw === undefined || raw === "")) continue;
@@ -167,7 +176,7 @@ export function parseMenuInput(value: unknown): MenuInput {
     } else if (c.selection !== undefined) throw new NutritionInputError("Trạng thái chọn mã cần có dietCodeId.", p);
     parsed.clinicalContext = clinical;
   }
-  if (comparison.mode === "profile" && !parsed.profile) throw new NutritionInputError("Đối chiếu hồ sơ cần hồ sơ, hoặc chọn none để chỉ tính thành phần.", "profile");
+  if (comparison.mode === "profile" && !parsed.profile) throw new NutritionInputError("Tính nhu cầu theo hồ sơ cần tuổi, đơn vị tuổi, giới tính, mức vận động và tình trạng sinh lý đã được cung cấp. Hỏi phần thiếu; hoặc chọn none để chỉ tính thành phần, manual nếu có mục tiêu xác nhận kèm nguồn.", "profile", 422);
   if (d.aiComment !== undefined) parsed.aiComment = text(d.aiComment, 8000, "aiComment", true);
   if (d.fields !== undefined) {
     if (!Array.isArray(d.fields) || !d.fields.length || d.fields.length > NUTRITION_LIMITS.fields) throw new NutritionInputError("Cần chọn từ 1 đến 40 chất.", "fields");

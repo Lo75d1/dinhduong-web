@@ -1,6 +1,6 @@
 # Công cụ, kết quả và cách xử lý
 
-Phiên bản hướng dẫn: 1.0.10. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
+Phiên bản hướng dẫn: 1.0.11. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
 
 Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa kết nối tài khoản và chỉ cần tra/tính/Excel: gọi start_guest_session công khai, dùng accessToken trong arguments.sessionToken của công cụ tiếp theo; phiên 30 phút không tạo tài khoản. Mặc định không lưu. Đọc guidance trong TỪNG phản hồi để biết thiếu gì, phải hỏi/chờ duyệt hay được gọi công cụ nào; không coi số liệu hay confirmationToken là người dùng đã đồng ý. Không gọi lại cùng truy vấn khi không có thay đổi. Người dùng có thể chưa quen kỹ thuật: tự mở phiên cần thiết qua công cụ khi đã được yêu cầu tra/tính/Excel, không bắt họ tự lấy token hoặc học tên API. Muốn lưu/dùng lâu dài thì đọc accountUse để hướng dẫn đăng ký/đăng nhập và kết nối tài khoản; giữ đầu vào, prepare lại bằng tài khoản rồi chờ duyệt trước save, không dùng ticket guest. Ưu tiên trả webUrl thật từ prepare/calculate để mở đầu vào và kết quả trên web, sửa/tính lại không cần tài khoản. Bản tạm lưu đầu vào30phút; không phải bản tài khoản. Không export hoặc save chỉ để có link xem. Món luộc/hấp cần làm rõ nước chấm và lượng thực ăn; tra nguồn thật, không tự thêm vào lịch sử24giờ.
 
@@ -81,7 +81,7 @@ Bản nháp đầu tiên và mọi bản sửa phải hiện ngay trong chat t�
 ## prepare_menu — Chuẩn bị bản để duyệt
 
 - Khi dùng: Đã có đầu vào theo menuSchema; cần kiểm phần thiếu hoặc chuẩn bị chốt.
-- Đầu vào: {input}; mode=menu hoặc recall24h; mỗi ngày có id,label,date,rows, date chưa biết dùng chuỗi rỗng.
+- Đầu vào: {input}; mode=menu hoặc recall24h; mỗi ngày có id,label,date,rows, date chưa biết dùng chuỗi rỗng. profile tùy chọn; nếu gửi phải biết age/ageUnit/gender/activityLevel/physiology, số hồ sơ là chuỗi. Thiếu tuổi/giới: hỏi phần thiếu, không đoán. Chỉ tính thành phần dùng comparison.mode=none và bỏ profile; mục tiêu có nguồn dùng manual, không cần profile.
 - Kết quả: input chuẩn hóa, preview.missingInputs, review.text, review.truncated, confirmationToken và expiresAt. Đây chưa phải người dùng đồng ý. Có webUrl/webExpiresAt để mở bản nháp và sửa trên web, không cần đăng nhập; đầu vào được giữ tạm30phút, chưa phải bản đã chốt.
 - Tiếp theo: Trình review.text đầy đủ từng thực phẩm/nguyên liệu và lượng dưới mỗi món ngay bản nháp đầu tiên; không rút thành tên món hoặc chỉ gửi link web. Theo approvalPresentation, giữ dấu *, hỏi người dùng xác nhận đúng thành phần/định lượng rồi DỪNG CHỜ. Có thay đổi thì prepare lại; chưa đồng ý không calculate/save/export.
 
@@ -130,6 +130,8 @@ Bản nháp đầu tiên và mọi bản sửa phải hiện ngay trong chat t�
 
 ## Khi không hoàn thành
 
+- **Hồ sơ chưa đủ tuổi/giới hoặc trường bắt buộc:** Hỏi đúng field còn thiếu, giữ cân nặng/chiều cao/vận động đã biết. Không đoán tuổi, giới hay tình trạng sinh lý. Tính nhu cầu cần hồ sơ đầy đủ theo menuSchema; nếu người dùng chỉ cần thành phần hoặc có mục tiêu xác nhận kèm nguồn, giải thích dùng none hoặc manual và bỏ profile chưa đủ. Không âm thầm đổi chế độ hoặc nhập hồ sơ rỗng.
+- **Token được gửi cả ở header và sessionToken:** Header xác thực hợp lệ quyết định tài khoản/quyền; sessionToken chỉ là tham số vận chuyển cho các công cụ hỗ trợ phiên tạm. Không gửi sessionToken khi đã dùng OAuth. Header sai vẫn bị từ chối, không chuyển lùi sang phiên tạm để bỏ qua xác thực.
 - **410 bản tạm:** Link hết hạn hoặc thiếu quyền mở: lấy đúng link đầy đủ từ chat hoặc yêu cầu tạo link mới từ đầu vào còn giữ. Không thử ID khác và không bắt đăng ký chỉ để sửa bản tạm. Giữ lâu dài thì lưu tài khoản theo yêu cầu.
 - **Không có công cụ trong phiên:** Chỉ giải thích kết nối/cập nhật plugin; vẫn làm rõ bữa ăn. Link/QR/token không tự thêm công cụ cho AI, không giả vờ đã gọi server.
 - **401/403:** Phiên tạm hết hạn: start_guest_session rồi prepare và duyệt lại. Thao tác tài khoản cần OAuth đúng scope; không tự nâng quyền. Token cá nhân và mật khẩu không gửi vào chat. Token phiên tạm do công cụ giữ nội bộ, không hiện cho người dùng.
