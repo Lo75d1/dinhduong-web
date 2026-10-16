@@ -1,6 +1,6 @@
 import type { NutrientField } from "@/lib/nutrient-fields";
 import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
-import { aiFilled, AI_NUMBER_LEGEND, displayNumber, wholeVddDish } from "@/lib/nutrition-chat/presentation";
+import { aiFilled, AI_NUMBER_LEGEND, displayNumber, standaloneVddDish } from "@/lib/nutrition-chat/presentation";
 import NutritionSurvey from "./NutritionSurvey";
 import NutritionClinicalComparison from "./NutritionClinicalComparison";
 
@@ -73,9 +73,9 @@ export default function NutritionMenuAnalysis({ menu }: { menu: ResolvedMenu }) 
 export function NutritionMenuInput({ menu }: { menu: ResolvedMenu }) {
   if (menu.mode === "recall24h") return <div className="mt-4"><NutritionSurvey menu={menu} /></div>;
   return <div className="mt-4 space-y-4">{menu.days.map(day => <section key={day.id} className="border border-neutral-300 p-3"><h3 className="font-semibold">{day.label}{day.date ? ` · ${day.date}` : ""}</h3><div className="mt-3 space-y-2">{day.rows.map((row, i) => {
-    const whole = wholeVddDish(row), previous = day.rows[i - 1];
+    const whole = standaloneVddDish(row), previous = day.rows[i - 1];
     const dish = whole ? row.actualFoodName || row.food.name : row.dish;
-    const same = previous && previous.meal === row.meal && previous.dish === row.dish && !whole && !wholeVddDish(previous);
+    const same = previous && previous.meal === row.meal && previous.dish === row.dish && !whole && !standaloneVddDish(previous);
     const basis = row.basis === "raw" ? "Mua vào" : row.basis === "cooked" ? "Chín" : row.sourceState === "raw_clean" ? "Sống sạch" : "Ăn được";
     return <div key={row.id} className="border-t border-neutral-200 pt-2 text-sm">{same ? null : <p className="mb-1 font-semibold">{row.meal} · {dish}</p>}<p>{whole ? "Cả món" : row.actualFoodName || row.food.name}: {displayNumber(row.quantity, aiFilled(row, "quantity"))} {row.unit} × {displayNumber(row.servings, aiFilled(row, "servings"))} suất <span className="text-neutral-600">· {basis} · {row.food.source.label || "—"}</span></p></div>;
   })}</div></section>)}<p className="text-sm">{AI_NUMBER_LEGEND}</p></div>;

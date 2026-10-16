@@ -41,6 +41,10 @@ async function main() {
   equal(recipeReview.rowCount, 3); equal(recipeReview.shownRows, 3);
   for (const [i, food] of recipeFoods.entries()) check(recipeReview.text.split("\n").some(line => line.includes(food.name) && line.includes(`| ${[80, 120, 5][i]} g |`)), "each ingredient keeps its own draft amount");
   for (const name of ["prepare_menu", "get_saved_menu"]) check(nutritionResponseGuidance(name, { preview: recipeMenu, review: recipeReview }).instruction.includes(NUTRITION_WORKFLOW.approvalPresentation), "approval responses retain the ingredient display requirement");
+  const linkedFoods=structuredClone(recipeFoods);linkedFoods[0].source.label="VDD";linkedFoods[0].foodType="MA";
+  const linkedMenu=resolveMenu(recipeInput,linkedFoods),linkedReview=nutritionMenuReview(linkedMenu);
+  check(linkedReview.text.includes("Cá kiểm thử")&&!linkedReview.text.includes("Kho chưa có thành phần nguyên liệu"),"VDD prepared food within an RNI recipe remains an ingredient in chat review");
+  equal(recallAmounts({...linkedMenu.days[0].rows[0],sourceState:"raw_clean"}).rawCleanGrams,null,"displaying a recipe component never invents raw-clean data for a VDD cooked dish");
   const long = structuredClone(normalized); long.days = [{ ...long.days[0], rows: Array.from({ length: 101 }, (_, i) => ({ ...long.days[0].rows[0], id: `long-${i}` })) }];
   const bounded = nutritionMenuReview(resolveMenu(long, foods)); equal(bounded.shownRows, 100); equal(bounded.truncated, true); check(bounded.text.includes("100/101"));
   for (const patch of [{ mealTime: "25:00" }, { aiFilledFields: ["quantity", "quantity"] }, { aiFilledFields: ["profile.weight"] }, { quantity: "*200" }]) {

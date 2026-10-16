@@ -86,6 +86,7 @@ async function main() {
   typedFoods[1].source.label = "RNI"; typedFoods[1].foodType = "MA";
   typedFoods[2].source.label = "RNI"; typedFoods[2].foodType = "TS";
   const typedInput = structuredClone(menu.input);
+  typedInput.days[0].rows[0].recipeSource={kind:"user",label:"Món VDD độc lập; không có công thức nguyên liệu"};
   typedInput.comparison = { mode: "none" };
   typedInput.days[0].rows[2].customFood!.source.label = "VDD";
   const noTarget = resolveMenu(typedInput, typedFoods);
@@ -105,6 +106,19 @@ async function main() {
   assert.deepEqual(typedImported.days.map(day => day.rows.length), [3, 1]);
   assert.equal(typedImported.days[0].rows[0].dish, "Cơm với thịt", "presentation does not replace the input dish alias");
   assert.equal(typedImported.days[0].rows[1].foodId, typedFoods[2].id);
+  const linkedMenu=resolveMenu(menu.input,typedFoods);
+  const linkedBytes=await buildNutritionWorkbook(linkedMenu,typedFoods);
+  await fs.writeFile("evidence/nutrition-chat/complete-report-linked-vdd-test.xlsx",linkedBytes);
+  const linkedBook=new ExcelJS.Workbook();await linkedBook.xlsx.load(Buffer.from(linkedBytes) as unknown as ExcelJS.Buffer);
+  const linkedPlan=linkedBook.getWorksheet("Thuc don")!;
+  assert.equal(linkedPlan.getCell("C7").result,"Cơm với thịt","linked RNI recipe retains the parent dish");
+  assert.equal(linkedPlan.getCell("D7").result,typedFoods[0].name,"VDD MA used within a recipe remains a named ingredient");
+  assert.equal(linkedPlan.getCell("C8").result??"","","the next ingredient stays under the same dish");
+  assert.equal(linkedPlan.getCell("D8").result,typedFoods[2].name);
+  assert.equal(linkedPlan.getCell("G7").result,260,"ingredient energy is retained");
+  assert.equal(linkedPlan.getCell("G8").result,100,"each ingredient has its own nutrition result");
+  assert.equal(linkedMenu.totals.energyKcal.value,menu.totals.energyKcal.value,"presentation does not change totals");
+  assert.match(String(linkedPlan.getCell("D7").formula),/^IF\(FALSE,/,"native recalculation keeps linked recipe ingredients visible");
   const changedInput = structuredClone(menu.input);
   changedInput.days.unshift({ id: "empty-day", label: "Ngày chưa nhập", date: "", rows: [] });
   changedInput.days[1].rows[0].servings = 2;

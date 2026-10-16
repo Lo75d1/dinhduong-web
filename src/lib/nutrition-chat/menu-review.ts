@@ -1,5 +1,5 @@
 import type { ResolvedMenu } from "./contracts";
-import { aiFilled, AI_NUMBER_LEGEND, displayNumber, wholeVddDish } from "./presentation";
+import { aiFilled, AI_NUMBER_LEGEND, displayNumber, standaloneVddDish } from "./presentation";
 import { CLINICAL_TARGET_LABELS } from "./clinical";
 
 const plain = (value: string) => value.replace(/[\r\n\t]+/g, " ").replace(/[\\`*_{}\[\]()<>#!|]/g, "\\$&");
@@ -16,10 +16,10 @@ export function nutritionMenuReview(menu: ResolvedMenu) {
   }
   shown.forEach(({ day, row }, i) => {
     const previous = shown[i - 1];
-    const whole = wholeVddDish(row);
+    const whole = standaloneVddDish(row);
     const dish = whole ? row.actualFoodName || row.food.name : row.dish;
-    const previousDish = previous && (wholeVddDish(previous.row) ? previous.row.actualFoodName || previous.row.food.name : previous.row.dish);
-    const same = previous?.day.id === day.id && previous.row.meal === row.meal && dish === previousDish && whole === wholeVddDish(previous.row);
+    const previousDish = previous && (standaloneVddDish(previous.row) ? previous.row.actualFoodName || previous.row.food.name : previous.row.dish);
+    const same = previous?.day.id === day.id && previous.row.meal === row.meal && dish === previousDish && whole === standaloneVddDish(previous.row);
     const time = row.mealTime ? `${aiFilled(row, "mealTime") ? "*" : ""}${row.mealTime} / ` : "";
     const basis = row.basis === "raw" ? "Mua vào" : row.basis === "cooked" ? "Chín → nguồn" : row.sourceState === "raw_clean" ? "Sống sạch" : row.sourceState === "cooked" ? "Chín" : "Theo nguồn";
     lines.push(`| ${previous?.day.id === day.id ? "" : plain(day.label)} | ${plain(time + row.meal)} | ${same ? "" : plain(dish)} | ${whole ? "Kho chưa có thành phần nguyên liệu" : plain(row.actualFoodName || row.food.name)} | ${plain(displayNumber(row.quantity, aiFilled(row, "quantity")))} ${row.unit} | ${plain(displayNumber(row.servings, aiFilled(row, "servings")))} | ${basis} | ${plain(row.food.source.label.slice(0, 80) || "—")} |`);

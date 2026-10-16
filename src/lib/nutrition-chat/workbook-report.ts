@@ -4,7 +4,7 @@ import type { NutritionFood, ResolvedMenu } from "./contracts";
 import { getExchangeRule } from "@/app/tinh-khau-phan/exchange-units";
 import { nutritionWebsiteLink } from "./website-links";
 import { markAiNumber } from "./workbook-ai";
-import { AI_NUMBER_LEGEND, briefFoodSource } from "./presentation";
+import { AI_NUMBER_LEGEND, briefFoodSource,standaloneVddDish } from "./presentation";
 import { appendClinicalWorkbookSection } from "./workbook-clinical";
 
 export type NutritionReportMeta = {
@@ -206,7 +206,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
   const wholeDishRange = `'_lists'!$F$${FIRST}:$F$${FIRST + Math.max(1, catalogue.length) - 1}`;
   const selectedNameAt = (r: number) => `IF('Nhap khau phan'!O${r}<>"",'Nhap khau phan'!O${r},'Nhap khau phan'!S${r})`;
-  const wholeDishAt = (r: number) => `IF('Nhap khau phan'!R${r}="catalog",IF('Nhap khau phan'!Q${r}="",FALSE,INDEX(${wholeDishRange},'Nhap khau phan'!Q${r})),FALSE)`;
+  const wholeDishAt = (r: number) => rows[r-FIRST]?.row.recipeSource.dishId ? "FALSE" : `IF('Nhap khau phan'!R${r}="catalog",IF('Nhap khau phan'!Q${r}="",FALSE,INDEX(${wholeDishRange},'Nhap khau phan'!Q${r})),FALSE)`;
   const dishNameAt = (r: number) => `IF(${wholeDishAt(r)},${selectedNameAt(r)},'Nhap khau phan'!D${r})`;
   const noIngredients = "Không có dữ liệu thành phần";
   rows.forEach(({ day, row }, index) => {
@@ -216,9 +216,9 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     const previousRef = (c: string) => `'Nhap khau phan'!${c}${inputRow - 1}`;
     const previous = rows[index - 1];
     const sameDay = previous?.day.id === day.id;
-    const wholeDish = isVddWholeDish(row.food);
+    const wholeDish = standaloneVddDish(row);
     const dishName = wholeDish ? row.actualFoodName || row.food.name : row.dish;
-    const previousWholeDish = previous ? isVddWholeDish(previous.row.food) : false;
+    const previousWholeDish = previous ? standaloneVddDish(previous.row) : false;
     const previousDishName = previousWholeDish ? previous.row.actualFoodName || previous.row.food.name : previous?.row.dish;
     const sameDish = sameDay && previous.row.meal === row.meal && previousWholeDish === wholeDish && previousDishName === dishName;
     const dayRef = `INDEX('Ngay va muc tieu'!$C$7:$C$96,${ref("B")})`;

@@ -1,7 +1,7 @@
 import type ExcelJS from "exceljs";
 import type { ResolvedMenu } from "./contracts";
 import { reportSheet, type NutritionWorkbookOptions } from "./workbook-report";
-import { aiFilled, AI_NUMBER_LEGEND, briefFoodSource, recallAmounts, RECALL_HEADERS, RECALL_ENERGY_HEADERS, wholeVddDish } from "./presentation";
+import { aiFilled, AI_NUMBER_LEGEND, briefFoodSource, recallAmounts, RECALL_HEADERS, RECALL_ENERGY_HEADERS, wholeVddDish,standaloneVddDish } from "./presentation";
 import { markAiNumber } from "./workbook-ai";
 
 const font = { name: "Times New Roman", size: 15, color: { argb: "000000" } };
@@ -42,10 +42,10 @@ export function addRecallWorkbookSheets(workbook: ExcelJS.Workbook, menu: Resolv
       const grams = `IF(${ref("H")}="g",${ref("G")}*${ref("I")},IF(AND(ISNUMBER(${ref("M")}),${ref("N")}<>""),${ref("G")}*${ref("I")}*${ref("M")},"—"))`;
       const cooked = `AND(${sameSource},${numericAmount},OR(${ref("J")}="cooked",AND(${ref("J")}="edible",${row.sourceState === "cooked" ? "TRUE" : "FALSE"})))`;
       const raw = `AND(${sameSource},${row.sourceState === "raw_clean" && !wholeVddDish(row) ? "TRUE" : "FALSE"},ISNUMBER(${ref("X")}))`;
-      const previous = day.rows[index - 1], whole = wholeVddDish(row);
+      const previous = day.rows[index - 1], whole = standaloneVddDish(row);
       const dish = whole ? row.actualFoodName || row.food.name : row.dish;
-      const previousDish = previous && (wholeVddDish(previous) ? previous.actualFoodName || previous.food.name : previous.dish);
-      const sameDish = previous && previous.meal === row.meal && previousDish === dish && whole === wholeVddDish(previous);
+      const previousDish = previous && (standaloneVddDish(previous) ? previous.actualFoodName || previous.food.name : previous.dish);
+      const sameDish = previous && previous.meal === row.meal && previousDish === dish && whole === standaloneVddDish(previous);
       survey.getCell(r, 1).value = row.mealTime ? `${aiFilled(row, "mealTime") ? "*" : ""}${row.mealTime}` : "—";
       formula(survey.getCell(r, 2), ref("C"), row.meal);
       formula(survey.getCell(r, 3), sameDish ? `IF(AND(${ref("C")}='Nhap khau phan'!C${source - 1},EXACT(${ref("D")},'Nhap khau phan'!D${source - 1})),"",${ref("D")})` : whole ? `IF(${ref("O")}<>"",${ref("O")},${ref("S")})` : ref("D"), sameDish ? "" : dish);

@@ -1,5 +1,5 @@
 import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
-import { aiFilled, AI_NUMBER_LEGEND, displayNumber, recallAmounts, RECALL_HEADERS, RECALL_ENERGY_HEADERS, wholeVddDish } from "@/lib/nutrition-chat/presentation";
+import { aiFilled, AI_NUMBER_LEGEND, displayNumber, recallAmounts, RECALL_HEADERS, RECALL_ENERGY_HEADERS, standaloneVddDish } from "@/lib/nutrition-chat/presentation";
 
 const cell = "border border-neutral-400 px-2 py-2 align-top";
 /** The two appendix layouts share the resolved input and calculator used by chat. */
@@ -8,9 +8,9 @@ export default function NutritionSurvey({ menu }: { menu: ResolvedMenu }) {
     const rawRows = day.rows.filter(row => recallAmounts(row).rawCleanGrams !== null);
     const rows = day.rows.map((row, i) => {
       const amount = recallAmounts(row), previous = day.rows[i - 1];
-      const whole = wholeVddDish(row), dish = whole ? row.actualFoodName || row.food.name : row.dish;
-      const previousDish = previous && (wholeVddDish(previous) ? previous.actualFoodName || previous.food.name : previous.dish);
-      const same = previous && previous.meal === row.meal && previousDish === dish && whole === wholeVddDish(previous);
+      const whole = standaloneVddDish(row), dish = whole ? row.actualFoodName || row.food.name : row.dish;
+      const previousDish = previous && (standaloneVddDish(previous) ? previous.actualFoodName || previous.food.name : previous.dish);
+      const same = previous && previous.meal === row.meal && previousDish === dish && whole === standaloneVddDish(previous);
       const markAmount = aiFilled(row, "quantity") || aiFilled(row, "servings") || aiFilled(row, "densityGPerMl");
       const values = [row.mealTime ? `${aiFilled(row, "mealTime") ? "*" : ""}${row.mealTime}` : "—", row.meal, same ? "" : dish, whole ? "—" : row.actualFoodName || row.food.name, row.householdMeasure ? `${aiFilled(row, "householdMeasure") ? "*" : ""}${row.householdMeasure}` : "—", displayNumber(amount.cookedGrams, markAmount), displayNumber(amount.conversionFactor, aiFilled(row, "conversionFactor")), displayNumber(amount.rawCleanGrams, markAmount || aiFilled(row, "conversionFactor")), whole ? "Cả món · VDD" : row.food.source.label || "—"];
       return { row, dish, values };

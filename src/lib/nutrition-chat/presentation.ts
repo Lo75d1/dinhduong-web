@@ -10,6 +10,10 @@ export function displayNumber(value: number | null | undefined, automatic = fals
   return value == null || !Number.isFinite(value) ? "—" : `${automatic ? "*" : ""}${value.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}`;
 }
 export function wholeVddDish(row: ResolvedRow) { return row.food.source.kind === "catalog" && row.food.source.label === "VDD" && row.food.foodType === "MA"; }
+/** A VDD prepared food can also be an ingredient of a linked RNI recipe.
+ * Keep that ingredient under its parent dish; this never invents its inner recipe
+ * or changes the separate raw-clean source guard in recallAmounts. */
+export function standaloneVddDish(row:ResolvedRow){return wholeVddDish(row)&&!row.recipeSource.dishId;}
 export function briefFoodSource(source: FoodSource) {
   if (source.kind === "catalog") return ["VDD", "RNI"].includes(source.label) ? source.label : "Kho";
   return { label: "Nhãn", document: "Tài liệu", user: "Người dùng", reference: "Tham chiếu", unknown: "Chưa rõ" }[source.kind];
