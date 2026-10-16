@@ -20,7 +20,9 @@ export default async function AccountPage({
     );
   const data = await accountSnapshot().catch(error => {
     // Diagnose server-render-only failures without logging messages, queries or credentials.
-    console.error("ACCOUNT_SNAPSHOT_FAILED", {name:error instanceof Error?error.name:"unknown",code:error&&typeof error==="object"&&"code" in error?String(error.code).slice(0,30):undefined,frames:error instanceof Error?error.stack?.split("\n").filter(line=>/^\s+at /.test(line)).slice(0,3):undefined});
+    const cause=error&&typeof error==="object"&&"cause" in error&&error.cause&&typeof error.cause==="object"?error.cause as Record<string,unknown>:{};
+    const safe=(value:unknown)=>typeof value==="string"&&/^[A-Za-z0-9_]{1,40}$/.test(value)?value:undefined;
+    console.error("ACCOUNT_SNAPSHOT_FAILED", {name:error instanceof Error?error.name:"unknown",kind:safe(cause.kind),code:safe(cause.originalCode??cause.code)});
     return null;
   });
   if (!data) {
