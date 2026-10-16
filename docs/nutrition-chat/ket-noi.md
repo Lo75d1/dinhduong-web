@@ -92,3 +92,10 @@ Ngày đối chiếu tài liệu nền tảng: 15/10/2026; [OpenAI Quickstart](h
 - Chưa có kết nối: trang bắt đầu có mục Lần đầu dùng, chỉ tên nút và địa chỉ server; QR/link không tự cài plugin. Trong ChatGPT ưu tiên OAuth or no authentication để dùng cả phiên tạm và tài khoản, hoặc No authentication khi chỉ dùng phiên tạm.
 - Muốn giữ lâu dài: mở /dang-nhap?next=%2Ftai-khoan, chọn Đăng ký mới/Tạo tài khoản hoặc Đăng nhập, rồi quay lại chat kết nối tài khoản và yêu cầu lưu. Đăng nhập web chưa tự gắn tài khoản với chat; nếu kết nối hiện tại chỉ No authentication, thêm kết nối hỗ trợ OAuth. Giữ input, prepare lại bằng identity tài khoản, chờ duyệt trước save; không dùng confirmationToken guest. Trả ration.url để mở lại trong Thực đơn của tôi, không bắt nhập lại hoặc gửi Excel.
 - Hướng dẫn web/QR/TXT/skill và workflow.accountUse cùng phiên bản1.0.6. Tùy chọn token thủ công nằm trong phần mở rộng dành cho phần mềm khác, không phải thao tác bắt buộc cho bác sĩ.
+
+## Link sửa/tính lại trên web —1.0.7
+
+- prepare_menu trả webUrl/webExpiresAt cho đầu vào ban đầu, calculate_menu trả link bản đã tính; mở/sửa/tính lại không cần tài khoản. Đầu vào giữ tạm30phút trong vùng riêng, không tạo tài khoản/Ration. Ai có link đầy đủ mở được đúng bản, không mở dữ liệu khác; chỉ chia sẻ theo ý bạn. Link có fragment trao đổi lấy cookie HttpOnly/Secure/SameSiteStrict rồi được gỡ khỏi thanh địa chỉ, không đưa Bearer/OAuth token vào URL/log truy cập.
+- Sửa món/thực phẩm/lượng trên web, xem trước/duyệt lại rồi Tính lại để mở bản cập nhật. Bản cũ giữ để đối chiếu. Sao chép link đầy đủ bằng nút trên trang; địa chỉ có ID rút gọn chỉ mở lại được trong trình duyệt đã nhận quyền. Excel giữ làm nút tải thêm.
+- Chỉ tra kho chung trong bản tạm; muốn lưu tài khoản thì đăng nhập trong tab mới, chuẩn bị bản bằng identity tài khoản và xác nhận lại, không dùng ticket guest để save. Phiên/browser link không đọc thư viện riêng hoặc tự nâng scope. Mỗi yêu cầu giữ nguyên hạn dùng, không gia hạn khi mở.
+- Món luộc/hấp: hỏi chọn nước chấm hoặc không dùng và lượng thực ăn, tra ID/nguồn thật và tính cùng bữa; không cộng trùng gia vị. Hỏi ghi24giờ không tự thêm nước chấm chưa ăn.

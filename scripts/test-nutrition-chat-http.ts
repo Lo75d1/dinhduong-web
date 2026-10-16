@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { build } from "esbuild";
 import { createRequire } from "node:module";
-import { mkdtemp } from "node:fs/promises";
+import { mkdtemp,readFile,unlink } from "node:fs/promises";
 import { removeNutritionFixtureDirectory } from "./fixtures/nutrition-oauth/safe-temp";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
@@ -18,15 +18,18 @@ import type * as Repository from "./fixtures/nutrition-oauth/repository";
 import type * as Output from "../src/lib/nutrition-chat/mcp-output";
 import type * as GuestRoute from "../src/app/api/nutrition/v1/guest-session/route";
 import type * as GuestStore from "../src/lib/nutrition-chat/guest-store";
+import type * as WebRoute from "../src/app/api/nutrition/v1/web-menu/route";
+import type * as WebItemRoute from "../src/app/api/nutrition/v1/web-menu/[id]/route";
 import type { MenuInput } from "../src/lib/nutrition-chat/contracts";
 import { getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken, randomNutritionToken } from "../src/lib/nutrition-chat/oauth-validation";
-type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & typeof GuestStore & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport; guestRoute: typeof GuestRoute };
+type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & typeof GuestStore & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport; guestRoute: typeof GuestRoute;webRoute:typeof WebRoute;webItemRoute:typeof WebItemRoute };
 let checks = 0;
 
 async function main() {
   const saved = { ...process.env };
   const directory = await mkdtemp(join(tmpdir(), "nutrition-http-fixture-"));
   const require = createRequire(import.meta.url);
+  const webKeys=new Set<string>();
   let runtime: Runtime | undefined;
   try {
     process.env.NUTRITION_PUBLIC_URL = "https://dinhduong2598.food";
@@ -34,7 +37,7 @@ async function main() {
     delete process.env.NUTRITION_ALLOWED_ORIGINS;
     delete process.env.NUTRITION_TRUST_PROXY;
     const sources = ["src/lib/nutrition-chat/service.ts", "src/lib/nutrition-chat/workbook.ts", "src/lib/nutrition-chat/mcp-output.ts", "src/lib/nutrition-chat/guest-store.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/repository.ts"];
-    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts", webReportRoute: "src/app/api/nutrition-report/export/route.ts", guestRoute: "src/app/api/nutrition/v1/guest-session/route.ts" };
+    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts", webReportRoute: "src/app/api/nutrition-report/export/route.ts", guestRoute: "src/app/api/nutrition/v1/guest-session/route.ts",webRoute:"src/app/api/nutrition/v1/web-menu/route.ts",webItemRoute:"src/app/api/nutrition/v1/web-menu/[id]/route.ts" };
     const outfile = join(directory, "http-fixture.cjs");
     await build({ stdin: { contents: sources.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n") + "\n" + Object.entries(routes).map(([label, path]) => `import * as ${label} from ${JSON.stringify(resolve(path))}; export {${label}};`).join("\n"), resolveDir: process.cwd(), loader: "ts" }, outfile,
       bundle: true, platform: "node", format: "cjs", logLevel: "silent", plugins: [{ name: "disposable-http", setup(builder) {
@@ -210,6 +213,7 @@ async function main() {
     const compactBody = await compactCalculation.json();
     assert.equal(compactBody.result.structuredContent.outputCompacted, true); checks++;
     assert.equal(compactBody.result.structuredContent.guidance.stage,"calculated"); checks++;
+    assert.ok(compactBody.result.structuredContent.webUrl.includes("/ket-noi-ai/ban-tam#"));checks++;
     assert.equal(compactBody.result.structuredContent.totals.energyKcal.value, 45500); checks++;
     assert.ok(compactBody.result.structuredContent.chatReport.text.includes("**45.500 kcal**")); checks++;
     assert.ok(compactBody.result.structuredContent.chatReport.text.includes("Chưa có mục tiêu nhu cầu")); checks++;
@@ -316,7 +320,7 @@ async function main() {
       const started=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"start_guest_session",arguments:{}},"",true));
       assert.equal(started.status,200);checks++;const second=(await started.json()).result.structuredContent;issuedTokens.push(second.accessToken);assert.ok(second.guidance.instruction.includes("sessionToken"));checks++;
       const guestPrepared=await rest("prepare",{input:menu},guest.accessToken);assert.equal(guestPrepared.status,200);checks++;
-      const gp=await guestPrepared.json();assert.equal(gp.guidance.stage,"awaiting_user_confirmation");checks++;assert.equal(gp.guidance.requiresUserConfirmation,true);checks++;assert.equal(gp.guidance.session.persistence,"none");checks++;
+      const gp=await guestPrepared.json();assert.equal(gp.guidance.stage,"awaiting_user_confirmation");checks++;assert.equal(gp.guidance.requiresUserConfirmation,true);checks++;assert.equal(gp.guidance.session.persistence,"temporary-web");checks++;
       const guestArgs={input:gp.input,confirmationToken:gp.confirmationToken};
       const gc=await rest("calculate",guestArgs,guest.accessToken);assert.equal(gc.status,200);checks++;const gcalc=await gc.json();assert.equal(gcalc.totals.energyKcal.value,130);checks++;assert.equal(gcalc.guidance.stage,"calculated");checks++;
       const mp=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"calculate_menu",arguments:{...guestArgs,sessionToken:guest.accessToken}},"",true));assert.equal(mp.status,200);checks++;assert.equal((await mp.json()).result.structuredContent.guidance.stage,"calculated");checks++;
@@ -331,6 +335,43 @@ async function main() {
       const empty=await rest("search_dishes",{q:"no-such-dish"},guest.accessToken);assert.equal((await empty.json()).guidance.stage,"no_matches");checks++;
       const privateMcp=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"list_saved_menus",arguments:{sessionToken:guest.accessToken}},"",true));assert.equal(privateMcp.status,403);checks++;assert.equal(JSON.parse((await privateMcp.json()).result.content[0].text).guidance.stage,"blocked");checks++;
       const missingMenu=structuredClone(menu);missingMenu.days[0].rows[0].quantity=null;
+      // A separate browser capability opens exactly one temporary input snapshot.
+      const webKey=new URL(gp.webUrl).hash.slice(1);webKeys.add(webKey);
+      assert.match(gp.webUrl,/^https:\/\/dinhduong2598\.food\/ket-noi-ai\/ban-tam#[A-Za-z0-9_-]{43}$/);checks++;
+      assert.equal(new URL(gp.webUrl).search,"");checks++;
+      assert.ok(!gp.webUrl.includes(guest.accessToken));checks++;
+      const exchange=(key:string,origin=base)=>api.webRoute.POST(request("web-menu",{key},undefined,{Origin:origin}));
+      assert.equal((await exchange(webKey,"https://evil.test")).status,403);checks++;
+      assert.equal((await exchange("A".repeat(43))).status,410);checks++;
+      const opened=await exchange(webKey);assert.equal(opened.status,200);checks++;
+      const cookieHeader=opened.headers.get("set-cookie")!;for(const flag of ["HttpOnly","Secure","SameSite=Strict","Path=/api/nutrition/v1/web-menu"]){assert.ok(cookieHeader.includes(flag));checks++;}
+      const webCookie=cookieHeader.split(";")[0],view=await opened.json();
+      const webContext=(id:string)=>({params:Promise.resolve({id})});
+      const webGet=(id:string,cookie?:string,extra:Record<string,string>={})=>api.webItemRoute.GET(new Request(`${base}/api/nutrition/v1/web-menu/${id}`,{headers:{...(cookie?{Cookie:cookie}:{}),...extra}}),webContext(id));
+      const webPost=(id:string,value:unknown,cookie=webCookie,origin=base)=>api.webItemRoute.POST(request(`web-menu/${id}`,value,undefined,{Cookie:cookie,Origin:origin}),webContext(id));
+      assert.equal(view.stage,"draft");checks++;assert.equal(view.input.days[0].rows[0].quantity,100);checks++;
+      const disk=JSON.parse(await readFile(join(tmpdir(),"dinhduong2598-nutrition-chat-v1","web-menus",`${view.id}.json`),"utf8"));
+      assert.equal(disk.identity,undefined);checks++;assert.equal(disk.userId,undefined);checks++;assert.equal(disk.accessToken,undefined);checks++;
+      assert.equal((await webGet(view.id)).status,410);checks++;
+      assert.equal((await webGet(view.id,webCookie)).status,200);checks++;
+      assert.equal((await webGet(view.id,webCookie,{Origin:"https://evil.test"})).status,403);checks++;
+      assert.equal((await webPost(view.id,{action:"prepare",input:menu},webCookie,"https://evil.test")).status,403);checks++;
+      const edited=structuredClone(view.input);edited.days[0].rows[0].quantity=150;
+      const wpr=await webPost(view.id,{action:"prepare",input:edited});assert.equal(wpr.status,200);checks++;const wp=await wpr.json();webKeys.add(new URL(wp.webUrl).hash.slice(1));
+      assert.equal(wp.preview.totals.energyKcal.value,195);checks++;
+      assert.equal((await webPost(view.id,{action:"calculate",input:gp.input,confirmationToken:gp.confirmationToken})).status,409);checks++;
+      const wcalc=await webPost(view.id,{action:"calculate",input:wp.input,confirmationToken:wp.confirmationToken});assert.equal(wcalc.status,200);checks++;const wc=await wcalc.json();webKeys.add(new URL(wc.webUrl).hash.slice(1));
+      assert.equal(wc.totals.energyKcal.value,195);checks++;assert.notEqual(wc.webUrl,gp.webUrl);checks++;
+      const original=await webGet(view.id,webCookie);assert.equal((await original.json()).input.days[0].rows[0].quantity,100);checks++;
+      const newViewResponse=await exchange(new URL(wc.webUrl).hash.slice(1)),newCookie=newViewResponse.headers.get("set-cookie")!.split(";")[0],newView=await newViewResponse.json();
+      assert.equal(newView.stage,"calculated");checks++;assert.equal(newView.input.days[0].rows[0].quantity,150);checks++;
+      assert.equal((await webGet(newView.id,webCookie)).status,410);checks++;
+      for(const action of ["save","get_saved_menu","list_personal_library"]){assert.equal((await webPost(newView.id,{action,input:edited},newCookie)).status,400);checks++;}
+      assert.equal((await webPost(newView.id,{action:"prepare",input:edited,ownerId:"user-a"},newCookie)).status,400);checks++;
+      const webExport=await webPost(newView.id,{action:"export",input:newView.input,confirmationToken:newView.confirmationToken},newCookie);assert.equal(webExport.status,200);checks++;const webExported=await webExport.json();webKeys.add(new URL(webExported.webUrl).hash.slice(1));
+      assert.ok(webExported.downloadUrl);checks++;
+      api.setFixtureFoodEnergy(200);const sourceRead=await webGet(newView.id,newCookie);const changedSource=await sourceRead.json();assert.equal(changedSource.sourceChanged,true);checks++;assert.equal(changedSource.preview.totals.energyKcal.value,300);checks++;api.setFixtureFoodEnergy(130);
+      const originalNow=Date.now;try{Date.now=()=>originalNow()+1801_000;assert.equal((await webGet(newView.id,newCookie)).status,410);checks++;}finally{Date.now=originalNow;}
       const missing=await rest("prepare",{input:missingMenu},second.accessToken);assert.equal(missing.status,200);checks++;const mb=await missing.json();assert.equal(mb.guidance.stage,"needs_input");checks++;assert.ok(mb.guidance.questions.length>0);checks++;
       const oldNow=Date.now;try{Date.now=()=>oldNow()+1801_000;assert.equal((await rest("search_foods",{q:"rice"},guest.accessToken)).status,401);checks++;}finally{Date.now=oldNow;}
       const ended=await api.guestRoute.DELETE(new Request(`${base}/api/nutrition/v1/guest-session`,{method:"DELETE",headers:{Authorization:`Bearer ${guest.accessToken}`}}));assert.equal(ended.status,200);checks++;
@@ -360,6 +401,7 @@ async function main() {
     console.log(`Nutrition actual HTTP route-handler fixtures: ${checks} checks passed. REST + legacy/modern MCP + OAuth bearer lookup + owner/CSRF/origin/scope errors + real workbook import parser verified.`);
     console.log("No HTTP socket, browser, real platform, live DB or real export/download; routes called directly with PGlite and isolated data/export fixtures.");
   } finally {
+    for(const key of webKeys){if(/^[A-Za-z0-9_-]{43}$/.test(key))await unlink(join(tmpdir(),"dinhduong2598-nutrition-chat-v1","web-menus",`${createHash("sha256").update(key).digest("hex")}.json`)).catch(()=>undefined);}
     if (runtime) await runtime.closeOAuthFixture();
     await removeNutritionFixtureDirectory(directory, "nutrition-http-fixture-");
     for (const key of Object.keys(process.env)) if (!(key in saved)) delete process.env[key];

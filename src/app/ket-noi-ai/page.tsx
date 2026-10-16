@@ -30,7 +30,7 @@ export default async function ConnectAiPage() {
         <div>
           <p className="mb-3 text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · KẾT NỐI HỘI THOẠI</p>
           <h1 id="connect-title" className="text-4xl font-semibold leading-[1.12] sm:text-5xl">Nói bữa ăn.<br />Nhận báo cáo.</h1>
-          <p className="mt-5 max-w-lg text-lg text-neutral-700">Tra món, chọn mã chế độ ăn và tính khẩu phần trong hội thoại. Chỉ lưu tài khoản hoặc tạo Excel khi bạn yêu cầu.</p>
+          <p className="mt-5 max-w-lg text-lg text-neutral-700">Tra món, chọn mã chế độ ăn và tính khẩu phần trong hội thoại. Kết quả có link để xem, sửa và tính lại trên web không cần tài khoản; Excel là tải thêm.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/ket-noi-ai/bat-dau" className={`rounded-lg bg-[#123c36] px-5 py-3 font-semibold text-white hover:bg-[#0f5c51] ${focus}`}>Bắt đầu bằng QR hoặc link →</Link>
             <a href="#cai-ket-noi" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Cài kết nối lần đầu</a>

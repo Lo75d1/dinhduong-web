@@ -2,7 +2,7 @@ import toolGuide from "./tool-guide.json";
 import type { NutritionIdentity } from "./contracts";
 
 export const GUEST_TOOL_NAMES = ["get_workflow", "search_foods", "get_food", "search_dishes", "get_dish", "search_diet_codes", "get_diet_code", "prepare_menu", "calculate_menu", "export_workbook"];
-type Guide = { stage: string; instruction: string; nextTools: string[]; requiresUserConfirmation: boolean; questions?: unknown[]; questionCount?: number; questionsTruncated?: boolean; session?: { kind: "guest"; expiresAt?: string; persistence: "none" } };
+type Guide = { stage: string; instruction: string; nextTools: string[]; requiresUserConfirmation: boolean; questions?: unknown[]; questionCount?: number; questionsTruncated?: boolean; session?: { kind: "guest"; expiresAt?: string; persistence: "temporary-web" } };
 // Additive to the existing response: clients keep reading items/preview/totals,
 // and receive the next action alongside those values, including empty searches.
 export function nutritionResponseGuidance(name: string, result: unknown, identity?: NutritionIdentity): Guide {
@@ -17,10 +17,12 @@ export function nutritionResponseGuidance(name: string, result: unknown, identit
     Object.assign(guidance, missing.length ? { stage: "needs_input", questions: missing.slice(0,20), questionCount: missing.length, questionsTruncated: missing.length>20, nextTools: ["prepare_menu"], instruction: "Hỏi gọn đúng các missingInputs; giữ dữ kiện đã có, không tự điền số thay người dùng. questions tối đa20mục, toàn bộ có trong preview.missingInputs; hỏi từng nhóm, không coi danh sách rút gọn là đầy đủ. Sửa đầu vào rồi prepare_menu lại. Chưa calculate/export/save." } : data.review?.truncated ? { stage: "review_too_large", nextTools: ["prepare_menu"], instruction: "Bản duyệt bị rút gọn. Chia kỳ theo ngày và prepare lại để người dùng duyệt đủ, chưa tính/xuất/lưu." } : { stage: "awaiting_user_confirmation", nextTools: ["calculate_menu", "export_workbook"], requiresUserConfirmation: true, instruction: "Trình review.text cho người dùng, giữ dấu * ở mọi số AI tự điền; hỏi họ có đồng ý đúng bản này không rồi DỪNG CHỜ câu trả lời. confirmationToken chỉ ràng buộc bản nháp, không chứng minh người dùng đồng ý. Sau đồng ý mới dùng input chuẩn hóa và token cùng phản hồi để calculate; export chỉ khi cần file, save chỉ khi được yêu cầu và có tài khoản." });
   }
   if (name === "get_diet_code") Object.assign(guidance, { stage: "diet_choice", requiresUserConfirmation: true });
-  if (name === "calculate_menu") Object.assign(guidance, { stage: "calculated", nextTools: [], instruction: "Trả chatReport.summaryText từ số liệu server, giữ đơn vị và phần thiếu. Yêu cầu chỉ tính đã hoàn tất; không tự xuất Excel/lưu hoặc bắt người dùng tải file. Nếu họ cần Excel, dùng input/token đã duyệt để export_workbook khi còn hạn." });
+  if (name === "calculate_menu") Object.assign(guidance, { stage: "calculated", nextTools: [], instruction: "Trả chatReport.summaryText cùng webUrl thật và webExpiresAt để người dùng mở/sửa/tính lại trên web không đăng nhập. Giữ đơn vị, phần thiếu và nguyên fragment của link. Đầu vào giữ tạm30phút, không phải bản lưu tài khoản. Không tự xuất Excel/lưu hoặc bắt tải file; Excel là tải thêm khi họ cần." });
   if (name === "export_workbook") Object.assign(guidance, { stage: "download_ready", nextTools: [], instruction: "Trả downloadUrl thật kèm expiresAt ngay cho người dùng; không tải file vào chat và không gọi xuất lại để đọc kết quả. Chỉ trả savedMenuUrl khi có giá trị. Link tải tạm không phải link bản lưu tài khoản." });
   if (name === "save_menu") Object.assign(guidance, { stage: "saved", instruction: "Trả ration.url thật và phiên bản đã lưu. Không lưu lặp; cập nhật sau khi người dùng yêu cầu phải đọc bản hiện tại, duyệt lại và dùng expectedRevision." });
-  if (identity?.kind === "guest") guidance.session = { kind: "guest", expiresAt: identity.expiresAt, persistence: "none" };
+  if (name === "prepare_menu") guidance.instruction += " Trả thêm webUrl/webExpiresAt từ phản hồi để người dùng có thể mở và sửa đầu vào ngay trên web; bản tạm30phút không cần tài khoản. Không tự tạo link hoặc bỏ phần fragment.";
+  if (name === "export_workbook") guidance.instruction += " Trả cả webUrl/webExpiresAt để mở/sửa bản tạm trên web; Excel là file tải thêm, webUrl khác savedMenuUrl lâu dài.";
+  if (identity?.kind === "guest") guidance.session = { kind: "guest", expiresAt: identity.expiresAt, persistence: "temporary-web" };
   return guidance;
 }
 export function nutritionErrorGuidance(status: number, field?: string) {

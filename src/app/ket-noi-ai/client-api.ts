@@ -3,7 +3,7 @@ export type NutritionDownload = { downloadUrl: string; expiresAt: string; filena
 export async function readNutritionResponse<T>(response: Response): Promise<T> {
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) {
-    if (response.status === 401) throw new Error("Bạn cần đăng nhập để mở, gửi và lưu bản Excel.");
+    if (response.status === 401) throw new Error("Bạn cần đăng nhập tài khoản để thực hiện thao tác này.");
     if (response.status === 429) {
       const seconds = Number(response.headers.get("Retry-After"));
       throw new Error(Number.isFinite(seconds) && seconds > 0 && seconds <= 86400 ? `Đã đến hạn mức xử lý. Thử lại sau ${Math.ceil(seconds)} giây.` : "Đã đến hạn mức xử lý. Vui lòng thử lại sau.");

@@ -17,7 +17,7 @@ export function nutritionStartLinks(origin: string) {
 
 export function nutritionDoctorStartMessage(origin: string) {
   const links=nutritionStartLinks(origin);
-  return `Hãy đọc hướng dẫn tại ${links.text} rồi giúp tôi lập thực đơn hoặc đánh giá khẩu phần bằng Dinh dưỡng 2598 từ đầu đến cuối. Tự mở phiên làm việc tạm khi cần, không bắt tôi tạo tài khoản hoặc sao chép mã truy cập. Hỏi từng phần còn thiếu, đưa bản để tôi duyệt rồi mới tính; trả báo cáo trong chat và link Excel khi tôi cần. Không lưu thực đơn vào tài khoản nếu tôi chưa yêu cầu. Nếu tôi muốn lưu và dùng lại lâu dài, hướng dẫn tôi tạo/đăng nhập tài khoản và kết nối trong chat. Nếu cuộc chat chưa có công cụ Dinh dưỡng 2598, chỉ tôi cách bật kết nối tại ${links.setup}; không báo đã tính khi chưa gọi được hệ thống.`;
+  return `Hãy đọc hướng dẫn tại ${links.text} rồi giúp tôi lập thực đơn hoặc đánh giá khẩu phần bằng Dinh dưỡng 2598 từ đầu đến cuối. Tự mở phiên làm việc tạm khi cần, không bắt tôi tạo tài khoản hoặc sao chép mã truy cập. Hỏi từng phần còn thiếu, đưa bản để tôi duyệt rồi mới tính; trả báo cáo cùng link mở trên web để tôi sửa/tính lại; Excel là tải thêm khi tôi cần. Không lưu thực đơn vào tài khoản nếu tôi chưa yêu cầu. Nếu tôi muốn lưu và dùng lại lâu dài, hướng dẫn tôi tạo/đăng nhập tài khoản và kết nối trong chat. Nếu cuộc chat chưa có công cụ Dinh dưỡng 2598, chỉ tôi cách bật kết nối tại ${links.setup}; không báo đã tính khi chưa gọi được hệ thống.`;
 }
 
 export function nutritionStartMessage(origin: string) {
@@ -30,19 +30,21 @@ Nếu chưa kết nối tài khoản, dùng start_guest_session để tra kho ch
 
 Tự xử lý phiên tạm khi cần làm việc, không yêu cầu tôi bấm tạo token, sao chép accessToken hoặc học tên công cụ. Nếu tôi muốn lưu/dùng lâu dài, hướng dẫn tại ${links.start}#luu-lau-dai; đăng nhập website chưa đồng nghĩa kết nối chat. Giữ nguyên đầu vào khi chuyển sang tài khoản, prepare lại bằng kết nối tài khoản và chờ tôi duyệt trước save_menu; không dùng confirmationToken của phiên tạm để lưu tài khoản.
 
+Có món luộc/hấp thì hỏi nước chấm và lượng thực dùng, tra dữ liệu thật rồi đưa vào tính sau khi tôi chọn; không tự thêm nước chấm vào khẩu phần24giờ đã ăn. Trả webUrl từ prepare để tôi có thể sửa đầu vào trên web; bản tạm30phút không cần đăng nhập.
+
 Hỏi các phần tôi chưa cung cấp: muốn lập thực đơn hay ghi lại ăn 24 giờ, một hay nhiều ngày, các món/thực phẩm và lượng. Hỏi tối đa 3 ý mỗi lần; không hỏi lại thông tin đã có. Mặc định chỉ tính thành phần, chỉ hỏi hồ sơ cơ thể khi tôi muốn đối chiếu nhu cầu.
 
 Nếu tôi có bệnh lý/chỉ định, đọc clinicalWorkflow, dùng search_diet_codes và get_diet_code để tra mã/tên/đối tượng/ghi chú thật. Hỏi phần còn thiếu liên quan, đưa mã để tôi xác nhận rồi lưu trong clinicalContext cùng khẩu phần. Không tự chẩn đoán/chọn mã đầu/ghép nhiều mã hoặc biến khoảng tham khảo thành mục tiêu cá nhân; phần chưa rõ để chưa có dữ liệu.
 
 Chọn món theo bữa ăn và thói quen Việt Nam. Tra cả công thức RNI và món VDD, cho tôi xem vài lựa chọn thật cùng điểm khác, không tự lấy dòng đầu. Giữ món tôi đã chọn; không ép thêm bữa phụ hay đổi cơm trắng. Mọi số AI tự điền phải có * ở trước và khai aiFilledFields; không thêm * vào số JSON. Không tự bịa số còn thiếu, thông tin cơ thể hoặc hệ số quy đổi.
 
-Gọi prepare_menu, đưa review.text gọn để tôi duyệt món, lượng, suất, nguồn rồi chờ xác nhận. Sau calculate_menu, dùng chatReport.summaryText trả kcal, P–L–G, phạm vi ngày và phần thiếu; như vậy đã hoàn tất nếu tôi chỉ cần tính. Chỉ save_menu khi tôi yêu cầu lưu để dùng lại; chỉ export_workbook khi cần file và mặc định saveToAccount=false, trả link tải thật ngay, không cần tải về chat. Đọc toolGuide/recipes/recovery trong get_workflow khi chưa rõ công cụ hoặc gặp lỗi; không gọi lặp nguyên yêu cầu đang lỗi. Bản hỏi ghi 24 giờ bám Phụ lục 1 và 2 của mục 11 QĐ 2598/QĐ-BYT. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
+Gọi prepare_menu, đưa review.text gọn để tôi duyệt món, lượng, suất, nguồn rồi chờ xác nhận. Sau calculate_menu, trả webUrl thật cùng chatReport.summaryText với kcal, P–L–G, phạm vi ngày và phần thiếu; như vậy đã hoàn tất nếu tôi chỉ cần tính. Chỉ save_menu khi tôi yêu cầu lưu để dùng lại; chỉ export_workbook khi cần file và mặc định saveToAccount=false, trả link tải thật ngay, không cần tải về chat. Đọc toolGuide/recipes/recovery trong get_workflow khi chưa rõ công cụ hoặc gặp lỗi; không gọi lặp nguyên yêu cầu đang lỗi. Bản hỏi ghi 24 giờ bám Phụ lục 1 và 2 của mục 11 QĐ 2598/QĐ-BYT. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
 }
 
 export const NUTRITION_START_STEPS = [
   { title: "Sao chép lời nhắn, mở chat và gửi", text: "Dùng ChatGPT hoặc Claude đã bật kết nối Dinh dưỡng 2598. Chat tự mở phiên làm việc tạm; bạn không cần lấy mã truy cập hoặc tạo tài khoản trên website." },
   { title: "Cung cấp thông tin và duyệt bản nháp", text: "Nói mục đích, số ngày, món và lượng đã biết. Chat tra dữ liệu, hỏi từng phần còn thiếu và đưa bản để bạn kiểm tra. Có bệnh lý hoặc mã chế độ ăn thì cung cấp thêm khi được hỏi." },
-  { title: "Nhận báo cáo; chọn tải hoặc lưu", text: "Sau khi bạn đồng ý, hệ thống tính và trả báo cáo trong chat. Cần Excel thì nhận link tải. Muốn giữ thực đơn để dùng nhiều lần, xem hướng dẫn tài khoản bên dưới." },
+  { title: "Nhận báo cáo; chọn tải hoặc lưu", text: "Sau khi bạn đồng ý, hệ thống tính và trả báo cáo trong chat. Mở link kết quả để sửa và tính lại trên web. Excel là tải thêm khi cần. Muốn giữ thực đơn để dùng nhiều lần, xem hướng dẫn tài khoản bên dưới." },
 ] as const;
 
 export function nutritionStartGuide(origin: string) {
@@ -108,7 +110,9 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 - Khi người dùng đồng ý xuất kèm bản lưu, gọi export_workbook với saveToAccount=true (cần nutrition:write). Trả cả savedMenuUrl để mở lại lâu dài bằng đúng tài khoản và link tải Excel có thời hạn. Nếu chỉ tải file hoặc chưa cấp quyền lưu thì để false; không tự mở rộng quyền.
 - Dùng lại bản đã lưu: lấy ID trong link qua get_saved_menu hoặc list_saved_menus, rồi hỏi điều chỉnh và prepare/chốt/tính lại. Có thể mở link trên web để đổi ngày/lượng/suất và lưu bản dùng lại. Không yêu cầu tải Excel lên cho bước này; chỉ nhập lại khi cần lấy những sửa đổi riêng trong file offline.
 
-## 4. Trả kết quả; lưu hoặc tải Excel khi cần
+## 4. Trả link web để sửa/tính lại; Excel là tải thêm
+
+- prepare_menu có webUrl/webExpiresAt cho đầu vào ban đầu, calculate_menu có link bản đã tính. Luôn trả link thật cùng thời hạn30phút; mở/sửa/tính lại không cần tài khoản. Đầu vào được giữ tạm trong hệ thống để mở link, không tạo Ration. Không save/export chỉ để lấy link xem. Trên web sửa bản, xem trước, xác nhận rồi Tính lại để mở link bản cập nhật; bản cũ giữ để đối chiếu. Link đầy đủ cấp quyền mở đúng bản, không phải token tài khoản; không tự bỏ phần fragment khi trả link.
 
 - Sau calculate_menu, ưu tiên chatReport.summaryText gọn: kcal, g và tỷ lệ năng lượng P–L–G, phạm vi ngày và phần thiếu. chatReport.text giữ báo cáo đầy đủ để xem khi cần; không dán mọi ghi chú dài vào phần chính.
 - Chỉ tính thì kết thúc tại báo cáo, không cần lưu tài khoản. Chỉ tải Excel dùng saveToAccount=false. Quyền write không tự cho phép lưu và không được đòi write nếu người dùng chỉ tính/xuất. ToolGuide giải thích từng đầu vào/kết quả; recipes chọn luồng, recovery xử lý lỗi thay vì gọi lặp.

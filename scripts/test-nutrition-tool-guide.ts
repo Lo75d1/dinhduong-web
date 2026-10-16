@@ -9,7 +9,7 @@ import {createHash} from "node:crypto";
 async function main(){let checks=0;const check=(v:unknown)=>{assert.ok(v);checks++;};
  check(Object.keys(NUTRITION_WORKFLOW.toolGuide).length===NUTRITION_TOOLS.length);
  for(const tool of NUTRITION_TOOLS){const guide=NUTRITION_WORKFLOW.toolGuide[tool.name];check(guide.input&&guide.returns&&guide.when&&guide.next);check(tool.description.includes(guide.returns));}
- const response=nutritionMcpOutput("get_workflow",NUTRITION_WORKFLOW);check(JSON.parse(response.text).persistence.default==="none");
+ const response=nutritionMcpOutput("get_workflow",NUTRITION_WORKFLOW);check(JSON.parse(response.text).persistence.default==="temporary-web");check(NUTRITION_WORKFLOW.persistence.accountDefault==="none");check(NUTRITION_WORKFLOW.menuGuidance.includes("nước chấm"));check(NUTRITION_WORKFLOW.webEditing.accountRequired===false);
  const start=nutritionStartMessage("https://dinhduong2598.food");check(start.includes("không lưu thực đơn vào tài khoản"));check(!start.includes("Tôi muốn xem kết quả bằng link bản riêng"));check(start.includes("saveToAccount=false"));
  const text=nutritionStartGuide("https://dinhduong2598.food");check(text.includes(`có ${NUTRITION_TOOLS.length} công cụ`));check(!text.includes("13 công cụ"));
  const doctor=nutritionDoctorStartMessage("https://example.test");check(doctor.includes(nutritionStartLinks("https://example.test").text));check(!doctor.includes("accessToken"));check(!doctor.includes("confirmationToken"));check(doctor.includes("không bắt tôi tạo tài khoản"));

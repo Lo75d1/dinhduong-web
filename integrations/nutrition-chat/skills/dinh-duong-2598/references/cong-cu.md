@@ -1,8 +1,8 @@
 # Công cụ, kết quả và cách xử lý
 
-Phiên bản hướng dẫn: 1.0.6. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
+Phiên bản hướng dẫn: 1.0.7. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
 
-Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa kết nối tài khoản và chỉ cần tra/tính/Excel: gọi start_guest_session công khai, dùng accessToken trong arguments.sessionToken của công cụ tiếp theo; phiên 30 phút không tạo tài khoản. Mặc định không lưu. Đọc guidance trong TỪNG phản hồi để biết thiếu gì, phải hỏi/chờ duyệt hay được gọi công cụ nào; không coi số liệu hay confirmationToken là người dùng đã đồng ý. Không gọi lại cùng truy vấn khi không có thay đổi. Người dùng có thể chưa quen kỹ thuật: tự mở phiên cần thiết qua công cụ khi đã được yêu cầu tra/tính/Excel, không bắt họ tự lấy token hoặc học tên API. Muốn lưu/dùng lâu dài thì đọc accountUse để hướng dẫn đăng ký/đăng nhập và kết nối tài khoản; giữ đầu vào, prepare lại bằng tài khoản rồi chờ duyệt trước save, không dùng ticket guest.
+Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa kết nối tài khoản và chỉ cần tra/tính/Excel: gọi start_guest_session công khai, dùng accessToken trong arguments.sessionToken của công cụ tiếp theo; phiên 30 phút không tạo tài khoản. Mặc định không lưu. Đọc guidance trong TỪNG phản hồi để biết thiếu gì, phải hỏi/chờ duyệt hay được gọi công cụ nào; không coi số liệu hay confirmationToken là người dùng đã đồng ý. Không gọi lại cùng truy vấn khi không có thay đổi. Người dùng có thể chưa quen kỹ thuật: tự mở phiên cần thiết qua công cụ khi đã được yêu cầu tra/tính/Excel, không bắt họ tự lấy token hoặc học tên API. Muốn lưu/dùng lâu dài thì đọc accountUse để hướng dẫn đăng ký/đăng nhập và kết nối tài khoản; giữ đầu vào, prepare lại bằng tài khoản rồi chờ duyệt trước save, không dùng ticket guest. Ưu tiên trả webUrl thật từ prepare/calculate để mở đầu vào và kết quả trên web, sửa/tính lại không cần tài khoản. Bản tạm lưu đầu vào30phút; không phải bản tài khoản. Không export hoặc save chỉ để có link xem. Món luộc/hấp cần làm rõ nước chấm và lượng thực ăn; tra nguồn thật, không tự thêm vào lịch sử24giờ.
 
 ## start_guest_session — Mở phiên tạm không cần tài khoản
 
@@ -78,15 +78,15 @@ Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa 
 
 - Khi dùng: Đã có đầu vào theo menuSchema; cần kiểm phần thiếu hoặc chuẩn bị chốt.
 - Đầu vào: {input}; mode=menu hoặc recall24h; mỗi ngày có id,label,date,rows, date chưa biết dùng chuỗi rỗng.
-- Kết quả: input chuẩn hóa, preview.missingInputs, review.text, review.truncated, confirmationToken và expiresAt. Đây chưa phải người dùng đồng ý.
-- Tiếp theo: Sửa các missingInputs ảnh hưởng tính rồi prepare lại; khi đủ, trình review.text một lần và chờ đồng ý. Dùng input/token cùng phản hồi cho calculate/export/save.
+- Kết quả: input chuẩn hóa, preview.missingInputs, review.text, review.truncated, confirmationToken và expiresAt. Đây chưa phải người dùng đồng ý. Có webUrl/webExpiresAt để mở bản nháp và sửa trên web, không cần đăng nhập; đầu vào được giữ tạm30phút, chưa phải bản đã chốt.
+- Tiếp theo: Sửa các missingInputs ảnh hưởng tính rồi prepare lại; khi đủ, trình review.text một lần và chờ đồng ý. Dùng input/token cùng phản hồi cho calculate/export/save. Trả webUrl thật để người dùng có thể chuyển sang chỉnh/duyệt trên web; không bắt lưu tài khoản hoặc tải Excel.
 
 ## calculate_menu — Tính và trả báo cáo, không lưu
 
 - Khi dùng: Người dùng đã đồng ý bản prepare hiện hành; cần xem số liệu.
 - Đầu vào: {input,confirmationToken} từ cùng lần prepare; không gửi thêm saveToAccount.
-- Kết quả: chatReport.summaryText để trả ngắn; chatReport.text để xem đầy đủ; totals/dayTotals/analysis/clinicalAssessment và phần thiếu. Không có link tải hay link bản lưu.
-- Tiếp theo: Trả số liệu ngay. Kết thúc nếu chỉ tính; export khi cần file, save chỉ khi người dùng yêu cầu lưu. Không bắt lưu để hoàn tất tính.
+- Kết quả: chatReport.summaryText/text, totals/dayTotals/analysis/clinicalAssessment cùng webUrl/webExpiresAt. Link mở bản tạm đã tính, xem/sửa/tính lại không cần đăng nhập; lưu đầu vào30phút, không tạo Ration. Không có link Excel nếu chưa xuất.
+- Tiếp theo: Trả tóm tắt cùng webUrl và thời hạn; người dùng mở để sửa trên hệ thống thay vì chat. Excel là tải thêm trên web hoặc export khi họ cần; chỉ save khi yêu cầu giữ lâu dài.
 
 ## save_menu — Lưu hoặc cập nhật thực đơn riêng
 
@@ -113,19 +113,20 @@ Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa 
 
 - Khi dùng: Người dùng yêu cầu file Excel của bản đã xác nhận; cần nutrition:export.
 - Đầu vào: {input,confirmationToken,saveToAccount:false}; chỉ true khi được yêu cầu lưu và có nutrition:write.
-- Kết quả: downloadUrl/expiresAt/filename; savedMenuUrl có thể null. Link tải tạm10phút; không cần tải file vào chat để hoàn tất.
+- Kết quả: downloadUrl/expiresAt/filename; savedMenuUrl có thể null. Link tải tạm10phút; không cần tải file vào chat để hoàn tất. Đồng thời có webUrl/webExpiresAt để xem/sửa bản tạm trên web không cần tài khoản; đây không phải savedMenuUrl lâu dài.
 - Tiếp theo: Trả link server ngay. Không gọi calculate/export lặp chỉ để tải lại. File offline không tự đồng bộ; chỉ yêu cầu nhập lại nếu họ đã sửa file.
 
 ## Các luồng
 
 - **Không cần tài khoản:** get_workflow → start_guest_session → giữ accessToken trong arguments.sessionToken cho mỗi tool tra/tính/xuất → tra kho → prepare → hỏi/chờ người dùng duyệt → calculate hoặc export_workbook saveToAccount=false. Không lưu hoặc đọc dữ liệu cá nhân. Đọc guidance sau từng phản hồi; không tạo phiên mới để vượt hạn mức.
-- **Chỉ tính, không lưu:** Tra kho → prepare_menu → trình review.text, xử lý missingInputs → người dùng đồng ý → calculate_menu → trả chatReport.summaryText. Không save_menu, không export nếu chưa cần file.
+- **Chỉ tính, không lưu:** Tra kho → prepare_menu → đưa review.text và webUrl để duyệt/sửa trên web → người dùng đồng ý → calculate_menu → trả chatReport.summaryText cùng webUrl30phút. Không tạo bản tài khoản; Excel chỉ tải thêm khi cần.
 - **Chỉ tải Excel, không lưu:** Tra kho → prepare_menu → người dùng đồng ý → export_workbook với saveToAccount=false → trả downloadUrl. Không cần tạo bản tài khoản và không bắt tải file vào cuộc chat.
 - **Lưu để dùng lại:** Sau khi duyệt đầu vào, save_menu theo yêu cầu → trả ration.url. Lần sau get_saved_menu, hỏi phần muốn đổi, prepare lại trước tính/lưu.
 - **Có bệnh lý/chỉ định:** Hỏi dữ kiện liên quan còn thiếu → search_diet_codes → get_diet_code → trình mã/ghi chú để xác nhận → clinicalContext → prepare/chốt/tính. Không có mã vẫn tính thành phần, không kết luận đạt chế độ bệnh lý.
 
 ## Khi không hoàn thành
 
+- **410 bản tạm:** Link hết hạn hoặc thiếu quyền mở: lấy đúng link đầy đủ từ chat hoặc yêu cầu tạo link mới từ đầu vào còn giữ. Không thử ID khác và không bắt đăng ký chỉ để sửa bản tạm. Giữ lâu dài thì lưu tài khoản theo yêu cầu.
 - **Không có công cụ trong phiên:** Chỉ giải thích kết nối/cập nhật plugin; vẫn làm rõ bữa ăn. Link/QR/token không tự thêm công cụ cho AI, không giả vờ đã gọi server.
 - **401/403:** Phiên tạm hết hạn: start_guest_session rồi prepare và duyệt lại. Thao tác tài khoản cần OAuth đúng scope; không tự nâng quyền. Token cá nhân và mật khẩu không gửi vào chat. Token phiên tạm do công cụ giữ nội bộ, không hiện cho người dùng.
 - **400:** Đọc field/message, sửa đúng tham số theo schema một lần; ID phải lấy từ lookup, mode chỉ menu/recall24h, ngày chưa biết là chuỗi rỗng. Không gửi lại nguyên lỗi.

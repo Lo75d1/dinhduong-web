@@ -1,5 +1,5 @@
 import "server-only";
-import type { NutritionIdentity } from "./contracts";
+import type { NutritionIdentity, ResolvedMenu } from "./contracts";
 import { NUTRIENT_KEYS, NutritionInputError } from "./validation";
 import { searchNutritionFoods, getNutritionFood, searchNutritionDishes, getNutritionDish, searchNutritionDietCodes, loadNutritionDietCode } from "./repository";
 import { validateOperationObject, operationId, prepareNutritionMenu, confirmedNutritionMenu, saveNutritionMenu, listSavedNutritionMenus, getSavedNutritionMenu } from "./service";
@@ -9,10 +9,13 @@ import { enforceNutritionRateLimit, NutritionSecurityError } from "./security";
 import { nutritionChatReport } from "./chat-report";
 import { listPersonalLibrary, getPersonalLibraryItem, personalLibraryKind } from "@/lib/personal-library";
 import { GUEST_TOOL_NAMES, nutritionResponseGuidance } from "./response-guidance";
+import { createWebMenu } from "./web-menu";
 
 export async function executeNutritionTool(name:string,value:unknown,identity:NutritionIdentity) {
   if(identity.kind==="guest" && !GUEST_TOOL_NAMES.includes(name))throw new NutritionSecurityError("guest_account_required",403,"Thao tác này cần tài khoản; phiên tạm chỉ tra kho chung, tính và xuất file.");
   const result=await executeOperation(name,value,identity);
+  if(name==="prepare_menu"){const prepared=result as Awaited<ReturnType<typeof prepareNutritionMenu>>;return {...prepared,...await createWebMenu(prepared.preview,identity,"draft"),guidance:nutritionResponseGuidance(name,prepared,identity)};}
+  if(name==="calculate_menu")return {...result,...await createWebMenu(result as ResolvedMenu,identity,"calculated"),guidance:nutritionResponseGuidance(name,result,identity)};
   return {...result,guidance:nutritionResponseGuidance(name,result,identity)};
 }
 async function executeOperation(name:string,value:unknown,identity:NutritionIdentity) {
@@ -51,5 +54,5 @@ async function executeOperation(name:string,value:unknown,identity:NutritionIden
   if(name==="export_workbook" && a.saveToAccount===true && !identity.scopes.includes("nutrition:write"))throw new NutritionSecurityError("insufficient_scope",403,"Cần cấp quyền lưu thực đơn để lưu cùng file Excel.","nutrition:write");
   const menu=await confirmedNutritionMenu(a,identity);
   if(name==="export_workbook" && a.saveToAccount===true)await saveNutritionMenu({...a,idempotencyKey:`export-${menu.digest}`},identity);
-  return name==="export_workbook"?exportNutritionMenu(menu,identity):{...menu,chatReport:nutritionChatReport(menu)};
+  return name==="export_workbook"?{...await exportNutritionMenu(menu,identity),...await createWebMenu(menu,identity,"calculated")}:{...menu,chatReport:nutritionChatReport(menu)};
 }

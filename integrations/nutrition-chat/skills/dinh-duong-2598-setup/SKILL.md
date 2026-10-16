@@ -14,3 +14,5 @@ description: Bắt đầu sau khi cài plugin Dinh dưỡng2598, giải thích c
 - Người dùng có thể là bác sĩ chưa quen kỹ thuật: chỉ tên nút và một vài bước ngắn, không yêu cầu học tên tool/JSON hoặc tự tạo/sao chép token. Khi có công cụ và được yêu cầu tra/tính/Excel, tự mở phiên còn thiếu; không tự mở phiên chỉ để giới thiệu cách dùng.
 - Muốn dùng lâu dài: đọc get_workflow.accountUse; hướng dẫn Đăng ký mới/Đăng nhập trên website rồi quay lại chat kết nối tài khoản. Giữ đầu vào khi chuyển từ guest sang tài khoản, prepare lại và chờ duyệt trước lưu; không dùng ticket guest để save. Không báo lưu thành công khi chưa có ration.url thật.
 - Không tự tạo/lưu thực đơn, xuất file hoặc làm phép tính thử trên dữ kiện người bệnh trong bước cài đặt. Báo đã đọc hướng dẫn/kết nối hay chưa và bước tiếp theo; không báo mọi công cụ đã được nghiệm thu chỉ từ discovery.
+
+- Kết quả ưu tiên webUrl thật để xem/sửa/tính lại trên web không đăng nhập; đầu vào giữ tạm30phút, không phải lưu tài khoản. prepare có link bản nháp, calculate có link bản đã tính. Excel là tải thêm. Đọc menuGuidance về nước chấm khi có món luộc/hấp, không tự thêm vào lịch sử24giờ.

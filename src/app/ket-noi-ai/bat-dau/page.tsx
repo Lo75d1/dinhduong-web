@@ -21,7 +21,7 @@ export default function StartNutritionChatPage() {
     <header className="border-b border-[#b1c8bd] pb-6">
       <p className="text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · BẮT ĐẦU HỘI THOẠI</p>
       <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">Quét QR hoặc dán link vào chat.</h1>
-      <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-700">Bạn nói mục đích và bữa ăn; chat hỏi phần còn thiếu, đưa bản để bạn duyệt rồi trả báo cáo. Khi đã bật kết nối Dinh dưỡng 2598, chat tự mở phiên tạm, bạn không cần lấy mã truy cập.</p>
+      <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-700">Bạn nói mục đích và bữa ăn; chat hỏi phần còn thiếu, đưa bản để bạn duyệt rồi trả báo cáo cùng link để mở, sửa và tính lại trên web. Khi đã bật kết nối Dinh dưỡng 2598, chat tự mở phiên tạm, bạn không cần lấy mã truy cập.</p>
       <p className="mt-3 font-semibold">Chỉ tra, tính hoặc lấy Excel: không cần tài khoản Dinh dưỡng 2598. <a href="#luu-lau-dai" className="underline underline-offset-4">Muốn lưu và dùng lại lâu dài?</a></p>
     </header>
     <div className="grid items-start gap-6 md:grid-cols-[1fr_220px]">

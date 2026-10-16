@@ -23,6 +23,7 @@ export function nutritionMcpOutput(name:string,result:unknown):{text:string;data
   else if(name==="prepare_menu" || name==="get_saved_menu")data={...record,preview:summary(record.preview as ResolvedMenu),...(Array.isArray(record.history)?{history:record.history.map(entry=>({revision:entry.revision,confirmedAt:entry.confirmedAt,dataVersion:entry.dataVersion,changedRowCount:entry.changes?.length??0})),historyDetailsCompacted:true}:{})};
   else if(name==="calculate_menu")data={...summary(result as ResolvedMenu),chatReport:nutritionChatReport(result as ResolvedMenu)};
   if(record.guidance && data && typeof data==="object")data={...data,guidance:record.guidance};
+  if(record.webUrl && data && typeof data==="object")data={...data,webUrl:record.webUrl,webExpiresAt:record.webExpiresAt,webStorage:record.webStorage};
   text=JSON.stringify(data);
   if(size(text,data,false)>NUTRITION_MCP_MAX_RESULT_CHARACTERS)throw new NutritionInputError("Đầu vào/kết quả vượt giới hạn hội thoại. Chia thành kỳ nhỏ hơn hoặc dùng trang web/REST để giữ đủ dữ liệu; không gửi kết quả bị cắt.","mcp_result",413);
   return {text,data,includeStructured:size(text,data,true)<=NUTRITION_MCP_MAX_RESULT_CHARACTERS};

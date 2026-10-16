@@ -53,7 +53,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-base text-neutral-800">
             <li><b>Mở hướng dẫn</b> bằng mã QR hoặc nút bên dưới.</li>
             <li><b>Sao chép lời nhắn, mở chat và gửi.</b> Lần đầu được chỉ cách bật kết nối.</li>
-            <li><b>Duyệt bản nháp, nhận báo cáo.</b> Chat tự mở phiên tạm; bạn không cần lấy mã truy cập.</li>
+            <li><b>Duyệt bản nháp, nhận báo cáo.</b> Mở link để sửa và tính lại trên web. Chat tự mở phiên tạm; bạn không cần lấy mã truy cập.</li>
           </ol>
           <div className="mt-6 flex flex-wrap gap-4">
             <Link href="/ket-noi-ai/bat-dau" className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#123c36] px-5 py-3 text-lg font-semibold text-white hover:bg-[#0b302b] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]">Bắt đầu và xem hướng dẫn →</Link>
