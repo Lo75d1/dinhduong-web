@@ -9,6 +9,7 @@
   "keywords": ["nutrition", "vietnamese", "meal-planning", "excel"],
   "extensions": {
     "com.openai": {
+      "onboardingSkill": "./skills/dinh-duong-2598-setup/SKILL.md",
       "interface": {
         "displayName": "Dinh dưỡng 2598",
         "shortDescription": "Tra món, chọn mã chế độ ăn và tính khẩu phần.",

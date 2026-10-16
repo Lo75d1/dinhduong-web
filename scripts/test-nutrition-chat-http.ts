@@ -5,6 +5,7 @@ import { mkdtemp } from "node:fs/promises";
 import { removeNutritionFixtureDirectory } from "./fixtures/nutrition-oauth/safe-temp";
 import { tmpdir } from "node:os";
 import { resolve, join } from "node:path";
+import {createHash} from "node:crypto";
 import type * as Rest from "../src/app/api/nutrition/v1/[action]/route";
 import type * as Mcp from "../src/app/api/nutrition/v1/mcp/route";
 import type * as Upload from "../src/app/api/nutrition/v1/import/route";
@@ -129,6 +130,14 @@ async function main() {
     assert.equal((await anonymousInit.json()).result.protocolVersion, "2025-06-18"); checks++;
     const anonymousDiscovery = await api.mcpRoute.POST(rpcRequest("server/discover", {}, "", true));
     assert.equal(anonymousDiscovery.status, 200); checks++;
+    const discovered=(await anonymousDiscovery.json()).result;assert.ok(discovered.capabilities.extensions["io.modelcontextprotocol/skills"]);checks++;
+    const skillList=await api.mcpRoute.POST(rpcRequest("skills/list",{},""));assert.equal(skillList.status,200);checks++;
+    const skills=(await skillList.json()).result.skills;assert.equal(skills.length,2);checks++;
+    for(const skill of skills){const detail=await api.mcpRoute.POST(rpcRequest("skills/get",{uri:skill.uri},"",true));assert.deepEqual((await detail.json()).result.skill,skill);checks++;
+      for(const resource of skill.resources){const read=await api.mcpRoute.POST(rpcRequest("resources/read",{uri:resource.uri},""));assert.equal(read.status,200);checks++;const contents=(await read.json()).result.contents;assert.equal(contents.length,1);checks++;assert.equal(contents[0].uri,resource.uri);checks++;assert.equal(`sha256:${createHash("sha256").update(contents[0].text,"utf8").digest("hex")}`,resource.digest);checks++;}}
+    assert.equal((await api.mcpRoute.POST(rpcRequest("resources/read",{uri:"file:///etc/passwd"},""))).status,404);checks++;
+    assert.equal((await api.mcpRoute.POST(rpcRequest("resources/read",{uri:"skill://dinh-duong-2598/../.env"},""))).status,404);checks++;
+    assert.equal((await api.mcpRoute.POST(rpcRequest("skills/list",{cursor:"unknown"},""))).status,400);checks++;
     const anonymousWorkflow = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "get_workflow", arguments: {} }, "", true));
     assert.equal(anonymousWorkflow.status, 200); checks++;
     assert.equal((await anonymousWorkflow.json()).result.structuredContent.name, "Dinh dưỡng 2598"); checks++;

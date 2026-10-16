@@ -42,19 +42,29 @@ if (!/^---\r?\nname: dinh-duong-2598\r?\ndescription: [^\r\n]+\r?\n---\r?\n/.tes
 const files = await sourceFiles(source);
 const pluginZip = new JSZip();
 const skillZip = new JSZip();
+const skillResources = {};
 for (const file of files) {
   const path = relative(source, file).split("\\").join("/");
   let content = (await readFile(file, "utf8")).replaceAll("https://dinhduong2598.food", publicUrl.origin).replaceAll("\r\n", "\n");
   if (/-----BEGIN [A-Z ]*PRIVATE KEY-----|(?:clientSecret|client_secret|Authorization)\s*[":=]+\s*["']?(?:Bearer\s+)?[A-Za-z0-9_-]{24,}/.test(content)) throw new Error(`Credential-like value in ${path}`);
   if (path.endsWith(".json")) JSON.parse(content);
   pluginZip.file(path, content, { date: fixedDate, createFolders: false });
+  const resourcePath = /^skills\/([^/]+)\/(.+)$/.exec(path);
+  if(resourcePath){const uri=`skill://dinh-duong-2598/${resourcePath[1]}/${resourcePath[2]}`;skillResources[uri]={uri,mimeType:"text/markdown",text:content};}
   if (path.startsWith("skills/dinh-duong-2598/")) skillZip.file(path.slice("skills/".length), content, { date: fixedDate, createFolders: false });
 }
+const skillCatalog = Object.values(skillResources).filter(resource=>resource.uri.endsWith("/SKILL.md")).map(resource=>{
+  const header=/^---\n([\s\S]+?)\n---\n/.exec(resource.text);if(!header)throw Error("Missing skill frontmatter");
+  const frontmatter={};for(const line of header[1].split("\n")){const field=/^([a-zA-Z][a-zA-Z0-9_-]*): (.+)$/.exec(line);if(!field)throw Error("Unsupported scalar skill frontmatter");frontmatter[field[1]]=field[2];}
+  const directory=resource.uri.slice(0,-"SKILL.md".length);if(directory.split("/").at(-2)!==frontmatter.name||!frontmatter.description)throw Error("Skill name/path mismatch");
+  return {uri:resource.uri,frontmatter,resources:Object.values(skillResources).filter(item=>item.uri.startsWith(directory)).map(item=>({uri:item.uri,digest:`sha256:${createHash("sha256").update(item.text,"utf8").digest("hex")}`}))};
+});
 await mkdir(output, { recursive: true });
 const assets = [
   ["dinh-duong-2598-plugin.zip", await pluginZip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 9 } })],
   ["dinh-duong-2598-skill.zip", await skillZip.generateAsync({ type: "nodebuffer", compression: "DEFLATE", compressionOptions: { level: 9 } })],
   ["huong-dan-ket-noi.md", Buffer.from((await readFile(join(root, "docs", "nutrition-chat", "ket-noi.md"), "utf8")).replaceAll("https://dinhduong2598.food", publicUrl.origin).replaceAll("\r\n", "\n"))],
+  ["mcp-skills.json",Buffer.from(JSON.stringify({skills:skillCatalog,resources:skillResources}))],
 ];
 const checksums = [];
 for (const [name, content] of assets) {
