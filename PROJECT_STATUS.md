@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Đủ nguyên liệu khi duyệt, link vào Tính khẩu phần và Excel — 16/10/2026
+
+- App **6299385** healthy, guide/plugin **1.0.10**/16tool. Bản nháp đầu tiên phải hiện tất cả nguyên liệu/lượng dưới món ngay trong chat; approvalPresentation theo từng phản hồi prepare/get_saved_menu, không chỉ hướng dẫn cài. Link mở Tính khẩu phần với hai bước Nhập khẩu phần/Kết quả, ngày/bữa/món và bảng nguyên liệu; link cũ tương thích, bản nhập thủ công giữ riêng. Tái dùng Calculator/editor/engine/API, không ép về Row gram làm mất ml/suất/nguồn/quy đổi.
+- Sửa lỗi nhận nhầm Food VDD loại MA trong công thức RNI thành món độc lập, che tên thành phần và món cha trong review/web/phiếu/Excel. VPS có923 liên kết loại này. Ngữ cảnh recipeSource.dishId giữ đúng dòng nguyên liệu và kcal/P/L/G; VDD độc lập vẫn không tự có thành phần. Guard sống sạch giữ riêng, không thay phép tính/kho/layout/migration. File cũ cần xuất lại.
+- Full suite sau UI/HTTP347/guide89/SSR18 và hồi quy sau vá review61/full report/TypeScript/lint đạt. Native fixture15 + **HTTPS71**/11assets + Excel thật **native20** đạt: hai nguyên liệu RNI gồm VDD MA giữ tên/số riêng, sửa lượng/suất tính đúng; bản in1trang đã xem. Fixture/token tạm dọn, account/session/Ration/OAuth count không đổi; canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm click/hydration/mobile hoặc AI thật vì browser không kết nối. Chi tiết `docs/nutrition-chat/ingredient-review-calculator-2026-10-16.md`; PR#4 draft/chưa merge.
+
 ## Link bản tạm sửa trên web và nước chấm — 16/10/2026
 
 - App **ea26cdf** healthy trên VPS, nhánh `codex/nutrition-chat-api`/PR#4 draft/chưa merge. Prepare có link đầu vào nháp, calculate/export có link bản đã tính; mở/sửa/tính lại không cần đăng nhập, hạn30phút. Đầu vào giữ riêng trong vùng tạm, không tạo tài khoản/Ration. Link mới giữ bản cập nhật, link cũ giữ đầu vào cũ; Excel là tải thêm. Muốn giữ lâu dài mới đăng nhập tab mới, prepare bằng tài khoản và duyệt lại để save.
