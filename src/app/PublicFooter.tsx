@@ -9,9 +9,11 @@ type Settings = {
   phone?: string;
   zaloUrl?: string;
   totalVisits?: number | null;
+  nutritionConnections?: { chatgpt: number | null; claude: number | null };
 };
 
 const fallback: Settings = { contactName: "Bộ phận hỗ trợ" };
+const connectionCount = (value: number | null | undefined) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value.toLocaleString("vi-VN") : "—";
 
 export default function PublicFooter() {
   const [settings, setSettings] = useState<Settings>(fallback);
@@ -47,7 +49,14 @@ export default function PublicFooter() {
           <Link href="/khao-sat" className="mt-1 block font-semibold text-[#123c36] hover:underline">Khảo sát mức độ dễ dùng (SUS)</Link>
         </div>
       </div>
-      {typeof settings.totalVisits === "number" && <p className="mt-5 border-t border-[#e1e7e3] pt-3 text-center text-xs text-neutral-500">{settings.totalVisits.toLocaleString("vi-VN")} lượt truy cập</p>}
+      <div className="mt-5 border-t border-[#e1e7e3] px-5 pt-3 text-center text-xs text-neutral-500">
+        {typeof settings.totalVisits === "number" && <p>{settings.totalVisits.toLocaleString("vi-VN")} lượt truy cập</p>}
+        <p className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[12px] leading-5 text-[#6b7280]" title="Lũy kế lượt kết nối được người dùng cấp quyền thành công từ khi bật thống kê.">
+          <span>Lượt kết nối</span>
+          <span>ChatGPT: {connectionCount(settings.nutritionConnections?.chatgpt)}</span>
+          <span>Claude: {connectionCount(settings.nutritionConnections?.claude)}</span>
+        </p>
+      </div>
     </footer>
   );
 }

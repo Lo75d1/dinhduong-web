@@ -110,6 +110,21 @@ export default function RootLayout({
               >
                 Tính khẩu phần
               </Link>
+              <a
+                href="https://suatanbv.io.vn/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Mở Suất ăn bệnh viện tại suatanbv.io.vn (tab mới)"
+                className="rounded-md border-2 border-[#d7aa43] bg-[#f4cd70] px-4 py-1.5 font-bold text-[#123c36] transition-colors hover:bg-[#ffe3a1] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]"
+              >
+                Suất ăn bệnh viện <span aria-hidden="true">↗</span>
+              </a>
+              <Link
+                href="/ket-noi-ai/bat-dau"
+                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
+              >
+                ChatGPT &amp; Claude
+              </Link>
             </div>
             {/* Chỗ để trang tự chèn thanh riêng (vd bước 1/2 của Tính khẩu phần) — ẩn khi rỗng. */}
             <div id="header-page-slot" className="header-page-slot order-3 flex w-full min-w-0 justify-center sm:order-2 sm:w-auto sm:flex-1"></div>

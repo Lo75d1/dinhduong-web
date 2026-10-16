@@ -1,11 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { defaultSiteSettings } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const query = await searchParams;
+  if (Object.keys(query).some(key => key === "fbclid" || key === "mibextid" || key.startsWith("utm_"))) {
+    redirect("/");
+  }
   const [foodCount, dishCount, settings] = await Promise.all([
     prisma.food.count(),
     prisma.dish.count(),
@@ -21,29 +26,62 @@ export default async function Home() {
   const zaloUrl = settings?.zaloUrl || defaultSiteSettings.zaloUrl;
   const offlineUrl = settings?.offlineDownloadUrl || "";
   return <div className="-mx-5 -my-8 overflow-hidden bg-[#f1f6f4] sm:-mx-8">
+    <aside aria-labelledby="hospital-meals-title" className="border-b-4 border-[#d7aa43] bg-[#123c36] px-5 py-6 text-white sm:px-10 lg:px-16">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p id="hospital-meals-title" className="text-2xl font-bold sm:text-3xl">Suất ăn bệnh viện</p>
+          <p className="mt-1 text-base text-[#e2ede6]">Hệ thống quản lý suất ăn · suatanbv.io.vn</p>
+        </div>
+        <a href="https://suatanbv.io.vn/" target="_blank" rel="noopener noreferrer" aria-label="Mở Suất ăn bệnh viện tại suatanbv.io.vn (tab mới)" className="inline-flex min-h-12 items-center justify-center gap-3 self-start rounded-md border-2 border-[#f4cd70] bg-[#f4cd70] px-6 py-3 text-lg font-bold text-[#123c36] transition-colors hover:border-white hover:bg-white active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:shrink-0">
+          Mở hệ thống suất ăn <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </aside>
     <section className="relative min-h-[510px] overflow-hidden border-b-4 border-[#123c36] bg-[#e6f1f2] px-5 py-12 sm:px-10 sm:py-16 lg:px-16">
-      <Image src="/dinh-duong-2597-cover.jpg" alt="Rau xanh, thực phẩm lành mạnh và biểu mẫu đánh giá dinh dưỡng" fill priority sizes="100vw" className="object-cover object-center" />
+      <Image src="/dinh-duong-2597-cover.jpg" alt="Thực phẩm và biểu mẫu đánh giá dinh dưỡng" fill priority sizes="100vw" className="object-cover object-center" />
       <div className="absolute inset-0 bg-gradient-to-r from-[#eef8fb]/[.97] via-[#eef8fb]/[.87] to-white/20" />
       <div className="relative mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.35fr_.65fr] lg:items-end">
-        <div className="[animation:clinical-enter_450ms_ease_both]"><p className="text-sm font-semibold tracking-[0.16em] text-[#123c36]">DINH DƯỠNG 2598</p><h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-[#123c36] sm:text-5xl">Dữ liệu khẩu phần rõ ràng cho từng quyết định chăm sóc.</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-neutral-900">Tra cứu thực phẩm, tính khẩu phần và xuất báo cáo.</p><div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#123c36]"><span className="rounded-full border border-[#52786d] bg-white/90 px-3 py-1">✓ DỮ LIỆU CÓ NGUỒN</span><span>Viện Dinh dưỡng · RNI · Bộ Y tế · WHO</span></div><div className="mt-7 flex flex-wrap gap-3"><Link href="/tinh-khau-phan" className="rounded-md bg-[#123c36] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#0b302b]">Mở phiếu tính khẩu phần →</Link><Link href="/thuc-pham" className="rounded-md border-2 border-[#123c36] bg-white/90 px-5 py-3 font-semibold text-[#123c36] hover:bg-white">Tra cứu thực phẩm</Link>{offlineUrl && <a href={offlineUrl} target="_blank" rel="noreferrer" className="rounded-md border-2 border-[#a77b10] bg-[#fff9e8] px-5 py-3 font-semibold text-[#73540d] hover:bg-white">⬇ Tải bản Excel offline</a>}</div></div>
-        <aside className="rounded-xl border-2 border-[#9dbbae] bg-white/95 p-5 shadow-[0_10px_25px_rgba(18,60,54,0.12)] [animation:clinical-enter_550ms_ease_both]"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">TÌNH TRẠNG HỆ THỐNG</p><div className="mt-4 space-y-3"><Metric label="Thực phẩm / sản phẩm" value={foodCount.toLocaleString("vi-VN")} /><Metric label="Món ăn có công thức" value={dishCount.toLocaleString("vi-VN")} /><div className="border-t border-[#adc4b9] pt-3 text-sm text-neutral-900"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-700" />Dữ liệu hiển thị theo 100 g phần ăn được</div></div></aside>
+        <div className="[animation:clinical-enter_450ms_ease_both]"><p className="text-sm font-semibold tracking-[0.16em] text-[#123c36]">DINH DƯỠNG 2598</p><h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-tight text-[#123c36] sm:text-5xl">Tra cứu thực phẩm và phân tích khẩu phần</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-neutral-900">Xem thành phần dinh dưỡng và công thức món ăn. Lập khẩu phần theo bữa, tính năng lượng, tỷ lệ các chất sinh năng lượng và xuất báo cáo.</p><div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#123c36]"><span className="rounded-full border border-[#52786d] bg-white/90 px-3 py-1">DỮ LIỆU VÀ TÀI LIỆU THAM KHẢO</span><span>Viện Dinh dưỡng · RNI · Bộ Y tế · WHO</span></div><div className="mt-7 flex flex-wrap gap-3"><Link href="/tinh-khau-phan" className="rounded-md bg-[#123c36] px-5 py-3 font-semibold text-white shadow-sm hover:bg-[#0b302b]">Tính khẩu phần →</Link><Link href="/ket-noi-ai/bat-dau" className="rounded-md border-2 border-[#123c36] bg-white/90 px-5 py-3 font-semibold text-[#123c36] hover:bg-white">Nhập qua ChatGPT / Claude →</Link><Link href="/thuc-pham" className="rounded-md border-2 border-[#123c36] bg-white/90 px-5 py-3 font-semibold text-[#123c36] hover:bg-white">Tra cứu thực phẩm</Link>{offlineUrl && <a href={offlineUrl} target="_blank" rel="noreferrer" className="rounded-md border-2 border-[#a77b10] bg-[#fff9e8] px-5 py-3 font-semibold text-[#73540d] hover:bg-white">Tải bảng tính Excel</a>}</div></div>
+        <aside className="rounded-xl border-2 border-[#9dbbae] bg-white/95 p-5 shadow-[0_10px_25px_rgba(18,60,54,0.12)] [animation:clinical-enter_550ms_ease_both]"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">DỮ LIỆU TRA CỨU</p><div className="mt-4 space-y-3"><Metric label="Thực phẩm và món ăn" value={foodCount.toLocaleString("vi-VN")} /><Metric label="Công thức món ăn" value={dishCount.toLocaleString("vi-VN")} /><div className="border-t border-[#adc4b9] pt-3 text-sm text-neutral-900"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-700" />Đơn vị và cơ sở tính được ghi theo từng nguồn.</div></div></aside>
+      </div>
+    </section>
+    <section id="huong-dan-hoi-thoai" aria-labelledby="chat-start-title" className="border-b-2 border-[#9bb6ab] bg-white px-5 py-9 text-[#123c36] sm:px-10 lg:px-16">
+      <div className="mx-auto grid max-w-6xl gap-7 md:grid-cols-[1fr_230px] md:items-center">
+        <div>
+          <h2 id="chat-start-title" className="max-w-3xl text-2xl font-semibold leading-tight sm:text-3xl">Nhập khẩu phần qua ChatGPT hoặc Claude</h2>
+          <p className="mt-3 max-w-3xl text-lg leading-8 text-neutral-800">Quét mã QR hoặc mở hướng dẫn, sao chép lời nhắn và gửi vào chat. Chat sẽ hỏi từng phần, tra món và chuẩn bị bản để bạn duyệt trước khi tính.</p>
+          <ol className="mt-4 list-decimal space-y-2 pl-5 text-base text-neutral-800">
+            <li><b>Mở hướng dẫn</b> bằng mã QR hoặc nút bên dưới.</li>
+            <li><b>Sao chép lời nhắn, mở chat và gửi.</b> Lần đầu được chỉ cách bật kết nối.</li>
+            <li><b>Duyệt bản nháp, nhận báo cáo.</b> Mở link để sửa và tính lại trên web. Chat tự mở phiên tạm; bạn không cần lấy mã truy cập.</li>
+          </ol>
+          <div className="mt-6 flex flex-wrap gap-4">
+            <Link href="/ket-noi-ai/bat-dau" className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#123c36] px-5 py-3 text-lg font-semibold text-white hover:bg-[#0b302b] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]">Bắt đầu và xem hướng dẫn →</Link>
+            <Link href="/ket-noi-ai/bat-dau#luu-lau-dai" className="inline-flex min-h-12 items-center py-3 font-semibold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]">Muốn lưu và dùng lại lâu dài?</Link>
+          </div>
+          <p className="mt-4 text-base text-neutral-700">Chỉ tra, tính hoặc lấy Excel: không cần tài khoản Dinh dưỡng 2598. Cần lưu thực đơn để dùng lại thì tạo tài khoản theo hướng dẫn.</p>
+        </div>
+        <figure className="flex flex-col items-center gap-3 rounded-lg border-2 border-[#123c36] bg-[#f7faf8] p-4">
+          <Image src="/ket-noi-ai/bat-dau/qr.png" width={200} height={200} unoptimized alt="Quét QR để mở hướng dẫn dùng Dinh dưỡng 2598 trong chat" className="h-48 w-48 bg-white" />
+          <figcaption className="text-center text-base font-semibold">Quét bằng camera điện thoại<br /><span className="font-normal">Mở hướng dẫn từng bước</span></figcaption>
+        </figure>
       </div>
     </section>
     <section className="relative overflow-hidden px-5 py-10 sm:px-10 lg:px-16">
       <Image src="/dinh-duong-2597-cover.jpg" alt="" fill aria-hidden className="object-cover object-center opacity-[0.14]" />
-      <div className="relative mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">QUY TRÌNH LÀM VIỆC</p><h2 className="mt-1 text-2xl font-semibold text-[#123c36]">Chọn điểm bắt đầu</h2></div></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Link href="/thuc-pham" className="clinical-card group rounded-xl border-2 border-[#7f948d] bg-white p-6 hover:-translate-y-0.5 hover:border-[#123c36]"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">01 · TRA CỨU</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Thực phẩm và món ăn</h3><p className="mt-3 text-neutral-900">Tìm theo tên; xem giá trị trên 100 g.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Mở tra cứu →</span></Link><Link href="/tinh-khau-phan" className="clinical-card group rounded-xl border-2 border-[#123c36] bg-[#f8fcfa] p-6 hover:-translate-y-0.5 hover:bg-white"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">02 · PHÂN TÍCH</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Phiếu tính khẩu phần</h3><p className="mt-3 text-neutral-900">Nhập theo bữa, đối chiếu nhu cầu và xuất báo cáo.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Bắt đầu tính →</span></Link></div></div>
+      <div className="relative mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">CHỨC NĂNG</p><h2 className="mt-1 text-2xl font-semibold text-[#123c36]">Tra cứu và tính khẩu phần</h2></div></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Link href="/thuc-pham" className="clinical-card group rounded-xl border-2 border-[#7f948d] bg-white p-6 hover:-translate-y-0.5 hover:border-[#123c36]"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">01 · TRA CỨU</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Tra cứu thành phần dinh dưỡng</h3><p className="mt-3 text-neutral-900">Tìm thực phẩm, món ăn hoặc sản phẩm theo tên; xem thành phần dinh dưỡng, đơn vị và nguồn dữ liệu.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Tra cứu thực phẩm →</span></Link><Link href="/tinh-khau-phan" className="clinical-card group rounded-xl border-2 border-[#123c36] bg-[#f8fcfa] p-6 hover:-translate-y-0.5 hover:bg-white"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">02 · PHÂN TÍCH</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Tính và phân tích khẩu phần</h3><p className="mt-3 text-neutral-900">Nhập thực phẩm và lượng ăn theo bữa. Xem năng lượng, tỷ lệ đạm–béo–bột đường, đối chiếu nhu cầu theo hồ sơ và xuất báo cáo.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Lập khẩu phần →</span></Link></div></div>
     </section>
     <section className="border-y-4 border-[#123c36] bg-white px-5 py-10 sm:px-10 lg:px-16">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">MINH BẠCH DỮ LIỆU</p><h2 className="mt-1 text-3xl font-semibold text-[#123c36]">Nguồn dữ liệu &amp; căn cứ chuyên môn</h2><p className="mt-2 max-w-3xl text-neutral-900">Mỗi nhóm dữ liệu có nguồn và phạm vi sử dụng riêng. Hệ thống không tự suy diễn số liệu còn thiếu.</p></div>
-          <Link href="/tai-lieu-tham-khao" className="rounded-md border-2 border-[#123c36] px-4 py-2.5 font-semibold text-[#123c36] hover:bg-[#edf4f0]">Xem đầy đủ tài liệu nguồn →</Link>
+          <div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">TÀI LIỆU THAM KHẢO</p><h2 className="mt-1 text-3xl font-semibold text-[#123c36]">Nguồn dữ liệu và tài liệu chuyên môn</h2><p className="mt-2 max-w-3xl text-neutral-900">Thành phần thực phẩm, công thức món ăn và khuyến nghị dinh dưỡng được trình bày kèm nguồn. Các chỉ số chưa có số liệu được ghi rõ để người sử dụng đối chiếu.</p></div>
+          <Link href="/tai-lieu-tham-khao" className="rounded-md border-2 border-[#123c36] px-4 py-2.5 font-semibold text-[#123c36] hover:bg-[#edf4f0]">Xem tài liệu tham khảo →</Link>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <SourceCard index="01" title="Thành phần thực phẩm" source="Viện Dinh dưỡng Việt Nam" detail="Bảng thành phần thực phẩm Việt Nam; giá trị được trình bày theo 100 g phần ăn được." />
-          <SourceCard index="02" title="Món ăn & công thức" source="Viện Dinh dưỡng · RNI/Thực đơn gia đình" detail="Dữ liệu món ăn và công thức nguyên liệu được giữ nhãn nguồn để người dùng đối chiếu." />
-          <SourceCard index="03" title="Nhu cầu & chế độ ăn" source="Viện Dinh dưỡng · Bộ Y tế" detail="Khuyến nghị dinh dưỡng và hệ thống mã chế độ ăn bệnh lý theo căn cứ chuyên môn hiện có." />
-          <SourceCard index="04" title="Đánh giá thể trạng" source="WHO · Mifflin–St Jeor" detail="Chuẩn tăng trưởng trẻ em của WHO và công thức ước tính nhu cầu năng lượng người lớn." />
+          <SourceCard index="01" title="Thành phần dinh dưỡng" source="Viện Dinh dưỡng Việt Nam" detail="Năng lượng, các chất sinh năng lượng, vitamin và khoáng chất theo cơ sở tính ghi trong dữ liệu nguồn." />
+          <SourceCard index="02" title="Món ăn và nguyên liệu" source="Viện Dinh dưỡng · RNI" detail="Thành phần món ăn và công thức nguyên liệu. Định lượng công thức cần được điều chỉnh theo số suất sử dụng." />
+          <SourceCard index="03" title="Nhu cầu và chế độ ăn" source="Viện Dinh dưỡng · Bộ Y tế" detail="Khuyến nghị dinh dưỡng theo nhóm đối tượng và mã chế độ ăn trong bệnh viện." />
+          <SourceCard index="04" title="Năng lượng và tăng trưởng" source="WHO · Mifflin–St Jeor" detail="Chuẩn tăng trưởng trẻ em của WHO và công thức ước tính nhu cầu năng lượng ở người lớn." />
         </div>
         <p className="mt-5 rounded-lg border-l-4 border-[#a77b10] bg-[#fff9e8] p-4 text-sm text-neutral-900"><b>Lưu ý:</b> Kết quả là công cụ hỗ trợ tra cứu và phân tích, không thay thế chẩn đoán, chỉ định hoặc tư vấn trực tiếp của nhân viên y tế.</p>
       </div>
@@ -52,9 +90,9 @@ export default async function Home() {
     <section className="relative overflow-hidden px-5 pb-12 sm:px-10 lg:px-16">
       <Image src="/dinh-duong-2597-cover.jpg" alt="" fill aria-hidden className="object-cover object-center opacity-[0.14]" />
       <div className="relative mx-auto max-w-6xl rounded-xl border-2 border-[#7f948d] bg-white/95 p-6 sm:p-8">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">HỖ TRỢ &amp; LIÊN HỆ</p>
-        <h2 className="mt-1 text-2xl font-semibold text-neutral-950">Cần hỗ trợ hoặc góp ý?</h2>
-        <p className="mt-2 max-w-2xl text-neutral-900">Cần hướng dẫn, báo lỗi dữ liệu hoặc góp ý? Hãy liên hệ.</p>
+        <p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">HỖ TRỢ SỬ DỤNG</p>
+        <h2 className="mt-1 text-2xl font-semibold text-neutral-950">Hướng dẫn sử dụng và phản hồi</h2>
+        <p className="mt-2 max-w-2xl text-neutral-900">Liên hệ để được hướng dẫn sử dụng, phản ánh sai sót dữ liệu hoặc góp ý cho website.</p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <ContactCard label="Người phụ trách" value={contactName} sub={organization} />
           {phone && <ContactCard label="Điện thoại / Zalo" value={phone} href={`tel:${phone.replace(/\s/g, "")}`} />}
@@ -63,7 +101,7 @@ export default async function Home() {
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
           {zaloUrl && <a href={zaloUrl} target="_blank" rel="noreferrer" className="rounded-md bg-[#123c36] px-5 py-2.5 font-semibold text-white hover:bg-[#0b302b]">Tham gia nhóm hỗ trợ Zalo</a>}
-          <Link href="/lien-he" className="rounded-md border-2 border-[#123c36] px-5 py-2.5 font-semibold text-[#123c36] hover:bg-white">Gửi liên hệ qua website</Link>
+          <Link href="/lien-he" className="rounded-md border-2 border-[#123c36] px-5 py-2.5 font-semibold text-[#123c36] hover:bg-white">Gửi phản hồi</Link>
         </div>
       </div>
     </section>

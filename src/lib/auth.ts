@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 
 export const SESSION_COOKIE = "dinhduong_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 14;
@@ -37,14 +38,20 @@ export function verifyPassword(password: string, encoded: string): boolean {
   }
 }
 
-function hashToken(token: string) {
+export function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("base64url");
 }
 
-export async function createSession(userId: string) {
+export async function createSession(userId: string, request?: Request, expectedPasswordHash?: string) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000);
-  await prisma.session.create({ data: { userId, tokenHash: hashToken(token), expiresAt } });
+  await prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${'nutrition-user-grants:' + userId}, 0))::text`;
+    const user = await tx.user.findUnique({ where: { id: userId } });
+    if (!user || user.disabledAt || (expectedPasswordHash && user.passwordHash !== expectedPasswordHash)) throw new Error("UNAUTHORIZED");
+    await tx.session.deleteMany({ where: { userId, expiresAt: { lte: new Date() } } });
+    await tx.session.create({ data: { userId, tokenHash: hashSessionToken(token), expiresAt, userAgent: request?.headers.get("user-agent")?.slice(0, 250) || null } });
+  });
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -58,24 +65,25 @@ export async function createSession(userId: string) {
 export async function clearSession() {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
-  if (token) await prisma.session.deleteMany({ where: { tokenHash: hashToken(token) } });
+  if (token) await prisma.session.deleteMany({ where: { tokenHash: hashSessionToken(token) } });
   store.set(SESSION_COOKIE, "", { httpOnly: true, sameSite: "lax", path: "/", maxAge: 0 });
 }
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+export async function getSessionUser(database: Pick<Prisma.TransactionClient, "session"> = prisma): Promise<SessionUser | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const session = await prisma.session.findUnique({
-    where: { tokenHash: hashToken(token) },
-    include: { user: { select: { id: true, email: true, displayName: true, role: true } } },
+  const session = await database.session.findUnique({
+    where: { tokenHash: hashSessionToken(token) },
+    include: { user: { select: { id: true, email: true, displayName: true, role: true, disabledAt: true } } },
   });
-  if (!session || session.expiresAt <= new Date()) return null;
-  return session.user;
+  if (!session || session.expiresAt <= new Date() || session.user.disabledAt) return null;
+  const { id, email, displayName, role } = session.user;
+  return { id, email, displayName, role };
 }
 
-export async function requireSessionUser(): Promise<SessionUser> {
-  const user = await getSessionUser();
+export async function requireSessionUser(database: Pick<Prisma.TransactionClient, "session"> = prisma): Promise<SessionUser> {
+  const user = await getSessionUser(database);
   if (!user) throw new Error("UNAUTHORIZED");
   return user;
 }

@@ -20,7 +20,16 @@ import {
   type PeriodRecommendation,
   type StrictMetric,
 } from "./multi-day-analysis";
-import { buildMultiDayExcelXml, buildMultiDayWordHtml } from "./multi-day-export";
+import { buildMultiDayWordHtml } from "./multi-day-export";
+import { downloadNutritionExcel, webReportDietCode } from "./nutrition-excel-download";
+import NutritionExcelExport from "./NutritionExcelExport";
+import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
+import NutritionClinicalComparison from "@/app/ket-noi-ai/NutritionClinicalComparison";
+import WhoGrowthAssessment from "./WhoGrowthAssessment";
+import { WHO_GROWTH_ENTRIES } from "@/lib/who-growth";
+import { displayNumber } from "@/lib/nutrition-chat/presentation";
+import { resolvedDisplayTotal, resolvedShoppingItems } from "./resolved-ration-detail";
+import { getExchangeRule } from "./exchange-units";
 
 const TARGET_KEY = "khauphan_menu_meal_targets_v1";
 const round = (value: number) => Math.round(value * 10) / 10;
@@ -66,35 +75,42 @@ function download(content: string, type: string, filename: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-// Vi chất "chính" (hiện luôn); còn lại đẩy vào phần gập cho gọn.
-const CORE_MICRO = new Set(["fiberG", "calciumMg", "ironMg", "zincMg", "sodiumMg", "potassiumMg", "vitARaeMcg", "vitCMg"]);
 
 export default function MultiDayAnalysis({
   days,
-  profile,
+  profile: suppliedProfile,
   recommendations,
+  resolvedMenu,
+  reportActions,
 }: {
   days: MenuDay[];
   profile: Profile | null;
   recommendations: RecommendationRow[];
+  resolvedMenu?: ResolvedMenu;
+  reportActions?: React.ReactNode;
 }) {
+  // The linked snapshot owns its profile; browser/manual values cannot replace it.
+  const profile = resolvedMenu ? resolvedMenu.input.profile ?? null : suppliedProfile;
   const mealNames = useMemo(() => {
     const names: string[] = [];
     const seen = new Set<string>();
+    if (resolvedMenu) return [...new Set(resolvedMenu.days.flatMap(day => day.rows.map(row => row.meal)))];
     for (const day of days) {
       for (const meal of dayMealsOrdered(day)) {
         if (!seen.has(meal.meal)) { seen.add(meal.meal); names.push(meal.meal); }
       }
     }
     return names;
-  }, [days]);
+  }, [days, resolvedMenu]);
   const [shareText, setShareText] = useState<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
   const [kitchenMode, setKitchenMode] = useState(false);
-  useEffect(() => { try { setKitchenMode(window.localStorage.getItem("khauphan_menu_kitchen_v1") === "1"); } catch { /* localStorage bị chặn */ } }, []);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate the existing browser-only report setting after SSR.
+  useEffect(() => { if (resolvedMenu) return; try { setKitchenMode(window.localStorage.getItem("khauphan_menu_kitchen_v1") === "1"); } catch { /* localStorage bị chặn */ } }, [resolvedMenu]);
   function changeKitchen(v: boolean) { setKitchenMode(v); try { window.localStorage.setItem("khauphan_menu_kitchen_v1", v ? "1" : "0"); } catch { /* localStorage bị chặn */ } }
 
   useEffect(() => {
+    if (resolvedMenu) return;
     try {
       const raw = JSON.parse(window.localStorage.getItem(TARGET_KEY) || "{}");
       if (raw && typeof raw === "object") {
@@ -105,12 +121,12 @@ export default function MultiDayAnalysis({
       setShareText({});
     }
     setHydrated(true);
-  }, []);
+  }, [resolvedMenu]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || resolvedMenu) return;
     try { window.localStorage.setItem(TARGET_KEY, JSON.stringify(shareText)); } catch { /* không chặn UI */ }
-  }, [shareText, hydrated]);
+  }, [shareText, hydrated, resolvedMenu]);
 
   const shares = useMemo(() => Object.fromEntries(mealNames.map((meal) => {
     const value = Number.parseFloat((shareText[meal] ?? "").replace(",", "."));
@@ -119,16 +135,10 @@ export default function MultiDayAnalysis({
   const shareTotal = Object.values(shares).reduce((sum, value) => sum + value, 0);
   const sharesValid = mealNames.length > 0 && Math.abs(shareTotal - 100) <= 0.5;
   const analysis = useMemo(
-    () => analyzeMenuPeriod(days, profile, recommendations, sharesValid ? shares : {}),
-    [days, profile, recommendations, shares, sharesValid],
+    () => resolvedMenu?.analysis ?? analyzeMenuPeriod(days, profile, recommendations, sharesValid ? shares : {}),
+    [days, profile, recommendations, shares, sharesValid, resolvedMenu],
   );
-  const shopping = useMemo(() => buildPeriodShoppingList(days), [days]);
-  // #5: chỉ đối chiếu vi chất có dữ liệu nguồn; gom phần thiếu thành ghi chú thay
-  // vì một loạt "—" vô nghĩa.
-  // #5 sửa lại: VẪN hiện & tính mọi vi chất (đánh dấu chỗ thiếu), nhưng tách nhóm
-  // CHÍNH (hiện luôn) và nhóm PHỤ (gập lại) để không thành một rừng "—".
-  const coreNutrients = useMemo(() => analysis.nutrients.filter((n) => CORE_MICRO.has(n.key)), [analysis.nutrients]);
-  const otherNutrients = useMemo(() => analysis.nutrients.filter((n) => !CORE_MICRO.has(n.key)), [analysis.nutrients]);
+  const shopping = useMemo(() => resolvedMenu ? [] : buildPeriodShoppingList(days), [days, resolvedMenu]);
   const allRows = useMemo(() => days.flatMap((d) => d.rows), [days]);
   // Trung bình mỗi ngày (trên các ngày có thực phẩm) — để đối chiếu nhu cầu như 1 ngày.
   const avgTotals = useMemo(() => {
@@ -164,70 +174,74 @@ export default function MultiDayAnalysis({
           <p className="text-xs text-[#5a708c]">Phân tích {analysis.dataDayCount}/{analysis.calendarDayCount} ngày có thực phẩm · ngày trống không tính là 0 kcal.</p>
         </div>
         <div className="flex flex-wrap gap-2" data-no-print>
+          {resolvedMenu ? reportActions : <>
           <button type="button" onClick={() => download(buildMultiDayWordHtml(days, analysis, shopping, profile), "application/msword;charset=utf-8", "bao-cao-dinh-duong-toan-ky.doc")} className="rounded-md border-2 border-[#185FA5] bg-white px-3 py-1.5 text-sm font-semibold text-[#0C447C] hover:bg-[#E6F1FB]">⬇ Word</button>
-          <button type="button" onClick={() => download(buildMultiDayExcelXml(days, analysis, shopping, profile), "application/vnd.ms-excel;charset=utf-8", "bao-cao-dinh-duong-toan-ky.xls")} className="rounded-md bg-[#185FA5] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#0C447C]">⬇ Excel</button>
+          <NutritionExcelExport label="Excel đầy đủ" onExport={saveToAccount => downloadNutritionExcel(days, profile, { saveToAccount, reportContext: { kitchenMode, mealShares: shares, dietCodeId: webReportDietCode(true) } })} />
+          </>}
         </div>
       </header>
 
       {/* C · Loại thực đơn: cá nhân đủ ngày / bếp tập thể theo bữa */}
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#B5D4F4] bg-[#F4F9FE] px-3 py-2">
+      {!resolvedMenu && <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#B5D4F4] bg-[#F4F9FE] px-3 py-2">
         <span className="text-sm font-semibold text-[#0C447C]">Loại thực đơn:</span>
         <div className="inline-flex items-center gap-1 rounded-md border border-[#B5D4F4] bg-white p-0.5">
           <button type="button" onClick={() => changeKitchen(false)} aria-pressed={!kitchenMode} className={`rounded px-2.5 py-1 text-sm font-semibold ${!kitchenMode ? "bg-[#185FA5] text-white" : "text-[#5a708c]"}`}>🧑 Cá nhân — đủ ngày</button>
           <button type="button" onClick={() => changeKitchen(true)} aria-pressed={kitchenMode} className={`rounded px-2.5 py-1 text-sm font-semibold ${kitchenMode ? "bg-[#185FA5] text-white" : "text-[#5a708c]"}`}>🍲 Bếp tập thể — theo bữa</button>
         </div>
-      </div>
-      {kitchenMode && (
+      </div>}
+      {!resolvedMenu && kitchenMode && (
         <div className="rounded-lg border-l-4 border-[#185FA5] bg-[#E6F1FB] px-3 py-2 text-sm text-[#0C447C]">
           <b>Bếp tập thể:</b> thực đơn thường chỉ gồm vài bữa (không phải cả ngày) — nên số so với <b>nhu cầu cả ngày</b> chỉ để tham khảo (% đạt, trung bình), <b>không phải thiếu hụt thật</b>. Tập trung cân đối P:L:G, natri, đa dạng món và bảng đi chợ. Cờ “thiếu/đạt/vượt” theo cả ngày đã ẩn ở phần tổng.
         </div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <BigMetric title="Năng lượng toàn kỳ" value={formatNumber(analysis.totalEnergy.value, "kcal")} note={`Mục tiêu ${formatNumber(analysis.targetPeriodKcal, "kcal")}`} status={kitchenMode ? undefined : analysis.periodEnergyStatus} />
-        <BigMetric title="Thâm hụt / tăng" value={formatSigned(analysis.periodGapKcal)} note={`Bình quân ${formatSigned(analysis.averageGapKcal, "kcal/ngày")}`} status={kitchenMode ? undefined : analysis.periodEnergyStatus} />
-        <BigMetric title="Trung bình mỗi ngày" value={formatNumber(analysis.averageEnergyKcal, "kcal")} note={`Nhu cầu ${formatNumber(analysis.target.value, "kcal/ngày")} · ${analysis.target.source ?? "chưa có RNI"}`} />
+        <BigMetric title="Năng lượng toàn kỳ" value={resolvedMenu ? formatMetric(analysis.totalEnergy, "kcal") : formatNumber(analysis.totalEnergy.value, "kcal")} note={`Mục tiêu ${formatNumber(analysis.targetPeriodKcal, "kcal")}`} status={!resolvedMenu && kitchenMode ? undefined : analysis.periodEnergyStatus} />
+        <BigMetric title="Thâm hụt / tăng" value={formatSigned(analysis.periodGapKcal)} note={`Bình quân ${formatSigned(analysis.averageGapKcal, "kcal/ngày")}`} status={!resolvedMenu && kitchenMode ? undefined : analysis.periodEnergyStatus} />
+        <BigMetric title="Trung bình mỗi ngày" value={formatMetric({ value: analysis.averageEnergyKcal, incomplete: analysis.totalEnergy.incomplete }, "kcal")} note={`Nhu cầu ${formatNumber(analysis.target.value, "kcal/ngày")} · ${resolvedMenu ? resolvedMenu.targets.find(target => target.key === "energyKcal")?.source ?? "chưa có mục tiêu" : analysis.target.source ?? "chưa có RNI"}`} />
         <BigMetric title="Ngày đạt / thiếu / vượt" value={`${analysis.achievedDays} / ${analysis.lowDays} / ${analysis.highDays}`} note={`${analysis.completeEnergyDayCount}/${analysis.dataDayCount} ngày đủ dữ liệu năng lượng`} />
       </div>
 
-      <MacroPerKgRow macros={analysis.macros} profile={profile} kcalPerDay={analysis.averageEnergyKcal} />
+      <MacroPerKgRow macros={analysis.macros} profile={profile} kcalPerDay={analysis.averageEnergyKcal} referenceNote={!resolvedMenu} />
 
       {/* Mục Hồ sơ & Khuyến nghị — 2 cột như 1 ngày: trái hồ sơ + mã chế độ ăn, phải đối chiếu nhu cầu */}
       <AnalysisSection eyebrow="HỒ SƠ · KHUYẾN NGHỊ" title="Hồ sơ, đối chiếu nhu cầu và mã chế độ ăn" note="“Thực tế” là TRUNG BÌNH MỖI NGÀY (tổng cả kỳ ÷ số ngày có thực phẩm), so trực tiếp với nhu cầu 1 ngày theo tuổi/giới. P/L/G theo %NL (% năng lượng).">
         <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
           <div className="flex flex-col gap-3 lg:sticky lg:top-2">
-            <ProfileCard profile={profile} />
-            <MultiDayDietCode days={days} />
+            <ProfileCard profile={profile} readOnly={Boolean(resolvedMenu)} />
+            {resolvedMenu ? resolvedMenu.clinicalAssessment ? <NutritionClinicalComparison assessment={resolvedMenu.clinicalAssessment} /> : <p className="text-sm text-neutral-600">Chưa chọn mã chế độ ăn.</p> : <MultiDayDietCode days={days} />}
           </div>
           <div className="mt-3 lg:mt-0">
-            {profile ? <RecommendationComparison profile={profile} totals={avgTotals} /> : <p className="rounded-lg border border-[#B5D4F4] bg-white p-3 text-sm text-neutral-600">Nhập hồ sơ (bên trái) để đối chiếu nhu cầu theo tuổi/giới.</p>}
+            {resolvedMenu ? <ResolvedTargets menu={resolvedMenu} /> : profile ? <RecommendationComparison profile={profile} totals={avgTotals} /> : <p className="rounded-lg border border-[#B5D4F4] bg-white p-3 text-sm text-neutral-600">Nhập hồ sơ (bên trái) để đối chiếu nhu cầu theo tuổi/giới.</p>}
           </div>
         </div>
       </AnalysisSection>
 
+      {resolvedMenu && <ResolvedGrowth menu={resolvedMenu} />}
+
       {(analysis.emptyDayCount > 0 || analysis.totalEnergy.incomplete) && <div className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-        <b>Độ đầy đủ:</b> {analysis.emptyDayCount ? `${analysis.emptyDayCount} ngày đang trống. ` : ""}{analysis.totalEnergy.incomplete ? "Có thực phẩm thiếu năng lượng nên tổng kỳ được giữ “—”." : "Các phép tính tổng chỉ dùng ngày có thực phẩm."}
+        <b>Độ đầy đủ:</b> {analysis.emptyDayCount ? `${analysis.emptyDayCount} ngày đang trống. ` : ""}{analysis.totalEnergy.incomplete ? resolvedMenu ? "Có thực phẩm thiếu số liệu; tổng chỉ gồm phần đã biết (≥), không dùng để kết luận đạt/thiếu/vượt." : "Có thực phẩm thiếu năng lượng nên tổng kỳ được giữ “—”." : "Các phép tính tổng chỉ dùng ngày có thực phẩm."}
       </div>}
 
-      <AnalysisSection eyebrow="KẾT LUẬN" title="Khuyến nghị tự động theo toàn kỳ" note="Sắp theo năng lượng, P/L/G, vi chất, phân bổ bữa và độ đầy đủ dữ liệu.">
+      {(!resolvedMenu || analysis.recommendations.length > 0) && <AnalysisSection eyebrow="KẾT LUẬN" title="Khuyến nghị tự động theo toàn kỳ" note="Sắp theo năng lượng, P/L/G, vi chất, phân bổ bữa và độ đầy đủ dữ liệu.">
         <div className="grid gap-2 lg:grid-cols-2">
           {analysis.recommendations.map((item) => <RecommendationCard key={item.id} item={item} />)}
         </div>
-      </AnalysisSection>
+      </AnalysisSection>}
 
       {/* Từ mục 1 đến đơn vị ăn: 2 cột — trái = thực đơn cố định, phải = các mục phân tích */}
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start lg:gap-4">
         <div className="lg:sticky lg:top-2">
-          <MealPlanOverview days={days} />
+          {resolvedMenu ? <ResolvedMealPlanOverview menu={resolvedMenu} /> : <MealPlanOverview days={days} />}
         </div>
         <div className="mt-3 flex min-w-0 flex-col gap-4 lg:mt-0">
       <AnalysisSection eyebrow="01 · NĂNG LƯỢNG" title="Tổng kỳ và biến động từng ngày" note="Ngưỡng đạt: 90–110% nhu cầu ngày. Chênh lệch dương là vượt, âm là thiếu.">
-        <EnergyTimeline days={analysis.days} target={analysis.target.value} />
+        {!resolvedMenu && <EnergyTimeline days={analysis.days} target={analysis.target.value} />}
         <div className="mt-3 overflow-x-auto rounded-lg border border-[#B5D4F4]">
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Ngày</th><th className="px-3 py-2 text-right">Kcal</th><th className="px-3 py-2 text-right">Mục tiêu</th><th className="px-3 py-2 text-right">Chênh lệch</th><th className="px-3 py-2 text-right">% nhu cầu</th><th className="px-3 py-2 text-right">Đạm</th><th className="px-3 py-2 text-right">Béo</th><th className="px-3 py-2 text-right">Bột đường</th><th className="px-3 py-2 text-center">Đánh giá</th></tr></thead>
             <tbody>{analysis.days.map((day) => <DayTotalRow key={day.dayId} day={day} />)}</tbody>
-            <tfoot><tr className="border-t-2 border-[#0C447C] bg-[#0C447C] font-bold text-white"><td className="px-3 py-2">{periodName}</td><td className="px-3 py-2 text-right">{formatNumber(analysis.totalEnergy.value)}</td><td className="px-3 py-2 text-right">{formatNumber(analysis.targetPeriodKcal)}</td><td className="px-3 py-2 text-right">{formatSigned(analysis.periodGapKcal, "")}</td><td className="px-3 py-2 text-right">{analysis.totalEnergy.value != null && analysis.targetPeriodKcal ? `${round(analysis.totalEnergy.value / analysis.targetPeriodKcal * 100)}%` : "—"}</td>{analysis.macros.map((macro) => <td key={macro.key} className="px-3 py-2 text-right">{formatNumber(macro.grams.value)}</td>)}<td className="px-3 py-2 text-center"><StatusBadge status={analysis.periodEnergyStatus} /></td></tr></tfoot>
+            <tfoot><tr className="border-t-2 border-[#0C447C] bg-[#0C447C] font-bold text-white"><td className="px-3 py-2">{periodName}</td><td className="px-3 py-2 text-right">{formatMetric(analysis.totalEnergy)}</td><td className="px-3 py-2 text-right">{formatNumber(analysis.targetPeriodKcal)}</td><td className="px-3 py-2 text-right">{formatSigned(analysis.periodGapKcal, "")}</td><td className="px-3 py-2 text-right">{!analysis.totalEnergy.incomplete && analysis.totalEnergy.value != null && analysis.targetPeriodKcal ? `${round(analysis.totalEnergy.value / analysis.targetPeriodKcal * 100)}%` : "—"}</td>{analysis.macros.map((macro) => <td key={macro.key} className="px-3 py-2 text-right">{formatMetric(macro.grams)}</td>)}<td className="px-3 py-2 text-center"><StatusBadge status={analysis.periodEnergyStatus} /></td></tr></tfoot>
           </table>
         </div>
       </AnalysisSection>
@@ -239,7 +253,7 @@ export default function MultiDayAnalysis({
       </AnalysisSection>
 
       <AnalysisSection eyebrow="03 · BỮA ĂN" title="Phân bổ năng lượng và P/L/G theo bữa" note="Tổng bữa được cộng trên toàn bộ ngày có dữ liệu; một bữa có thể chứa vài chục món mà không giới hạn dòng.">
-        <div className="mb-3 rounded-lg border-2 border-[#185FA5] bg-[#F4F9FE] p-3">
+        {!resolvedMenu && <div className="mb-3 rounded-lg border-2 border-[#185FA5] bg-[#F4F9FE] p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h4 className="text-base font-bold text-[#0C447C]">⚙ Mục tiêu năng lượng từng bữa</h4>
             <span className={`text-sm font-bold ${sharesValid ? "text-emerald-700" : "text-amber-700"}`}>Tổng: {round(shareTotal)}% {sharesValid ? "✓ đủ 100%" : "· cần = 100%"}</span>
@@ -263,11 +277,11 @@ export default function MultiDayAnalysis({
             <button type="button" onClick={splitEvenly} className="rounded-md border-2 border-[#185FA5] px-3 py-1.5 text-sm font-bold text-[#0C447C]">Chia đều</button>
             <button type="button" onClick={() => setShareText({})} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-600">Xóa tỷ lệ</button>
           </div>
-        </div>
+        </div>}
         <div className="overflow-x-auto rounded-lg border border-[#B5D4F4]">
           <table className="w-full min-w-[980px] text-sm">
             <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Bữa</th><th className="px-3 py-2 text-right">Ngày có bữa</th><th className="px-3 py-2 text-right">Tổng kcal</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">% toàn kỳ</th><th className="px-3 py-2 text-right">Mục tiêu</th><th className="px-3 py-2 text-right">Chênh lệch</th><th className="px-3 py-2 text-right">P (g)</th><th className="px-3 py-2 text-right">L (g)</th><th className="px-3 py-2 text-right">G (g)</th><th className="px-3 py-2 text-center">Đánh giá</th></tr></thead>
-            <tbody>{analysis.mealAggregates.map((meal) => <tr key={meal.meal} className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-bold text-[#0C447C]">{meal.meal}</td><td className="px-3 py-2 text-right">{meal.daysPresent}/{analysis.dataDayCount}</td><td className="px-3 py-2 text-right">{formatMetric(meal.energy)}</td><td className="px-3 py-2 text-right">{formatNumber(meal.averageEnergyPerDataDay)}</td><td className="px-3 py-2 text-right">{formatNumber(meal.distributionPct, "%")}</td><td className="px-3 py-2 text-right">{meal.targetSharePct == null ? "—" : `${round(meal.targetSharePct)}% · ${formatNumber(meal.targetPeriodKcal, "kcal")}`}</td><td className="px-3 py-2 text-right">{formatSigned(meal.gapKcal, "")}</td><td className="px-3 py-2 text-right">{formatMetric(meal.protein)}</td><td className="px-3 py-2 text-right">{formatMetric(meal.lipid)}</td><td className="px-3 py-2 text-right">{formatMetric(meal.glucid)}</td><td className="px-3 py-2 text-center"><StatusBadge status={meal.status} /></td></tr>)}</tbody>
+            <tbody>{analysis.mealAggregates.map((meal) => <tr key={meal.meal} className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-bold text-[#0C447C]">{meal.meal}</td><td className="px-3 py-2 text-right">{meal.daysPresent}/{analysis.dataDayCount}</td><td className="px-3 py-2 text-right">{formatMetric(meal.energy)}</td><td className="px-3 py-2 text-right">{formatMetric({ value: meal.averageEnergyPerDataDay, incomplete: meal.energy.incomplete })}</td><td className="px-3 py-2 text-right">{formatNumber(meal.distributionPct, "%")}</td><td className="px-3 py-2 text-right">{meal.targetSharePct == null ? "—" : `${round(meal.targetSharePct)}% · ${formatNumber(meal.targetPeriodKcal, "kcal")}`}</td><td className="px-3 py-2 text-right">{formatSigned(meal.gapKcal, "")}</td><td className="px-3 py-2 text-right">{formatMetric(meal.protein)}</td><td className="px-3 py-2 text-right">{formatMetric(meal.lipid)}</td><td className="px-3 py-2 text-right">{formatMetric(meal.glucid)}</td><td className="px-3 py-2 text-center"><StatusBadge status={meal.status} /></td></tr>)}</tbody>
           </table>
         </div>
       </AnalysisSection>
@@ -276,29 +290,14 @@ export default function MultiDayAnalysis({
         <div className="overflow-x-auto rounded-lg border border-[#B5D4F4]">
           <table className="w-full min-w-[920px] text-sm">
             <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Món</th><th className="px-3 py-2 text-right">Lần xuất hiện</th><th className="px-3 py-2 text-right">Thực phẩm</th><th className="px-3 py-2 text-right">Kcal</th><th className="px-3 py-2 text-right">% toàn kỳ</th><th className="px-3 py-2 text-right">P (g)</th><th className="px-3 py-2 text-right">L (g)</th><th className="px-3 py-2 text-right">G (g)</th><th className="px-3 py-2 text-right">Natri (mg)</th></tr></thead>
-            <tbody>{analysis.dishes.slice(0, 30).map((dish) => <tr key={dish.dish} className="border-t border-[#E1E9F5]"><td className="px-3 py-2"><details><summary className="cursor-pointer font-bold text-[#0C447C]">{dish.dish}</summary><p className="mt-1 text-xs text-neutral-600">Ngày: {dish.days.join(", ")} · Bữa: {dish.meals.join(", ")}</p></details></td><td className="px-3 py-2 text-right">{dish.appearances}</td><td className="px-3 py-2 text-right">{dish.foodCount}</td><td className="px-3 py-2 text-right font-semibold">{formatMetric(dish.energy)}</td><td className="px-3 py-2 text-right">{dish.energy.value != null && analysis.totalEnergy.value ? `${round(dish.energy.value / analysis.totalEnergy.value * 100)}%` : "—"}</td><td className="px-3 py-2 text-right">{formatMetric(dish.protein)}</td><td className="px-3 py-2 text-right">{formatMetric(dish.lipid)}</td><td className="px-3 py-2 text-right">{formatMetric(dish.glucid)}</td><td className="px-3 py-2 text-right">{formatMetric(dish.sodium)}</td></tr>)}</tbody>
+            <tbody>{analysis.dishes.slice(0, 30).map((dish) => <tr key={dish.dish} className="border-t border-[#E1E9F5]"><td className="px-3 py-2"><details><summary className="cursor-pointer font-bold text-[#0C447C]">{dish.dish}</summary><p className="mt-1 text-xs text-neutral-600">Ngày: {dish.days.join(", ")} · Bữa: {dish.meals.join(", ")}</p></details></td><td className="px-3 py-2 text-right">{dish.appearances}</td><td className="px-3 py-2 text-right">{dish.foodCount}</td><td className="px-3 py-2 text-right font-semibold">{formatMetric(dish.energy)}</td><td className="px-3 py-2 text-right">{!dish.energy.incomplete && !analysis.totalEnergy.incomplete && dish.energy.value != null && analysis.totalEnergy.value ? `${round(dish.energy.value / analysis.totalEnergy.value * 100)}%` : "—"}</td><td className="px-3 py-2 text-right">{formatMetric(dish.protein)}</td><td className="px-3 py-2 text-right">{formatMetric(dish.lipid)}</td><td className="px-3 py-2 text-right">{formatMetric(dish.glucid)}</td><td className="px-3 py-2 text-right">{formatMetric(dish.sodium)}</td></tr>)}</tbody>
           </table>
         </div>
       </AnalysisSection>
 
-      <AnalysisSection defaultOpen={false} eyebrow="05 · VI CHẤT & KHOÁNG CHẤT" title="Tổng kỳ, trung bình ngày và mức đáp ứng" note="Vẫn tính mọi chất; chỗ thiếu dữ liệu nguồn được đánh dấu ở cột ghi chú. Với natri, mục tiêu là giới hạn trên; các chất còn lại đánh giá mức đáp ứng tối thiểu.">
-        <div className="overflow-x-auto rounded-lg border border-[#B5D4F4]">
-          <table className="w-full min-w-[980px] text-sm">
-            <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Chất</th><th className="px-3 py-2 text-right">Tổng kỳ</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">Khuyến nghị/ngày</th><th className="px-3 py-2 text-right">Nhu cầu kỳ</th><th className="px-3 py-2 text-right">Đáp ứng</th><th className="px-3 py-2 text-right">Ngày đạt</th><th className="px-3 py-2 text-center">Đánh giá</th><th className="px-3 py-2 text-left">Ghi chú dữ liệu</th></tr></thead>
-            <tbody>{coreNutrients.map((nutrient) => <NutrientRow key={nutrient.key} nutrient={nutrient} />)}</tbody>
-          </table>
-        </div>
-        {otherNutrients.length > 0 && (
-          <details className="mt-2 overflow-hidden rounded-lg border border-[#B5D4F4]">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-[#0C447C]">Xem thêm {otherNutrients.length} vi chất khác (nước, magie, phospho, vitamin nhóm B…)</summary>
-            <div className="overflow-x-auto border-t border-[#D7E6F5]">
-              <table className="w-full min-w-[980px] text-sm">
-                <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Chất</th><th className="px-3 py-2 text-right">Tổng kỳ</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">Khuyến nghị/ngày</th><th className="px-3 py-2 text-right">Nhu cầu kỳ</th><th className="px-3 py-2 text-right">Đáp ứng</th><th className="px-3 py-2 text-right">Ngày đạt</th><th className="px-3 py-2 text-center">Đánh giá</th><th className="px-3 py-2 text-left">Ghi chú dữ liệu</th></tr></thead>
-                <tbody>{otherNutrients.map((nutrient) => <NutrientRow key={nutrient.key} nutrient={nutrient} />)}</tbody>
-              </table>
-            </div>
-          </details>
-        )}
+      <AnalysisSection defaultOpen={false} eyebrow="05 · VI CHẤT & KHOÁNG CHẤT" title="Tổng kỳ, trung bình ngày và mức đáp ứng" note={`Hiện đầy đủ ${analysis.nutrients.length} chỉ tiêu trong cùng một bảng. Năng lượng và đạm/béo/bột đường ở các bảng phía trên. Chỉ đối chiếu khi có mục tiêu từ hồ sơ hoặc chỉ định; thiếu dữ liệu nguồn để — hoặc ≥.`}>
+        <NutrientSummaryTable nutrients={analysis.nutrients} />
+
       </AnalysisSection>
 
       <AnalysisSection defaultOpen={false} eyebrow="06 · ĐA DẠNG THỰC PHẨM" title="Nhóm thực phẩm trong toàn kỳ" note={`${formatNumber(analysis.averageFoodGroups, "nhóm/ngày")} · ${analysis.missingFoodGroupRows} dòng chưa có phân loại nhóm.`}>
@@ -316,6 +315,7 @@ export default function MultiDayAnalysis({
       </AnalysisSection>
 
       <AnalysisSection defaultOpen={false} eyebrow="06B · ĐƠN VỊ ĂN / ĐI CHỢ" title="Quy đổi đơn vị ăn và danh sách đi chợ toàn kỳ" note="Bê từ chế độ một ngày, gộp toàn bộ thực phẩm của cả kỳ (mọi ngày).">
+        {resolvedMenu ? <ResolvedShopping menu={resolvedMenu} /> : <>
         <div className="rounded-lg border border-[#B5D4F4] bg-white p-3">
           <h4 className="mb-2 text-sm font-bold text-[#0C447C]">Quy đổi đơn vị ăn / nhóm thực phẩm</h4>
           <ExchangeUnits rows={allRows} />
@@ -324,18 +324,69 @@ export default function MultiDayAnalysis({
           <h4 className="mb-2 text-sm font-bold text-[#0C447C]">🛒 Danh sách đi chợ / xuất kho toàn kỳ</h4>
           <ShoppingList rows={allRows} />
         </div>
+        </>}
       </AnalysisSection>
         </div>
       </div>
 
-      <AnalysisSection defaultOpen={false} eyebrow="07 · CHI TIẾT TỪNG NGÀY" title="Chi tiết dinh dưỡng từng ngày — như báo cáo một ngày" note="Mỗi ngày là một bảng chi tiết ĐẦY ĐỦ: Bữa → Món → Thực phẩm, có ⚙ Chọn chất, tổng món/bữa/ngày và quy đổi đi chợ. Bấm để mở từng ngày.">
+      <AnalysisSection defaultOpen={Boolean(resolvedMenu)} eyebrow="07 · CHI TIẾT TỪNG NGÀY" title="Chi tiết dinh dưỡng từng ngày — như báo cáo một ngày" note="Mỗi ngày là một bảng chi tiết ĐẦY ĐỦ: Bữa → Món → Thực phẩm, có ⚙ Chọn chất, tổng món/bữa/ngày và quy đổi đi chợ. Bấm để mở từng ngày.">
         <div className="flex flex-col gap-2">
-          {days.map((day, index) => <DayRationBlock key={day.id} day={day} defaultOpen={index === 0} />)}
+          {resolvedMenu ? resolvedMenu.days.map((day, index) => <ResolvedDayRationBlock key={day.id} menu={resolvedMenu} dayId={day.id} defaultOpen={index === 0} />) : days.map((day, index) => <DayRationBlock key={day.id} day={day} defaultOpen={index === 0} />)}
         </div>
       </AnalysisSection>
 
     </section>
   );
+}
+
+function ResolvedTargets({ menu }: { menu: ResolvedMenu }) {
+  const active = menu.targets.filter(target => target.value !== null);
+  return <div className="rounded-lg border border-[#B5D4F4] bg-white p-3">
+    <h4 className="text-base font-bold text-[#0C447C]">Mục tiêu đối chiếu đã cung cấp</h4>
+    {!active.length ? <p className="mt-2 text-sm text-neutral-700">Chỉ tính thành phần. Chưa có mục tiêu nên không kết luận đạt, thiếu hay vượt nhu cầu.</p> : <div className="mt-2 overflow-x-auto"><table className="w-full text-sm"><thead className="bg-[#E6F1FB] text-left text-[#0C447C]"><tr><th className="p-2">Chỉ tiêu</th><th className="p-2 text-right">Mục tiêu/ngày</th><th className="p-2">Nguồn</th></tr></thead><tbody>{active.map(target => { const field = CORE_CALC_FIELDS.find(field => field.key === target.key) ?? menu.fields.find(field => field.key === target.key); return <tr key={target.key} className="border-t border-[#E1E9F5]"><td className="p-2">{field?.label ?? target.key}</td><td className="p-2 text-right">{target.isUpperLimit ? "≤ " : ""}{formatNumber(target.value, field?.unit ?? "")}</td><td className="p-2">{target.source ?? "—"}</td></tr>; })}</tbody></table></div>}
+    <p className="mt-2 text-xs text-neutral-600">Hồ sơ và mục tiêu lấy từ bản đang mở. Chỉnh đầu vào rồi tính lại để cập nhật báo cáo.</p>
+  </div>;
+}
+
+function ResolvedGrowth({ menu }: { menu: ResolvedMenu }) {
+  const profile = menu.input.profile;
+  if (!profile) return null;
+  const age = Number(profile.age), ageMonths = profile.ageUnit === "thang" ? age : age * 12;
+  const weight = Number(profile.weight), height = Number(profile.height);
+  if (!(ageMonths > 0 && ageMonths <= 228 && weight > 0 && height > 0)) return null;
+  return <WhoGrowthAssessment entries={WHO_GROWTH_ENTRIES.filter(entry => entry.sex === profile.gender)} ageMonths={ageMonths} weightKg={weight} heightCm={height} />;
+}
+
+function ResolvedMealPlanOverview({ menu }: { menu: ResolvedMenu }) {
+  return <div className="rounded-lg border-2 border-[#B5D4F4] bg-[#F4F9FE] p-2"><h4 className="mb-2 text-sm font-bold text-[#0C447C]">🗓️ Thực đơn ({menu.days.length} ngày)</h4><div className="grid grid-cols-2 gap-2">{menu.days.map(day => {
+    const analysis = menu.analysis.days.find(item => item.dayId === day.id);
+    const meals = new Map<string, Set<string>>();
+    for (const row of day.rows) { const dishes = meals.get(row.meal) ?? new Set<string>(); dishes.add(row.dish); meals.set(row.meal, dishes); }
+    return <div key={day.id} className="rounded-md border border-[#B5D4F4] bg-white p-2"><div className="flex items-start justify-between gap-1"><span className="min-w-0 text-sm font-bold text-[#0C447C]">{day.label}</span><span className="shrink-0 text-xs font-bold text-[#185FA5]">{formatMetric(analysis?.energy)}</span></div><div className="mt-1 flex flex-col gap-1">{[...meals].map(([meal, dishes]) => <div key={meal}><div className="text-xs font-semibold text-[#0C447C]">{meal} · {formatMetric(analysis?.meals.find(item => item.meal === meal)?.energy)}</div><ul>{[...dishes].map(dish => <li key={dish} className="text-xs text-neutral-700">· {dish || "Chưa đặt món"}</li>)}</ul></div>)}{!day.rows.length && <div className="text-xs text-neutral-400">— trống</div>}</div></div>;
+  })}</div></div>;
+}
+
+function ResolvedShopping({ menu }: { menu: ResolvedMenu }) {
+  const rows = menu.days.flatMap(day => day.rows), items = resolvedShoppingItems(rows);
+  const groups = new Map<string, typeof rows>();
+  for (const row of rows) { const key = row.food.foodGroup ?? "Chưa phân nhóm"; groups.set(key, [...(groups.get(key) ?? []), row]); }
+  return <div className="space-y-3">
+    <div className="rounded-lg border border-[#B5D4F4] bg-white p-3"><h4 className="mb-2 text-sm font-bold text-[#0C447C]">Quy đổi đơn vị ăn / nhóm thực phẩm</h4><div className="overflow-x-auto"><table className="w-full min-w-[560px] text-sm"><thead className="bg-[#E6F1FB] text-left"><tr><th className="p-2">Nhóm</th><th className="p-2">Quy tắc tham khảo</th><th className="p-2 text-right">Đơn vị ăn</th></tr></thead><tbody>{[...groups].map(([group, groupRows]) => {
+      const rule = getExchangeRule(group);
+      const key = rule?.type === "glucid" ? "glucidG" : rule?.type === "protein" ? "proteinG" : rule?.type === "lipid" ? "lipidG" : null;
+      const nutrient = key ? resolvedDisplayTotal(groupRows, key) : null;
+      const massKnown = groupRows.every(row => row.edibleGrams !== null);
+      const value = rule?.type === "qty" ? massKnown ? groupRows.reduce((sum, row) => sum + row.edibleGrams!, 0) / rule.divisor : null : rule && nutrient?.value !== null && nutrient?.value !== undefined && !nutrient.incomplete ? nutrient.value / rule.divisor : null;
+      return <tr key={group} className="border-t border-[#E1E9F5]"><td className="p-2">{group}</td><td className="p-2">{rule?.unitText ?? "Chưa có quy tắc quy đổi"}</td><td className="p-2 text-right">{displayNumber(value)}</td></tr>;
+    })}</tbody></table></div></div>
+    <div className="rounded-lg border border-[#B5D4F4] bg-white p-3"><h4 className="mb-2 text-sm font-bold text-[#0C447C]">🛒 Danh sách đi chợ / xuất kho toàn kỳ</h4><p className="text-xs text-neutral-700">Không tự đổi ml thành g. Chưa đủ khối lượng riêng hoặc thải bỏ thì lượng mua để —.</p><div className="mt-2 overflow-x-auto"><table className="w-full min-w-[620px] text-sm"><thead className="bg-[#E6F1FB] text-left"><tr><th className="p-2">Thực phẩm</th><th className="p-2 text-right">Lượng dùng tính</th><th className="p-2 text-right">Mua / xuất kho (g)</th><th className="p-2">Nguồn</th></tr></thead><tbody>{items.map(item => <tr key={item.id} className="border-t border-[#E1E9F5]"><td className="p-2">{item.name}</td><td className="p-2 text-right">{item.amount}</td><td className="p-2 text-right">{displayNumber(item.rawGrams)}</td><td className="p-2">{item.source || "—"}</td></tr>)}</tbody></table></div></div>
+  </div>;
+}
+
+function ResolvedDayRationBlock({ menu, dayId, defaultOpen }: { menu: ResolvedMenu; dayId: string; defaultOpen: boolean }) {
+  const [open, setOpen] = useState(defaultOpen), day = menu.days.find(item => item.id === dayId)!;
+  const analysis = menu.analysis.days.find(item => item.dayId === dayId);
+  return <div className="overflow-hidden rounded-lg border border-[#B5D4F4]"><button type="button" onClick={() => setOpen(current => !current)} className="flex w-full items-center justify-between gap-2 bg-[#E6F1FB] px-3 py-2 text-left"><span className="text-base font-bold text-[#0C447C]">📅 {day.label}</span><span className="text-sm text-[#5a708c]">{formatMetric(analysis?.energy, "kcal")} · {day.rows.length} TP · {open ? "▾ đang mở" : "▸ mở chi tiết"}</span></button>{open && (day.rows.length ? <div className="border-t border-[#D7E6F5] p-2"><RationDetail rows={[]} mode={menu.mode} resolvedMenu={menu} dayId={day.id} compact /></div> : <p className="border-t border-[#D7E6F5] px-3 py-3 text-sm text-[#7d8ea3]">Ngày này chưa có thực phẩm.</p>)}</div>;
 }
 
 // Chi tiết TỪNG NGÀY = bê nguyên RationDetail (bảng chọn-chất Bữa→Món→TP + quy đổi),
@@ -357,7 +408,7 @@ function DayRationBlock({ day, defaultOpen }: { day: MenuDay; defaultOpen: boole
 }
 
 // Chỉ số lâm sàng: g đạm/béo/bột đường trên kg cân nặng — trung bình mỗi ngày.
-function MacroPerKgRow({ macros, profile, kcalPerDay }: { macros: { key: string; averageGramsPerDay: number | null }[]; profile: Profile | null; kcalPerDay: number | null }) {
+function MacroPerKgRow({ macros, profile, kcalPerDay, referenceNote = true }: { macros: { key: string; averageGramsPerDay: number | null; grams?: StrictMetric }[]; profile: Profile | null; kcalPerDay: number | null; referenceNote?: boolean }) {
   const w = Number(profile?.weight);
   const META: Record<string, { label: string; color: string }> = { proteinG: { label: "Đạm", color: "#2563eb" }, lipidG: { label: "Béo", color: "#d97706" }, glucidG: { label: "Bột đường", color: "#16a34a" } };
   if (!(w > 0)) return <div className="rounded-lg border-2 border-[#185FA5] bg-white p-3 text-sm text-[#5a708c]">⚖️ <b className="text-[#0C447C]">Trên cân nặng (g/kg/ngày)</b> — nhập cân nặng ở hồ sơ để hiện chỉ số này.</div>;
@@ -374,12 +425,12 @@ function MacroPerKgRow({ macros, profile, kcalPerDay }: { macros: { key: string;
           const perKg = m && m.averageGramsPerDay != null ? r2(m.averageGramsPerDay / w) : null;
           const meta = META[key];
           return <div key={key} className="rounded-md border border-[#B5D4F4] bg-[#F4F9FE] p-2 text-center">
-            <div className="text-xl font-extrabold" style={{ color: meta.color }}>{perKg != null ? perKg : "—"}</div>
+            <div className="text-xl font-extrabold" style={{ color: meta.color }}>{perKg != null ? `${m?.grams?.incomplete ? "≥ " : ""}${perKg}` : "—"}</div>
             <div className="text-xs text-[#5a708c]">{meta.label} g/kg</div>
           </div>;
         })}
       </div>
-      <p className="mt-2 text-[11px] text-[#7d8ea3]">Trung bình mỗi ngày trên cân nặng hồ sơ. Tham khảo: đạm ~1–1,5 g/kg (bệnh lý gan/thận… có ngưỡng riêng — đối chiếu chỉ định).</p>
+      {referenceNote && <p className="mt-2 text-[11px] text-[#7d8ea3]">Trung bình mỗi ngày trên cân nặng hồ sơ. Tham khảo: đạm ~1–1,5 g/kg (bệnh lý gan/thận… có ngưỡng riêng — đối chiếu chỉ định).</p>}
     </div>
   );
 }
@@ -413,7 +464,7 @@ function MealPlanOverview({ days }: { days: MenuDay[] }) {
 }
 
 // Thẻ hồ sơ (chip + nút nhập) — bên trái mục Khuyến nghị, như 1 ngày.
-function ProfileCard({ profile }: { profile: Profile | null }) {
+function ProfileCard({ profile, readOnly = false }: { profile: Profile | null; readOnly?: boolean }) {
   const h = Number(profile?.height), w = Number(profile?.weight);
   const bmi = h > 0 && w > 0 ? Math.round((w / (h / 100) ** 2) * 10) / 10 : null;
   const chips: [string, string][] = profile
@@ -423,11 +474,11 @@ function ProfileCard({ profile }: { profile: Profile | null }) {
     <div className="rounded-lg border-2 border-[#B5D4F4] bg-white p-2">
       <div className="mb-1 flex items-center justify-between gap-2">
         <h4 className="text-sm font-bold text-[#0C447C]">Hồ sơ người dùng</h4>
-        <PersonalProfile onChange={() => { /* đồng bộ qua event khauphan:profile */ }} />
+        {!readOnly && <PersonalProfile onChange={() => { /* đồng bộ qua event khauphan:profile */ }} />}
       </div>
       {profile ? (
         <div className="flex flex-wrap gap-1.5">{chips.map(([l, v]) => <span key={l} className="inline-flex items-baseline gap-1 rounded border border-[#B5D4F4] bg-[#F4F9FE] px-2 py-0.5 text-xs"><span className="text-neutral-500">{l}:</span><span className="font-semibold text-[#0C447C]">{v}</span></span>)}</div>
-      ) : <p className="text-xs text-neutral-500">Chưa nhập hồ sơ — bấm nút để nhập tuổi/giới/cân nặng.</p>}
+      ) : <p className="text-xs text-neutral-500">{readOnly ? "Chưa cung cấp hồ sơ; vẫn tính được thành phần khẩu phần." : "Chưa nhập hồ sơ — bấm nút để nhập tuổi/giới/cân nặng."}</p>}
     </div>
   );
 }
@@ -472,8 +523,8 @@ function EnergyTimeline({ days, target }: { days: DayPeriodAnalysis[]; target: n
 }
 
 function DayTotalRow({ day }: { day: DayPeriodAnalysis }) {
-  const pct = day.energy.value != null && day.targetKcal ? day.energy.value / day.targetKcal * 100 : null;
-  return <tr className="border-t border-[#E1E9F5]"><td className="px-3 py-2"><span className="font-bold text-[#0C447C]">{day.label}</span>{day.date && <span className="ml-2 text-xs text-neutral-500">{day.date}</span>}</td><td className="px-3 py-2 text-right">{formatNumber(day.energy.value)}</td><td className="px-3 py-2 text-right">{formatNumber(day.targetKcal)}</td><td className="px-3 py-2 text-right">{formatSigned(day.gapKcal, "")}</td><td className="px-3 py-2 text-right">{formatNumber(pct, "%")}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.proteinG)}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.lipidG)}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.glucidG)}</td><td className="px-3 py-2 text-center"><StatusBadge status={day.status} /></td></tr>;
+  const pct = !day.energy.incomplete && day.energy.value != null && day.targetKcal ? day.energy.value / day.targetKcal * 100 : null;
+  return <tr className="border-t border-[#E1E9F5]"><td className="px-3 py-2"><span className="font-bold text-[#0C447C]">{day.label}</span>{day.date && <span className="ml-2 text-xs text-neutral-500">{day.date}</span>}</td><td className="px-3 py-2 text-right">{formatMetric(day.energy)}</td><td className="px-3 py-2 text-right">{formatNumber(day.targetKcal)}</td><td className="px-3 py-2 text-right">{formatSigned(day.gapKcal, "")}</td><td className="px-3 py-2 text-right">{formatNumber(pct, "%")}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.proteinG)}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.lipidG)}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.glucidG)}</td><td className="px-3 py-2 text-center"><StatusBadge status={day.status} /></td></tr>;
 }
 
 function MacroCard({ macro }: { macro: MacroPeriodSummary }) {
@@ -482,9 +533,18 @@ function MacroCard({ macro }: { macro: MacroPeriodSummary }) {
   const recommendedRange = macro.recommendedMinPct == null || macro.recommendedMaxPct == null
     ? "—"
     : `${round(macro.recommendedMinPct)}–${round(macro.recommendedMaxPct)}%`;
-  return <article className="rounded-xl border border-[#B5D4F4] p-4"><div className="flex items-center justify-between"><h4 className="text-lg font-black text-[#0C447C]">{macro.label}</h4><StatusBadge status={macro.status} /></div><div className="mt-3 grid grid-cols-2 gap-2 text-sm"><div><p className="text-xs text-neutral-500">Tổng kỳ</p><p className="font-bold">{formatMetric(macro.grams, "g")}</p></div><div><p className="text-xs text-neutral-500">Trung bình/ngày</p><p className="font-bold">{formatNumber(macro.averageGramsPerDay, "g")}</p></div><div><p className="text-xs text-neutral-500">Năng lượng</p><p className="font-bold">{formatNumber(macro.energyKcal, "kcal")}</p></div><div><p className="text-xs text-neutral-500">Tỷ lệ năng lượng</p><p className="font-bold">{formatNumber(macro.energySharePct, "%")}</p></div></div><div className="mt-3 h-3 overflow-hidden rounded-full bg-neutral-100"><div className="h-full rounded-full" style={{ width: `${width}%`, background: color }} /></div><p className="mt-2 text-xs text-neutral-600">Khuyến nghị: {recommendedRange}{macro.gramsPerKgPerDay != null ? ` · ${round(macro.gramsPerKgPerDay)} g/kg/ngày` : ""}</p></article>;
+  return <article className="rounded-xl border border-[#B5D4F4] p-4"><div className="flex items-center justify-between"><h4 className="text-lg font-black text-[#0C447C]">{macro.label}</h4><StatusBadge status={macro.status} /></div><div className="mt-3 grid grid-cols-2 gap-2 text-sm"><div><p className="text-xs text-neutral-500">Tổng kỳ</p><p className="font-bold">{formatMetric(macro.grams, "g")}</p></div><div><p className="text-xs text-neutral-500">Trung bình/ngày</p><p className="font-bold">{formatMetric({ value: macro.averageGramsPerDay, incomplete: macro.grams.incomplete }, "g")}</p></div><div><p className="text-xs text-neutral-500">Năng lượng</p><p className="font-bold">{formatMetric({ value: macro.energyKcal, incomplete: macro.grams.incomplete }, "kcal")}</p></div><div><p className="text-xs text-neutral-500">Tỷ lệ năng lượng</p><p className="font-bold">{formatNumber(macro.energySharePct, "%")}</p></div></div><div className="mt-3 h-3 overflow-hidden rounded-full bg-neutral-100"><div className="h-full rounded-full" style={{ width: `${width}%`, background: color }} /></div><p className="mt-2 text-xs text-neutral-600">Khuyến nghị: {recommendedRange}{macro.gramsPerKgPerDay != null ? ` · ${round(macro.gramsPerKgPerDay)} g/kg/ngày` : ""}</p></article>;
 }
 
 function NutrientRow({ nutrient }: { nutrient: NutrientPeriodSummary }) {
-  return <tr className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-bold text-[#0C447C]">{nutrient.label}</td><td className="px-3 py-2 text-right">{formatMetric(nutrient.total, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.averagePerDay, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPerDay, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPeriod, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.percentOfTarget, "%")}</td><td className="px-3 py-2 text-right">{nutrient.comparableDays ? `${nutrient.achievedDays}/${nutrient.comparableDays}` : "—"}</td><td className="px-3 py-2 text-center"><StatusBadge status={nutrient.status} /></td><td className="px-3 py-2 text-xs text-neutral-600">{nutrient.total.incomplete ? "Thiếu dữ liệu ở một số thực phẩm" : nutrient.targetPerDay == null ? "Chưa có mốc RNI phù hợp" : nutrient.isUpperLimit ? "Đối chiếu giới hạn trên" : nutrient.targetType || "Đủ dữ liệu"}</td></tr>;
+  return <tr data-nutrient-summary-key={nutrient.key} className="border-t border-[#E1E9F5]"><td className="px-3 py-2 font-bold text-[#0C447C]">{nutrient.label}</td><td className="px-3 py-2 text-right">{formatMetric(nutrient.total, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatMetric({ value: nutrient.averagePerDay, incomplete: nutrient.total.incomplete }, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPerDay, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.targetPeriod, nutrient.unit)}</td><td className="px-3 py-2 text-right">{formatNumber(nutrient.percentOfTarget, "%")}</td><td className="px-3 py-2 text-right">{nutrient.comparableDays ? `${nutrient.achievedDays}/${nutrient.comparableDays}` : "—"}</td><td className="px-3 py-2 text-center"><StatusBadge status={nutrient.status} /></td><td className="px-3 py-2 text-xs text-neutral-600">{nutrient.total.incomplete ? "Thiếu dữ liệu ở một số thực phẩm" : nutrient.targetPerDay == null ? "Chưa có mốc RNI phù hợp" : nutrient.isUpperLimit ? "Đối chiếu giới hạn trên" : nutrient.targetType || "Đủ dữ liệu"}</td></tr>;
+}
+
+export function NutrientSummaryTable({ nutrients }: { nutrients: NutrientPeriodSummary[] }) {
+  return <div className="overflow-x-auto rounded-lg border border-[#B5D4F4]">
+          <table className="w-full min-w-[980px] text-sm">
+            <thead className="bg-[#E6F1FB] text-[#0C447C]"><tr><th className="px-3 py-2 text-left">Chất</th><th className="px-3 py-2 text-right">Tổng kỳ</th><th className="px-3 py-2 text-right">TB/ngày</th><th className="px-3 py-2 text-right">Khuyến nghị/ngày</th><th className="px-3 py-2 text-right">Nhu cầu kỳ</th><th className="px-3 py-2 text-right">Đáp ứng</th><th className="px-3 py-2 text-right">Ngày đạt</th><th className="px-3 py-2 text-center">Đánh giá</th><th className="px-3 py-2 text-left">Ghi chú dữ liệu</th></tr></thead>
+            <tbody>{nutrients.map((nutrient) => <NutrientRow key={nutrient.key} nutrient={nutrient} />)}</tbody>
+          </table>
+        </div>;
 }

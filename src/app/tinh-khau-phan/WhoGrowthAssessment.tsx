@@ -1,10 +1,8 @@
 "use client";
 
-import { lmsZScore, nearestStandard, type WhoGrowthEntry, type WhoIndicator } from "@/lib/who-growth";
+import { assessWhoGrowth, nearestStandard, type WhoGrowthEntry, type WhoIndicator } from "@/lib/who-growth";
 
 const round = (value: number, digits = 2) => Math.round(value * 10 ** digits) / 10 ** digits;
-
-type Assessment = { label: string; value: number; unit: string; indicator: WhoIndicator; score: number; source: string; status: string };
 
 type CurveSpec = { indicator: Extract<WhoIndicator, "wfa" | "lhfa" | "bfa">; title: string; unit: string; value: number };
 
@@ -93,35 +91,13 @@ function GrowthCurveChart({ entries, spec, ageMonths }: { entries: WhoGrowthEntr
   </article>;
 }
 
-function classify(indicator: WhoIndicator, score: number, ageMonths: number) {
-  if (indicator === "lhfa") return score < -3 ? "Thấp còi nặng" : score < -2 ? "Thấp còi" : "Trong dải tham khảo";
-  if (indicator === "wfa") return score < -3 ? "Nhẹ cân nặng" : score < -2 ? "Nhẹ cân" : "Trong dải tham khảo";
-  const overweightCutoff = ageMonths <= 60 ? 2 : 1;
-  const obesityCutoff = ageMonths <= 60 ? 3 : 2;
-  return score < -3 ? "Gầy còm nặng" : score < -2 ? "Gầy còm" : score > obesityCutoff ? "Béo phì" : score > overweightCutoff ? "Thừa cân" : ageMonths <= 60 && score > 1 ? "Nguy cơ thừa cân" : "Trong dải tham khảo";
-}
-
 function tone(status: string) {
   return status === "Trong dải tham khảo" ? "border-emerald-700 bg-emerald-50" : status.includes("nguy cơ") ? "border-amber-600 bg-amber-50" : "border-rose-700 bg-rose-50";
 }
 
 export default function WhoGrowthAssessment({ entries, ageMonths, weightKg, heightCm }: { entries: WhoGrowthEntry[]; ageMonths: number; weightKg: number; heightCm: number }) {
-  function assess(indicator: WhoIndicator, coordinate: number, value: number, label: string, unit: string): Assessment | null {
-    const standards = entries.filter((entry) => entry.indicator === indicator);
-    const standard = nearestStandard(standards, coordinate);
-    if (!standard) return null;
-    const score = lmsZScore(value, standard);
-    if (score === null) return null;
-    return { label, value, unit, indicator, score, source: standard.source, status: classify(indicator, score, ageMonths) };
-  }
-
   const bmi = weightKg / Math.pow(heightCm / 100, 2);
-  const items = [
-    ageMonths <= 120 ? assess("wfa", ageMonths, weightKg, "Cân nặng theo tuổi", "kg") : null,
-    ageMonths <= 228 ? assess("lhfa", ageMonths, heightCm, "Chiều cao theo tuổi", "cm") : null,
-    assess("bfa", ageMonths, bmi, "BMI theo tuổi", "kg/m²"),
-    ageMonths <= 60 ? assess(ageMonths < 24 ? "wfl" : "wfh", heightCm, weightKg, ageMonths < 24 ? "Cân nặng theo chiều dài" : "Cân nặng theo chiều cao", "kg") : null,
-  ].filter((item): item is Assessment => item !== null);
+  const items = assessWhoGrowth(entries, ageMonths, weightKg, heightCm);
 
   const charts: CurveSpec[] = [
     ageMonths <= 120 ? { indicator: "wfa", title: "Cân nặng theo tuổi", unit: "kg", value: weightKg } : null,

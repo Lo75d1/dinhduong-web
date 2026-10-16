@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import AiRationInput, { type AiRationItem } from "./AiRationInput";
 import Modal from "./Modal";
+import MealInputWorkspace, { EditableTitle, DishInputFrame } from "./MealInputWorkspace";
 import {
   loadMedicationRows,
   makeMedicationRow,
@@ -561,7 +562,6 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   }
 
   const [aiOpen, setAiOpen] = useState(false);
-  const [mobilePane, setMobilePane] = useState<"tree" | "detail">("tree");
   const selMeal = work?.meal ?? tree[0]?.meal ?? "";
   const selMealIndex = tree.findIndex((meal) => meal.meal === selMeal);
   const selMealNode = selMealIndex >= 0 ? tree[selMealIndex] : undefined;
@@ -586,49 +586,19 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
       </form>}
 
-      <div className="lg:grid lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-3 lg:min-h-0 lg:flex-1">
-        <div className={`flex-col gap-2 ${mobilePane === "detail" ? "hidden" : "flex"} lg:flex lg:min-h-0 lg:overflow-y-auto lg:pr-1`}>
-      <div ref={mealPlanRef} tabIndex={-1} className="scroll-mt-6 outline-none">
-      {tree.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-8 text-center text-sm text-neutral-400">Chưa có bữa ăn nào. Bấm “+ Thêm bữa ăn” để bắt đầu.</div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {tree.map((meal, index) => (
-            <div key={meal.meal} className={`overflow-hidden rounded-lg border ${meal.meal === selMeal ? "border-[#123c36]" : "border-neutral-300"}`}>
-              <div className="flex items-center gap-0.5 bg-[#eef4f1] px-1.5 py-1 text-[#0c5f4d]">
-                <span className="shrink-0 text-[15px]" aria-hidden="true">🍱</span>
-                <EditableTitle value={meal.meal} onCommit={(name) => renameMeal(meal.meal, name)} className="min-w-0 flex-1 rounded bg-transparent px-1 py-0.5 text-sm font-semibold text-[#0c5f4d] focus:bg-white focus:outline-none" />
-                <span className="shrink-0 rounded bg-[#123c36] px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white" title="Tổng năng lượng của bữa">{fmtKcal(mealKcal(meal))}</span>
-                <button type="button" onClick={() => moveMeal(meal.meal, "up")} disabled={index === 0} title="Chuyển bữa lên" className="shrink-0 rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▲</button>
-                <button type="button" onClick={() => moveMeal(meal.meal, "down")} disabled={index === tree.length - 1} title="Chuyển bữa xuống" className="shrink-0 rounded px-1 text-xs hover:bg-white/70 disabled:opacity-30">▼</button>
-                <button type="button" onClick={() => addDish(meal.meal)} title="Thêm món" className="shrink-0 rounded px-1 text-sm font-bold hover:bg-white/70">＋</button>
-                <button type="button" onClick={() => activateMedicationSearch(meal.meal)} title="Thuốc / TPBS" className="shrink-0 rounded px-1 text-sm hover:bg-white/70">💊</button>
-                <button type="button" onClick={() => deleteMeal(meal.meal)} title="Xóa bữa" className="shrink-0 rounded px-1 text-sm text-[#8a2323] hover:bg-white/70">✕</button>
-              </div>
-              {meal.dishes.length === 0 ? <p className="bg-white px-2 py-1.5 pl-8 text-xs text-neutral-500">Chưa có món — bấm ＋ hoặc dùng thanh dưới.</p> : <div className="bg-white">{meal.dishes.map((dish) => { const active = work?.meal === meal.meal && work.dish === dish.dish; return <button key={dish.dish} type="button" onClick={() => { setWork({ meal: meal.meal, dish: dish.dish }); setMobilePane("detail"); }} className={`flex w-full items-center gap-1.5 border-t border-neutral-200 px-2 py-1.5 pl-8 text-left text-sm ${active ? "bg-[#dceee1] font-semibold text-[#123c36] ring-1 ring-inset ring-[#123c36]/30" : "text-neutral-800 hover:bg-neutral-50"}`}><span className="shrink-0 text-[14px]" aria-hidden="true">🍽️</span><span className="min-w-0 flex-1 truncate">{dish.dish}</span><span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-amber-900" title="Năng lượng của món">{Math.round(dishKcal(dish))} kcal</span></button>; })}</div>}
-              <MealMedications meds={medRows.filter((med) => med.meal === meal.meal)} onUpdate={updateMedication} onDelete={deleteMedication} />
-            </div>
-          ))}
-        </div>
-      )}
-      <button type="button" onClick={addMeal} disabled={!hydrated} className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-emerald-600 bg-emerald-50/70 px-3 py-2.5 text-sm font-bold text-emerald-800 hover:bg-emerald-100 disabled:cursor-wait disabled:opacity-60">＋ Thêm bữa ăn mới</button>
-      </div>
-        </div>
-        <div className={`min-w-0 ${mobilePane === "tree" ? "hidden" : "block"} lg:block lg:min-h-0 lg:overflow-y-auto`}>
-          <button type="button" onClick={() => setMobilePane("tree")} className="mb-3 inline-flex items-center gap-1 rounded-md border border-neutral-300 bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] lg:hidden">‹ Danh sách bữa / món</button>
+      <MealInputWorkspace meals={tree.map(meal => ({ meal: meal.meal, kcal: fmtKcal(mealKcal(meal)), dishes: meal.dishes.map(dish => ({ dish: dish.dish, kcal: fmtKcal(dishKcal(dish)) })) }))} selection={{meal:selMeal,dish:selDish}} disabled={!hydrated} onSelect={setWork} onRenameMeal={renameMeal} onMoveMeal={moveMeal} onAddDish={addDish} onDeleteMeal={deleteMeal} onAddMeal={addMeal} listRef={mealPlanRef} mealExtra={meal => <MealMedications meds={medRows.filter(med => med.meal === meal)} onUpdate={updateMedication} onDelete={deleteMedication}/>} mealActions={meal => <button type="button" onClick={() => activateMedicationSearch(meal)} title="Thuốc / TPBS" className="shrink-0 rounded px-1 text-sm hover:bg-white/70">💊</button>}>
           {selMealNode && selDishNode ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-neutral-600">🍱 <b className="text-[#0c5f4d]">{selMealNode.meal}</b> › 🍽️ <b className="text-[#123c36]">{selDishNode.dish}</b></p>
-              <div className="overflow-hidden rounded-lg border border-[#7f948d] bg-white shadow-sm">
+              <>
                 <DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDuplicate={() => duplicateDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />
-              </div>
+              </>
               {medRows.some((med) => med.meal === selMealNode.meal) && <p className="text-xs text-neutral-500">💊 Thuốc / TPBS của bữa <b>{selMealNode.meal}</b> hiển thị ở cây bên trái (mức bữa).</p>}
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-neutral-300 px-4 py-10 text-center text-sm text-neutral-500">Chọn một món 🍽️ ở cây bên trái để mở và nhập thực phẩm.</div>
           )}
-        </div>
-      </div>
+      </MealInputWorkspace>
 
       {/* Ô tìm kiếm ghim cố định dưới màn hình — theo yêu cầu người dùng, tránh
           phải cuộn lên xuống liên tục để thêm thực phẩm khi danh sách bữa/món
@@ -777,11 +747,6 @@ function ModeSelector({ mode, disabled, onChange }: { mode: RationMode; disabled
       </button>
     </div>
   );
-}
-
-function EditableTitle({ value, onCommit, className, placeholder }: { value: string; onCommit: (value: string) => void; className?: string; placeholder?: string }) {
-  const [text, setText] = useState(value);
-  return <input value={text} placeholder={placeholder} onChange={(event) => setText(event.target.value)} onBlur={() => { if (text.trim()) onCommit(text.trim()); else setText(value); }} className={className} />;
 }
 
 function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDuplicateDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
@@ -967,8 +932,7 @@ function MedicationInMeal({ title, medications, onUpdate, onDelete, warning = fa
 function DishTotalInput({ total, onScale }: { total: number; onScale: (t: number) => void }) {
   const [text, setText] = useState(String(Math.round(total)));
   const [focused, setFocused] = useState(false);
-  useEffect(() => { if (!focused) setText(String(Math.round(total))); }, [total, focused]);
-  return <input type="number" min={0} value={text} aria-label="Tổng khối lượng món (sống sạch) — sửa để chia lại các nguyên liệu theo tỉ lệ" onFocus={() => setFocused(true)} onChange={(e) => setText(e.target.value)} onBlur={() => { setFocused(false); const v = Number(String(text).replace(",", ".")); if (Number.isFinite(v) && v > 0) onScale(v); }} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} className="w-16 rounded border border-[#0c5f4d] bg-white px-1 py-0.5 text-right text-xs font-bold tabular-nums text-[#0c5f4d] focus:outline-none focus:ring-2 focus:ring-[#123c36]" />;
+  return <input type="number" min={0} value={focused ? text : String(Math.round(total))} aria-label="Tổng khối lượng món (sống sạch) — sửa để chia lại các nguyên liệu theo tỉ lệ" onFocus={() => { setText(String(Math.round(total))); setFocused(true); }} onChange={(e) => setText(e.target.value)} onBlur={() => { setFocused(false); const v = Number(String(text).replace(",", ".")); if (Number.isFinite(v) && v > 0) onScale(v); }} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }} className="w-16 rounded border border-[#0c5f4d] bg-white px-1 py-0.5 text-right text-xs font-bold tabular-nums text-[#0c5f4d] focus:outline-none focus:ring-2 focus:ring-[#123c36]" />;
 }
 
 function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDuplicate, onDeleteFoodRow, onUpdateQuantity, onUpdateNote }: {
@@ -985,17 +949,9 @@ function DishBlock({ node, mode, isWork, onSelect, onRename, onDelete, onDuplica
     setFlash(true);
     window.setTimeout(() => setFlash(false), 650);
   }
-  return <div>
-    <div className={`flex items-center gap-1.5 border-l-4 border-[#52786d] px-2 py-1.5 ${isWork ? "bg-[#dceee1]" : "bg-[#eef4f1]"}`}>
-      <button type="button" onClick={() => setOpen((o) => !o)} aria-label={open ? "Thu gọn món" : "Mở món"} className="shrink-0 rounded px-1 text-sm font-bold text-[#0c5f4d] hover:bg-white/60">{open ? "▾" : "▸"}</button>
-      <span className="shrink-0 text-base" aria-hidden="true">🍽️</span>
-      <EditableTitle value={node.dish} onCommit={onRename} placeholder="Tên món" className="min-w-0 flex-1 rounded border border-[#8ba39b] bg-white px-2 py-0.5 text-sm font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />
-      {node.rows.length > 0 && <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-[#0c5f4d] sm:flex" title="Tổng khối lượng món (sống sạch) — sửa số này để tự chia lại các nguyên liệu theo tỉ lệ"><span aria-hidden="true">∑ món</span><DishTotalInput total={dishTotal} onScale={scaleDishRows} /><span aria-hidden="true">g</span></span>}
-      <button type="button" onClick={onDuplicate} className="shrink-0 rounded px-2 py-1 text-sm text-[#0c5f4d] hover:bg-white/70" title="Nhân đôi món">⧉</button>
-      <button onClick={onDelete} className="shrink-0 rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>
-    </div>
+  return <DishInputFrame name={node.dish} onRename={onRename} onDelete={onDelete} onDuplicate={onDuplicate} leading={<button type="button" onClick={() => setOpen(o => !o)} aria-label={open ? "Thu gọn món" : "Mở món"} className="shrink-0 rounded px-1 text-sm font-bold text-[#0c5f4d] hover:bg-white/60">{open ? "▾" : "▸"}</button>} quantity={node.rows.length > 0 ? <span className="hidden shrink-0 items-center gap-1 text-xs font-semibold text-[#0c5f4d] sm:flex" title="Tổng khối lượng món (sống sạch) — sửa số này để tự chia lại các nguyên liệu theo tỉ lệ"><span aria-hidden="true">∑ món</span><DishTotalInput total={dishTotal} onScale={scaleDishRows}/><span aria-hidden="true">g</span></span> : null}>
     {node.rows.length === 0 ? <div className="border-t border-[#8ba39b] px-4 py-3 text-sm text-neutral-900">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía dưới.</div> : open ? <div className={`overflow-x-auto transition-colors duration-500 ${flash ? "bg-amber-100" : "bg-transparent"}`}><table className="w-full min-w-[560px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]"><colgroup><col className="w-[44%]"/><col className="w-[13%]"/><col className="w-[12%]"/><col className="w-[12%]"/><col className="w-[15%]"/><col className="w-[4%]"/></colgroup><thead className="text-left"><tr><th className="px-2 py-1 font-semibold">Thực phẩm</th>{mode === "recall24h" ? <><th className="px-1 py-1 text-right font-semibold">Đã ăn</th><th className="px-1 py-1 text-right font-semibold">Hệ số</th><th className="px-1 py-1 text-right font-semibold">Sống sạch</th></> : <><th className="px-1 py-1 text-right font-semibold">Sống sạch</th><th className="px-1 py-1 text-right font-semibold">Mua/kho</th><th className="px-1 py-1 text-right font-semibold">Thải bỏ</th></>}<th className="px-2 py-1 font-semibold">Ghi chú</th><th className="px-1 py-1" /></tr></thead><tbody>{node.rows.map((row) => <FoodRow key={row.uid} row={row} mode={mode} onDelete={() => onDeleteFoodRow(row.uid)} onUpdateQuantity={onUpdateQuantity} onUpdateNote={onUpdateNote} />)}</tbody></table></div> : <button type="button" onClick={() => { setOpen(true); onSelect(); }} className="w-full border-t border-[#8ba39b] px-4 py-2.5 text-left text-sm font-medium text-[#123c36] hover:bg-[#f0f6f2]">🍽️ {node.rows.length} thực phẩm — bấm để mở</button>}
-  </div>;
+  </DishInputFrame>;
 }
 
 function FoodRow({ row, mode, onDelete, onUpdateQuantity, onUpdateNote }: { row: Row; mode: RationMode; onDelete: () => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void }) {

@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     ? [...new Set(body.ids.filter((id): id is string => typeof id === "string" && id.length > 0))].slice(0, 100)
     : [];
   const fields = Array.isArray(body.fields)
-    ? [...new Set(body.fields.filter((field): field is string => typeof field === "string" && ALLOWED_FIELDS.has(field)))].slice(0, 100)
+    ? [...new Set(body.fields.filter((field): field is string => typeof field === "string" && ALLOWED_FIELDS.has(field)))].slice(0, ALLOWED_FIELDS.size)
     : [];
   if (ids.length === 0 || fields.length === 0) return Response.json({ items: [] });
 

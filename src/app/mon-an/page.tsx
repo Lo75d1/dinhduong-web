@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NutritionDataSources from "@/components/NutritionDataSources";
 import { prisma } from "@/lib/prisma";
 import { searchTokens } from "@/lib/search";
 import type { Prisma } from "@/generated/prisma/client";
@@ -48,6 +49,8 @@ export default async function MonAnPage({
 
   return <div className="flex flex-col gap-5">
     <section className="border-b-2 border-[#123c36] pb-4"><p className="text-xs font-semibold tracking-[0.16em] text-[#123c36]">DANH MỤC MÓN ĂN</p><h1 className="mt-1 text-3xl font-semibold">Tra cứu món ăn</h1><p className="mt-2 max-w-4xl text-neutral-900">Danh mục này tách rõ <strong>công thức món ăn</strong> với <strong>món ăn chỉ có số liệu dinh dưỡng</strong>, tránh hiểu nhầm khi lập khẩu phần.</p></section>
+
+    <NutritionDataSources />
 
     <section className="grid gap-px overflow-hidden rounded-lg border-2 border-[#123c36] bg-[#123c36] sm:grid-cols-3"><div className="bg-white p-4"><p className="text-xs font-semibold tracking-wide text-[#123c36]">CÔNG THỨC RNI</p><p className="mt-1 text-2xl font-semibold">{total.toLocaleString("vi-VN")}</p><p className="text-sm text-neutral-900">kết quả theo bộ lọc công thức</p></div><div className="bg-white p-4"><p className="text-xs font-semibold tracking-wide text-[#123c36]">MÓN ĂN TRONG FOOD</p><p className="mt-1 text-2xl font-semibold">{foodMealTotal.toLocaleString("vi-VN")}</p><p className="text-sm text-neutral-900">có số liệu /100 g, không có công thức</p></div><div className="bg-[#edf4f0] p-4"><p className="text-xs font-semibold tracking-wide text-[#123c36]">CÁCH ĐỌC</p><p className="mt-1 font-semibold">Công thức ≠ số liệu /100 g</p><p className="text-sm text-neutral-900">Kiểm tra nhãn vàng trước khi sử dụng.</p></div></section>
 

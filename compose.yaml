@@ -11,6 +11,8 @@ services:
       HOSTNAME: 0.0.0.0
     expose:
       - "3000"
+    volumes:
+      - nutrition_chat_tmp:/tmp/dinhduong2598-nutrition-chat-v1
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 30s
@@ -45,6 +47,8 @@ services:
     profiles: ["maintenance"]
     env_file: .env.production
     command: ["npx", "prisma", "migrate", "deploy"]
+    volumes:
+      - nutrition_chat_tmp:/tmp/dinhduong2598-nutrition-chat-v1
     networks:
       - nutrition
 
@@ -54,3 +58,4 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  nutrition_chat_tmp:

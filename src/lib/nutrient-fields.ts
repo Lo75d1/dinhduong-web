@@ -69,7 +69,13 @@ export const NUTRIENT_GROUPS: NutrientGroup[] = [
       { key: "vitD3Mcg", label: "Vitamin D3", unit: "µg" },
       { key: "vitEMg", label: "Vitamin E", unit: "mg" },
       { key: "vitEAddedMg", label: "Vitamin E bổ sung", unit: "mg" },
+      ...["Alpha", "Beta", "Gamma", "Delta"].flatMap((form) => [
+        { key: `tocopherol${form}Mg`, label: `${form}-tocopherol`, unit: "mg" },
+        { key: `tocotrienol${form}Mg`, label: `${form}-tocotrienol`, unit: "mg" },
+      ]),
       { key: "vitKMcg", label: "Vitamin K", unit: "µg" },
+      { key: "dihydrophylloquinoneMcg", label: "Dihydrophylloquinone", unit: "µg" },
+      { key: "menaquinone4Mcg", label: "Menaquinone-4", unit: "µg" },
       { key: "cholineMg", label: "Choline", unit: "mg" },
     ],
   },
@@ -94,6 +100,7 @@ export const NUTRIENT_GROUPS: NutrientGroup[] = [
       { key: "glycineMg", label: "Glycine", unit: "mg" },
       { key: "prolineMg", label: "Proline", unit: "mg" },
       { key: "serineMg", label: "Serine", unit: "mg" },
+      { key: "hydroxyprolineG", label: "Hydroxyproline", unit: "g" },
     ],
   },
   {
@@ -112,6 +119,31 @@ export const NUTRIENT_GROUPS: NutrientGroup[] = [
       { key: "arachidonicC204G", label: "Arachidonic (C20:4)", unit: "g" },
       { key: "epaC205G", label: "EPA (C20:5)", unit: "g" },
       { key: "dhaC226G", label: "DHA (C22:6)", unit: "g" },
+      { key: "margaricC170G", label: "Margaric (C17:0)", unit: "g" },
+      { key: "behenicC220G", label: "Behenic (C22:0)", unit: "g" },
+      { key: "lignocericC240G", label: "Lignoceric (C24:0)", unit: "g" },
+      { key: "myristoleicC141G", label: "Myristoleic (C14:1)", unit: "g" },
+      { key: "palmitoleicC161G", label: "Palmitoleic (C16:1)", unit: "g" },
+      ...([
+        ["c40G", "C4:0"], ["c60G", "C6:0"], ["c80G", "C8:0"], ["c100G", "C10:0"],
+        ["c120G", "C12:0"], ["c140G", "C14:0"], ["c181UndiffG", "C18:1 không phân biệt"],
+        ["c161UndiffG", "C16:1 không phân biệt"], ["c182UndiffG", "C18:2 không phân biệt"],
+        ["c183UndiffG", "C18:3 không phân biệt"], ["c200G", "C20:0"], ["c130G", "C13:0"],
+        ["c150G", "C15:0"], ["c151G", "C15:1"], ["c161TransG", "C16:1 trans"],
+        ["c171G", "C17:1"], ["c181TransG", "C18:1 trans"], ["c1811TransG", "C18:1-11 trans"],
+        ["c201G", "C20:1"], ["c221UndiffG", "C22:1 không phân biệt"], ["c221cG", "C22:1 cis"],
+        ["c221tG", "C22:1 trans"], ["c241cG", "C24:1 cis"], ["c182ClaG", "C18:2 CLA"],
+        ["c182TtG", "C18:2 trans-trans"], ["c182IG", "C18:2 i (nhãn nguồn)"],
+        ["c182NfdG", "C18:2 nfd (nhãn nguồn)"], ["c183N6CccG", "C18:3 n-6 cis-cis-cis"],
+        ["c183IG", "C18:3 i (nhãn nguồn)"], ["c184G", "C18:4"], ["c202N6CcG", "C20:2 n-6 cis-cis"],
+        ["c203UndiffG", "C20:3 không phân biệt"], ["c203N3G", "C20:3 n-3"], ["c203N6G", "C20:3 n-6"],
+        ["c204UndiffG", "C20:4 không phân biệt"], ["c215G", "C21:5"], ["c224G", "C22:4"],
+        ["c225N3DpaG", "DPA (C22:5 n-3)"], ["transMonoenoicG", "Axit béo trans một nối đôi"],
+        ["transPolyenoicG", "Axit béo trans nhiều nối đôi"],
+      ] as const).map(([key, label]) => ({ key, label: `Axit béo ${label}`, unit: "g" })),
+      { key: "stigmasterolMg", label: "Stigmasterol", unit: "mg" },
+      { key: "campesterolMg", label: "Campesterol", unit: "mg" },
+      { key: "betaSitosterolMg", label: "Beta-sitosterol", unit: "mg" },
     ],
   },
   {
@@ -126,6 +158,7 @@ export const NUTRIENT_GROUPS: NutrientGroup[] = [
       { key: "galactoseG", label: "Galactose", unit: "g" },
       { key: "sucroseG", label: "Sucrose", unit: "g" },
       { key: "starchG", label: "Tinh bột", unit: "g" },
+      { key: "phyticAcidMg", label: "Axit phytic", unit: "mg" },
     ],
   },
   {
@@ -135,12 +168,21 @@ export const NUTRIENT_GROUPS: NutrientGroup[] = [
       { key: "theobromineMg", label: "Theobromine", unit: "mg" },
       { key: "alcoholG", label: "Cồn", unit: "g" },
       { key: "isoflavoneTotalMg", label: "Isoflavone tổng số", unit: "mg" },
+      { key: "daidzeinMg", label: "Daidzein", unit: "mg" },
+      { key: "genisteinMg", label: "Genistein", unit: "mg" },
+      { key: "glyceteinMg", label: "Glycetein (nhãn nguồn)", unit: "mg" },
     ],
   },
 ];
 
 // Danh sách phẳng dùng cho bộ chọn chất trong báo cáo khẩu phần.
 export const ALL_NUTRIENT_FIELDS = NUTRIENT_GROUPS.flatMap((group) => group.fields);
+
+// Giữ để đối soát nguồn, không tự quy đổi hoặc cộng vào kết quả khẩu phần.
+export const SOURCE_ONLY_NUTRIENT_FIELDS = [
+  { key: "vitAMgVdd", label: "Vitamin A VDD (đơn vị nguồn cần xác minh)", unit: "mg", note: "Đơn vị mg bất thường; không dùng thay Vitamin A RAE/RE hoặc µg." },
+  { key: "rniUnknownFattyAcidG", label: "RNI: Arginine (g), nhãn chưa xác minh", unit: "g", note: "Nằm trong nhóm axit béo của nguồn; không tự gán thành arginine hay một axit béo khác." },
+] as const;
 
 export const LEVEL_LABELS: Record<number, string> = {
   0: "Không/thấp",

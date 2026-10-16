@@ -1,0 +1,10 @@
+# Link trang chu tu Facebook — 15/10/2026
+
+- Yeu cau: link trang chu co duoi theo doi tu Facebook tu quay ve `/` sach. Chua co URL loi cu the tu nguoi dung; truoc sua, `/?fbclid=...` va UTM tra 200 nhung chua redirect. Khong khang dinh da tai hien loi 404 tren link that cua nguoi dung.
+- Tai dung Server Component trang chu `src/app/page.tsx`: doc `searchParams` async theo Next16, co `fbclid`, `mibextid` hoac `utm_*` thi `redirect("/")` truoc khi truy van du lieu. Dich co dinh cung website, khong lay dich tu query; khong tao middleware/proxy/catch-all moi.
+- Chi ap dung trang chu. Tim kiem, link Food/Dish, Ration, OAuth, API, QR va cac trang khac giu duong dan/tham so can thiet. Duong dan khong ton tai van 404; khong tu doan moi link Facebook deu phai ve trang chu.
+- Prisma generate, TypeScript va ESLint file sua dat. Khong sua giao dien/noi dung, bo tinh, canonical Food/Dish, migration hay cau hinh VPS. Nhanh `codex/nutrition-chat-api`, cung PR #4, chua merge main.
+- VPS preflight doc that: checkoutb83f02e, app59dc690 healthy, DB25/25, env/layout/Caddy/Google SHA khop. App **09424ce** da build Linux/TypeScript va healthy; backup image/config `/opt/dinhduong-release-backups/nutrition-facebook-home-20261015-192501-codex`. Khong migration; PR #4 chua merge main.
+- HTTPS **16 cases** dat: fbclid co/rong/lap, UTM hon hop, mibextid, UTM rieng, query chua URL ngoai, HEAD deu 307 -> `/`; follow tra 200 dung trang chu va khong loop. Root sach/query khong theo doi 200; Food/QR/API health khong bi redirect; OAuth thieu tham so van loi rieng, duong dan khong ton tai van404.
+- Browser that mo `/?fbclid=TEST_FACEBOOK_LINK&utm_source=facebook`: URL cuoi `https://dinhduong2598.food/`, dung heading/trang chu. Anh ignore `evidence/nutrition-chat/facebook-home-browser.png`; da dong tab kiem thu.
+- Sau kiem: Food3.719/Dish7.369/DishIngredient41.457 count/digest khop, 25 migration, SHA env/layout/Caddy/Google giu nguyen; maintenance timer active/enabled, app khong OOM, swap build da go.

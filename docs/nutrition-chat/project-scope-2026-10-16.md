@@ -1,0 +1,35 @@
+# Gỡ nội dung dự án khác — 16/10/2026
+
+- Chủ dự án yêu cầu gỡ quản lý suất ăn và thông tin PC07 vì thuộc dự án khác.
+- Tìm trước: ba lối vào nằm trong menu tài khoản, một lối trong trang quản trị và một liên kết hướng dẫn gán khoa ở quản trị người dùng. PC07 nằm trong `defaultSiteSettings.organization`, có thể hiện lúc ContactForm khởi tạo hoặc khi đọc thiết lập lỗi. Không có mục suất ăn trong header source; override layout VPS chỉ thêm Thông tin mới.
+- Bỏ các liên kết quản lý/báo suất ăn/ca trực bếp và hướng dẫn gán khoa; lưới quản trị còn bốn mục. Ba URL cũ `/quan-tri/suat-an`, `/bao-suat-an`, `/bep` trả notFound theo cơ chế Next hiện có. Không dựng hệ hoặc chức năng thay thế.
+- Bỏ tổ chức PC07 khỏi giá trị mặc định. Trước triển khai, VPS có organization là dấu chấm và address là địa chỉ bệnh viện tại Đà Nẵng; chỉ xóa giá trị tổ chức cũ/placeholder với điều kiện chặt, giữ thông tin liên hệ thực tế và bộ đếm. Backup trước và ghi DataChangeLog cho thay đổi thiết lập.
+- Không sửa Food/Dish/nguyên liệu, schema hay lịch sử migration; không xóa dữ liệu nghiệp vụ của module cũ. Thay đổi này gỡ giao diện khỏi website Dinh dưỡng 2598, không phải migration phá dữ liệu giữa các dự án.
+- Prisma generate, TypeScript và ESLint bảy file sửa đạt. Không viết test mới cho việc gỡ liên kết; kiểm trang và thiết lập qua HTTPS sau triển khai.
+
+## Nghiệm thu VPS
+
+- Source app **b60b934723b9411f2bb94538eaa80f6e4982db20**, nhánh `codex/nutrition-chat-api`, chưa merge main. Backup/rollback image: `/opt/dinhduong-release-backups/nutrition-project-scope-20261016-135612-codex`. Build Linux/TypeScript và health đạt; không migration mới.
+- Thiết lập `public.organization` từ placeholder `.` thành null trong transaction, backup trước và ghi DataChangeLog với tác nhân bảo trì theo yêu cầu chủ dự án. Digest mọi trường còn lại (trừ updatedAt) khớp ngay trong transaction; giữ địa chỉ bệnh viện, tên/điện thoại/Zalo và bộ đếm. Không thay bằng một đơn vị tự suy đoán.
+- **HTTPS48**: settings no-store, không PC07, địa chỉ bệnh viện giữ đúng, bộ đếm còn số; home/hướng dẫn/liên hệ/quản trị không nhãn/link suất ăn; cả10client assets tải thật không còn PC07 hoặc các nhãn menu đã gỡ. Ba URL cũ404 và không render module; health/OAuth discovery/OpenAPI/trang bắt đầu chat200.
+- Công cụ browser trả inventory rỗng nên chưa kiểm tương tác/ảnh desktop-mobile trực tiếp; không coi HTTPS và đọc bundle là kiểm trình duyệt.
+- Canonical count/digest trước/sau khớp (Food3719/Dish7369/nguyên liệu41457), migration25 giữ nguyên. SHA env/layout/Caddy/Google khớp, timer active/enabled, app healthy/OOMKilled=false, không còn swap build. Không tạo fixture tài khoản.
+- Bước đầu wrapper deploy có lỗi cú pháp ở allowlist và dừng trước checkout/build; đã sửa và chạy lại với pin commit cùng tám file được phép. Bản cũ không bị thay trong lần lỗi đó.
+
+## Liên kết sang ứng dụng suất ăn
+
+- Theo yêu cầu tiếp theo của chủ dự án, thêm một thẻ “Suất ăn bệnh viện” ở trang chủ, ngay sau phần chức năng tra cứu/tính khẩu phần; dẫn chính xác tới `https://suatanbv.io.vn/` trong tab mới, có nhãn truy cập và `noopener noreferrer`.
+- Tái dùng bố cục, màu và lớp giao diện trang chủ; không thêm package, API hay dữ liệu. Các URL suất ăn nội bộ đã gỡ vẫn trả404; đây là liên kết sang ứng dụng riêng của chủ dự án.
+- Source ứng dụng **aae66a7b7f45f7ae0b096763e53bd4ecb80176e1** healthy trên VPS; Prisma generate, TypeScript, ESLint file sửa và Linux build đạt. Backup `/opt/dinhduong-release-backups/nutrition-meal-link-20261016-140215-codex`.
+- **HTTPS24 đạt**: có đúng một link/đích/nhãn/tab mới/rel an toàn; đặt trước tài liệu tham khảo; canonical Dinh dưỡng giữ nguyên; redirect Facebook/UTM vẫn307 về `/`; ba URL suất ăn nội bộ404; health/OAuth/OpenAPI/trang bắt đầu chat200, tổ chức cũ vẫn trống/bộ đếm còn số. Canonical count/digest,25migration và SHA env/layout/Caddy/Google khớp; timer active/enabled, không OOM/swap.
+- Trang đích `suatanbv.io.vn` timeout: curl Windows15s; DNS VPS trả162.4.177.119 và fetch HTTPS báo `UND_ERR_CONNECT_TIMEOUT`. Không đổi địa chỉ người dùng cung cấp, không sửa máy chủ/DNS của ứng dụng khác; chưa xác nhận website đích mở được. Công cụ browser không có phiên kết nối nên chưa thử bấm/ảnh trực tiếp; không coi SSR/HTTPS là kiểm browser.
+
+## Làm rõ lối vào ứng dụng suất ăn
+
+- Theo phản hồi khó thấy của chủ dự án: bỏ thẻ trắng thấp dưới phần chức năng, chuyển thành dải xanh rêu đậm ngay trước phần giới thiệu đầu trang, chữ lớn và nút vàng “Mở hệ thống suất ăn”. Thêm nút vàng “Suất ăn bệnh viện” trên thanh điều hướng chung.
+- Giữ đúng URL/tab mới/rel/nhãn truy cập; dùng lớp Tailwind hiện có, có focus/hover/pressed, nút tối thiểu48px và bố cục dọc trên điện thoại. Chỉ đổi hai file giao diện; không đổi engine, API, package hoặc dữ liệu.
+- Layout VPS có override thêm “Thông tin mới”; triển khai phải backup và kiểm đúng patch sáu dòng này, tạm đảo patch để fast-forward source rồi áp lại. Layout SHA thay đổi theo source mới; env/Caddy/Google giữ nguyên SHA, không coi toàn layout phải giữ SHA cũ.
+- Prisma generate, TypeScript, ESLint hai file và Linux build đạt. Source app **a900a0942a975e73869a0ea4e71c4247b487dc73** healthy; backup `/opt/dinhduong-release-backups/nutrition-meal-banner-20261016-141027-codex`. Không viết test riêng cho chỉnh bố cục có thể đảo ngược.
+- **HTTPS35**: hai link đúng đích/tab mới/rel/nhãn, đều nút vàng có focus; menu toàn site, banner trang chủ trướcH1 có nền xanh/chữ lớn/nút48px/lớp responsive; thẻ cũ bỏ; redirect Facebook/URL nội bộ404/health/OAuth/OpenAPI/chat giữ đúng. Kiểm contrast theo màu sRGB: trắng trên xanh12,17:1, xanh trên vàng8,01:1.
+- Patch override sáu dòng đã áp lại và kiểm ngược thành công; env/Caddy/Google giữSHA, layout SHA mới được ghi/kiểm trước-sau build, canonical count/digest và25migration giữ nguyên; timer active/enabled, không OOM/swap. Lần đọc DB preflight đầu trả lỗi; đọc lại có timeout kết nối hữu hạn và health đạt trước triển khai, không suy đoán nguyên nhân.
+- Browser inventory vẫn rỗng; chưa kiểm ảnh/click desktop/mobile trực tiếp. Kiểm SSR chỉ xác nhận thứ tự/cấu trúc/lớp định dạng, không đảm bảo ảnh hiển thị hay website đích đang hoạt động; trạng thái timeout trang đích ở mục trước là snapshot lần kiểm trước.

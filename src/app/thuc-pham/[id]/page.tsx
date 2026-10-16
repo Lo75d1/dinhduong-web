@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NutritionRecordSource } from "@/components/NutritionDataSources";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { NUTRIENT_GROUPS, LEVEL_LABELS } from "@/lib/nutrient-fields";
@@ -48,6 +49,7 @@ export default async function ThucPhamDetailPage({
         {food.sourceNote && (
           <p className="mt-2 text-xs text-neutral-400">Nguồn tham khảo: {food.sourceNote}</p>
         )}
+        <NutritionRecordSource source={food.source} sourceCode={food.sourceCode} foodType={food.foodType} />
       </div>
 
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">

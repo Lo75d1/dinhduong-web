@@ -1,10 +1,201 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Đủ trường dinh dưỡng trên trang Tính khẩu phần — 17/10/2026
+
+- App **e3177c7** healthy trên VPS (sau ff4741d): prepare nạp registry160, tổng/bảng nguồn giữ đủ160 dù chat yêu cầu ít trường; phân tích normalized có156 chất ngoài kcal/P/L/G. Bảng chi tiết manual/linked mặc định đủ160, nút toàn bộ/rút gọn5/chọn từng chất dùng chung; bỏ tầng gập vi chất phụ. Không bịa mốc hoặc số: thiếu—/≥,0 giữ0; vá reducer manual từng hiện≥0 khi hoàn toàn thiếu nguồn.
+- Tái dùng registry/repository/engine/MultiDayAnalysis/RationDetail/MCP compactor, không model/migration/kho hoặc đổi16tool/gói1.0.11. Full suite đạt; HTTP393/native708, TypeScript/lint/diff/ration-report đạt. HTTPS590 đối chiếu160nguồn/tổng, guard và XLSX đạt. Browser thật đã thử156dòng/160cột, rút gọn/chọn B12 và viewport390×844 không tràn trang; ảnh mobile có trong evidence. Test manual nhiều ngày cũ vẫn fail600!==null ở dòng29, engine/test không đổi; chưa nghiệm thu hội thoại AI thật.
+- Canonical5bảng/25migration/cấu hình giữ nguyên; timer active/enabled, app không OOM, swap0. Phiên kỹ thuật đạt đã dọn, bản browser xóa sau QA; một bản kỹ thuật lượt quota trước chờ TTL30phút. PR#4 draft/chưa merge. Chi tiết `docs/nutrition-chat/full-nutrients-web-2026-10-17.md`.
+
+## Bản tính nháp dùng giao diện Tính khẩu phần hiện có — 16/10/2026
+
+- App **4339c73** healthy trên VPS. Link chat mở ngay bước Kết quả, bản nháp có nhãn chưa chốt; dùng chính bảng/thẻ của MultiDayAnalysis và RationDetail nguồn server. Phần nhập chia sẻ cây bữa/món, khung món và thanh bước với trang tính thường; mobile một pane cây hoặc nguyên liệu, không còn danh sách thẻ dài nằm trên bảng nhập. Không chỉ bọc form riêng bằng URL/tiêu đề Calculator.
+- MenuInput gốc giữ ml/suất/nguồn/quy đổi/mã/dấu sao; không ép về Row gam hay lấy cấu hình manual. Sửa đầu vào xóa kết quả/ticket/xác nhận cũ; dùng lại payload/ticket mới để xem và duyệt/tính lại/tải Excel. Tổng thiếu—/≥,0 giữ0, ratio thiếu cơ sở—. Không thay engine/kho/quyền/migration hoặc gói1.0.11/16tool.
+- Prisma/TypeScript/lint14file (0error,4warning cũ ở MealInput)/full suite đạt; native results217/160fields, CalculatorSSR27, **HTTPS98** và SSR dữ liệu VPS22 đạt. Browser/IAB không kết nối nên chưa kiểm click/hydration/ảnh mobile thật. Token/file thử dọn, account counts/canonical5bảng/25migration/cấu hình giữ nguyên; timer active/enabled, không OOM/swap, curl Windows200. PR#4 draft/chưa merge. Biên bản `docs/nutrition-chat/native-calculator-2026-10-16.md`.
+
+## Sửa token MCP gửi trùng và hướng dẫn hồ sơ thiếu — 16/10/2026
+
+- App **4c2a23c** đã build/healthy trên VPS; guide/plugin **1.0.11**,16tool. Tái hiện rồi sửa sessionToken lọt vào allowlist nghiệp vụ khi client có cả Authorization và argument; header identity/scope vẫn ưu tiên, không fallback khi sai/thiếu quyền. Schema profile khai đúng required/enums; thiếu tuổi/giới trả422/needs_input và hỏi phần thiếu, không bịa. None/manual có mục tiêu nguồn không cần profile; không tự đổi chế độ để qua lỗi.
+- Prisma/TypeScript/lint6file/full suite đạt: core86/HTTP389/guide97, các hồi quy khác giữ đạt. **HTTPS72** trên VPS gồm MCP cũ/mới/ba đường token, schema/4góiSHA, thiếu và đủ hồ sơ, none/manual không hồ sơ, tính đúng Food nguồn và auth/private guards. Token/snapshot kỹ thuật dọn, account counts/canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm nền tảng AI thật; Windows có kết nối SSH/HTTPS timeout xen kẽ dù lượt kiểm VPS hoàn tất healthy, chưa rõ nguyên nhân. Chi tiết `docs/nutrition-chat/tool-input-fixes-2026-10-16.md`; PR#4 draft/chưa merge main.
+
+## Bổ sung các bảng phân tích web vào Excel — 16/10/2026
+
+- App **8e20d14** healthy trên VPS: thêm `Can doi nang luong` và `Dong gop bua mon`; đủ bảng ngày/kỳ, P:L:G và theo cân nặng, đóng góp bữa/món, ngày đủ cơ sở/đạt, nhóm thực phẩm/ngày, số bữa theo mã chế độ ăn và bảng WHO trẻ em khi đủ hồ sơ/nguồn. Ma trận từng thực phẩm×160 chỉ tiêu vẫn là tab đầu. Không bổ sung biểu đồ.
+- Tái dùng builder, số/công thức nhập/tổng và hàm WHO chung web; không engine/model/migration hoặc sửa kho. Xuất web giữ lựa chọn bếp/tỷ lệ bữa/mã canonical hiện có. Thiếu `—`, zero giữ0, phần thiếu đánh `≥`; không tự chia mục tiêu bữa. Bếp chỉ tham khảo nhu cầu cả ngày. File cũ cần xuất lại.
+- Prisma/TypeScript/lint15file/full suite và Linux build đạt; test phân tích56, native fixture28/hồi quy668; **HTTPS82**, file chat1.619.009byte/native971 và file web1.621.525byte/native366 đạt, mọi sheet không lỗi công thức. PDF bảng cân đối/đóng góp đã xem. Browser không kết nối nên chưa kiểm click/hydration/AI thật. Account counts/canonical5bảng/25migration/cấu hình giữ nguyên, token/file tạm dọn, timer active/enabled, không OOM/swap. Guide/plugin1.0.10/16tool, PR#4 draft/chưa merge main. Biên bản: `docs/nutrition-chat/analysis-tables-2026-10-16.md`.
+
+## Bảng Excel từng thực phẩm và đầy đủ vi chất — 16/10/2026
+
+- App **981579e** healthy trên VPS; `Phan tich chi tiet` là tab đầu của Excel đầy đủ dùng chung web/hội thoại. Một bảng gồm ngày/bữa/món, từng thực phẩm, lượng g/ml/suất và lượng nguồn dùng tính, **160 cột dinh dưỡng**, nguồn cuối bảng; có cộng món/bữa/ngày/toàn khẩu phần. Không chỉ bốn chất hoặc tổng dọc theo chất.
+- Tái dùng số/công thức `Nhap khau phan` và `Phan tich`, registry160; không thêm bộ tính/model/migration, không sửa kho. Tổng không cộng trùng subtotal; thiếu `—`, zero giữ zero, tổng một phần đánh `≥` nhưng vẫn là số. Sửa lượng/suất/nguồn tự cập nhật; đổi ngày/bữa/món/số dòng cần xuất lại để sắp nhóm, tổng khẩu phần vẫn tính trên vùng nhập. Không ép160 cột lên một trang, không freeze/ẩn vi chất; bảng hành chính Times New Roman/lưới.
+- Prisma/TypeScript/ESLint file sửa/full suite và Linux build đạt. Excel thật fixture **668** kiểm; **HTTPS76**/11assets và chính file1.566.164byte mở Excel **971** kiểm: từng nguyên liệu×160 chất đối chiếu API nguồn, bốn cấp tổng và thay lượng/suất đúng, không lỗi công thức. Đã xem PDF phần cột đầu; chưa kiểm trình đọc khác Excel hoặc AI thật. Token/file thử dọn, account counts/canonical5bảng/25migration/cấu hình giữ nguyên; timer active/enabled, không OOM/swap. Guide/plugin1.0.10/16tool giữ nguyên, PR#4 draft/chưa merge. File cũ cần xuất lại. Chi tiết `docs/nutrition-chat/detail-matrix-2026-10-16.md`.
+
+## Đủ nguyên liệu khi duyệt, link vào Tính khẩu phần và Excel — 16/10/2026
+
+- App **6299385** healthy, guide/plugin **1.0.10**/16tool. Bản nháp đầu tiên phải hiện tất cả nguyên liệu/lượng dưới món ngay trong chat; approvalPresentation theo từng phản hồi prepare/get_saved_menu, không chỉ hướng dẫn cài. Link mở Tính khẩu phần với hai bước Nhập khẩu phần/Kết quả, ngày/bữa/món và bảng nguyên liệu; link cũ tương thích, bản nhập thủ công giữ riêng. Tái dùng Calculator/editor/engine/API, không ép về Row gram làm mất ml/suất/nguồn/quy đổi.
+- Sửa lỗi nhận nhầm Food VDD loại MA trong công thức RNI thành món độc lập, che tên thành phần và món cha trong review/web/phiếu/Excel. VPS có923 liên kết loại này. Ngữ cảnh recipeSource.dishId giữ đúng dòng nguyên liệu và kcal/P/L/G; VDD độc lập vẫn không tự có thành phần. Guard sống sạch giữ riêng, không thay phép tính/kho/layout/migration. File cũ cần xuất lại.
+- Full suite sau UI/HTTP347/guide89/SSR18 và hồi quy sau vá review61/full report/TypeScript/lint đạt. Native fixture15 + **HTTPS71**/11assets + Excel thật **native20** đạt: hai nguyên liệu RNI gồm VDD MA giữ tên/số riêng, sửa lượng/suất tính đúng; bản in1trang đã xem. Fixture/token tạm dọn, account/session/Ration/OAuth count không đổi; canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm click/hydration/mobile hoặc AI thật vì browser không kết nối. Chi tiết `docs/nutrition-chat/ingredient-review-calculator-2026-10-16.md`; PR#4 draft/chưa merge.
+
+## Link bản tạm sửa trên web và nước chấm — 16/10/2026
+
+- App **ea26cdf** healthy trên VPS, nhánh `codex/nutrition-chat-api`/PR#4 draft/chưa merge. Prepare có link đầu vào nháp, calculate/export có link bản đã tính; mở/sửa/tính lại không cần đăng nhập, hạn30phút. Đầu vào giữ riêng trong vùng tạm, không tạo tài khoản/Ration. Link mới giữ bản cập nhật, link cũ giữ đầu vào cũ; Excel là tải thêm. Muốn giữ lâu dài mới đăng nhập tab mới, prepare bằng tài khoản và duyệt lại để save.
+- Tái dùng bộ tính/nguồn/biểu mẫu dùng lại/báo cáo/limiter/vùng tạm/timer; không model/migration hoặc sửa kho. Capability fragment đổi lấy cookie từng bản HttpOnly/Secure/Strict; ID không cookie không mở được. Không đưa token tài khoản vào link. Đọc tra nguồn hiện tại, TTL/quota/Origin/allowlist phía server; dọn file hết hạn qua maintenance15phút đã cập nhật image và kiểm chạy.
+- Hướng dẫn1.0.8/16tool trên workflow/QR/TXT/web/ZIP/skill: món luộc/hấp phải hỏi nước chấm/lượng thực dùng, tra và tính nguồn thật, không cộng trùng hoặc thêm vào lịch sử24h khi chưa ăn. Rà bỏ câu cũ bắt lưu tài khoản mới có link web; cần Refresh/Scan Tools để nhận hướng dẫn mới.
+- Full suite/HTTP347/guide89/React SSR10, Prisma/TypeScript/lint file sửa/Linux build đạt. **HTTPS99 + smoke20**: chỉnh100→150g tính đúng theo hai Food thật, bản cũ/mới tách biệt, cookie/Origin/TTL/save-denied, Excel1.550.729byte; account/session/Ration/OAuth count không đổi, fixture dọn. Canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm browser tương tác/hydration/mobile hoặc hội thoại AI thật do browser không kết nối. Chi tiết `docs/nutrition-chat/web-edit-and-sauces-2026-10-16.md`.
+
+## QR/hướng dẫn dành cho bác sĩ và dùng lâu dài — 16/10/2026
+
+- App7d3ecf1 healthy: trang chủ có QR/ba bước/nút bắt đầu, trang QR có lời nhắn ngắn và hướng dẫn bật kết nối lần đầu. Chat được chỉ tự mở phiên tạm, không bắt bác sĩ lấy token; manual token nằm trong phần mở rộng. QR/link không tự cài plugin vào chat chưa có công cụ.
+- Mục dùng lâu dài hướng dẫn Đăng ký mới/Đăng nhập → quay lại chat kết nối tài khoản → yêu cầu lưu → duyệt lại → mở Thực đơn của tôi; giữ input, không dùng ticket guest để save tài khoản. Bỏ câu cũ bắt xuất Excel để lưu. Workflow/accountUse/QR/TXT/ZIP/skill1.0.6,16tool; không đổi auth/bộ tính/migration/kho.
+- Prisma/TypeScript/lint/HTTP308/guide86/React20/Linux build, HTTPS86 + smoke19/9client assets đạt; account/session/Ration/OAuth count không đổi, token thử dọn. Canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm browser/AI thật do công cụ không kết nối. Chi tiết `docs/nutrition-chat/doctor-start-2026-10-16.md`; PR#4 vẫn draft/chưa merge.
+
+## Phiên tạm không tài khoản — 16/10/2026
+
+- Bổ sung start_guest_session và token khách30phút, không tạo tài khoản hoặc lưu thực đơn; chỉ kho chung/tính/Excel, không thư viện/bản lưu riêng. Có tạo/kết thúc trên `/ket-noi-ai#phien-tam`;16tool/gói1.0.5. Mỗi kết quả/lỗi API có guidance hỏi phần thiếu/chờ duyệt/bước tiếp, giữ cả khi MCP rút gọn.
+- Full suite/HTTP308/guide77/React12/Prisma/TypeScript/lint đạt; không migration. App92b4eb8 build/healthy, nguồn/cấu hình giữ nguyên. Lần kiểm đầu web/SSH timeout dù ping18ms; chủ dự án reboot VPS, truy cập trở lại, chưa xác định nguyên nhân. Chạy lại có timeout và swap tạm: HTTPS87 đạt, Excel1.548.367byte tải/nhập lại200, account/session/Ration/OAuth count không đổi, token/file đợt đạt đã dọn;2hash phiên cũ chờ hết hạn30phút. App healthy/timer active, swap tạm tắt/xóa; chưa kiểm sức tải/browser/AI thật. Chi tiết `docs/nutrition-chat/guest-session-2026-10-16.md`; PR#4 draft/chưa merge.
+
+## Hướng dẫn plugin và token API chỉ tính — 16/10/2026
+
+- App **23457e0** healthy: hướng dẫn1.0.4 dùng chung cho15tool, QR/TXT/web/ZIP; sửa lời nhắn mặc định lưu, phân biệt chỉ tính/chỉ Excel/lưu. Onboarding và2skill/6file có thể import qua MCP extension/digest; host cần Scan Tools/cập nhật snapshot, không tự giả định đã cài skill.
+- Tài khoản → Kết nối ứng dụng có token API1giờ/24giờ/7ngày, read/calculate và export tùy chọn, không write; chỉ lưu hash/không refresh, có thu hồi. Tái dùng OAuth client/token, không bảng/migration mới và không tăng bộ đếm kết nối nền tảng. Chỉ tính/xuất không tạo Ration.
+- Khắc phục trang tài khoản RSC lỗi driverXX000 dù API profile200: PrismaClient dùng chung trên process, pool3/thời gian chờ10giây. HTML form/API và hai lượt đọc song song đã đạt, log lỗi bản cuối0. Login giữ đúng mục token.
+- Full suite trước mở rộng, HTTP252/guide74/account94, Prisma/TypeScript/lint file sửa/Linux build; HTTPS100 + smoke16/React11 đạt. Đã dọn2user/2session/2client/2token/4audit,0Ration; canonical5bảng/count/digest,25migration/cấu hình giữ nguyên, timer active, không OOM/swap. Browser không kết nối nên chưa kiểm tương tác/AI thật. Biên bản: `docs/nutrition-chat/plugin-guide-and-api-token-2026-10-16.md`; PR#4 vẫn draft/chưa merge.
+
+## Chế độ ăn bệnh lý trong Nutrition Chat — 16/10/2026
+
+- App **5901e2f** healthy trên VPS: thêm `search_diet_codes`/`get_diet_code`, tổng15tool; dùng lại246 mã MCDA, không thêm bảng/migration hoặc sửa kho. Chat có hướng dẫn hỏi dữ kiện còn thiếu, đọc ghi chú, trình mã để xác nhận rồi lưu cùng thực đơn. Mã chưa chốt/sai đối tượng bị chặn; thay context hoặc nguồn phải duyệt lại.
+- Web có phần đối chiếu và sửa dữ kiện/mã trong biểu mẫu dùng lại. Excel giữ mã khi nhập lại, phần Bao cao đối chiếu sáu chỉ tiêu bằng công thức; không trộn khoảng mã với mục tiêu cá nhân. Dữ liệu thiếu/ước tính không kết luận chắc chắn; đơn vị nước chưa xác minh không dùng so sánh.
+- Full suite/Prisma/TypeScript/ESLint file sửa/Linux build đạt. HTTPS58 + native import/update/package19, Excel thật fixture20/file VPS12, React/parser dữ liệu VPS9 và trang in4/4 đạt. Browser inventory rỗng nên chưa kiểm giao diện tương tác hay hội thoại nền tảng thật; không coi render React là browser QA.
+- Đã dọn1 bản/2 phiên/2 user kiểm thử; count/digest5 bảng nguồn,25migration và env/layout/Caddy/Google giữ nguyên. Timer active/enabled, không OOM/swap. PR#4 vẫn draft/chưa merge main; theo quyền triển khai trực tiếp đã được chủ dự án cấp. Biên bản: `docs/nutrition-chat/clinical-diet-codes-2026-10-16.md`.
+
+## Làm nổi bật lối vào suất ăn — 16/10/2026
+
+- App **a900a09** healthy: “Suất ăn bệnh viện” thành nút vàng trên menu chung; trang chủ có dải xanh đậm/chữ lớn/nút vàng ngay trước phần giới thiệu, thay thẻ trắng nằm thấp. Cùng URL/tab mới/nhãn truy cập; chữ/nền tương phản12,17:1 và8,01:1, nút chính tối thiểu48px.
+- Prisma/TypeScript/ESLint hai file/Linux build và HTTPS35 đạt; kiểm hai liên kết, thứ tự trướcH1, menu toàn site, kiểu màu/focus/responsive, URL nội bộ404 và API dinh dưỡng. Chưa kiểm ảnh/click bằng browser do inventory rỗng. Override “Thông tin mới” sáu dòng giữ nguyên qua patch được kiểm; layout SHA theo source mới, env/Caddy/Google và canonical/25migration không đổi. Timer active, không OOM/swap. Biên bản: `docs/nutrition-chat/project-scope-2026-10-16.md`.
+
+## Liên kết ứng dụng suất ăn — 16/10/2026
+
+- App **aae66a7** healthy trên VPS: trang chủ có thẻ “Suất ăn bệnh viện” sau phần chức năng, mở `https://suatanbv.io.vn/` trong tab mới. Theo yêu cầu chủ dự án, chỉ thêm liên kết sang ứng dụng riêng; các URL suất ăn nội bộ tiếp tục404.
+- Prisma/TypeScript/ESLint file sửa/Linux build và HTTPS24 đạt; canonical/cấu hình/25migration giữ nguyên, timer active, không OOM/swap. Trang đích chưa xác nhận mở được: HTTPS timeout từ máy Windows và VPS, DNS lúc kiểm tra trỏ162.4.177.119. Không coi link đúng là trang đích hoạt động; chưa kiểm click bằng browser do công cụ không kết nối. Chi tiết ở `docs/nutrition-chat/project-scope-2026-10-16.md`.
+
+## Gỡ nội dung dự án khác — 16/10/2026
+
+- Theo yêu cầu chủ dự án, app **b60b934** healthy trên VPS: gỡ lối vào quản lý/báo suất ăn/ca trực bếp trong menu tài khoản và quản trị, bỏ hướng dẫn gán khoa; ba URL cũ trả404. Bỏ tổ chức PC07 khỏi giá trị mặc định, xóa placeholder tổ chức trên VPS bằng cập nhật có backup/audit, giữ địa chỉ bệnh viện và các liên hệ/bộ đếm.
+- Prisma generate/TypeScript/ESLint file sửa/Linux build đạt; **HTTPS48** gồm10client assets, ba404 và API dinh dưỡng/discovery. Canonical/cấu hình/25migration giữ nguyên, timer active/enabled, không OOM/swap. Không kiểm browser trực tiếp do công cụ hiện không có phiên kết nối. Nhánh PR#4 chưa merge main; chi tiết `docs/nutrition-chat/project-scope-2026-10-16.md`.
+
+## Hướng dẫn hội thoại và phiếu 24h — 16/10/2026
+
+- App **e85a281** healthy trên VPS, nhánh `codex/nutrition-chat-api`, PR #4 chưa merge main. Trả tóm tắt + link bản riêng trước; Excel chỉ tạo khi cần tải. `prepare.review.text` duyệt đúng đầu vào, mọi số AI tự điền có dấu `*` qua metadata, vẫn giữ kiểu số để tính.
+- Khẩu phần 24h có hai phụ lục theo QĐ2598 trên web/Excel: phiếu 9 cột và bảng quy đổi 7 cột. Nguồn/ghi chú chính rút gọn; RNI giữ nguyên liệu, VDD cả món không suy ra sống sạch. Sửa lỗi VDD catalog không có Dish ID, giữ kiểm chứng nguồn canonical.
+- Full suite, Prisma/TypeScript/lint file sửa và Linux build đạt; HTTPS33 + công khai14 + native import/update11, Excel thật fixture28/file VPS28, SaveAs/parser5+4 và 4 trang in đạt. React render bằng dữ liệu VPS đạt; **chưa kiểm trình duyệt trực tiếp đợt này** vì công cụ không có phiên browser kết nối. Không coi là đã nghiệm thu hội thoại ChatGPT/Claude/Gemini thật.
+- Fixture đã dọn (1 Ration, 2 phiên, 2 user); canonical count/digest, DB25 migration và cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Không migration mới. Chi tiết: `docs/nutrition-chat/review-and-recall-2026-10-16.md`.
+
+## Bổ sung Nutrition Chat và dữ liệu cá nhân — 15/10/2026
+
+- Link trang chủ có `fbclid`/`mibextid`/`utm_*` đã tự chuyển về `/` sạch trên VPS app **09424ce**: HTTPS16 và trình duyệt thật đạt, không chuyển vòng lặp. Chỉ xử lý trang chủ, giữ link tra cứu/QR/API/OAuth; không sửa canonical/migration/cấu hình. Biên bản `docs/nutrition-chat/facebook-home-2026-10-15.md`.
+- Phân biệt món VDD/nguyên liệu RNI đã lên VPS app **59dc690**: RNI giữ đủ từng dòng nguyên liệu; VDD MA hiện tên cả món và ghi không có dữ liệu thành phần. Sửa Food ID tự đổi cách hiển thị, không đổi bộ tính/import. Native fixture38 + HTTPS45/file thật Excel43/native import4 đạt; canonical/cấu hình giữ nguyên. Biên bản nối tiếp `docs/nutrition-chat/menu-layout-2026-10-15.md`.
+- Nhãn Ngày/Món ăn theo nhóm đã lên VPS app **be06415**: chỉ hiện ở đầu mỗi nhóm liên tiếp, tự hiện lại khi sang nhóm khác; bảng nhập vẫn đủ nhãn. HTTPS39, Excel file thật35 và native import4 đạt; dữ liệu/cấu hình giữ nguyên. Chi tiết nối tiếp trong `docs/nutrition-chat/menu-layout-2026-10-15.md`.
+- Bố cục sheet Thực đơn mới đã chạy VPS app **5994ff2**: tách Ngày/Bữa/Món/Thực phẩm, thêm 4 chỉ số liên kết từ bảng nhập, chữ 15/lưới thường, nguồn-ghi chú một cột cuối. Tiếp tục nhập ở Nhap khau phan; mục tiêu chỉ ở báo cáo. HTTPS30 + Excel thật28 + native SaveAs/import4 đạt, không đổi engine/import/canonical. Biên bản `docs/nutrition-chat/menu-layout-2026-10-15.md`.
+- Link nguồn dinh dưỡng VDD/RNI đã lên VPS app **ba2829d**: quản trị dữ liệu, danh mục/chi tiết thực phẩm-món ăn và tài liệu tham khảo. Link là trang tra cứu chung; VDD tách thực phẩm/món ăn, RNI ghi rõ cần đăng nhập; giữ mã nguồn, không sửa Food/Dish. HTTPS42 + browser thật đạt, canonical/cấu hình khớp. Biên bản `docs/nutrition-chat/data-sources-2026-10-15.md`.
+- Nhánh triển khai: `codex/nutrition-chat-api`, PR #4; chưa merge main. Trạng thái/kiểm chứng hiện tại ở `docs/nutrition-chat/verification.md`, không suy trạng thái VPS từ các snapshot cũ bên dưới.
+- Excel có công thức, đủ chất/nguồn và link thực phẩm/bản lưu đã kiểm VPS riêng tại `docs/nutrition-chat/saved-menu-links-2026-10-15.md`.
+- Người dùng yêu cầu ba mục tài khoản và chọn thêm/sửa/lưu độc lập thực phẩm/món để dùng nhiều lần. Code mới tái dùng Ration/engine; thêm PersonalFood/PersonalDish cho phần thư viện chưa có, không dùng FoodSubmission hoặc sửa kho Food/Dish. Chi tiết ở `docs/nutrition-chat/personal-library-2026-10-15.md`.
+- Chủ dự án đã yêu cầu trực tiếp lên VPS: app **46f2659** healthy, migration thư viện đã áp bằng image migrate no-cache sau backup/restore thử; DB **25/25**. HTTPS69 + public17 và browser thật đạt; fixture đã dọn, canonical/cấu hình giữ nguyên. Vẫn nhánh riêng, chưa merge main. Biên bản: `docs/nutrition-chat/vps-personal-library-2026-10-15.md`.
+
 Đọc file này TRƯỚC khi làm bất cứ việc gì trong `D:\datanutrition\web`. Đây là
 bản tóm tắt để phiên chat mới (theo đúng khuyến nghị: chia nhỏ hội thoại, ghim
 tài liệu nền tảng) không phải dò lại từ đầu.
 
 ## Bối cảnh
+
+### Link Excel và dùng lại bản cá nhân (15/10/2026)
+
+- App `151ec6b` healthy trên VPS, nhánh thử chưa merge main. Excel có link Food và link bản lưu theo tài khoản; web đăng nhập chọn lưu thêm khi xuất, có thể bỏ chọn; chat thêm cờ `saveToAccount` cần quyền write, export-only vẫn hoạt động khi không lưu. Retry cùng digest không tạo bản trùng. Tái dùng Ration/JSON/service/quota/builder, không migration/seed/Food/Dish write.
+- Tài khoản có lối mở danh sách; bản lưu đổi tên/ngày/lượng/suất, prepare/xem trước/chốt thành bản dùng lại. Nhập Excel thu gọn làm dự phòng cho sửa riêng offline; đăng nhập từ link quay lại đúng bản. Bản offline không tự đồng bộ. Metadata/thuốc riêng của report web chưa thêm vào snapshot Ration.
+- Hồi quy core67/report37/security89/OAuth261/storage82/HTTP187/workbook; native fixture23 + file thật19, native SaveAs/import200, HTTPS22 và UI thao tác100→200 g/198→396 kcal đạt. Đã dọn 4 Ration/2 phiên còn lại/2 user kiểm thử, source/cấu hình giữ nguyên, timer active, không OOM/swap. Chi tiết `docs/nutrition-chat/saved-menu-links-2026-10-15.md`.
+- Bộ ba “Thực đơn của tôi / Thực phẩm của tôi / Món ăn của tôi” đã bổ sung sau đợt này: gom Ration cũ/mới, thư viện độc lập theo yêu cầu đã chốt, chạy VPS46f2659. FoodSubmission vẫn chỉ là đề xuất kiểm duyệt, không phải thư viện cá nhân.
+
+### Thống nhất báo cáo Excel web/hội thoại (15/10/2026)
+
+- Bộ xuất source `2aa88d3`; app đóng gói lại cùng plugin/skill mới `656646c` đã build Linux và healthy trên VPS, vẫn trên nhánh thử `codex/nutrition-chat-api`, chưa merge main. Gói tải HTTPS khớp SHA256SUMS. Tái dùng builder/tính toán/khóa PostgreSQL hiện có; không thêm bảng/migration/seed hoặc sửa Food/Dish. Chi tiết và giới hạn: `docs/nutrition-chat/report-export-2026-10-15.md`.
+- Excel chung dạng báo cáo hành chính trắng/đen, Times New Roman/A4, không frozen panes; báo cáo chính gọn, thực đơn thực tế, phụ lục 160 chất tính được, đối chiếu nguồn và 2 trường chưa xác minh chỉ giữ để rà. File quản trị xuất đủ 162 trường nguồn; writer streaming giảm RAM khi xuất toàn kho.
+- Đã vá lỗi Excel `AND` vẫn tính `INDEX` nguồn tự nhập ngoài vùng dù dòng dùng Food canonical: gây `#REF!` và tổng trống sau mở file. Native Excel fixture 23 checks và tải thật web 1/2 ngày sau vá; file 2 ngày sửa gram tự tính đúng, quét mọi sheet không lỗi; 10 checks file thật gồm cả khung nhập quản trị đạt. File đã tải từ bản cũ cần xuất lại.
+- HTTPS origin/schema/quota/khóa xuất thật đạt; export quản trị 401/403/200 và đầy đủ 3.719 Food/7.369 Dish/41.457 nguyên liệu. Canonical count+digest/cấu hình riêng khớp trước sau; fixture tài khoản/phiên đã dọn, timer active, không OOM, không còn swap build. Peak app sau tải UI bản cuối ~622 MiB; chưa nghiệm thu tải tối đa.
+- Hướng dẫn hội thoại ưu tiên món có sẵn: RNI lấy Dish, VDD món hoàn chỉnh lấy Food type MA; không tự bịa công thức. Chưa nghiệm thu hành vi lập món trên tài khoản ChatGPT/Claude/Gemini thật. TypeScript/build/test đạt; còn lỗi lint `set-state-in-effect` cũ ở MultiDayAnalysis ngoài phạm vi.
+
+### Nutrition Chat API — nhánh chạy thử VPS (14/10/2026)
+
+- Nhánh `codex/nutrition-chat-api`: MCP + REST + OAuth, khẩu phần 24h/một/nhiều ngày, nguồn ngoài kho, bản Ration riêng, Excel tự tính và nhập lại có xem trước. Trang `/ket-noi-ai`, đặc tả tại `docs/nutrition-chat/`.
+- Next.js nâng từ 16.2.10 lên 16.4.0 để vá cảnh báo bảo mật critical trước phát hành; không đổi Food/Dish hoặc dữ liệu canonical. Hai migration Nutrition Chat đã áp trên VPS, chi tiết ở mục nghiệm thu bên dưới.
+- `Ration.conversationJson` giữ đầu vào/nguồn/ngày/đơn vị/null và lịch sử 20 lần lưu; các cột Float của RationItem cũ không biểu diễn đủ dữ liệu này. API khẩu phần cũ chặn ghi/đọc nhầm bản hội thoại.
+- Người dùng đã bỏ cửa Claude duyệt cho phần việc này, sau đó cấp thông tin SSH và giao Codex chạy thử VPS. Giữ nhánh thử riêng, chưa merge main. Hướng dẫn vận hành: `docs/nutrition-chat/vps-runbook.md`.
+- Build/test local được bổ sung bằng nghiệm thu HTTPS/DB/Docker thật bên dưới; kết nối tài khoản ChatGPT/Claude thật vẫn chưa nghiệm thu.
+- Xem `docs/nutrition-chat/verification.md` để phân biệt kiểm chứng mới, lỗi kiểm tra cũ và các bước còn phải nghiệm thu trên VPS.
+
+#### Đã chạy thử VPS thực tế (14/10/2026)
+
+- Sau hướng dẫn tự chạy, người dùng cấp khóa/thông tin SSH và giao Codex kết nối triển khai. VPS `/opt/dinhduong` chạy nhánh `codex/nutrition-chat-api`, lần triển khai API đầu dùng `bdc1f4f`; chưa merge main. Bản footer bổ sung bên dưới dùng app `63cf966`.
+- Đã backup/restore thử DB public riêng, build image Linux Node 24/Next 16.4.0 và áp đủ 7 migration còn thiếu. Hai migration Nutrition Chat gồm `20261014090000_nutrition_chat_oauth` và `20261014213000_nutrition_chat_private_access`; migration status up to date.
+- HTTPS thật: 41 kiểm tra OAuth/MCP/owner/revision/Excel/import/refresh/revoke đạt; 2 user/client kiểm thử và các dữ liệu liên quan đã dọn. Food/Dish/nguyên liệu món giữ nguyên cả số dòng lẫn dấu kiểm tra nội dung.
+- Timer bảo trì hết hạn OAuth/Excel 15 phút đã bật, chạy đầu thành công. Cấu hình proxy/menu/file Google riêng trên VPS được giữ lại; upstream `162.4.177.119:80` của `/thong-tin-moi/` đang timeout/502, không tự sửa máy khác.
+- Báo cáo thực tế và giới hạn còn lại: `docs/nutrition-chat/vps-2026-10-14.md`. Tài khoản ChatGPT/Claude thật, tải tối đa và quyền Data API của bảng tài khoản cũ vẫn cần nghiệm thu/rà riêng.
+
+#### Bộ đếm kết nối ở footer (14/10/2026)
+
+- Theo yêu cầu người dùng: thêm hai tổng lũy kế ChatGPT/Claude nhỏ ở footer hiện có, tái dùng `SiteSetting` và `/api/site-settings`; không dựng bảng analytics riêng.
+- Chỉ tăng khi authorization code đổi thành token lần đầu thành công; callback chính xác xác định nền tảng. Refresh/code lỗi/phát lại/mở link không tăng số, rollback không cộng số; nguồn tính không chứa định danh người dùng.
+- Migration `20261014230000_nutrition_connection_counts` đã áp, repo 23 migration up to date. `site_settings` có RLS/revoke Data API để không sửa số trực tiếp; app owner/BYPASSRLS và public API/admin hiện có tiếp tục hoạt động.
+- OAuth/PGlite 254 checks và toàn bộ suite Nutrition Chat đạt; TypeScript/lint/build đạt. Backup mới + restore thử riêng đạt; Food/Dish/nguyên liệu và cài đặt có sẵn khớp digest trước/sau. Tổng thực tế sau bật: ChatGPT 0, Claude 0; không backfill lượt thử trước đó.
+- App image `63cf966` đã chạy trên VPS; footer thật chữ 12 px/xám, một hàng ở panel 319 px và document 304 px, không tràn ngang. Migration image `3fb8cc3` chứa cùng migration/logic bộ đếm, timer bảo trì giữ nguyên.
+
+#### Lối vào từ trang chủ (15/10/2026)
+
+- Đã bổ sung nút “Kết nối ChatGPT & Claude →” ở đầu trang chủ và mục “ChatGPT & Claude” trên menu chung, cùng mở `/ket-noi-ai` đã có.
+- VPS app image `ae369ab`: build Linux/TypeScript, health và HTTPS đạt; đã bấm thử cả hai link trên trình duyệt thật. Panel 319 px/document 304 px không tràn ngang. Bộ đếm footer tiếp tục 0/0; không thay OAuth/schema/migration/Food/Dish.
+- Giữ cấu hình/nav “Thông tin mới” và file Google riêng của VPS; có backup image/env/layout/stash trước đổi. Nhánh vẫn chưa merge main. Báo cáo `docs/nutrition-chat/vps-2026-10-15.md`.
+
+#### QR / link bắt đầu hội thoại (15/10/2026)
+
+- Bản tiếp theo `461d8bd` đã chạy trên VPS: menu và nút đầu trang cùng mở `/ket-noi-ai/bat-dau`. Có lời nhắn tự đủ để sao chép/dán vào chat, QR PNG tải để chia sẻ, hướng dẫn HTML server-rendered và bản chữ `/ket-noi-ai/bat-dau/huong-dan.txt`.
+- QR chỉ chứa URL public bắt đầu, không chứa token hoặc dữ liệu người dùng. Tái dùng MCP/OAuth, quy trình và kho dữ liệu hiện có; không thay schema/migration/tính toán. ChatGPT/Claude cần cài/bật kết nối và cấp quyền một lần; link không tự cấp quyền.
+- 41 kiểm tra chỉ đọc hướng dẫn/route/QR đạt, giải mã QR 720/180/128 px đúng URL. PNG trên HTTPS VPS cũng giải mã đúng; trang chủ/start/guide/QR/health/file Google trả 200. Build Linux/TypeScript, Prisma generate, lint file sửa và diff check đạt.
+- Trình duyệt thật: ba nút copy báo thành công, ô readonly chứa đúng lời nhắn/link/MCP và link cài kết nối mở đúng trang. Panel 319 px/document 304 px không tràn ngang. Clipboard hệ điều hành chưa được xác minh độc lập do bridge trình duyệt trả rỗng; công cụ web của phiên không mở được URL dù HTTPS/browser đọc được. Không cam kết AI luôn mở link; có lời nhắn đầy đủ làm fallback.
+- Bộ đếm vẫn 0/0; chưa nghiệm thu tài khoản ChatGPT/Claude thật. App image `461d8bd`, maintenance image `3fb8cc3` giữ nguyên; backup/nav/Caddy/file Google được giữ và swap build đã gỡ. Chi tiết tại `docs/nutrition-chat/start-workflow.md`.
+
+#### Báo cáo dinh dưỡng trong chat (15/10/2026)
+
+- `calculate_menu`/REST calculate trả thêm `chatReport` Markdown trước link Excel: năng lượng, g đạm/béo/bột đường, tỷ lệ năng lượng P–L–G, chỉ số cơ bản/các chất đã chọn, tổng/trung bình/ngày, nguồn/mốc nhu cầu và phần thiếu/ước tính. Bản MCP rút gọn vẫn giữ báo cáo.
+- Tái dùng totals/dayTotals/analysis hiện có; không thay bộ tính hoặc lưu báo cáo vào DB. Guard tỷ lệ theo ngày khi macro chưa đủ; không có mục tiêu thì không kết luận đáp ứng nhu cầu. QR/lời nhắn/get_workflow/skill cùng hướng dẫn hiển thị báo cáo trước Excel.
+- Local: 37 kiểm tra báo cáo thuần, 83 kiểm tra HTTP fixture, 67 core/protocol; Prisma generate, TypeScript, lint file sửa và diff check đạt. App image `1179d21` đã build Linux/TypeScript và healthy trên VPS, không chạy migration/seed.
+- HTTPS VPS: 28 kiểm tra báo cáo đạt cho dữ liệu Food có sẵn, tổng thiếu, nhiều ngày/có mốc/ngày trống; tài khoản và session kiểm thử tạm đã dọn. Food/Dish/nguyên liệu khớp count+digest trước/sau, bộ đếm vẫn 0/0. Trình duyệt thật hiển thị lời nhắn/bước nhận báo cáo, panel 319 px/document 304 px không tràn ngang. Tài khoản ChatGPT/Claude thật vẫn chưa nghiệm thu.
+
+#### Câu chữ trang chủ theo chuyên môn (15/10/2026)
+
+- Theo yêu cầu người dùng, viết lại phần tĩnh `src/app/page.tsx`: tiêu đề “Tra cứu thực phẩm và phân tích khẩu phần”, mô tả chức năng/đầu vào/báo cáo, nút “Nhập qua ChatGPT / Claude”, nhãn số lượng dữ liệu, mô tả nguồn và hỗ trợ sử dụng. Trình bày đúng đơn vị/cơ sở tính theo từng nguồn, bỏ câu mặc định mọi dữ liệu trên 100 g.
+- Tái dùng trang/chức năng/liên kết có sẵn; chỉ đổi câu chữ và alt ảnh. Không thay layout/CSS, logic lấy dữ liệu, các giá trị cài đặt, lời cảm ơn hoặc thông tin liên hệ do quản trị nhập. Prisma generate/TypeScript/ESLint file sửa/diff check và build Linux/TypeScript đạt.
+- App image `a625517` đã healthy trên VPS: homepage/health/start/Google 200, menu và nút hội thoại cùng giữ đích start, bộ đếm 0/0. Trình duyệt thật 319 px/document 304 px không tràn ngang; bấm nút mới mở đúng trang. Cấu hình/nav/env/file Google riêng khớp hash trước/sau; không chạy migration/seed, swap build đã gỡ. Ảnh ignore `evidence/nutrition-chat/vps-home-copy-mobile.jpg`.
+
+#### Sửa phát hiện công cụ / bước OAuth ChatGPT (15/10/2026)
+
+- Người dùng tạo plugin OAuth nhưng chat không có get_workflow và chưa thấy trang cấp quyền. Đọc VPS xác nhận DCR đã có client ChatGPT, code/token đều 0; không sửa/xóa client đó. SDK MCP chính thức 1.32.1 tái hiện khởi tạo bị chặn invalid_token trước khi đọc tools.
+- Server 1.0.1 mở discovery/schema và get_workflow public có hạn mức; mười công cụ dữ liệu vẫn kiểm OAuth/owner. Thêm securitySchemes cấp tool + mirror metadata, lỗi auth có challenge trong JSON-RPC và HTTP 401/403, envelope modern giữ challenge. Plugin manifest khai báo mixed/DCR; hướng dẫn bổ sung Refresh, kiểm 11 tool, cấp quyền khi dùng dữ liệu.
+- Local HTTP fixture 167 checks, core/protocol 67, Prisma generate/TypeScript/lint file sửa/diff check đạt. App `fca8747` đã build Linux/TypeScript và healthy trên VPS. SDK chính thức 1.32.1 kết nối, đọc 11 tools và gọi get_workflow anonymous đạt; HTTPS thêm 68 checks: mười tool dữ liệu từ chối thiếu token, challenge đúng, token sai/origin lạ vẫn chặn.
+- Hướng dẫn Refresh/cấp quyền hiện trên browser thật, 1280 px/document 1265 px không tràn ngang; ảnh ignore `evidence/nutrition-chat/vps-plugin-discovery-guide.jpg`. Cần người dùng Refresh và thử lại plugin thật; chưa xác nhận liên kết OAuth hoặc chat tính/xuất thành công. Không tạo grant giả để tăng lượt; client người dùng được giữ nguyên.
+
+#### Quản lý tài khoản và OAuth thủ công (15/10/2026)
+
+- Theo yêu cầu người dùng, mở rộng cả `/tai-khoan` và `/quan-tri/nguoi-dung`: hồ sơ, mật khẩu hiện tại, phiên website, kết nối OAuth, cấu hình thủ công, lịch sử; quản trị tìm/lọc/phân trang, tạo/sửa vai trò, khóa/mở, reset mật khẩu và thu hồi quyền. Tái dùng User/Session/OAuth/DataChangeLog, không tạo hệ tài khoản hay API key song song.
+- Client thủ công gắn chủ sở hữu, secret chỉ hiện một lần và lưu hash; hỗ trợ Basic/POST với cùng secret, DCR vẫn giữ phương thức đã đăng ký. Không coi tạo client là grant thành công; plugin ChatGPT/Claude thật vẫn cần người dùng nghiệm thu.
+- App `c9c74fb` đã healthy trên VPS; migration `20261015100000_account_management` đã áp bằng image migrate no-cache, 24 migration up to date. Thêm disabledAt/userAgent/ownerId nullable; RLS/revoke đóng đọc trực tiếp app_users/app_sessions/data_change_logs. Tài khoản cũ không bị khóa; role app đã xác minh owner/BYPASSRLS trước áp.
+- Backup DB và restore/migration PostgreSQL riêng đạt. Local 62 kiểm tra tài khoản, hồi quy Nutrition Chat/OAuth 254/HTTP167/core67/report37/storage82/workbook đạt; Prisma generate/TypeScript/lint file sửa và build Linux đạt. HTTPS thật 74 checks đạt; đổi/reset mật khẩu, khóa/mở và thu hồi chặn session/token cũ, giữ khẩu phần.
+- Browser thật: lưu hồ sơ đổi ngay tên menu; tìm và chọn user, thao tác/audit/form quản trị hiển thị đúng. Viewport 390 px/document375 và 1280 px/document1265 không tràn ngang. Ảnh ignore `evidence/nutrition-chat/vps-account-mobile.jpg`, `vps-account-admin-mobile.jpg`, `vps-account-admin-desktop.jpg`.
+- Bốn user kiểm thử, một client bearer và dữ liệu/audit liên quan đã dọn; credential kiểm thử đã xóa. Food/Dish/nguyên liệu khớp count+digest; bộ đếm ChatGPT/Claude vẫn 0/0; env/Caddy/layout/file Google và maintenance timer giữ nguyên; swap build đã gỡ. Chưa có tự khôi phục mật khẩu qua email/MFA/xóa tài khoản; hỗ trợ qua quản trị, dùng khóa để giữ dữ liệu. Chi tiết `docs/nutrition-chat/account-management.md` và `vps-account-2026-10-15.md`.
+
+#### Sửa native form cấp quyền bị Origin null (15/10/2026)
+
+- Ảnh người dùng cho thấy tới được trang cấp quyền nhưng POST bị invalid_request. Xung đột no-referrer với HTML form navigation: Origin null bị chặn; request fetch CORS trước đó không bắt được ca này.
+- App `eeef35d` đã healthy trên VPS. Chỉ hai form confirm/revoke nhận ngoại lệ Origin null khi POST URL-encoded + Fetch Metadata same-origin/navigate/document, vẫn kiểm session và CSRF ký. JSON/bearer API giữ kiểm nguồn cũ; không đổi Caddy/callback/DB/secret.
+- Local security89/OAuth261/account62, Prisma/TypeScript/lint và Linux build đạt. HTTPS28 checks đạt cho approve/deny/revoke, nguồn/CSRF xấu và JSON vẫn chặn. Không theo callback/đổi code thử sang token, không tăng số kết nối giả; user/client thử đã dọn, nguồn+server settings giữ nguyên, swap gỡ.
+- IAB chỉ xác nhận DOM/trạng thái sau HTTP revoke; click native không điều hướng được trong phiên, không có Chrome trong inventory. Cần người dùng mở kết nối mới từ ChatGPT và xác nhận để nghiệm thu platform. Chi tiết `docs/nutrition-chat/vps-native-form-2026-10-15.md`.
 
 Rebuild lại 1 app dinh dưỡng cũ (Google Apps Script, thư mục
 `gg script dinhduong by claude`) thành web thật (Next.js). **Bản Apps Script
