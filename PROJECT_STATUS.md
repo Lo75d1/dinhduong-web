@@ -1,5 +1,12 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Chế độ ăn bệnh lý trong Nutrition Chat — 16/10/2026
+
+- App **5901e2f** healthy trên VPS: thêm `search_diet_codes`/`get_diet_code`, tổng15tool; dùng lại246 mã MCDA, không thêm bảng/migration hoặc sửa kho. Chat có hướng dẫn hỏi dữ kiện còn thiếu, đọc ghi chú, trình mã để xác nhận rồi lưu cùng thực đơn. Mã chưa chốt/sai đối tượng bị chặn; thay context hoặc nguồn phải duyệt lại.
+- Web có phần đối chiếu và sửa dữ kiện/mã trong biểu mẫu dùng lại. Excel giữ mã khi nhập lại, phần Bao cao đối chiếu sáu chỉ tiêu bằng công thức; không trộn khoảng mã với mục tiêu cá nhân. Dữ liệu thiếu/ước tính không kết luận chắc chắn; đơn vị nước chưa xác minh không dùng so sánh.
+- Full suite/Prisma/TypeScript/ESLint file sửa/Linux build đạt. HTTPS58 + native import/update/package19, Excel thật fixture20/file VPS12, React/parser dữ liệu VPS9 và trang in4/4 đạt. Browser inventory rỗng nên chưa kiểm giao diện tương tác hay hội thoại nền tảng thật; không coi render React là browser QA.
+- Đã dọn1 bản/2 phiên/2 user kiểm thử; count/digest5 bảng nguồn,25migration và env/layout/Caddy/Google giữ nguyên. Timer active/enabled, không OOM/swap. PR#4 vẫn draft/chưa merge main; theo quyền triển khai trực tiếp đã được chủ dự án cấp. Biên bản: `docs/nutrition-chat/clinical-diet-codes-2026-10-16.md`.
+
 ## Làm nổi bật lối vào suất ăn — 16/10/2026
 
 - App **a900a09** healthy: “Suất ăn bệnh viện” thành nút vàng trên menu chung; trang chủ có dải xanh đậm/chữ lớn/nút vàng ngay trước phần giới thiệu, thay thẻ trắng nằm thấp. Cùng URL/tab mới/nhãn truy cập; chữ/nền tương phản12,17:1 và8,01:1, nút chính tối thiểu48px.
