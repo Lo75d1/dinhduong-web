@@ -6,6 +6,8 @@ import Page,{generateMetadata} from "../src/app/tinh-khau-phan/page";
 import LegacyLinkPage from "../src/app/ket-noi-ai/ban-tam/page";
 import MenuDraftEditor from "../src/app/tinh-khau-phan/MenuDraftEditor";
 import ReuseSavedMenu from "../src/app/ket-noi-ai/ban-luu/[id]/ReuseSavedMenu";
+import { LinkedCalculatorResults } from "../src/app/ket-noi-ai/ban-tam/WebMenuView";
+import CalculatorNavigation from "../src/app/tinh-khau-phan/CalculatorNavigation";
 import {workbookFixture} from "./test-nutrition-chat-workbook";
 
 async function main(){let checks=0;const check=(value:unknown,message:string)=>{assert.ok(value,message);checks++;};
@@ -28,10 +30,22 @@ async function main(){let checks=0;const check=(value:unknown,message:string)=>{
   check(markup.includes(">ml</span>"),"millilitres remain ml rather than silently converted to g");
   check(markup.includes("Ngày 2"),"all days remain reachable");
   check(markup.includes("Số suất")&&markup.includes("Cơ sở · nguồn"),"portions and source basis remain visible");
+  check(normal.includes("data-calculator-meal-workspace")&&markup.includes("data-calculator-meal-workspace"),"manual and conversation entry share the actual native workspace");
+  check(markup.includes("data-calculator-dish-panel"),"conversation ingredients use the native dish panel");
+  check(!markup.includes("Bữa → Món ăn"),"old separate card navigation removed");
+  const navigationMarkup=renderToStaticMarkup(createElement(CalculatorNavigation,{pageMode:"single",activeView:"analysis",foodCount:3,onViewChange:()=>undefined}));
+  check(navigationMarkup.includes("data-calculator-navigation")&&navigationMarkup.includes("Kết quả · 3 TP"),"native result navigation shows current linked data");
   check(!markup.includes("Thực phẩm của tôi"),"temporary picker only exposes public catalog");
   const reused=renderToStaticMarkup(createElement(ReuseSavedMenu,{menu,temporary:{id:"a".repeat(64),expiresAt:new Date(Date.now()+1800000).toISOString()},layout:"calculator"}));
   check(reused.includes("Xem trước và tính lại")&&reused.includes("Thành phần món ăn"),"reuses existing prepare/calculate/save editor in native layout");
   check(reused.includes("Đăng nhập / Đăng ký trong tab mới"),"long-term account handoff remains available");
+  const ready=renderToStaticMarkup(createElement(ReuseSavedMenu,{menu,initialPrepared:{input:menu.input,preview:menu,confirmationToken:"technical-test-ticket"},temporary:{id:"a".repeat(64),expiresAt:new Date(Date.now()+1800000).toISOString()},layout:"calculator",view:"analysis"}));
+  check(ready.includes("Tải thêm Excel")&&ready.includes("Tôi xác nhận đầu vào"),"loaded snapshot reuses fresh prepare ticket but still requires user confirmation");
+  check(!ready.includes("Tổng dinh dưỡng cả đợt"),"controller no longer embeds a second independent report");
+  const results=renderToStaticMarkup(createElement(LinkedCalculatorResults,{menu,draft:true}));
+  check(results.includes("BẢN TÍNH NHÁP")&&results.includes("Hồ sơ, đối chiếu nhu cầu và mã chế độ ăn"),"draft opens in native analysis panels");
+  check(results.includes("Tổng kỳ và biến động từng ngày"),"native day analysis table present");
+  check(results.includes("Mục tiêu đối chiếu đã cung cấp"),"native profile panel uses targets from the linked snapshot");
   console.log(`Calculator link: ${checks} React SSR/metadata checks passed; no browser interaction claim.`);
 }
 main().catch(error=>{console.error(error);process.exitCode=1});

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ALL_NUTRIENT_FIELDS, NUTRIENT_GROUPS, type NutrientField } from "@/lib/nutrient-fields";
 import { aggregateIngredients, buildDetailRows, buildReportLines, type FoodReportValues } from "./ration-detail";
 import type { RationMode, Row } from "./types";
+import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
+import ResolvedRationDetail from "./ResolvedRationDetail";
 
 const DEFAULT_FIELDS = ["proteinG", "lipidG", "glucidG", "fiberG"];
 const round = (value: number) => Math.round(value * 10) / 10;
@@ -14,7 +16,11 @@ function formatValue(value: { total: number; incomplete: boolean } | undefined, 
   return `${value.incomplete ? "≥ " : ""}${round(value.total)} ${unit}`;
 }
 
-export default function RationDetail({ rows, mode, compact = false }: { rows: Row[]; mode: RationMode; compact?: boolean }) {
+export default function RationDetail(props: { rows: Row[]; mode: RationMode; compact?: boolean; resolvedMenu?: ResolvedMenu; dayId?: string }) {
+  return props.resolvedMenu ? <ResolvedRationDetail menu={props.resolvedMenu} dayId={props.dayId ?? props.resolvedMenu.days[0]?.id ?? ""} /> : <ManualRationDetail {...props} />;
+}
+
+function ManualRationDetail({ rows, mode, compact = false }: { rows: Row[]; mode: RationMode; compact?: boolean }) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>(DEFAULT_FIELDS);
   const [reportValues, setReportValues] = useState<FoodReportValues>({});
   const foodRows = rows.filter((row) => row.foodId);

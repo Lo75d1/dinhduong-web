@@ -6,6 +6,7 @@ import Link from "next/link";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import LegacyChartReport from "./LegacyChartReport";
 import MealInput from "./MealInput";
+import CalculatorNavigation, { useCalculatorHeader } from "./CalculatorNavigation";
 import MultiDayBoard from "./MultiDayBoard";
 import PersonalProfile, { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
 import RecommendationComparison from "./RecommendationComparison";
@@ -62,7 +63,7 @@ function ManualCalculator() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [openAdvanced, setOpenAdvanced] = useState<Record<string, boolean>>({});
   const [profileOpen, setProfileOpen] = useState(false);
-  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
+  const headerSlot = useCalculatorHeader();
   const [activeView, setActiveView] = useState<"entry" | "analysis">("entry");
   // Chế độ cấp trang: một ngày ↔ thực đơn nhiều ngày (board riêng).
   const [pageMode, setPageMode] = useState<"single" | "multi">("single");
@@ -89,15 +90,11 @@ function ManualCalculator() {
   }
   // Focus mode (desktop): thu gọn header/tiêu đề để khu nhập chiếm gần trọn màn hình.
   useEffect(() => {
-    document.body.classList.add("ration-focus");
-    // Đọc nút slot có sẵn trong header (do layout render) để portal thanh bước 1/2 vào.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHeaderSlot(document.getElementById("header-page-slot"));
     try {
       const params = new URLSearchParams(window.location.search);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Restore the existing manual page mode after hydration.
       if ((params.get("menuDate") && params.get("dietTypeId")) || localStorage.getItem("khauphan_pagemode_v1") === "multi") setPageMode("multi");
     } catch { /* localStorage bị chặn */ }
-    return () => document.body.classList.remove("ration-focus");
   }, []);
 
   function changePageMode(next: "single" | "multi") {
@@ -123,36 +120,7 @@ function ManualCalculator() {
   return <div className="calculation-workspace flex flex-col gap-6">
     <CalculatorHeading/>
 
-    {headerSlot && createPortal(
-      <div data-no-print className="flex w-full flex-wrap items-center justify-center gap-2 sm:flex-nowrap">
-        {/* Chế độ lập khẩu phần: 1 ngày / nhiều ngày — cùng thanh header với bước 1/2 */}
-        <div className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" role="group" aria-label="Chế độ lập khẩu phần">
-          <button type="button" onClick={() => changePageMode("single")} aria-pressed={pageMode === "single"} className={`rounded-md px-3 py-1.5 text-sm font-semibold ${pageMode === "single" ? "bg-[#123c36] text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>📋 Một ngày</button>
-          <button type="button" onClick={() => changePageMode("multi")} aria-pressed={pageMode === "multi"} className={`rounded-md px-3 py-1.5 text-sm font-semibold transition-colors duration-200 ${pageMode === "multi" ? "bg-[#185FA5] text-white" : "text-neutral-700 hover:bg-[#E6F1FB]"}`}>🗓️ Nhiều ngày</button>
-        </div>
-        {pageMode === "single" && (
-          <nav className="clinical-stepper flex flex-1 items-center gap-1 rounded-lg border border-[#7f948d] bg-white p-1" aria-label="Các bước tính khẩu phần">
-            <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "entry" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "entry"}>
-              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập khẩu phần
-            </button>
-            <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold ${activeView === "analysis" ? "bg-[#123c36] text-white" : "text-neutral-800 hover:bg-neutral-100"}`} aria-pressed={activeView === "analysis"}>
-              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>Kết quả{foodRows.length ? ` · ${foodRows.length} TP` : ""}
-            </button>
-          </nav>
-        )}
-        {pageMode === "multi" && (
-          <nav className="clinical-stepper flex flex-1 items-center gap-1 rounded-lg border border-[#7d8ea3] bg-white p-1" aria-label="Các bước thực đơn nhiều ngày">
-            <button onClick={() => setActiveView("entry")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors duration-200 ${activeView === "entry" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-[#E6F1FB]"}`} aria-pressed={activeView === "entry"}>
-              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">1</span>Nhập thực đơn
-            </button>
-            <button onClick={() => setActiveView("analysis")} className={`clinical-step flex-1 rounded-md px-3 py-2 text-center text-sm font-semibold transition-colors duration-200 ${activeView === "analysis" ? "bg-[#185FA5] text-white" : "text-neutral-800 hover:bg-[#E6F1FB]"}`} aria-pressed={activeView === "analysis"}>
-              <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full border border-current text-xs">2</span>Phân tích
-            </button>
-          </nav>
-        )}
-      </div>,
-      headerSlot
-    )}
+    {headerSlot && createPortal(<CalculatorNavigation pageMode={pageMode} activeView={activeView} foodCount={foodRows.length} onViewChange={setActiveView} onPageModeChange={changePageMode}/>,headerSlot)}
 
     {pageMode === "multi" && <section key={`multi-${activeView}`} className="mode-panel-enter clinical-panel min-w-0"><MultiDayBoard view={activeView} /></section>}
 
