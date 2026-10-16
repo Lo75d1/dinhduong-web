@@ -38,7 +38,7 @@ export type ReportLine = {
   foodName: string;
   edibleGrams: number;
   rawGrams: number | null;
-  values: Record<string, { total: number; incomplete: boolean }>;
+  values: Record<string, { total: number | null; incomplete: boolean }>;
 };
 
 const numberOrZero = (value: number | null | undefined) => (typeof value === "number" ? value : 0);
@@ -112,16 +112,19 @@ function summarize(rows: Row[], fields: ReportField[], reportValues: FoodReportV
   const values: ReportLine["values"] = {};
   for (const field of fields) {
     let total = 0;
+    let known = 0;
     let incomplete = false;
     for (const row of rows) {
+      if (row.grams === 0) { known++; continue; }
       const raw = valueFor(row, field.key, reportValues);
       if (raw === null) {
         incomplete = true;
       } else {
         total += (raw * row.grams) / 100;
+        known++;
       }
     }
-    values[field.key] = { total, incomplete };
+    values[field.key] = { total: known ? total : null, incomplete };
   }
   return values;
 }

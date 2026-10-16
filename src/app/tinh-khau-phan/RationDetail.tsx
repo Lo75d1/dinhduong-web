@@ -11,8 +11,8 @@ import NutrientFieldPicker, { DETAIL_NUTRIENT_KEYS } from "./NutrientFieldPicker
 const round = (value: number) => Math.round(value * 10) / 10;
 const grams = (value: number | null) => (value === null ? "—" : `${round(value)} g`);
 
-function formatValue(value: { total: number; incomplete: boolean } | undefined, unit: string) {
-  if (!value) return "—";
+function formatValue(value: { total: number | null; incomplete: boolean } | undefined, unit: string) {
+  if (!value || value.total === null) return "—";
   return `${value.incomplete ? "≥ " : ""}${round(value.total)} ${unit}`;
 }
 
