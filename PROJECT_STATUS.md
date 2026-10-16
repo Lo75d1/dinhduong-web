@@ -1,5 +1,10 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Làm nổi bật lối vào suất ăn — 16/10/2026
+
+- App **a900a09** healthy: “Suất ăn bệnh viện” thành nút vàng trên menu chung; trang chủ có dải xanh đậm/chữ lớn/nút vàng ngay trước phần giới thiệu, thay thẻ trắng nằm thấp. Cùng URL/tab mới/nhãn truy cập; chữ/nền tương phản12,17:1 và8,01:1, nút chính tối thiểu48px.
+- Prisma/TypeScript/ESLint hai file/Linux build và HTTPS35 đạt; kiểm hai liên kết, thứ tự trướcH1, menu toàn site, kiểu màu/focus/responsive, URL nội bộ404 và API dinh dưỡng. Chưa kiểm ảnh/click bằng browser do inventory rỗng. Override “Thông tin mới” sáu dòng giữ nguyên qua patch được kiểm; layout SHA theo source mới, env/Caddy/Google và canonical/25migration không đổi. Timer active, không OOM/swap. Biên bản: `docs/nutrition-chat/project-scope-2026-10-16.md`.
+
 ## Liên kết ứng dụng suất ăn — 16/10/2026
 
 - App **aae66a7** healthy trên VPS: trang chủ có thẻ “Suất ăn bệnh viện” sau phần chức năng, mở `https://suatanbv.io.vn/` trong tab mới. Theo yêu cầu chủ dự án, chỉ thêm liên kết sang ứng dụng riêng; các URL suất ăn nội bộ tiếp tục404.
