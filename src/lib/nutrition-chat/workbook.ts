@@ -6,6 +6,7 @@ import { ALL_NUTRIENT_FIELDS } from "../nutrient-fields";
 import { resolveMenu, sanitizeNutritionFood } from "./core";
 import { addNutritionReportSheets, isVddWholeDish, type NutritionWorkbookOptions } from "./workbook-report";
 import { nutritionDetailCellCount } from "./workbook-detail";
+import { nutritionAnalysisCellCount } from "./workbook-analysis";
 import { NUTRIENT_KEYS, parseMenuInput } from "./validation";
 import { addNativeWorkbookCharts } from "./workbook-charts";
 import { assertNutritionWorkbookExportBudget, inspectWorkbookArchive, NutritionWorkbookError, WORKBOOK_LIMITS } from "./workbook-security";
@@ -136,7 +137,8 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   if (complete) {
     // Bound live object/formula allocation before constructing ExcelJS cells on the 2 GB VPS.
     const dataCells = foods.reduce((sum, food) => sum + 10 + sourceFields.filter(field => food.nutrients[field.key] != null).length, 0);
-    const estimatedCells = dataCells + wholeDishRows.length + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2 + nutritionDetailCellCount(menu) + (menu.mode === "recall24h" ? rows.length * 16 + menu.days.length * 60 : 0);
+    const groupCount = new Set([...foods.map(food => food.foodGroup || "Chưa phân nhóm"), ...customs.map(food => food.foodGroup || "Chưa phân nhóm")]).size;
+    const estimatedCells = dataCells + wholeDishRows.length + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2 + nutritionDetailCellCount(menu) + nutritionAnalysisCellCount(menu, groupCount) + (menu.mode === "recall24h" ? rows.length * 16 + menu.days.length * 60 : 0);
     if (estimatedCells > 400_000) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Báo cáo đầy đủ vượt dung lượng xử lý an toàn. Chia thành các đợt ít ngày hoặc ít dòng hơn rồi xuất lại.");
   }
   const lastInput = FIRST + inputCapacity - 1;
@@ -147,7 +149,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   workbook.title = menu.title;
   workbook.created = new Date(menu.generatedAt);
   workbook.calcProperties.fullCalcOnLoad = true;
-  if (complete) for (const name of ["Phan tich chi tiet", ...(menu.mode === "recall24h" ? ["Phieu 24h", "Quy doi 24h"] : []), "Bao cao", "Thuc don", "Thanh phan day du", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
+  if (complete) for (const name of ["Phan tich chi tiet", ...(menu.mode === "recall24h" ? ["Phieu 24h", "Quy doi 24h"] : []), "Bao cao", "Can doi nang luong", "Dong gop bua mon", "Thuc don", "Thanh phan day du", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
   const analysis = workbook.addWorksheet(SHEETS.analysis);
   const comparison = workbook.addWorksheet(SHEETS.comparison);
   const targetSheet = workbook.addWorksheet(SHEETS.targets);
@@ -525,7 +527,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     input.getCell("A2").value = `Chỉnh ngày, bữa/món, mã thực phẩm, lượng, đơn vị và số suất tại các cột nhập. Dòng dự phòng được ẩn theo nhóm; có thể hiện thêm dòng khi cần (tối đa ${inputCapacity} dòng). Tra mã tại Du lieu. Bản in gọn ở Thuc don.`;
   }
   const protectionPassword = randomBytes(18).toString("base64url");
-  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Phan tich chi tiet", "Phieu 24h", "Quy doi 24h", "Bao cao", "Thuc don", "Thanh phan day du", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
+  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Phan tich chi tiet", "Can doi nang luong", "Dong gop bua mon", "Phieu 24h", "Quy doi 24h", "Bao cao", "Thuc don", "Thanh phan day du", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
   const chartStart = noteRow + 5;
   const charts = [];
   const labelRange = range(SHEETS.targets, "C", FIRST + WORKBOOK_LIMITS.days - 1);

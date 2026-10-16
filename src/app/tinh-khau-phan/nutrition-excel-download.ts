@@ -3,6 +3,11 @@ import type { NutritionMedicationLine, NutritionReportMeta } from "@/lib/nutriti
 import type { MenuDay } from "./multi-day";
 import type { Profile } from "./PersonalProfile";
 import type { RationMode } from "./types";
+import type { NutritionReportContext } from "@/lib/nutrition-chat/workbook-context";
+
+export function webReportDietCode(multiDay: boolean): string | undefined {
+  try { return window.localStorage.getItem(multiDay ? "khauphan_menu_dietcode_v1" : "khauphan_dietcode_v1") || undefined; } catch { return undefined; }
+}
 
 export function webNutritionReportInput(days: MenuDay[], profile: Profile | null, mode: RationMode = "menu"): MenuInput {
   const usableProfile = profile && /^\d+(?:[.,]\d+)?$/.test(profile.age);
@@ -26,11 +31,12 @@ export function webNutritionReportInput(days: MenuDay[], profile: Profile | null
   };
 }
 
-export async function downloadNutritionExcel(days: MenuDay[], profile: Profile | null, options: { mode?: RationMode; meta?: NutritionReportMeta; medications?: NutritionMedicationLine[]; saveToAccount?: boolean } = {}) {
+export async function downloadNutritionExcel(days: MenuDay[], profile: Profile | null, options: { mode?: RationMode; meta?: NutritionReportMeta; medications?: NutritionMedicationLine[]; saveToAccount?: boolean; reportContext?: NutritionReportContext } = {}) {
   const input = webNutritionReportInput(days, profile, options.mode);
   const missing = days.flatMap(day => day.rows.filter(row => !row.foodId && row.dish).map(row => `${day.label} / ${row.meal} / ${row.dish}`));
   const meta = { ...options.meta, menuNote: [options.meta?.menuNote, missing.length ? `Món chưa nhập thực phẩm: ${[...new Set(missing)].join("; ")}` : ""].filter(Boolean).join(". ") };
-  const response = await fetch("/api/nutrition-report/export", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, meta, medications: options.medications ?? [], saveToAccount: options.saveToAccount === true }) });
+  const reportContext = options.reportContext ?? { dietCodeId: webReportDietCode(false) };
+  const response = await fetch("/api/nutrition-report/export", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, meta, medications: options.medications ?? [], saveToAccount: options.saveToAccount === true, reportContext }) });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(typeof error.message === "string" ? error.message : "Chưa xuất được Excel. Vui lòng thử lại.");

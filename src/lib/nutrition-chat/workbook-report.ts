@@ -7,13 +7,15 @@ import { markAiNumber } from "./workbook-ai";
 import { AI_NUMBER_LEGEND, briefFoodSource,standaloneVddDish } from "./presentation";
 import { appendClinicalWorkbookSection } from "./workbook-clinical";
 import { addNutritionDetailSheet } from "./workbook-detail";
+import type { NutritionReportContext } from "./workbook-context";
+import { addNutritionAnalysisTables } from "./workbook-analysis";
 
 export type NutritionReportMeta = {
   subjectName?: string; subjectGroup?: string; clinicalCourse?: string;
   authorName?: string; authorRole?: string; authorOrganization?: string; reportDate?: string; menuNote?: string;
 };
 export type NutritionMedicationLine = { meal: string; name: string; dose: string; timing: string; note: string };
-export type NutritionWorkbookOptions = { complete?: boolean; meta?: NutritionReportMeta; medications?: NutritionMedicationLine[] };
+export type NutritionWorkbookOptions = { complete?: boolean; meta?: NutritionReportMeta; medications?: NutritionMedicationLine[]; reportContext?: NutritionReportContext };
 export function isVddWholeDish(food: NutritionFood) {
   return food.source.kind === "catalog" && food.source.label === "VDD" && food.foodType === "MA";
 }
@@ -349,5 +351,6 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     options.medications.forEach((item, i) => { medications.getRow(FIRST + i).values = [item.meal, item.name, item.dose, item.timing, item.note]; });
     body(medications, FIRST + options.medications.length - 1);
   }
+  addNutritionAnalysisTables(workbook, menu, options, build, reportSheet);
   return { report: summary, detail: report, plan, sources, nutrientCount: ALL_NUTRIENT_FIELDS.length };
 }

@@ -73,7 +73,7 @@ async function main() {
   assert.equal(cached(find("Vitamin D"), 3), 6);
   assert.equal(cached(find("Vitamin K"), 3), 0);
   const detail = wb.getWorksheet("Thanh phan day du")!;
-  let betaRow = 0; detail.eachRow((row, i) => { if (row.getCell(1).value === "Beta-tocopherol") betaRow = i; });
+  let betaRow = 0; detail.eachRow((row, i) => { if (!betaRow && row.getCell(1).value === "Beta-tocopherol") betaRow = i; });
   assert.ok(betaRow); assert.equal(detail.getCell(betaRow, 3).result, 3);
   assert.equal(cached(find("Canxi"), 3), 20);
   assert.equal(cached(find("Canxi"), 7), 2);

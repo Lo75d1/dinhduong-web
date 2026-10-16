@@ -21,7 +21,7 @@ import {
   type StrictMetric,
 } from "./multi-day-analysis";
 import { buildMultiDayWordHtml } from "./multi-day-export";
-import { downloadNutritionExcel } from "./nutrition-excel-download";
+import { downloadNutritionExcel, webReportDietCode } from "./nutrition-excel-download";
 import NutritionExcelExport from "./NutritionExcelExport";
 
 const TARGET_KEY = "khauphan_menu_meal_targets_v1";
@@ -93,6 +93,7 @@ export default function MultiDayAnalysis({
   const [shareText, setShareText] = useState<Record<string, string>>({});
   const [hydrated, setHydrated] = useState(false);
   const [kitchenMode, setKitchenMode] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate the existing browser-only report setting after SSR.
   useEffect(() => { try { setKitchenMode(window.localStorage.getItem("khauphan_menu_kitchen_v1") === "1"); } catch { /* localStorage bị chặn */ } }, []);
   function changeKitchen(v: boolean) { setKitchenMode(v); try { window.localStorage.setItem("khauphan_menu_kitchen_v1", v ? "1" : "0"); } catch { /* localStorage bị chặn */ } }
 
@@ -167,7 +168,7 @@ export default function MultiDayAnalysis({
         </div>
         <div className="flex flex-wrap gap-2" data-no-print>
           <button type="button" onClick={() => download(buildMultiDayWordHtml(days, analysis, shopping, profile), "application/msword;charset=utf-8", "bao-cao-dinh-duong-toan-ky.doc")} className="rounded-md border-2 border-[#185FA5] bg-white px-3 py-1.5 text-sm font-semibold text-[#0C447C] hover:bg-[#E6F1FB]">⬇ Word</button>
-          <NutritionExcelExport label="Excel đầy đủ" onExport={saveToAccount => downloadNutritionExcel(days, profile, { saveToAccount })} />
+          <NutritionExcelExport label="Excel đầy đủ" onExport={saveToAccount => downloadNutritionExcel(days, profile, { saveToAccount, reportContext: { kitchenMode, mealShares: shares, dietCodeId: webReportDietCode(true) } })} />
         </div>
       </header>
 

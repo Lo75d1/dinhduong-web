@@ -32,22 +32,24 @@ export function appendClinicalWorkbookSection(sheet: ExcelJS.Worksheet, menu: Re
   const last = 6 + inputCapacity;
   const estimated = `OR(${menu.days.some(day => day.rows.some(item => item.recipeSource.kind === "ai")) ? "TRUE" : "FALSE"},COUNTIF('Nhap khau phan'!$O$7:$O$${last},"?*")>0,COUNTIF('Nhap khau phan'!$R$7:$R$${last},"unknown")>0)`;
   const eligible = context.targetGroup === diet.targetGroup && (context.selection === "user_confirmed" || context.selection === "prescribed");
-  for (const metric of assessment.metrics.filter(metric => metric.key !== "meals")) {
-    const r = row++, index = menu.fields.findIndex(field => field.key === metric.key), valueColumn = col(4 + index * 2), missingColumn = col(5 + index * 2);
+  for (const metric of assessment.metrics) {
+    const isMeal = metric.key === "meals";
+    const r = row++, index = menu.fields.findIndex(field => field.key === metric.key), valueColumn = col(isMeal ? 4 + menu.fields.length * 2 + 6 : 4 + index * 2), missingColumn = col(5 + index * 2);
     const source = `'Phan tich'!${valueColumn}`, missing = `'Phan tich'!${missingColumn}`, numbers = `${source}$7:$${valueColumn}$96`, missingNumbers = `${missing}$7:$${missingColumn}$96`;
     const hasRange = metric.min !== null || metric.max !== null;
     sheet.getRow(r).values = [metric.label, metric.unit, null, metric.min ?? "—", metric.max ?? "—", null, null, null];
     const formula = (column: number, expression: string, result: string | number | null) => { sheet.getCell(r, column).value = { formula: expression, result: result ?? "—" }; };
-    formula(3, index < 0 ? '"—"' : `IF(OR(${missing}$98>0,NOT(ISNUMBER(${source}$99))),"—",${source}$99)`, metric.average);
-    const countGuard = index < 0 || !eligible || !hasRange;
-    formula(6, countGuard ? "0" : `IF(${estimated},0,SUMPRODUCT(--ISNUMBER(${numbers}),--(${missingNumbers}=0),--('Phan tich'!$C$7:$C$96>0)))`, metric.assessedDays);
-    formula(7, countGuard ? "0" : `IF(${estimated},0,SUMPRODUCT(--ISNUMBER(${numbers}),--(${missingNumbers}=0),--('Phan tich'!$C$7:$C$96>0)${metric.min !== null ? `,--(${numbers}>=D${r})` : ""}${metric.max !== null ? `,--(${numbers}<=E${r})` : ""}))`, metric.withinDays);
-    formula(8, !eligible || !hasRange ? '"Chưa đủ cơ sở"' : `IF(OR(NOT(ISNUMBER(C${r})),${estimated}),"Chưa đủ cơ sở",${metric.min !== null ? `IF(C${r}<D${r},"Thấp hơn khoảng",` : ""}${metric.max !== null ? `IF(C${r}>E${r},"Cao hơn khoảng","Trong khoảng tham khảo")` : '"Trong khoảng tham khảo"'}${metric.min !== null ? ")" : ""})`, DIET_STATUS_LABELS[metric.status]);
+    formula(3, isMeal ? `IF(OR('Phan tich'!C99=0,COUNT(${numbers})<>'Phan tich'!C99),"—",AVERAGE(${numbers}))` : index < 0 ? '"—"' : `IF(OR(${missing}$98>0,NOT(ISNUMBER(${source}$99))),"—",${source}$99)`, metric.average);
+    const countGuard = !isMeal && index < 0 || !eligible || !hasRange;
+    const invalid = isMeal ? "FALSE" : estimated, missingFilter = isMeal ? "" : `,--(${missingNumbers}=0)`;
+    formula(6, countGuard ? "0" : `IF(${invalid},0,SUMPRODUCT(--ISNUMBER(${numbers})${missingFilter},--('Phan tich'!$C$7:$C$96>0)))`, metric.assessedDays);
+    formula(7, countGuard ? "0" : `IF(${invalid},0,SUMPRODUCT(--ISNUMBER(${numbers})${missingFilter},--('Phan tich'!$C$7:$C$96>0)${metric.min !== null ? `,--(${numbers}>=D${r})` : ""}${metric.max !== null ? `,--(${numbers}<=E${r})` : ""}))`, metric.withinDays);
+    formula(8, !eligible || !hasRange ? '"Chưa đủ cơ sở"' : `IF(OR(NOT(ISNUMBER(C${r})),${invalid}),"Chưa đủ cơ sở",${metric.min !== null ? `IF(C${r}<D${r},"Thấp hơn khoảng",` : ""}${metric.max !== null ? `IF(C${r}>E${r},"Cao hơn khoảng","Trong khoảng tham khảo")` : '"Trong khoảng tham khảo"'}${metric.min !== null ? ")" : ""})`, DIET_STATUS_LABELS[metric.status]);
     sheet.getRow(r).height = 24;
     for (let column = 1; column <= 8; column++) { const cell = sheet.getCell(r, column); cell.font = font; cell.border = border; cell.alignment = { wrapText: true, vertical: "middle", horizontal: column >= 3 && column <= 7 ? "right" : "left" }; cell.numFmt = column === 6 || column === 7 ? "0" : "#,##0.00"; }
   }
   const meals = diet.ranges.find(range => range.key === "meals");
-  if (meals) line(`Số bữa tham khảo/ngày: ${dietRangeText(meals)}. Đối chiếu số bữa theo ngày xem báo cáo web.`);
+  if (meals) line(`Số bữa tham khảo/ngày: ${dietRangeText(meals)}. Chỉ đếm bữa có lượng dùng lớn hơn 0; ngày thiếu định lượng chưa đối chiếu.`);
   if (diet.note) line(`Ghi chú nguồn: ${diet.note}`);
   for (const warning of diet.qualityWarnings) line(warning);
   line(`Nguồn: ${diet.source.label}. ${diet.source.url}`);

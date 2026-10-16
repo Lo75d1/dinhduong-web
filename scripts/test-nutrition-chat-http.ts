@@ -250,11 +250,18 @@ async function main() {
     const webRequest = (value: unknown, origin = base) => new Request(`${base}/api/nutrition-report/export`, { method: "POST", headers: { Origin: origin, "Content-Type": "application/json" }, body: JSON.stringify(value) });
     assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input }, "https://example.invalid"))).status, 403); checks++;
     assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, meta: { role: "ADMIN" } }))).status, 400); checks++;
-    const webExport = await api.webReportRoute.POST(webRequest({ input: prepared.input, meta: { subjectName: "Mẫu thử" }, medications: [] }));
+    for (const reportContext of [{ totals: { energyKcal: 1 } }, { kitchenMode: "true" }, { mealShares: { Trưa: 101 } }]) {
+      await api.fixtureQuery('DELETE FROM nutrition_api_windows');
+      assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, reportContext }))).status, 400); checks++;
+    }
+    await api.fixtureQuery('DELETE FROM nutrition_api_windows');
+    const webExport = await api.webReportRoute.POST(webRequest({ input: prepared.input, meta: { subjectName: "Mẫu thử" }, medications: [], reportContext: { dietCodeId: "fixture-diet", kitchenMode: true, mealShares: { Trưa: 100 } } }));
     assert.equal(webExport.status, 200, webExport.status === 200 ? undefined : await webExport.clone().text()); checks++;
     assert.match(webExport.headers.get("content-type")!, /spreadsheetml/); checks++;
     const webImported = await api.parseNutritionWorkbook(new Uint8Array(await webExport.arrayBuffer()));
     assert.equal(webImported.days[0].rows[0].foodId, "fixture-rice"); checks++;
+    assert.equal(webImported.clinicalContext?.dietCodeId, "fixture-diet"); checks++;
+    assert.equal(webImported.clinicalContext?.selection, "user_confirmed"); checks++;
     // Separate feature phase in the disposable PGlite DB; quota behavior has its own fixtures/live checks.
     await api.fixtureQuery('DELETE FROM nutrition_api_windows');
     assert.equal((await api.webReportRoute.POST(webRequest({ input: prepared.input, saveToAccount: true }))).status, 401); checks++;

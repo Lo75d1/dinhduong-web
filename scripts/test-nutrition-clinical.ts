@@ -46,6 +46,8 @@ async function main() {
   const titleRow = report.getRows(1, report.rowCount)!.find(row => row.getCell(1).value === "ĐỐI CHIẾU CHẾ ĐỘ ĂN BỆNH LÝ")!.number;
   const clinicalRow = report.getRows(titleRow + 1, report.rowCount - titleRow)!.find(row => row.getCell(1).value === "Năng lượng")!.number;
   equal(report.getCell(clinicalRow, 3).result, 195); equal(report.getCell(clinicalRow, 8).result, "Trong khoảng tham khảo"); equal(report.getCell(clinicalRow, 6).result, 2); equal(report.getCell(clinicalRow, 7).result, 1);
+  const mealsRow = report.getRows(clinicalRow + 1, report.rowCount - clinicalRow)!.find(row => row.getCell(1).value === "Số bữa")!.number;
+  equal(report.getCell(mealsRow, 3).result, 1); equal(report.getCell(mealsRow, 6).result, 2); equal(report.getCell(mealsRow, 7).result, 2); equal(report.getCell(mealsRow, 8).result, "Trong khoảng tham khảo");
   const imported = await parseNutritionWorkbook(bytes); equal(imported.clinicalContext, normalized.clinicalContext); equal(resolveMenu(imported, [food], [], diet).clinicalAssessment?.metrics[0].average, 195);
   wb.getWorksheet("Nhap khau phan")!.getCell("G7").value = 300; const edited = await parseNutritionWorkbook(new Uint8Array(await wb.xlsx.writeBuffer())); const updated = resolveMenu(edited, [food], [], diet).clinicalAssessment!.metrics[0]; equal(updated.average, 325); equal(updated.status, "above"); equal(updated.withinDays, 0);
   console.log(JSON.stringify({ checks, clinicalRow, workbook: "clinical-test.xlsx", result: "clinical validation, source ranges, incomplete/zero/estimated days, provenance and workbook roundtrip passed" }));
