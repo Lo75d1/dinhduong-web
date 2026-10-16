@@ -1,5 +1,12 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Hướng dẫn hội thoại và phiếu 24h — 16/10/2026
+
+- App **e85a281** healthy trên VPS, nhánh `codex/nutrition-chat-api`, PR #4 chưa merge main. Trả tóm tắt + link bản riêng trước; Excel chỉ tạo khi cần tải. `prepare.review.text` duyệt đúng đầu vào, mọi số AI tự điền có dấu `*` qua metadata, vẫn giữ kiểu số để tính.
+- Khẩu phần 24h có hai phụ lục theo QĐ2598 trên web/Excel: phiếu 9 cột và bảng quy đổi 7 cột. Nguồn/ghi chú chính rút gọn; RNI giữ nguyên liệu, VDD cả món không suy ra sống sạch. Sửa lỗi VDD catalog không có Dish ID, giữ kiểm chứng nguồn canonical.
+- Full suite, Prisma/TypeScript/lint file sửa và Linux build đạt; HTTPS33 + công khai14 + native import/update11, Excel thật fixture28/file VPS28, SaveAs/parser5+4 và 4 trang in đạt. React render bằng dữ liệu VPS đạt; **chưa kiểm trình duyệt trực tiếp đợt này** vì công cụ không có phiên browser kết nối. Không coi là đã nghiệm thu hội thoại ChatGPT/Claude/Gemini thật.
+- Fixture đã dọn (1 Ration, 2 phiên, 2 user); canonical count/digest, DB25 migration và cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Không migration mới. Chi tiết: `docs/nutrition-chat/review-and-recall-2026-10-16.md`.
+
 ## Bổ sung Nutrition Chat và dữ liệu cá nhân — 15/10/2026
 
 - Link trang chủ có `fbclid`/`mibextid`/`utm_*` đã tự chuyển về `/` sạch trên VPS app **09424ce**: HTTPS16 và trình duyệt thật đạt, không chuyển vòng lặp. Chỉ xử lý trang chủ, giữ link tra cứu/QR/API/OAuth; không sửa canonical/migration/cấu hình. Biên bản `docs/nutrition-chat/facebook-home-2026-10-15.md`.

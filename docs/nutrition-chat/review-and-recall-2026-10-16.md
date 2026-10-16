@@ -26,4 +26,11 @@
 
 ## Nghiệm thu VPS
 
-- Ghi sau khi triển khai và kiểm tra HTTPS, trình duyệt, file Excel thật, quyền sở hữu và dọn fixture hoàn tất.
+- Source ứng dụng **e85a2811acb6ce27e9ebd3d00dbb910f18491ae0**, nhánh `codex/nutrition-chat-api`; Linux build/TypeScript và health đạt. Không merge main, không migration mới. Backup/rollback image tại `/opt/dinhduong-release-backups/nutrition-review-2598-20261016-131540-codex`.
+- **33 kiểm tra HTTPS**: prepare có bản duyệt/dấu `*`/nguồn VDD chuẩn; calculate trả tóm tắt, không tạo file; save trả link bền theo chủ; mở lại giữ thời gian/số đo/nguồn/dấu AI. Người khác404, anonymous401. Sau đó mới gọi export; file thật **1.588.582 byte**, nhập lại giữ **274,1 kcal**. MCP `get_workflow` công khai có chính sách mới. REST workflow cần đăng nhập; kiểm tra ban đầu gọi anonymous trả401 đúng thiết kế, đã sửa cách kiểm tra thay vì nới quyền.
+- **14 kiểm tra công khai**: health, trang bắt đầu/tài liệu, OAuth discovery/OpenAPI, hướng dẫn TXT và SHA256 của toàn bộ gói tải khớp bản phát hành plugin1.0.2.
+- **28 kiểm tra Excel native trên file VPS**: phiếu 9 cột/bảng quy đổi, số thực và dấu AI, VDD không có nguyên liệu/sống sạch giả, RNI đủ hai nguyên liệu. Thay lượng/hệ số/suất cập nhật, thay Food ID bỏ cơ sở sống sạch chưa xác nhận, không lỗi công thức. Đã xem đủ 4 trang in A4 từ file này.
+- Native SaveAs → parser local **4 kiểm tra**, tiếp theo **11 kiểm tra HTTPS**: nhập file đã sửa **274,1 → 380,9 kcal**, bỏ dấu riêng số người dùng sửa, bỏ số đo gia dụng cũ, lưu revision2 trên cùng link, lịch sử2 bản. Fixture local có thêm SaveAs/parser5 kiểm tra. React render với dữ liệu VPS kiểm cấu trúc hai phụ lục/thẻ điện thoại/nguồn và ngày; không coi là kiểm bố cục bằng trình duyệt.
+- Công cụ trình duyệt trả inventory rỗng, browser `2`/`iab` unavailable. **Chưa kiểm giao diện trực tiếp desktop/mobile đợt này**, và chưa nghiệm thu hành vi hội thoại trên tài khoản ChatGPT/Claude/Gemini thật. Không dùng số kiểm browser của đợt trước để thay thế.
+- Đã dọn chính xác **1 Ration, 2 phiên, 2 user** mang nhãn fixture; còn0. Credential context tạm và các bản sao riêng đã xóa. Không tạo OAuth client/token hay lượt kết nối giả.
+- Sau dọn: Food3719/digest `e276f0ba439a43219f523fc70b9a309d`, Dish7369/`b47e289aaf51d33bd0fe51449ba19eba`, nguyên liệu41457/`336c41b1755b694b348d461ad8c1cbb1`, migration25 giữ nguyên trước/sau. SHA env/layout/Caddy/Google khớp; timer active/enabled, app healthy, OOMKilled=false, swap build đã gỡ.
