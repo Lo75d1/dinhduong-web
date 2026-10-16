@@ -22,7 +22,7 @@ Gói ZIP portable không tự xuất hiện trong thư viện công khai. Đăng
 ## Claude
 
 1. Customize → Connectors → Add custom connector, dùng URL MCP trên.
-2. Chọn đăng nhập OAuth và **Register automatically** vì máy chủ sử dụng đăng ký động DCR; không yêu cầu client secret chung.
+2. Chỉ tra/tính/Excel: dùng phiên tạm nếu connector cho phép không đăng nhập. Lưu/mở dữ liệu riêng: chọn OAuth và **Register automatically**; không yêu cầu client secret chung. Nếu giao diện bắt buộc OAuth, làm theo giao diện và giải thích giới hạn đó.
 3. Bật connector trong hội thoại và gửi lời nhắn bắt đầu. Skill ZIP là lựa chọn thêm: vào Customize → Skills → Create skill → Upload a skill để cài `dinh-duong-2598-skill.zip`.
 
 Quyền thêm connector/skill phụ thuộc tài khoản và quản trị tổ chức. [Nguồn connector của Claude](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp); [nguồn upload skill](https://support.claude.com/en/articles/12512180-use-skills-in-claude).
@@ -84,4 +84,11 @@ Ngày đối chiếu tài liệu nền tảng: 15/10/2026; [OpenAI Quickstart](h
 - Phiên tạm không lưu/mở bản cá nhân hoặc thư viện riêng; saveToAccount phải false. Có thể nhận link Excel mà không tạo bản trên tài khoản.
 - Hạn mức: tạo6phiên/giờ theo IP qua proxy tin cậy (không có proxy dùng chung một bộ đếm), toàn hệ60phiên/giờ;30yêu cầu/phút/phiên,6lần chuẩn bị/tính/phút,2lần xuất/phút và giới hạn xuất toàn hệ có sẵn.429 giữ đầu vào và chờ Retry-After, không tạo thêm phiên để lách.
 - Mỗi kết quả có guidance: stage, instruction, nextTools, requiresUserConfirmation, questions khi cần. needs_input: hỏi phần thiếu; awaiting_user_confirmation: trình review.text rồi dừng chờ; calculated: trả chatReport.summaryText; download_ready: trả downloadUrl ngay. Lỗi có chỉ dẫn khôi phục; confirmationToken không phải bằng chứng người dùng đã đồng ý.
-- Cập nhật plugin bằng Refresh/Scan Tools hoặc cài lại gói1.0.5 để có công cụ và tham số mới. Nền tảng buộc OAuth riêng có thể vẫn yêu cầu đăng nhập; không khẳng định luồng khách đã chạy trong ChatGPT/Claude chỉ từ kiểm thử máy chủ.
+- Cập nhật plugin bằng Refresh/Scan Tools hoặc cài lại gói mới nhất để có công cụ và tham số mới. Nền tảng buộc OAuth riêng có thể vẫn yêu cầu đăng nhập; không khẳng định luồng khách đã chạy trong ChatGPT/Claude chỉ từ kiểm thử máy chủ.
+
+## Dành cho bác sĩ: QR/link và tự mở phiên
+
+- Trang chủ có QR và nút Bắt đầu và xem hướng dẫn. QR/link cùng mở /ket-noi-ai/bat-dau; sao chép lời nhắn ngắn, mở chat đã bật kết nối, dán và gửi. Chat tự gọi get_workflow/start_guest_session theo yêu cầu, giữ token nội bộ. Không bắt người dùng tự tạo token hoặc đọc JSON.
+- Chưa có kết nối: trang bắt đầu có mục Lần đầu dùng, chỉ tên nút và địa chỉ server; QR/link không tự cài plugin. Trong ChatGPT ưu tiên OAuth or no authentication để dùng cả phiên tạm và tài khoản, hoặc No authentication khi chỉ dùng phiên tạm.
+- Muốn giữ lâu dài: mở /dang-nhap?next=%2Ftai-khoan, chọn Đăng ký mới/Tạo tài khoản hoặc Đăng nhập, rồi quay lại chat kết nối tài khoản và yêu cầu lưu. Đăng nhập web chưa tự gắn tài khoản với chat; nếu kết nối hiện tại chỉ No authentication, thêm kết nối hỗ trợ OAuth. Giữ input, prepare lại bằng identity tài khoản, chờ duyệt trước save; không dùng confirmationToken guest. Trả ration.url để mở lại trong Thực đơn của tôi, không bắt nhập lại hoặc gửi Excel.
+- Hướng dẫn web/QR/TXT/skill và workflow.accountUse cùng phiên bản1.0.6. Tùy chọn token thủ công nằm trong phần mở rộng dành cho phần mềm khác, không phải thao tác bắt buộc cho bác sĩ.

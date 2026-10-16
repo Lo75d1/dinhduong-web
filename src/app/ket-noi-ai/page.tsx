@@ -5,6 +5,7 @@ import { getNutritionPublicUrl, getNutritionResourceUrl } from "@/lib/nutrition-
 import { nutritionStartLinks } from "@/lib/nutrition-chat/start-guide";
 import WorkbookImport from "./WorkbookImport";
 import GuestSessionPanel from "./GuestSessionPanel";
+import LongTermUse from "./LongTermUse";
 import { NUTRITION_TOOLS, NUTRITION_WORKFLOW } from "@/lib/nutrition-chat/tools";
 
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ export default async function ConnectAiPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/ket-noi-ai/bat-dau" className={`rounded-lg bg-[#123c36] px-5 py-3 font-semibold text-white hover:bg-[#0f5c51] ${focus}`}>Bắt đầu bằng QR hoặc link →</Link>
             <a href="#cai-ket-noi" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Cài kết nối lần đầu</a>
-            <a href="#phien-tam" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Dùng không cần tài khoản</a>
+            <Link href="/ket-noi-ai/bat-dau#luu-lau-dai" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Lưu và dùng lại lâu dài</Link>
             <a href="#nhap-excel" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Gửi lại Excel đã sửa</a>
           </div>
         </div>
@@ -60,11 +61,12 @@ export default async function ConnectAiPage() {
         <p className="mt-6 border-l-4 border-[#9bb6ab] pl-4 text-neutral-700">Một ngày hoặc nhiều ngày. Chỉ tính thành phần thì không cần hồ sơ cơ thể; đối chiếu nhu cầu là lựa chọn riêng.</p>
       </section>
 
-      <GuestSessionPanel />
+      <div className="py-6"><LongTermUse /></div>
       <section id="cai-ket-noi" aria-labelledby="setup-title" className="scroll-mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-8">
-        <h2 id="setup-title" className="text-2xl font-semibold">Kết nối một lần cho mỗi tài khoản</h2>
+        <h2 id="setup-title" className="text-2xl font-semibold">Bật kết nối lần đầu trong ứng dụng chat</h2>
+        <p className="mt-3 text-neutral-700">Muốn được chỉ từng bước từ đầu: <Link href="/ket-noi-ai/bat-dau#lan-dau" className="font-semibold underline">mở hướng dẫn lần đầu</Link>. Đã bật kết nối: chat tự mở phiên tạm khi cần, không bắt bạn tạo token. Lưu và mở bản riêng mới cần đăng nhập tài khoản Dinh dưỡng 2598.</p>
         <p className="mt-3 text-sm text-neutral-700">Nếu đăng ký tự động không hoạt động: <Link href="/tai-khoan?section=connections#ket-noi-thu-cong" className="font-semibold text-[#123c36] underline">tạo cấu hình OAuth thủ công trong Tài khoản</Link>. Xem và thu hồi quyền tại <Link href="/tai-khoan?section=connections" className="underline">Kết nối ứng dụng</Link>.</p>
-        <p className="mt-3 text-sm text-neutral-700">Chỉ tra/tính/xuất file: <a href="#phien-tam" className="font-semibold underline">dùng phiên tạm không cần tài khoản</a>. Token API cá nhân vẫn có trong Tài khoản cho ứng dụng hỗ trợ Bearer header.</p>
+        <p className="mt-3 text-sm text-neutral-700">Dùng phần mềm riêng có hỗ trợ Bearer token: <a href="#phien-tam" className="font-semibold underline">mở tùy chọn tạo token thủ công</a>. Token API cá nhân vẫn có trong Tài khoản.</p>
         <p className="mt-2 text-neutral-700">Đường dẫn công cụ dùng chung cho cả hai nền tảng:</p>
         <code className="mt-3 block break-all rounded-lg bg-[#edf4f0] p-3 text-sm text-[#123c36]">{resourceUrl}</code>
         <div className="mt-7 grid gap-8 md:grid-cols-2">
@@ -97,6 +99,7 @@ export default async function ConnectAiPage() {
         <p className="mt-4 text-sm text-neutral-700">Tên mục và quyền cài đặt tùy tài khoản hoặc tổ chức. Gói tải này chưa đồng nghĩa đã được niêm yết trong thư viện công khai. Nếu chưa thấy công cụ, kiểm tra kết nối trước khi tính.</p>
       </section>
 
+      <GuestSessionPanel />
       <section className="py-8" aria-labelledby="tools-guide-title">
         <h2 id="tools-guide-title" className="text-2xl font-semibold">Một plugin, {NUTRITION_TOOLS.length} công cụ</h2>
         <p className="mt-3 text-neutral-700">Mặc định chỉ tính và trả báo cáo. Cần file thì nhận link Excel; chỉ tạo bản trong tài khoản khi bạn yêu cầu lưu. Trong chat, gọi get_workflow để đọc hướng dẫn hiện tại.</p>

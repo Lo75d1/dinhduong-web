@@ -45,6 +45,28 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
         <aside className="rounded-xl border-2 border-[#9dbbae] bg-white/95 p-5 shadow-[0_10px_25px_rgba(18,60,54,0.12)] [animation:clinical-enter_550ms_ease_both]"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">DỮ LIỆU TRA CỨU</p><div className="mt-4 space-y-3"><Metric label="Thực phẩm và món ăn" value={foodCount.toLocaleString("vi-VN")} /><Metric label="Công thức món ăn" value={dishCount.toLocaleString("vi-VN")} /><div className="border-t border-[#adc4b9] pt-3 text-sm text-neutral-900"><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-700" />Đơn vị và cơ sở tính được ghi theo từng nguồn.</div></div></aside>
       </div>
     </section>
+    <section id="huong-dan-hoi-thoai" aria-labelledby="chat-start-title" className="border-b-2 border-[#9bb6ab] bg-white px-5 py-9 text-[#123c36] sm:px-10 lg:px-16">
+      <div className="mx-auto grid max-w-6xl gap-7 md:grid-cols-[1fr_230px] md:items-center">
+        <div>
+          <h2 id="chat-start-title" className="max-w-3xl text-2xl font-semibold leading-tight sm:text-3xl">Nhập khẩu phần qua ChatGPT hoặc Claude</h2>
+          <p className="mt-3 max-w-3xl text-lg leading-8 text-neutral-800">Quét mã QR hoặc mở hướng dẫn, sao chép lời nhắn và gửi vào chat. Chat sẽ hỏi từng phần, tra món và chuẩn bị bản để bạn duyệt trước khi tính.</p>
+          <ol className="mt-4 list-decimal space-y-2 pl-5 text-base text-neutral-800">
+            <li><b>Mở hướng dẫn</b> bằng mã QR hoặc nút bên dưới.</li>
+            <li><b>Sao chép lời nhắn, mở chat và gửi.</b> Lần đầu được chỉ cách bật kết nối.</li>
+            <li><b>Duyệt bản nháp, nhận báo cáo.</b> Chat tự mở phiên tạm; bạn không cần lấy mã truy cập.</li>
+          </ol>
+          <div className="mt-6 flex flex-wrap gap-4">
+            <Link href="/ket-noi-ai/bat-dau" className="inline-flex min-h-12 items-center justify-center rounded-md bg-[#123c36] px-5 py-3 text-lg font-semibold text-white hover:bg-[#0b302b] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]">Bắt đầu và xem hướng dẫn →</Link>
+            <Link href="/ket-noi-ai/bat-dau#luu-lau-dai" className="inline-flex min-h-12 items-center py-3 font-semibold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]">Muốn lưu và dùng lại lâu dài?</Link>
+          </div>
+          <p className="mt-4 text-base text-neutral-700">Chỉ tra, tính hoặc lấy Excel: không cần tài khoản Dinh dưỡng 2598. Cần lưu thực đơn để dùng lại thì tạo tài khoản theo hướng dẫn.</p>
+        </div>
+        <figure className="flex flex-col items-center gap-3 rounded-lg border-2 border-[#123c36] bg-[#f7faf8] p-4">
+          <Image src="/ket-noi-ai/bat-dau/qr.png" width={200} height={200} unoptimized alt="Quét QR để mở hướng dẫn dùng Dinh dưỡng 2598 trong chat" className="h-48 w-48 bg-white" />
+          <figcaption className="text-center text-base font-semibold">Quét bằng camera điện thoại<br /><span className="font-normal">Mở hướng dẫn từng bước</span></figcaption>
+        </figure>
+      </div>
+    </section>
     <section className="relative overflow-hidden px-5 py-10 sm:px-10 lg:px-16">
       <Image src="/dinh-duong-2597-cover.jpg" alt="" fill aria-hidden className="object-cover object-center opacity-[0.14]" />
       <div className="relative mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">CHỨC NĂNG</p><h2 className="mt-1 text-2xl font-semibold text-[#123c36]">Tra cứu và tính khẩu phần</h2></div></div><div className="mt-5 grid gap-5 md:grid-cols-2"><Link href="/thuc-pham" className="clinical-card group rounded-xl border-2 border-[#7f948d] bg-white p-6 hover:-translate-y-0.5 hover:border-[#123c36]"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">01 · TRA CỨU</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Tra cứu thành phần dinh dưỡng</h3><p className="mt-3 text-neutral-900">Tìm thực phẩm, món ăn hoặc sản phẩm theo tên; xem thành phần dinh dưỡng, đơn vị và nguồn dữ liệu.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Tra cứu thực phẩm →</span></Link><Link href="/tinh-khau-phan" className="clinical-card group rounded-xl border-2 border-[#123c36] bg-[#f8fcfa] p-6 hover:-translate-y-0.5 hover:bg-white"><p className="text-sm font-semibold tracking-[0.12em] text-[#123c36]">02 · PHÂN TÍCH</p><h3 className="mt-2 text-2xl font-semibold text-neutral-950">Tính và phân tích khẩu phần</h3><p className="mt-3 text-neutral-900">Nhập thực phẩm và lượng ăn theo bữa. Xem năng lượng, tỷ lệ đạm–béo–bột đường, đối chiếu nhu cầu theo hồ sơ và xuất báo cáo.</p><span className="mt-5 inline-block font-semibold text-[#123c36]">Lập khẩu phần →</span></Link></div></div>

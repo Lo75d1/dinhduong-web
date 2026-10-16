@@ -9,3 +9,4 @@
 - Token xác nhận từ prepare là dữ liệu kỹ thuật ngắn hạn, khác token API trong cài đặt kết nối. Không dán mật khẩu/token bí mật vào hội thoại.
 
 - Phiên không tài khoản: start_guest_session → arguments.sessionToken cho công cụ kho chung/tính/xuất. Mã30phút, không lưu thực đơn hoặc mở thư viện riêng. Đọc guidance sau mỗi kết quả/lỗi và dừng chờ khi cần xác nhận.
+- Dành cho bác sĩ: trang chủ có QR mở hướng dẫn từng bước; lời nhắn ngắn để dán vào chat đã bật kết nối. Chat tự xử lý token khi được yêu cầu tra/tính. Muốn lưu dùng lâu dài, xem get_workflow.accountUse và mục /ket-noi-ai/bat-dau#luu-lau-dai; đăng nhập web và kết nối chat là hai bước, giữ đầu vào và duyệt lại bằng identity tài khoản trước khi lưu.

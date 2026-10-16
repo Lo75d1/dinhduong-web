@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { getNutritionPublicUrl } from "@/lib/nutrition-chat/oauth-validation";
-import { NUTRITION_START_STEPS, nutritionStartGuide, nutritionStartLinks, nutritionStartMessage } from "@/lib/nutrition-chat/start-guide";
+import { NUTRITION_START_STEPS, nutritionDoctorStartMessage, nutritionStartGuide, nutritionStartLinks, nutritionStartMessage } from "@/lib/nutrition-chat/start-guide";
 import StartInChat from "../StartInChat";
+import LongTermUse from "../LongTermUse";
+import { NUTRITION_TOOLS } from "@/lib/nutrition-chat/tools";
 
 export const metadata: Metadata = {
   title: "Bắt đầu bằng QR hoặc link | Dinh dưỡng 2598",
-  description: "Quét QR, dán lời nhắn vào ChatGPT hoặc Claude: chọn món, duyệt khẩu phần và mở kết quả trên web; tải Excel khi cần.",
+  description: "Quét QR, dán lời nhắn vào chat và được hướng dẫn từng bước. Chat tự mở phiên tạm để tra, tính và trả báo cáo; tạo tài khoản khi muốn lưu dùng lại.",
   alternates: { canonical: "/ket-noi-ai/bat-dau" },
 };
 export const dynamic = "force-dynamic";
@@ -19,22 +21,17 @@ export default function StartNutritionChatPage() {
     <header className="border-b border-[#b1c8bd] pb-6">
       <p className="text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · BẮT ĐẦU HỘI THOẠI</p>
       <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">Quét QR hoặc dán link vào chat.</h1>
-      <p className="mt-4 max-w-3xl text-lg text-neutral-700">Chọn món, xem bản nháp rồi chốt. Mở kết quả đã tính trên web để xem, điều chỉnh và dùng lại; tải Excel khi cần.</p>
+      <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-700">Bạn nói mục đích và bữa ăn; chat hỏi phần còn thiếu, đưa bản để bạn duyệt rồi trả báo cáo. Khi đã bật kết nối Dinh dưỡng 2598, chat tự mở phiên tạm, bạn không cần lấy mã truy cập.</p>
+      <p className="mt-3 font-semibold">Chỉ tra, tính hoặc lấy Excel: không cần tài khoản Dinh dưỡng 2598. <a href="#luu-lau-dai" className="underline underline-offset-4">Muốn lưu và dùng lại lâu dài?</a></p>
     </header>
     <div className="grid items-start gap-6 md:grid-cols-[1fr_220px]">
-      <StartInChat message={nutritionStartMessage(origin)} link={links.start} mcp={links.mcp} />
+      <StartInChat message={nutritionDoctorStartMessage(origin)} fallbackMessage={nutritionStartMessage(origin)} link={links.start} mcp={links.mcp} />
       <figure className="flex flex-col items-center gap-3 rounded-xl border border-[#b1c8bd] bg-white p-5">
         <Image src="/ket-noi-ai/bat-dau/qr.png" unoptimized width={180} height={180} alt="QR mở trang bắt đầu Dinh dưỡng 2598, cùng link dán vào chat" />
         <figcaption className="text-center text-sm text-neutral-700">Quét bằng máy ảnh điện thoại. QR mở đúng trang này, không chứa tài khoản hoặc khóa.</figcaption>
         <a href="/ket-noi-ai/bat-dau/qr.png" download="dinh-duong-2598-bat-dau.png" className="font-semibold underline underline-offset-4">Tải QR để in hoặc chia sẻ</a>
       </figure>
     </div>
-    <section className="rounded-xl border border-[#9bb6ab] bg-[#edf4f0] p-5">
-      <h2 className="text-xl font-semibold">Lần đầu: cấp quyền kết nối một lần</h2>
-      <p className="mt-2 text-neutral-700">Link giúp AI đọc quy trình. Để tra kho, tính và xuất Excel, bạn cần thêm kết nối Dinh dưỡng 2598 và đăng nhập OAuth trên website. Lời nhắn sẽ nhắc bước này nếu chat chưa có công cụ.</p>
-      <Link href="/ket-noi-ai#cai-ket-noi" className="mt-4 inline-block rounded-lg bg-[#123c36] px-4 py-2.5 font-semibold text-white hover:bg-[#0f5c51]">Xem cách kết nối ChatGPT / Claude →</Link>
-      <p className="mt-3 text-sm text-neutral-700">ChatGPT: tạo và cài plugin cá nhân, mở hội thoại Work rồi dùng @ chọn plugin. Claude: thêm connector và bật trong chat. <a href="https://developers.openai.com/plugins/quickstart" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Hướng dẫn OpenAI</a> · <a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Hướng dẫn Claude</a>.</p>
-    </section>
     <section aria-labelledby="start-workflow-title">
       <h2 id="start-workflow-title" className="text-2xl font-semibold">Từ bữa ăn đến kết quả</h2>
       <ol className="mt-5 space-y-5">{NUTRITION_START_STEPS.map((step, index) => <li key={step.title} className="flex gap-4">
@@ -42,6 +39,20 @@ export default function StartNutritionChatPage() {
         <div><h3 className="text-lg font-semibold">{step.title}</h3><p className="mt-1 text-neutral-700">{step.text}</p></div>
       </li>)}</ol>
     </section>
+    <section id="lan-dau" aria-labelledby="first-use-title" className="scroll-mt-6 rounded-xl border border-[#9bb6ab] bg-white p-5 sm:p-7">
+      <h2 id="first-use-title" className="text-2xl font-semibold">Lần đầu dùng: bật kết nối một lần</h2>
+      <p className="mt-3 text-neutral-700">QR và link giúp chat đọc hướng dẫn. Chat cần có kết nối Dinh dưỡng 2598 để gọi dữ liệu và tính trên hệ thống. Khi đã cài, những lần sau bạn chỉ mở chat có bật kết nối và gửi lời nhắn.</p>
+      <ol className="mt-4 list-decimal space-y-3 pl-5 text-neutral-800">
+        <li>Trong ChatGPT, mở <b>Plugins</b>, bấm <b>+</b> → <b>Add custom MCP server</b>, đặt tên <b>Dinh dưỡng 2598</b> và dán địa chỉ bên dưới.</li>
+        <li>Ở Authentication, chọn <b>OAuth or no authentication</b> nếu có để dùng được cả phiên tạm lẫn tài khoản. Chỉ tra/tính/Excel có thể chọn <b>No authentication</b>. Tạo plugin, kiểm có <b>{NUTRITION_TOOLS.length} công cụ</b> rồi bấm cài đặt.</li>
+        <li>Mở cuộc chat mới ở <b>Work</b>, gõ <b>@</b> và chọn <b>Dinh dưỡng 2598</b>. Quay lên sao chép lời nhắn rồi dán và gửi. Chat sẽ tự mở phiên làm việc.</li>
+      </ol>
+      <p className="mt-4 break-all rounded border border-[#b1c8bd] bg-[#f7faf8] p-3 text-base"><span className="block font-semibold">Địa chỉ dán vào Server URL</span>{links.mcp}</p>
+      <p className="mt-3 text-neutral-700">Dùng Claude: mở phần Connectors, thêm Dinh dưỡng 2598 bằng cùng địa chỉ và bật trong chat; lựa chọn kết nối phụ thuộc tài khoản hoặc tổ chức.</p>
+      <div className="mt-4 flex flex-wrap gap-4 text-sm"><Link href="/ket-noi-ai#cai-ket-noi" className="underline underline-offset-4">Xem hướng dẫn kết nối chi tiết</Link><a href="https://developers.openai.com/plugins/quickstart" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Hướng dẫn chính thức của OpenAI</a></div>
+      <p className="mt-3 text-sm text-neutral-700">Đã cài nhưng chat chưa thấy công cụ mới: mở plugin → Refresh, rồi thử trong cuộc chat mới. Nếu giao diện không có mục cài kết nối, chat chỉ có thể giúp làm rõ đầu vào; chưa thể tính qua hệ thống.</p>
+    </section>
+    <LongTermUse />
     <div className="flex flex-wrap gap-4 border-t border-[#b1c8bd] pt-5">
       <Link href="/ket-noi-ai#nhap-excel" className="underline underline-offset-4">Gửi lại Excel đã sửa</Link>
       <Link href="/ket-noi-ai/ban-luu" className="underline underline-offset-4">Mở khẩu phần đã lưu</Link>

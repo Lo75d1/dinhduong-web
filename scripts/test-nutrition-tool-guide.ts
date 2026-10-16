@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import JSZip from "jszip";
 import {NUTRITION_TOOLS,NUTRITION_WORKFLOW} from "../src/lib/nutrition-chat/tools";
-import {nutritionStartMessage,nutritionStartGuide} from "../src/lib/nutrition-chat/start-guide";
+import {nutritionDoctorStartMessage,nutritionStartLinks,nutritionStartMessage,nutritionStartGuide} from "../src/lib/nutrition-chat/start-guide";
 import {nutritionMcpOutput} from "../src/lib/nutrition-chat/mcp-output";
 import {createHash} from "node:crypto";
 
@@ -12,6 +12,9 @@ async function main(){let checks=0;const check=(v:unknown)=>{assert.ok(v);checks
  const response=nutritionMcpOutput("get_workflow",NUTRITION_WORKFLOW);check(JSON.parse(response.text).persistence.default==="none");
  const start=nutritionStartMessage("https://dinhduong2598.food");check(start.includes("không lưu thực đơn vào tài khoản"));check(!start.includes("Tôi muốn xem kết quả bằng link bản riêng"));check(start.includes("saveToAccount=false"));
  const text=nutritionStartGuide("https://dinhduong2598.food");check(text.includes(`có ${NUTRITION_TOOLS.length} công cụ`));check(!text.includes("13 công cụ"));
+ const doctor=nutritionDoctorStartMessage("https://example.test");check(doctor.includes(nutritionStartLinks("https://example.test").text));check(!doctor.includes("accessToken"));check(!doctor.includes("confirmationToken"));check(doctor.includes("không bắt tôi tạo tài khoản"));
+ check(NUTRITION_WORKFLOW.accountUse.loginPath.startsWith("/dang-nhap?next="));check(NUTRITION_WORKFLOW.accountUse.steps.some(step=>step.includes("Không tái dùng confirmationToken")));
+ check(text.includes("Đăng ký mới"));check(text.includes("Đăng nhập website không tự gắn tài khoản với plugin"));check(text.includes("không bắt học tên API"));
  const zip=await JSZip.loadAsync(await fs.readFile("public/nutrition-chat/dinh-duong-2598-plugin.zip"));
  check(zip.file("README.md"));const reference=await zip.file("skills/dinh-duong-2598/references/cong-cu.md")!.async("string");for(const tool of NUTRITION_TOOLS)check(reference.includes(`## ${tool.name} —`));
  check(reference.includes("MCP"));check(reference.includes("confirmationToken"));check(reference.includes("Chỉ tính, không lưu"));check(reference.includes("429 hoặc503"));

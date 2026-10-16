@@ -15,8 +15,9 @@ export default function GuestSessionPanel() {
     } catch { setMessage("Chưa kết nối được máy chủ; thử lại sau."); }
     finally { setBusy(false); }
   }
-  return <section id="phien-tam" aria-labelledby="guest-title" className="my-8 scroll-mt-6 rounded-xl border border-[#123c36] bg-[#edf4f0] p-5 sm:p-8">
-    <h2 id="guest-title" className="text-2xl font-semibold">Dùng ngay, không cần tài khoản</h2>
+  return <details id="phien-tam" className="my-8 scroll-mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-8">
+    <summary className="cursor-pointer text-lg font-semibold">Dành cho phần mềm khác: tạo token thủ công</summary>
+    <h2 id="guest-title" className="mt-4 text-xl font-semibold">Phiên tạm không cần tài khoản</h2>
     <p className="mt-3 text-neutral-700">Phiên tạm 30 phút để tra món, tính khẩu phần và lấy link Excel. Không lưu thực đơn vào tài khoản.</p>
     <p className="mt-2 text-neutral-700">Trong plugin đã bật công cụ: yêu cầu “Mở phiên tạm bằng start_guest_session rồi giúp tôi tính khẩu phần”. Plugin giữ mã phiên và dùng tiếp; bạn không cần tự sao chép.</p>
     <p className="mt-2 text-sm text-neutral-700">Ứng dụng hỗ trợ Bearer token có thể tạo mã thủ công bên dưới. Token chỉ hiện trong trang này, không lưu trên trình duyệt. Muốn lưu hoặc dùng thư viện riêng thì kết nối tài khoản bằng OAuth.</p>
@@ -31,5 +32,5 @@ export default function GuestSessionPanel() {
       <p className="text-sm text-neutral-700">Kết thúc phiên sẽ vô hiệu hóa token. Link Excel đã xuất có hạn tải riêng 10 phút.</p>
     </div>}
     <p role="status" className="mt-3 text-sm">{message}</p>
-  </section>;
+  </details>;
 }

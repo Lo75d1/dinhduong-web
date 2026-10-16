@@ -11,7 +11,13 @@ export function nutritionStartLinks(origin: string) {
     upload: `${origin}/ket-noi-ai#nhap-excel`,
     saved: `${origin}/ket-noi-ai/ban-luu`,
     revoke: `${origin}/ket-noi-ai/authorize/connections`,
+    account: `${origin}/dang-nhap?next=${encodeURIComponent("/tai-khoan")}`,
   };
+}
+
+export function nutritionDoctorStartMessage(origin: string) {
+  const links=nutritionStartLinks(origin);
+  return `Hãy đọc hướng dẫn tại ${links.text} rồi giúp tôi lập thực đơn hoặc đánh giá khẩu phần bằng Dinh dưỡng 2598 từ đầu đến cuối. Tự mở phiên làm việc tạm khi cần, không bắt tôi tạo tài khoản hoặc sao chép mã truy cập. Hỏi từng phần còn thiếu, đưa bản để tôi duyệt rồi mới tính; trả báo cáo trong chat và link Excel khi tôi cần. Không lưu thực đơn vào tài khoản nếu tôi chưa yêu cầu. Nếu tôi muốn lưu và dùng lại lâu dài, hướng dẫn tôi tạo/đăng nhập tài khoản và kết nối trong chat. Nếu cuộc chat chưa có công cụ Dinh dưỡng 2598, chỉ tôi cách bật kết nối tại ${links.setup}; không báo đã tính khi chưa gọi được hệ thống.`;
 }
 
 export function nutritionStartMessage(origin: string) {
@@ -21,6 +27,8 @@ export function nutritionStartMessage(origin: string) {
 Trả lời tiếng Việt bằng gạch đầu dòng. Trước tiên kiểm tra công cụ Dinh dưỡng 2598 trong phiên và gọi get_workflow nếu có. Nếu chưa có hoặc chưa đọc được link, nói rõ và hướng dẫn kết nối tại ${links.setup}; vẫn có thể làm rõ bữa ăn, nhưng chỉ báo đã tra data, tính, lưu hoặc xuất Excel khi công cụ thật trả kết quả.
 
 Nếu chưa kết nối tài khoản, dùng start_guest_session để tra kho chung/tính/xuất không cần đăng nhập; giữ accessToken trong arguments.sessionToken, không in token. Đọc guidance sau từng phản hồi, hỏi đúng phần thiếu và dừng chờ khi requiresUserConfirmation=true. Lưu/mở bản riêng mới cần OAuth.
+
+Tự xử lý phiên tạm khi cần làm việc, không yêu cầu tôi bấm tạo token, sao chép accessToken hoặc học tên công cụ. Nếu tôi muốn lưu/dùng lâu dài, hướng dẫn tại ${links.start}#luu-lau-dai; đăng nhập website chưa đồng nghĩa kết nối chat. Giữ nguyên đầu vào khi chuyển sang tài khoản, prepare lại bằng kết nối tài khoản và chờ tôi duyệt trước save_menu; không dùng confirmationToken của phiên tạm để lưu tài khoản.
 
 Hỏi các phần tôi chưa cung cấp: muốn lập thực đơn hay ghi lại ăn 24 giờ, một hay nhiều ngày, các món/thực phẩm và lượng. Hỏi tối đa 3 ý mỗi lần; không hỏi lại thông tin đã có. Mặc định chỉ tính thành phần, chỉ hỏi hồ sơ cơ thể khi tôi muốn đối chiếu nhu cầu.
 
@@ -32,11 +40,9 @@ Gọi prepare_menu, đưa review.text gọn để tôi duyệt món, lượng, s
 }
 
 export const NUTRITION_START_STEPS = [
-  { title: "Nói mục đích và bữa ăn", text: "Chọn thực đơn hoặc ghi lại ăn 24 giờ, số ngày và món đã biết. AI chỉ hỏi các phần còn thiếu, gồm lượng, đơn vị và số suất." },
-  { title: "Tra kho và làm rõ nguyên liệu", text: "AI tra thực phẩm/công thức của Dinh dưỡng 2598, đưa lựa chọn có nguồn. Nguyên liệu thay, món mới và số liệu ngoài kho được trình bày để bạn xác nhận." },
-  { title: "Xem bản nháp rồi chốt", text: "Bạn xem ngày, bữa, nguyên liệu, định lượng và các cảnh báo. Chỉ sau khi bạn đồng ý, AI gửi đúng bản đó đến hệ thống để tính." },
-  { title: "Nhận kết quả và chọn cách giữ lại", text: "Nhận tóm tắt năng lượng và P–L–G ngay trong chat. Chỉ tính thì kết thúc tại đây; cần Excel thì nhận link tải, muốn dùng lại trên web thì yêu cầu lưu bản riêng." },
-  { title: "Dùng lại hoặc gửi bản đã sửa", text: "Mở bản cá nhân đã lưu, hoặc gửi Excel đã chỉnh vào trang nhập lại để xem trước, chốt và tính lại. Công thức kho gốc được giữ nguyên." },
+  { title: "Sao chép lời nhắn, mở chat và gửi", text: "Dùng ChatGPT hoặc Claude đã bật kết nối Dinh dưỡng 2598. Chat tự mở phiên làm việc tạm; bạn không cần lấy mã truy cập hoặc tạo tài khoản trên website." },
+  { title: "Cung cấp thông tin và duyệt bản nháp", text: "Nói mục đích, số ngày, món và lượng đã biết. Chat tra dữ liệu, hỏi từng phần còn thiếu và đưa bản để bạn kiểm tra. Có bệnh lý hoặc mã chế độ ăn thì cung cấp thêm khi được hỏi." },
+  { title: "Nhận báo cáo; chọn tải hoặc lưu", text: "Sau khi bạn đồng ý, hệ thống tính và trả báo cáo trong chat. Cần Excel thì nhận link tải. Muốn giữ thực đơn để dùng nhiều lần, xem hướng dẫn tài khoản bên dưới." },
 ] as const;
 
 export function nutritionStartGuide(origin: string) {
@@ -57,7 +63,8 @@ Tài liệu cho người dùng và AI khi người dùng chủ động yêu cầ
 ## 0. Kiểm tra công cụ trước
 
 - Có công cụ Dinh dưỡng 2598: gọi get_workflow, đọc schema/giới hạn thật của phiên. Quy trình và schema từ công cụ đang chạy là nguồn hiện hành.
-- Chưa có công cụ hoặc OAuth lỗi: nói rõ chưa kết nối, hướng dẫn bước cài/cấp quyền dưới đây; có thể tiếp tục làm rõ món/định lượng nhưng không khẳng định đã tra kho, tính trên hệ thống, lưu hoặc tạo file.
+- Người dùng chính là bác sĩ/nhân viên y tế, có thể chưa quen thao tác kỹ thuật: hướng dẫn bằng tên nút và từng bước ngắn, không bắt học tên API, copy token hoặc điền JSON. Có công cụ và cần tra/tính/Excel thì tự gọi start_guest_session khi chưa có phiên còn hạn; giữ accessToken nội bộ, truyền arguments.sessionToken. Không cần hỏi thêm quyền mở phiên khi việc này đã nằm trong yêu cầu tra/tính. Không tự mở phiên chỉ vì người dùng đang đọc hướng dẫn hoặc chỉ muốn xem cách dùng.
+- Chưa có công cụ: nói rõ, hướng dẫn bật kết nối lần đầu; có thể tiếp tục làm rõ món/định lượng nhưng không khẳng định đã tra kho, tính trên hệ thống, lưu hoặc tạo file. Phiên tạm hết hạn không phải lỗi tài khoản: giữ đầu vào, tạo phiên mới khi cần và prepare/duyệt lại; không tự gia hạn liên tục hoặc tạo phiên để vượt hạn mức.
 - Không có khả năng mở link: dùng lời nhắn tự đủ ở cuối tài liệu; không giả vờ đã đọc trang. Không tự gửi POST từ công cụ duyệt web hoặc yêu cầu người dùng dán token để vượt bước OAuth.
 - Trả lời tiếng Việt bằng gạch đầu dòng. Hỏi tối đa 3 ý mỗi lần, chỉ hỏi thông tin còn thiếu. Không hỏi hồ sơ cơ thể khi chỉ tính thành phần.
 
@@ -74,9 +81,9 @@ Nguồn OpenAI: https://developers.openai.com/plugins/quickstart
 
 ### Claude
 
-1. Mở Customize → Connectors → thêm custom connector, dùng URL MCP và OAuth / Register automatically.
-2. Đăng nhập Dinh dưỡng 2598, xem quyền rồi xác nhận. Bật connector trong cuộc hội thoại trước khi gửi lời nhắn.
-3. AI gọi get_workflow để kiểm tra. Skill ZIP là lựa chọn bổ sung cho lần dùng sau, không thay cho connector.
+1. Mở Customize → Connectors → thêm custom connector, dùng URL MCP; bật connector trong cuộc hội thoại trước khi gửi lời nhắn.
+2. Chỉ tra/tính/Excel: dùng phiên tạm qua start_guest_session nếu connector cho phép không đăng nhập. Lưu/mở dữ liệu riêng: OAuth / Register automatically, đăng nhập Dinh dưỡng 2598 và xem quyền rồi xác nhận. Nếu giao diện bắt buộc OAuth, giải thích giới hạn đó; không nói QR/link tự vượt bước kết nối.
+3. AI gọi get_workflow để kiểm tra, tự giữ token phiên tạm trong công cụ. Skill ZIP là lựa chọn bổ sung cho lần dùng sau, không thay cho connector.
 
 Nguồn Claude: https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp
 
@@ -114,9 +121,17 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 - Muốn đưa file đã sửa về hệ thống: mở ${links.upload}, đăng nhập, upload .xlsx tối đa 5 MB, xem preview/xác nhận/tính lại. Không tin các tổng/cache/công thức do file gửi lên cung cấp; không tự lấy file từ URL tùy ý.
 - Muốn dùng lại: list_saved_menus/get_saved_menu chỉ đọc bản của chủ đã cấp quyền. Có sourceChanged thì nói rõ nguồn đổi và chốt lại trước sửa/xuất.
 
+## Dùng lâu dài theo yêu cầu người dùng
+
+- Chỉ tra/tính/Excel: tiếp tục phiên tạm, không bắt đăng ký; chỉ giới thiệu lựa chọn tài khoản ngắn khi phù hợp, không biến thành điều kiện để nhận báo cáo.
+- Muốn lưu/dùng lại: hướng dẫn mở ${links.account}, chọn Đăng ký mới nếu chưa có, điền họ tên/email/mật khẩu rồi Tạo tài khoản; đã có thì Đăng nhập. Không xin mật khẩu hoặc mã truy cập trong chat.
+- Sau đó quay lại chat, dùng kết nối tài khoản Dinh dưỡng 2598; người dùng đăng nhập/cấp quyền trên đúng website khi nền tảng yêu cầu. Đăng nhập website không tự gắn tài khoản với plugin. Nếu chưa kết nối được, giữ đầu vào và hướng dẫn tại ${links.setup}; không báo đã lưu.
+- Khi chuyển từ guest sang OAuth, giữ đầu vào hiện có, gọi prepare_menu bằng identity tài khoản, trình lại bản và chờ xác nhận. Ticket guest khác identity nên không dùng để save. Chỉ save_menu sau yêu cầu lưu rõ; trả ration.url thật. Thiếu write thì chỉ xin quyền cần thiết cho việc lưu đã được yêu cầu.
+- Lần sau mở ${links.saved} hoặc nhờ chat tìm thực đơn đã lưu bằng list_saved_menus/get_saved_menu. Thực phẩm và món riêng có trong Tài khoản. Không bắt gửi lại Excel; link tải Excel tạm khác link bản lưu yêu cầu đăng nhập đúng chủ. Không tự tải dữ liệu tài khoản chỉ vì đã đăng nhập.
+
 ## 5. Khi gặp lỗi
 
-- Thiếu quyền/phiên hết hạn: hướng dẫn kết nối lại; chỉ xin quyền ghi khi cần lưu bản cá nhân. Các quyền dùng cho quy trình: nutrition:read, nutrition:calculate, nutrition:export; nutrition:write chỉ khi muốn lưu.
+- Thiếu công cụ: hướng dẫn cài/bật kết nối. Phiên khách hết hạn: tự mở phiên mới khi cần, giữ đầu vào rồi prepare/duyệt lại; không xin tài khoản nếu chỉ tính/Excel. Kết nối tài khoản hết hạn/thiếu quyền: hướng dẫn kết nối lại; chỉ xin quyền ghi khi đã yêu cầu lưu. Các quyền: nutrition:read, nutrition:calculate, nutrition:export; nutrition:write chỉ khi muốn lưu.
 - Hạn mức/bận: báo thời gian thử lại do server trả, giữ bản nháp, không vòng lặp gọi liên tục.
 - Không có dữ liệu hoặc công cụ lỗi: báo chính xác phần chưa xong, không thay số server bằng số tự bịa. Không yêu cầu token/mật khẩu/khóa chung hoặc thông tin định danh bệnh nhân.
 
