@@ -119,7 +119,7 @@ export default function PersonalLibrary({ kind, items, nextPage, q, page, initia
             <section className="min-w-0" aria-label="Nguyên liệu của món ăn">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-lg font-semibold">Thành phần món ăn</h3><span className="text-sm text-neutral-600">{dish.days[0].rows.length} dòng nguyên liệu</span></div>
               <p className="mb-3 text-sm text-neutral-700">Định lượng dưới đây là toàn công thức. Kiểm tra số phần khi đưa vào thực đơn.</p>
-              {dish.days[0].rows.length ? <div className="overflow-x-auto rounded border border-[#b1c8bd]">
+              {dish.days[0].rows.length ? <div className="relative overflow-x-auto rounded border border-[#b1c8bd]">
                 <table className="w-full min-w-[36rem] border-collapse text-left text-base">
                   <caption className="sr-only">Nguyên liệu, định lượng, đơn vị và nguồn của công thức</caption>
                   <thead className="bg-[#edf4f0]"><tr><th scope="col" className="px-3 py-3 font-semibold">Thực phẩm / nguồn</th><th scope="col" className="w-32 px-3 py-3 text-right font-semibold">Định lượng</th><th scope="col" className="w-16 px-2 py-3 font-semibold">Đơn vị</th><th scope="col" className="w-20 px-3 py-3"><span className="sr-only">Thao tác</span></th></tr></thead>
