@@ -20,6 +20,8 @@ export function nutritionStartMessage(origin: string) {
 
 Trả lời tiếng Việt bằng gạch đầu dòng. Trước tiên kiểm tra công cụ Dinh dưỡng 2598 trong phiên và gọi get_workflow nếu có. Nếu chưa có hoặc chưa đọc được link, nói rõ và hướng dẫn kết nối tại ${links.setup}; vẫn có thể làm rõ bữa ăn, nhưng chỉ báo đã tra data, tính, lưu hoặc xuất Excel khi công cụ thật trả kết quả.
 
+Nếu chưa kết nối tài khoản, dùng start_guest_session để tra kho chung/tính/xuất không cần đăng nhập; giữ accessToken trong arguments.sessionToken, không in token. Đọc guidance sau từng phản hồi, hỏi đúng phần thiếu và dừng chờ khi requiresUserConfirmation=true. Lưu/mở bản riêng mới cần OAuth.
+
 Hỏi các phần tôi chưa cung cấp: muốn lập thực đơn hay ghi lại ăn 24 giờ, một hay nhiều ngày, các món/thực phẩm và lượng. Hỏi tối đa 3 ý mỗi lần; không hỏi lại thông tin đã có. Mặc định chỉ tính thành phần, chỉ hỏi hồ sơ cơ thể khi tôi muốn đối chiếu nhu cầu.
 
 Nếu tôi có bệnh lý/chỉ định, đọc clinicalWorkflow, dùng search_diet_codes và get_diet_code để tra mã/tên/đối tượng/ghi chú thật. Hỏi phần còn thiếu liên quan, đưa mã để tôi xác nhận rồi lưu trong clinicalContext cùng khẩu phần. Không tự chẩn đoán/chọn mã đầu/ghép nhiều mã hoặc biến khoảng tham khảo thành mục tiêu cá nhân; phần chưa rõ để chưa có dữ liệu.
@@ -64,8 +66,8 @@ Tài liệu cho người dùng và AI khi người dùng chủ động yêu cầ
 ### ChatGPT
 
 1. Mở Plugins → nút thêm → Add custom MCP server. Đặt tên Dinh dưỡng 2598, dùng URL MCP phía trên. Chọn OAuth or no authentication nếu có, hoặc OAuth.
-2. Tạo plugin, kiểm tra có ${NUTRITION_TOOLS.length} công cụ gồm get_workflow, rồi cài plugin cá nhân. Mở cuộc hội thoại Work mới, dùng @ chọn plugin rồi yêu cầu gọi get_workflow. Hướng dẫn này không cần đăng nhập; các công cụ dữ liệu vẫn cần cấp quyền.
-3. Khi gọi công cụ dữ liệu, ChatGPT yêu cầu kết nối tài khoản: bấm kết nối, đăng nhập Dinh dưỡng 2598 ở đúng website, xem quyền rồi xác nhận. Không nhập mật khẩu vào hội thoại.
+2. Tạo plugin, kiểm tra có ${NUTRITION_TOOLS.length} công cụ gồm get_workflow, rồi cài plugin cá nhân. Mở cuộc hội thoại Work mới, dùng @ chọn plugin rồi yêu cầu gọi get_workflow. get_workflow và start_guest_session không cần đăng nhập; tra/tính/Excel dùng phiên tạm30phút hoặc OAuth.
+3. Chỉ tra/tính/Excel: gọi start_guest_session, truyền accessToken bằng arguments.sessionToken cho công cụ tiếp theo, đọc guidance sau từng phản hồi. Lưu/mở dữ liệu riêng mới cần OAuth: đăng nhập ở đúng website, xem quyền rồi xác nhận. Không nhập mật khẩu vào hội thoại.
 4. Plugin đã cài nhưng không có công cụ: mở plugin → Refresh, kiểm lại danh sách rồi thử trong hội thoại mới. Không coi việc thêm tên plugin là đã cấp quyền OAuth. Gói skill/plugin tải sẵn là lựa chọn bổ sung; không bắt buộc upload ZIP để dùng lời nhắn này cùng MCP.
 
 Nguồn OpenAI: https://developers.openai.com/plugins/quickstart

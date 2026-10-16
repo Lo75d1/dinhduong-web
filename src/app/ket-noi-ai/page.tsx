@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getNutritionPublicUrl, getNutritionResourceUrl } from "@/lib/nutrition-chat/oauth-validation";
 import { nutritionStartLinks } from "@/lib/nutrition-chat/start-guide";
 import WorkbookImport from "./WorkbookImport";
+import GuestSessionPanel from "./GuestSessionPanel";
 import { NUTRITION_TOOLS, NUTRITION_WORKFLOW } from "@/lib/nutrition-chat/tools";
 
 export const metadata: Metadata = {
@@ -32,6 +33,7 @@ export default async function ConnectAiPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/ket-noi-ai/bat-dau" className={`rounded-lg bg-[#123c36] px-5 py-3 font-semibold text-white hover:bg-[#0f5c51] ${focus}`}>Bắt đầu bằng QR hoặc link →</Link>
             <a href="#cai-ket-noi" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Cài kết nối lần đầu</a>
+            <a href="#phien-tam" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Dùng không cần tài khoản</a>
             <a href="#nhap-excel" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Gửi lại Excel đã sửa</a>
           </div>
         </div>
@@ -58,10 +60,11 @@ export default async function ConnectAiPage() {
         <p className="mt-6 border-l-4 border-[#9bb6ab] pl-4 text-neutral-700">Một ngày hoặc nhiều ngày. Chỉ tính thành phần thì không cần hồ sơ cơ thể; đối chiếu nhu cầu là lựa chọn riêng.</p>
       </section>
 
+      <GuestSessionPanel />
       <section id="cai-ket-noi" aria-labelledby="setup-title" className="scroll-mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-8">
         <h2 id="setup-title" className="text-2xl font-semibold">Kết nối một lần cho mỗi tài khoản</h2>
         <p className="mt-3 text-sm text-neutral-700">Nếu đăng ký tự động không hoạt động: <Link href="/tai-khoan?section=connections#ket-noi-thu-cong" className="font-semibold text-[#123c36] underline">tạo cấu hình OAuth thủ công trong Tài khoản</Link>. Xem và thu hồi quyền tại <Link href="/tai-khoan?section=connections" className="underline">Kết nối ứng dụng</Link>.</p>
-        <p className="mt-3 text-sm text-neutral-700">Ứng dụng có ô Bearer token: <Link href="/tai-khoan?section=connections&focus=api-token#api-token" className="font-semibold underline">tạo token API chỉ tính, không lưu</Link>. Token không thay bước bật công cụ trong chat; dùng OAuth khi nền tảng không hỗ trợ nhập token.</p>
+        <p className="mt-3 text-sm text-neutral-700">Chỉ tra/tính/xuất file: <a href="#phien-tam" className="font-semibold underline">dùng phiên tạm không cần tài khoản</a>. Token API cá nhân vẫn có trong Tài khoản cho ứng dụng hỗ trợ Bearer header.</p>
         <p className="mt-2 text-neutral-700">Đường dẫn công cụ dùng chung cho cả hai nền tảng:</p>
         <code className="mt-3 block break-all rounded-lg bg-[#edf4f0] p-3 text-sm text-[#123c36]">{resourceUrl}</code>
         <div className="mt-7 grid gap-8 md:grid-cols-2">
@@ -71,7 +74,7 @@ export default async function ConnectAiPage() {
               <li>Mở Plugins, thêm custom MCP server với URL phía trên.</li>
               <li>Chọn “OAuth or no authentication” nếu có, hoặc OAuth. Tạo plugin rồi kiểm tra danh sách có {NUTRITION_TOOLS.length} công cụ, gồm get_workflow.</li>
               <li>Cài plugin cá nhân; mở hội thoại Work mới, dùng @ chọn plugin và yêu cầu gọi get_workflow để kiểm tra.</li>
-              <li>Khi cần tra dữ liệu hoặc tính khẩu phần, bấm kết nối tài khoản khi ChatGPT yêu cầu; đăng nhập Dinh dưỡng 2598 và xem quyền trước khi cấp.</li>
+              <li>Chỉ tra/tính/Excel: gọi start_guest_session, không cần tài khoản. Muốn lưu hoặc mở dữ liệu riêng: kết nối OAuth, đăng nhập Dinh dưỡng 2598 và xem quyền trước khi cấp.</li>
               <li>Đã cài nhưng không thấy công cụ: mở plugin → Refresh, kiểm lại danh sách công cụ rồi thử trong hội thoại mới. Không cần xóa tài khoản hoặc nhập lại dữ liệu trên website.</li>
             </ol>
             <a href="https://developers.openai.com/plugins/quickstart" target="_blank" rel="noopener noreferrer" className={`mt-3 inline-block text-sm underline underline-offset-4 ${focus}`}>Hướng dẫn chính thức của OpenAI</a>
@@ -80,7 +83,7 @@ export default async function ConnectAiPage() {
             <h3 className="text-xl font-semibold">Claude</h3>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-neutral-700">
               <li>Mở Customize → Connectors, thêm custom connector với URL phía trên.</li>
-              <li>Chọn đăng nhập OAuth và “Register automatically”; cấp quyền bằng tài khoản riêng.</li>
+              <li>Nếu chỉ dùng kho chung, tính và xuất file: dùng start_guest_session khi connector cho phép không xác thực. Muốn dùng dữ liệu riêng: chọn OAuth và “Register automatically”, cấp quyền bằng tài khoản riêng.</li>
               <li>Bật connector trong chat rồi gửi lời nhắn bắt đầu; có thể cài thêm skill ZIP để dùng lại quy trình.</li>
             </ol>
             <a href="https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp" target="_blank" rel="noopener noreferrer" className={`mt-3 inline-block text-sm underline underline-offset-4 ${focus}`}>Hướng dẫn chính thức của Claude</a>

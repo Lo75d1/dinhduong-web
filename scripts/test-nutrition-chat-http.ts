@@ -16,9 +16,11 @@ import type * as Database from "./fixtures/nutrition-oauth/database";
 import type * as State from "./fixtures/nutrition-oauth/state";
 import type * as Repository from "./fixtures/nutrition-oauth/repository";
 import type * as Output from "../src/lib/nutrition-chat/mcp-output";
+import type * as GuestRoute from "../src/app/api/nutrition/v1/guest-session/route";
+import type * as GuestStore from "../src/lib/nutrition-chat/guest-store";
 import type { MenuInput } from "../src/lib/nutrition-chat/contracts";
 import { getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken, randomNutritionToken } from "../src/lib/nutrition-chat/oauth-validation";
-type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport };
+type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & typeof GuestStore & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport; guestRoute: typeof GuestRoute };
 let checks = 0;
 
 async function main() {
@@ -31,8 +33,8 @@ async function main() {
     process.env.APP_SECRET = "disposable-http-fixture-placeholder-only";
     delete process.env.NUTRITION_ALLOWED_ORIGINS;
     delete process.env.NUTRITION_TRUST_PROXY;
-    const sources = ["src/lib/nutrition-chat/service.ts", "src/lib/nutrition-chat/workbook.ts", "src/lib/nutrition-chat/mcp-output.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/repository.ts"];
-    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts", webReportRoute: "src/app/api/nutrition-report/export/route.ts" };
+    const sources = ["src/lib/nutrition-chat/service.ts", "src/lib/nutrition-chat/workbook.ts", "src/lib/nutrition-chat/mcp-output.ts", "src/lib/nutrition-chat/guest-store.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/repository.ts"];
+    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts", webReportRoute: "src/app/api/nutrition-report/export/route.ts", guestRoute: "src/app/api/nutrition/v1/guest-session/route.ts" };
     const outfile = join(directory, "http-fixture.cjs");
     await build({ stdin: { contents: sources.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n") + "\n" + Object.entries(routes).map(([label, path]) => `import * as ${label} from ${JSON.stringify(resolve(path))}; export {${label}};`).join("\n"), resolveDir: process.cwd(), loader: "ts" }, outfile,
       bundle: true, platform: "node", format: "cjs", logLevel: "silent", plugins: [{ name: "disposable-http", setup(builder) {
@@ -122,9 +124,9 @@ async function main() {
     const anonymousList = await api.mcpRoute.POST(rpcRequest("tools/list", {}, ""));
     assert.equal(anonymousList.status, 200); checks++;
     const anonymousTools = (await anonymousList.json()).result.tools;
-    assert.equal(anonymousTools.length, 15); checks++;
+    assert.equal(anonymousTools.length, 16); checks++;
     assert.deepEqual(anonymousTools.find((tool: { name: string }) => tool.name === "get_workflow").securitySchemes, [{ type: "noauth" }]); checks++;
-    for (const tool of anonymousTools.filter((item: { name: string }) => item.name !== "get_workflow")) { assert.equal(tool.securitySchemes[0].type, "oauth2"); checks++; }
+    for (const tool of anonymousTools) { assert.ok(tool.securitySchemes.some((scheme:{type:string})=>scheme.type==="noauth" || scheme.type==="oauth2")); checks++; }
     const anonymousInit = await api.mcpRoute.POST(rpcRequest("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "anonymous fixture", version: "1" } }, ""));
     assert.equal(anonymousInit.status, 200); checks++;
     assert.equal((await anonymousInit.json()).result.protocolVersion, "2025-06-18"); checks++;
@@ -144,18 +146,19 @@ async function main() {
     const malformedWorkflow = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "get_workflow", arguments: { ownerId: "user-b" } }, "", true));
     assert.equal((await malformedWorkflow.json()).result.isError, true); checks++;
     assert.equal((await api.mcpRoute.POST(rpcRequest("tools/list", {}, "bad-token"))).status, 401); checks++;
-    for (const tool of anonymousTools.filter((item: { name: string }) => item.name !== "get_workflow")) {
+    for (const tool of anonymousTools.filter((item: { name: string }) => !["get_workflow","start_guest_session"].includes(item.name))) {
       const denied = await api.mcpRoute.POST(rpcRequest("tools/call", { name: tool.name, arguments: {} }, "", true));
-      assert.equal(denied.status, 401); checks++;
+      const guestCapable=Boolean(tool.inputSchema.properties.sessionToken);
+      assert.equal(denied.status, guestCapable?200:401); checks++;
       const deniedBody = (await denied.json()).result;
       assert.equal(deniedBody.isError, true); checks++;
-      assert.ok(deniedBody._meta["mcp/www_authenticate"][0].includes('error="invalid_token"')); checks++;
-      assert.ok(deniedBody._meta["mcp/www_authenticate"][0].includes("error_description=")); checks++;
+      if(guestCapable){assert.equal(deniedBody._meta["mcp/www_authenticate"],undefined);checks++;assert.equal(JSON.parse(deniedBody.content[0].text).error,"guest_session_required");checks++;}
+      else{assert.ok(deniedBody._meta["mcp/www_authenticate"][0].includes('error="invalid_token"'));checks++;assert.ok(deniedBody._meta["mcp/www_authenticate"][0].includes("error_description="));checks++;}
       assert.equal(deniedBody._meta["io.modelcontextprotocol/serverInfo"].name, "dinh-duong-2598"); checks++;
       assert.equal(deniedBody.structuredContent, undefined); checks++;
     }
     const legacyDenied = await api.mcpRoute.POST(rpcRequest("tools/call", { name: "search_foods", arguments: { q: "cơm" } }, ""));
-    assert.ok((await legacyDenied.json()).result._meta["mcp/www_authenticate"][0].includes("nutrition:read")); checks++;
+    assert.equal(JSON.parse((await legacyDenied.json()).result.content[0].text).error,"guest_session_required"); checks++;
     const badOrigin = await api.mcpRoute.POST(rpcRequest("tools/list", {}, token, false, { Origin: "https://evil.test" }));
     const badOriginStatus = badOrigin.status; // Assert after other cases to expose independent regressions.
     const list = await api.mcpRoute.POST(rpcRequest("tools/list", {}));
@@ -206,6 +209,7 @@ async function main() {
     assert.equal(compactCalculation.status, 200); checks++;
     const compactBody = await compactCalculation.json();
     assert.equal(compactBody.result.structuredContent.outputCompacted, true); checks++;
+    assert.equal(compactBody.result.structuredContent.guidance.stage,"calculated"); checks++;
     assert.equal(compactBody.result.structuredContent.totals.energyKcal.value, 45500); checks++;
     assert.ok(compactBody.result.structuredContent.chatReport.text.includes("**45.500 kcal**")); checks++;
     assert.ok(compactBody.result.structuredContent.chatReport.text.includes("Chưa có mục tiêu nhu cầu")); checks++;
@@ -297,6 +301,44 @@ async function main() {
     assert.equal(busyWorkbook.status, 503); checks++;
     assert.equal(busyWorkbook.headers.get("retry-after"), "15"); checks++;
     api.setFixtureWorkbookBusy(false);
+    await api.fixtureQuery('DELETE FROM "nutrition_api_windows"');
+    // Anonymous sessions exercise the same handlers without browser/account auth.
+    const privateCounts=()=>api.fixtureQuery('SELECT (SELECT count(*) FROM app_users)::int AS users,(SELECT count(*) FROM app_sessions)::int AS sessions,(SELECT count(*) FROM rations)::int AS rations,(SELECT count(*) FROM nutrition_oauth_tokens)::int AS tokens,(SELECT count(*) FROM nutrition_oauth_clients)::int AS clients');
+    const beforeGuest=await privateCounts();
+    const issuedTokens:string[]=[];
+    try {
+      assert.equal((await api.guestRoute.POST(request("guest-session",{},undefined,{Origin:"https://evil.test"}))).status,403);checks++;
+      assert.equal((await api.guestRoute.POST(request("guest-session",{userId:"user-a"},undefined))).status,400);checks++;
+      const created=await api.guestRoute.POST(request("guest-session",{},undefined));assert.equal(created.status,201);checks++;
+      assert.equal(created.headers.get("cache-control"),"no-store");checks++;
+      const guest=await created.json();issuedTokens.push(guest.accessToken);
+      assert.equal(guest.accountRequired,false);checks++;assert.equal(guest.expiresIn,1800);checks++;assert.ok(!guest.scopes.includes("nutrition:write"));checks++;
+      const started=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"start_guest_session",arguments:{}},"",true));
+      assert.equal(started.status,200);checks++;const second=(await started.json()).result.structuredContent;issuedTokens.push(second.accessToken);assert.ok(second.guidance.instruction.includes("sessionToken"));checks++;
+      const guestPrepared=await rest("prepare",{input:menu},guest.accessToken);assert.equal(guestPrepared.status,200);checks++;
+      const gp=await guestPrepared.json();assert.equal(gp.guidance.stage,"awaiting_user_confirmation");checks++;assert.equal(gp.guidance.requiresUserConfirmation,true);checks++;assert.equal(gp.guidance.session.persistence,"none");checks++;
+      const guestArgs={input:gp.input,confirmationToken:gp.confirmationToken};
+      const gc=await rest("calculate",guestArgs,guest.accessToken);assert.equal(gc.status,200);checks++;const gcalc=await gc.json();assert.equal(gcalc.totals.energyKcal.value,130);checks++;assert.equal(gcalc.guidance.stage,"calculated");checks++;
+      const mp=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"calculate_menu",arguments:{...guestArgs,sessionToken:guest.accessToken}},"",true));assert.equal(mp.status,200);checks++;assert.equal((await mp.json()).result.structuredContent.guidance.stage,"calculated");checks++;
+      assert.equal((await rest("calculate",guestArgs,second.accessToken)).status,409);checks++;
+      const ge=await rest("export",{...guestArgs,saveToAccount:false},guest.accessToken);assert.equal(ge.status,200);checks++;assert.equal((await ge.json()).guidance.stage,"download_ready");checks++;
+      assert.equal((await rest("export",{...guestArgs,saveToAccount:true},guest.accessToken)).status,403);checks++;
+      for(const name of ["list_saved_menus","get_saved_menu","list_personal_library","get_personal_library_item","save_menu"]){const denied=await rest(name,{},guest.accessToken);assert.equal(denied.status,403);checks++;assert.equal((await denied.json()).guidance.stage,"blocked");checks++;}
+      assert.equal((await get("saved",guest.accessToken)).status,403);checks++;
+      const badToken=guest.accessToken.slice(0,-1)+(guest.accessToken.endsWith("A")?"B":"A");assert.equal((await rest("search_foods",{q:"rice"},badToken)).status,401);checks++;
+      const badHeader=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"search_foods",arguments:{q:"rice",sessionToken:guest.accessToken}},"bad-oauth",true));assert.equal(badHeader.status,401);checks++;
+      const badArgument=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"search_foods",arguments:{q:"rice",sessionToken:token}},"",true));assert.equal(badArgument.status,400);checks++;
+      const empty=await rest("search_dishes",{q:"no-such-dish"},guest.accessToken);assert.equal((await empty.json()).guidance.stage,"no_matches");checks++;
+      const privateMcp=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"list_saved_menus",arguments:{sessionToken:guest.accessToken}},"",true));assert.equal(privateMcp.status,403);checks++;assert.equal(JSON.parse((await privateMcp.json()).result.content[0].text).guidance.stage,"blocked");checks++;
+      const missingMenu=structuredClone(menu);missingMenu.days[0].rows[0].quantity=null;
+      const missing=await rest("prepare",{input:missingMenu},second.accessToken);assert.equal(missing.status,200);checks++;const mb=await missing.json();assert.equal(mb.guidance.stage,"needs_input");checks++;assert.ok(mb.guidance.questions.length>0);checks++;
+      const oldNow=Date.now;try{Date.now=()=>oldNow()+1801_000;assert.equal((await rest("search_foods",{q:"rice"},guest.accessToken)).status,401);checks++;}finally{Date.now=oldNow;}
+      const ended=await api.guestRoute.DELETE(new Request(`${base}/api/nutrition/v1/guest-session`,{method:"DELETE",headers:{Authorization:`Bearer ${guest.accessToken}`}}));assert.equal(ended.status,200);checks++;
+      assert.equal((await rest("search_foods",{q:"rice"},guest.accessToken)).status,401);checks++;
+      for(let i=0;i<4;i++){const extra=await api.guestRoute.POST(request("guest-session",{},undefined));assert.equal(extra.status,201);checks++;issuedTokens.push((await extra.json()).accessToken);}
+      const limited=await api.guestRoute.POST(request("guest-session",{},undefined));assert.equal(limited.status,429);checks++;assert.ok(Number(limited.headers.get("retry-after"))>0);checks++;assert.equal((await limited.json()).guidance.stage,"blocked");checks++;
+      assert.deepEqual(await privateCounts(),beforeGuest,"guest path creates no accounts, sessions, OAuth metadata or saved menus");checks++;
+    } finally { for(const issued of issuedTokens)await api.revokeGuestSession(issued).catch(()=>undefined); }
     await api.fixtureQuery('DELETE FROM "nutrition_api_windows"');
     const pingStatuses: number[] = [];
     // Keep PostgreSQL CURRENT_TIMESTAMP fixed for this short test so a wall-clock

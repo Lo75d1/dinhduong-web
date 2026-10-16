@@ -8,14 +8,20 @@ import { NUTRITION_WORKFLOW, nutritionToolScope } from "./tools";
 import { enforceNutritionRateLimit, NutritionSecurityError } from "./security";
 import { nutritionChatReport } from "./chat-report";
 import { listPersonalLibrary, getPersonalLibraryItem, personalLibraryKind } from "@/lib/personal-library";
+import { GUEST_TOOL_NAMES, nutritionResponseGuidance } from "./response-guidance";
 
 export async function executeNutritionTool(name:string,value:unknown,identity:NutritionIdentity) {
+  if(identity.kind==="guest" && !GUEST_TOOL_NAMES.includes(name))throw new NutritionSecurityError("guest_account_required",403,"Thao tác này cần tài khoản; phiên tạm chỉ tra kho chung, tính và xuất file.");
+  const result=await executeOperation(name,value,identity);
+  return {...result,guidance:nutritionResponseGuidance(name,result,identity)};
+}
+async function executeOperation(name:string,value:unknown,identity:NutritionIdentity) {
   const scope=nutritionToolScope(name);
   if(!scope)throw new NutritionInputError("Công cụ không tồn tại.","name",404);
   if(!identity.scopes.includes(scope))throw new NutritionSecurityError("insufficient_scope",403,"Cần cấp quyền cho thao tác này.",scope);
   await enforceNutritionRateLimit(`nutrition-user:${identity.userId}`,{limit:120,windowSeconds:60});
-  if(["prepare_menu","calculate_menu","save_menu"].includes(name))await enforceNutritionRateLimit(`nutrition-compute:${identity.userId}`,{limit:20,windowSeconds:60});
-  if(name==="export_workbook")await enforceNutritionRateLimit(`nutrition-export:${identity.userId}`,{limit:4,windowSeconds:60});
+  if(["prepare_menu","calculate_menu","save_menu"].includes(name))await enforceNutritionRateLimit(`nutrition-compute:${identity.userId}`,{limit:identity.kind==="guest"?6:20,windowSeconds:60});
+  if(name==="export_workbook")await enforceNutritionRateLimit(`nutrition-export:${identity.userId}`,{limit:identity.kind==="guest"?2:4,windowSeconds:60});
   if(name==="get_workflow"){validateOperationObject(value,[]);return NUTRITION_WORKFLOW;}
   if(name==="search_diet_codes"){const a=validateOperationObject(value,["q","targetGroup","diseaseGroup","limit","offset"]);return searchNutritionDietCodes(a);}
   if(name==="get_diet_code"){const a=validateOperationObject(value,["id"],["id"]);return loadNutritionDietCode(operationId(a.id,"id"));}

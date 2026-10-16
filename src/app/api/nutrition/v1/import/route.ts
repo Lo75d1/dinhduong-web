@@ -4,6 +4,7 @@ import { parseNutritionWorkbook } from "@/lib/nutrition-chat/workbook";
 import { prepareNutritionMenu } from "@/lib/nutrition-chat/service";
 import { NUTRITION_LIMITS, NutritionInputError } from "@/lib/nutrition-chat/validation";
 import {prisma} from "@/lib/prisma";
+import {nutritionResponseGuidance} from "@/lib/nutrition-chat/response-guidance";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 export async function POST(request:Request) {
@@ -25,7 +26,8 @@ export async function POST(request:Request) {
       const slots=await tx.$queryRaw<Array<{acquired:boolean}>>`SELECT pg_try_advisory_xact_lock(hashtextextended('nutrition-chat-workbook-v1',0)) AS "acquired"`;
       if(!slots[0]?.acquired)throw new NutritionSecurityError("workbook_busy",503,"Máy chủ đang xử lý Excel; thử lại sau.",undefined,15);
       const input=await parseNutritionWorkbook(new Uint8Array(await file.arrayBuffer()));
-      return nutritionJson(await prepareNutritionMenu(input,identity));
+      const prepared=await prepareNutritionMenu(input,identity);
+      return nutritionJson({...prepared,guidance:nutritionResponseGuidance("prepare_menu",prepared,identity)});
     },{timeout:60_000,maxWait:2000});
   }catch(error){return nutritionRestError(error);}
 }

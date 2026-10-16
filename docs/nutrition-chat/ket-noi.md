@@ -11,8 +11,8 @@
 ## ChatGPT
 
 1. Mở Plugins, thêm custom MCP server bằng URL trên. Chọn **OAuth or no authentication** nếu có, hoặc OAuth.
-2. Tạo plugin và kiểm danh sách có **15 công cụ**, gồm `get_workflow`. Cài plugin cá nhân, mở hội thoại Work mới và dùng @ chọn plugin.
-3. Yêu cầu gọi `get_workflow` để kiểm tra; công cụ hướng dẫn và discovery public không cần token. Khi gọi công cụ dữ liệu, ChatGPT yêu cầu kết nối: đăng nhập Dinh dưỡng 2598, kiểm tên ứng dụng và quyền rồi đồng ý.
+2. Tạo plugin và kiểm danh sách có **16 công cụ**, gồm `get_workflow` và `start_guest_session`. Cài plugin cá nhân, mở hội thoại Work mới và dùng @ chọn plugin.
+3. Yêu cầu gọi `get_workflow`. Chỉ tra kho chung/tính/Excel: `start_guest_session` không cần tài khoản; dùng `accessToken` trong `arguments.sessionToken` cho công cụ tiếp theo. Muốn lưu/mở bản riêng mới kết nối OAuth: đăng nhập Dinh dưỡng 2598, kiểm tên ứng dụng và quyền rồi đồng ý.
 4. Nếu đã thêm plugin nhưng phiên không có công cụ: vào plugin → **Refresh**, kiểm lại danh sách và thử trong hội thoại mới. Tên plugin trong chat không chứng minh đã cấp quyền; server phải có lần đổi code thành token thành công. Gói ZIP là lựa chọn thêm.
 
 Nguồn xử lý thiếu công cụ/cập nhật metadata: [Connect and test](https://developers.openai.com/plugins/deploy/connect-chatgpt); khai báo quyền và tín hiệu cấp quyền: [Authentication](https://developers.openai.com/plugins/build/auth).
@@ -49,7 +49,7 @@ Muốn lưu cần kết nối có `nutrition:write`. Nếu đã cấp thiếu qu
 
 ## Plugin nào làm gì, kết quả ở đâu?
 
-- Một plugin Dinh dưỡng2598 chứa15 công cụ; không cài mỗi tool thành plugin riêng. Khi chỉ thêm URL MCP, gọi `get_workflow` để nhận hướng dẫn hiện tại; không giả định skill ZIP đã được nạp.
+- Một plugin Dinh dưỡng2598 chứa16 công cụ; không cài mỗi tool thành plugin riêng. Khi chỉ thêm URL MCP, gọi `get_workflow` để nhận hướng dẫn hiện tại; không giả định skill ZIP đã được nạp.
 - `get_workflow.toolGuide` chỉ rõ khi dùng, đầu vào, trường kết quả và bước tiếp theo; `recipes` chọn luồng chỉ tính/chỉ Excel/lưu/bệnh lý; `recovery` giải thích400/401/403/404/409/422/429/503 và kết quả rút gọn.
 - Gói ZIP có README, SKILL và `references/cong-cu.md` từ cùng hợp đồng với server. Phiên bản hướng dẫn1.0.4. Danh sách và kết quả cũng xem trực tiếp ở trang kết nối.
 - Tìm kiếm trả `items`; `get_food/get_dish/get_diet_code` trả một đối tượng trực tiếp. Code như GU01-X khác ID trong kho. `calculate_menu` trả `chatReport`, không tự có link tải/bản lưu.
@@ -75,3 +75,13 @@ File sửa trên máy không tự đồng bộ. Khi cần, đăng nhập trang h
 - Sau khi ngắt kết nối ở nền tảng, thu hồi quyền tại `https://dinhduong2598.food/ket-noi-ai/authorize/connections` khi muốn vô hiệu hóa token còn hạn. Mất kết nối không xóa bản khẩu phần đã chủ ý lưu.
 
 Ngày đối chiếu tài liệu nền tảng: 15/10/2026; [OpenAI Quickstart](https://developers.openai.com/plugins/quickstart). Tên mục trên giao diện có thể thay đổi; nghiệm thu bằng tài khoản thật, không coi link/QR hoặc kết quả fixture là bằng chứng đã kết nối nền tảng.
+
+## Phiên tạm không cần tài khoản
+
+- Trang tạo thủ công: https://dinhduong2598.food/ket-noi-ai#phien-tam. Token30phút chỉ giữ hash/hạn trong vùng tạm máy chủ; không tạo User, web Session, OAuth client/token hoặc Ration. Không lưu menu/hồ sơ đầu vào.
+- Plugin dùng chế độ OAuth or no authentication: get_workflow → start_guest_session công khai → truyền accessToken trong arguments.sessionToken cho search/get kho chung, prepare_menu, calculate_menu, export_workbook. Không dùng sessionToken khi đã có OAuth. Token không xuất trong câu trả lời hoặc URL; không hỏi token tài khoản của người dùng.
+- REST: POST /api/nutrition/v1/guest-session với JSON {} → dùng Authorization: Bearer accessToken. DELETE cùng URL với Bearer token để kết thúc ngay; hết hạn không tự gia hạn. Link file đã xuất có hạn riêng10phút.
+- Phiên tạm không lưu/mở bản cá nhân hoặc thư viện riêng; saveToAccount phải false. Có thể nhận link Excel mà không tạo bản trên tài khoản.
+- Hạn mức: tạo6phiên/giờ theo IP qua proxy tin cậy (không có proxy dùng chung một bộ đếm), toàn hệ60phiên/giờ;30yêu cầu/phút/phiên,6lần chuẩn bị/tính/phút,2lần xuất/phút và giới hạn xuất toàn hệ có sẵn.429 giữ đầu vào và chờ Retry-After, không tạo thêm phiên để lách.
+- Mỗi kết quả có guidance: stage, instruction, nextTools, requiresUserConfirmation, questions khi cần. needs_input: hỏi phần thiếu; awaiting_user_confirmation: trình review.text rồi dừng chờ; calculated: trả chatReport.summaryText; download_ready: trả downloadUrl ngay. Lỗi có chỉ dẫn khôi phục; confirmationToken không phải bằng chứng người dùng đã đồng ý.
+- Cập nhật plugin bằng Refresh/Scan Tools hoặc cài lại gói1.0.5 để có công cụ và tham số mới. Nền tảng buộc OAuth riêng có thể vẫn yêu cầu đăng nhập; không khẳng định luồng khách đã chạy trong ChatGPT/Claude chỉ từ kiểm thử máy chủ.

@@ -4,10 +4,13 @@ import {
   getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken,
   NutritionSecurityError, parseNutritionScopes, validateNutritionOrigin,
 } from "./oauth-validation";
+import { guestSessionIdentity } from "./guest-store";
+import { nutritionErrorGuidance } from "./response-guidance";
 
 export { getNutritionPublicUrl, getNutritionResourceUrl, NutritionSecurityError, validateNutritionOrigin };
 export { readNutritionText, readNutritionJson, readNutritionForm } from "./http";
-export type NutritionIdentity = { userId: string; clientId: string; scopes: string[] };
+import type { NutritionIdentity } from "./contracts";
+export type { NutritionIdentity } from "./contracts";
 export type NutritionRatePolicy = { limit: number; windowSeconds: number };
 
 export const NUTRITION_NO_STORE_HEADERS = {
@@ -38,16 +41,23 @@ export function nutritionErrorResponse(error: unknown): Response {
       headers.set("WWW-Authenticate", nutritionAuthenticateChallenge(error.scope ?? "nutrition:read", error.code === "insufficient_scope" ? "insufficient_scope" : "invalid_token"));
     }
     if (error.retryAfter !== undefined) headers.set("Retry-After", String(error.retryAfter));
-    return nutritionJson({ error: error.code, error_description: error.description }, error.status, headers);
+    return nutritionJson({ error: error.code, error_description: error.description, guidance: nutritionErrorGuidance(error.status) }, error.status, headers);
   }
   // DB exceptions and stack traces can contain connection details. Never serialize/log them.
-  return nutritionJson({ error: "server_error", error_description: "Hệ thống tạm thời chưa xử lý được yêu cầu." }, 503);
+  return nutritionJson({ error: "server_error", error_description: "Hệ thống tạm thời chưa xử lý được yêu cầu.", guidance: nutritionErrorGuidance(503) }, 503);
 }
 
 export async function getNutritionIdentity(request: Request, requiredScope: string): Promise<NutritionIdentity> {
   validateNutritionOrigin(request);
   const scopes = parseNutritionScopes(requiredScope);
   const authorization = request.headers.get("authorization") ?? "";
+  if (/^Bearer ng_/i.test(authorization)) {
+    await enforceNutritionRateLimit("nutrition-guest-auth:global", { limit: 600, windowSeconds: 60 });
+    const identity = await guestSessionIdentity(authorization.slice(7));
+    if (scopes.some(scope => !identity.scopes.includes(scope))) throw new NutritionSecurityError("guest_account_required", 403, "Phiên tạm chỉ tra kho chung, tính và xuất file; lưu/mở bản riêng cần kết nối tài khoản.");
+    await enforceNutritionRateLimit(`nutrition-guest:${identity.userId}`, { limit: 30, windowSeconds: 60 });
+    return identity;
+  }
   if (!/^Bearer [A-Za-z0-9_-]{43}$/i.test(authorization)) {
     throw new NutritionSecurityError("invalid_token", 401, "Thiếu access token hợp lệ.", scopes.join(" "));
   }

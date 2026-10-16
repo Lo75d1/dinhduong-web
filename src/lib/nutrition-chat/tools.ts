@@ -1,10 +1,12 @@
 import { MENU_INPUT_SCHEMA, NUTRIENT_KEYS, NUTRITION_LIMITS } from "./validation";
 import { VIETNAMESE_MENU_GUIDANCE } from "./menu-guidance";
 import toolGuide from "./tool-guide.json";
+import { GUEST_TOOL_NAMES } from "./response-guidance";
 const obj = (properties: Record<string,unknown>, required: string[] = []) => ({type:"object",additionalProperties:false,properties,required});
 const id={type:"string",minLength:1,maxLength:100,pattern:"^[A-Za-z0-9_-]+$"};
 const input={input:MENU_INPUT_SCHEMA},confirmed={...input,confirmationToken:{type:"string",maxLength:2000}};
 const definitions = [
+  ["start_guest_session","Mở phiên tạm30phút không cần tài khoản cho tra kho chung, tính và Excel; không lưu bản cá nhân. Gọi khi chưa có phiên, giữ accessToken nội bộ và truyền sessionToken trong arguments công cụ tiếp theo. Không tạo lại để vượt hạn mức.","nutrition:read",obj({})],
   ["get_workflow","Hướng dẫn ba bước, nguồn ngoài kho, giới hạn và cấu trúc đầu vào.","nutrition:read",obj({})],
   ["search_foods","Tra nguyên liệu hoặc món VDD hoàn chỉnh (type=MA). Khi lập thực đơn, ưu tiên tên món: gọi search_dishes và tìm type=MA trước; chỉ dùng thực phẩm thô khi cần chọn nguyên liệu.","nutrition:read",obj({q:{type:"string",minLength:1,maxLength:120},type:{type:"string",enum:["TS","CB","MA","SP"]},source:{type:"string",enum:["VDD","RNI"]},group:{type:"string",maxLength:100},limit:{type:"integer",minimum:1,maximum:40},offset:{type:"integer",minimum:0,maximum:6000},fields:{type:"array",maxItems:40,items:{type:"string",enum:[...NUTRIENT_KEYS]}}},["q"])],
   ["get_food","Đọc Food ID, thành phần trên 100 g/ml, nguồn và dữ liệu còn thiếu.","nutrition:read",obj({id},["id"])],
@@ -22,14 +24,18 @@ const definitions = [
   ["export_workbook","Xuất Excel đầy đủ, có link tra thực phẩm. Đặt saveToAccount=true để đồng thời lưu một bản riêng và nhận savedMenuUrl mở lại trên web/chat, cần quyền nutrition:write; tải lại cùng bản không tạo bản trùng. Link tải file hết hạn 10 phút, link bản lưu yêu cầu đúng tài khoản. Sửa Excel offline không tự đồng bộ.","nutrition:export",obj({...confirmed,saveToAccount:{type:"boolean",description:"Lưu thêm bản thực đơn trong tài khoản khi xuất; cần quyền nutrition:write."}},["input","confirmationToken"])],
 ] as const;
 export const NUTRITION_TOOLS = definitions.map(([name,description,scope,inputSchema])=>{
-  const securitySchemes=name==="get_workflow"?[{type:"noauth"}]:[{type:"oauth2",scopes:[scope]}];
+  const publicTool=["get_workflow","start_guest_session"].includes(name);
+  const guestTool=GUEST_TOOL_NAMES.includes(name)&&!publicTool;
+  const securitySchemes=publicTool?[{type:"noauth"}]:[...(guestTool?[{type:"noauth"}]:[]),{type:"oauth2",scopes:[scope]}];
   const guide=toolGuide.tools[name];
-  return {name,title:guide.title,description:`${description} Kết quả: ${guide.returns}`,inputSchema,securitySchemes,annotations:{readOnlyHint:!["save_menu","export_workbook"].includes(name),destructiveHint:false,idempotentHint:name!=="export_workbook",openWorldHint:false},_meta:{securitySchemes}};
+  const schema=guestTool?{...inputSchema,properties:{...inputSchema.properties,sessionToken:{type:"string",pattern:"^ng_[A-Za-z0-9_-]{43}$",maxLength:46,description:"Token từ start_guest_session, chỉ cho phiên tạm; bỏ trường khi đã dùng OAuth. Không phải confirmationToken."}}}:inputSchema;
+  return {name,title:guide.title,description:`${description} Kết quả: ${guide.returns} Đọc guidance trong phản hồi, làm đúng bước tiếp theo và chờ người dùng khi requiresUserConfirmation=true.`,inputSchema:schema,securitySchemes,annotations:{readOnlyHint:!["start_guest_session","save_menu","export_workbook"].includes(name),destructiveHint:false,idempotentHint:!["start_guest_session","export_workbook"].includes(name),openWorldHint:false},_meta:{securitySchemes}};
 });
 export function nutritionToolScope(name:string) { return definitions.find(d=>d[0]===name)?.[2]; }
 export const NUTRITION_WORKFLOW = {
   name:"Dinh dưỡng 2598",contractVersion:"1.0",guideVersion:toolGuide.version,limits:NUTRITION_LIMITS,
   start:toolGuide.start,toolGuide:toolGuide.tools,recipes:toolGuide.recipes,recovery:toolGuide.recovery,
+  guestSession:{tool:"start_guest_session",accountRequired:false,expiresIn:1800,mcp:"arguments.sessionToken",rest:"Authorization: Bearer accessToken",allowedTools:GUEST_TOOL_NAMES,saveToAccount:false,createUrl:"/api/nutrition/v1/guest-session",end:"DELETE createUrl với Bearer token; file đã xuất có hạn tải riêng10phút."},
   persistence:{default:"none",calculate:"Không tạo bản tài khoản; trả báo cáo ngay trong chat.",export:"saveToAccount=false chỉ tạo file tạm có thời hạn, không tạo Ration.",save:"Chỉ khi người dùng yêu cầu lưu vào tài khoản. Không bắt lưu để tính, không tạo link bản lưu giả."},
   menuGuidance:VIETNAMESE_MENU_GUIDANCE,
   clinicalWorkflow:"Nếu có bệnh lý/chỉ định: hỏi các tình trạng, giai đoạn/điều trị và thông tin còn thiếu liên quan; không điền không bệnh khi chưa biết. Có mã được chỉ định thì tra đúng ID/đối tượng; chưa có thì search_diet_codes → get_diet_code → trình lựa chọn và ghi chú để xác nhận. Điền clinicalContext gồm conditions/notes/targetGroup/dietCodeId/selection; proposed chưa được chốt, user_confirmed là người dùng chọn, prescribed là chỉ định họ cung cấp, không phải hệ thống xác minh chuyên môn. prepare trả mã và phần còn thiếu; lưu/mở lại giữ context và đọc lại nguồn. Đối chiếu riêng khoảng MCDA theo ngày/trung bình, giữ mục tiêu cá nhân riêng. Không có mã thì chỉ tính thành phần, không kết luận đạt chế độ bệnh lý.",

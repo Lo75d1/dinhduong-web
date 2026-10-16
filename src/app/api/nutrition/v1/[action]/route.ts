@@ -5,6 +5,7 @@ import { nutritionToolScope, NUTRITION_TOOLS } from "@/lib/nutrition-chat/tools"
 import { NutritionInputError, NUTRITION_LIMITS } from "@/lib/nutrition-chat/validation";
 import {deleteSavedNutritionMenu,validateOperationObject,operationId} from "@/lib/nutrition-chat/service";
 import {enforceNutritionRateLimit} from "@/lib/nutrition-chat/security";
+import {startGuestSession} from "@/lib/nutrition-chat/guest-session";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 type Context={params:Promise<{action:string}>};
@@ -13,6 +14,7 @@ export async function POST(request:Request,context:Context) {
   try {
     const {action}=await context.params,name=actions[action];
     if(!name)throw new NutritionInputError("Đường dẫn không tồn tại.","action",404);
+    if(name==="start_guest_session"){validateOperationObject(await readNutritionJson(request,1024),[]);return nutritionJson(await startGuestSession(request),201);}
     const identity=await nutritionRestIdentity(request,nutritionToolScope(name)!);
     return nutritionJson(await executeNutritionTool(name,await readNutritionJson(request,NUTRITION_LIMITS.jsonBytes),identity));
   }catch(error){return nutritionRestError(error);}

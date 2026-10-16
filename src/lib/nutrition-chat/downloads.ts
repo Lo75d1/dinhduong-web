@@ -24,7 +24,7 @@ export async function exportNutritionMenu(menu: ResolvedMenu,identity: Nutrition
   return withNutritionWorkbookSlot(async()=>{
     const state=await cleanupNutritionDownloads();
     if(state.bytes>256*1024*1024 || state.files>=100)throw new NutritionInputError("Hàng đợi xuất đang đầy; thử lại sau.","export",503);
-    const saved=await prisma.ration.findFirst({where:{ownerId:identity.userId,conversationRevision:{gt:0},conversationJson:{path:["preview","digest"],equals:menu.digest}},orderBy:{updatedAt:"desc"},select:{id:true,conversationRevision:true}});
+    const saved=identity.kind==="guest"?null:await prisma.ration.findFirst({where:{ownerId:identity.userId,conversationRevision:{gt:0},conversationJson:{path:["preview","digest"],equals:menu.digest}},orderBy:{updatedAt:"desc"},select:{id:true,conversationRevision:true}});
     const exported=saved?{...menu,savedRecord:{id:saved.id,revision:saved.conversationRevision}}:menu;
     const catalogue=await loadNutritionCatalogue(ALL_NUTRIENT_FIELDS.map(f=>f.key));
     const bytes=await buildNutritionWorkbook(exported,catalogue);

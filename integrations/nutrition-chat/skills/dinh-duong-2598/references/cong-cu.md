@@ -1,8 +1,15 @@
 # Công cụ, kết quả và cách xử lý
 
-Phiên bản hướng dẫn: 1.0.4. Một plugin Dinh dưỡng 2598 chứa 15 công cụ; không phải cài mỗi công cụ thành một plugin.
+Phiên bản hướng dẫn: 1.0.5. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
 
-Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Mặc định chỉ tính và trả báo cáo trong chat, không lưu tài khoản. Có quyền ghi không đồng nghĩa người dùng yêu cầu lưu. Không gọi lại cùng truy vấn khi không có thay đổi.
+Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa kết nối tài khoản và chỉ cần tra/tính/Excel: gọi start_guest_session công khai, dùng accessToken trong arguments.sessionToken của công cụ tiếp theo; phiên 30 phút không tạo tài khoản. Mặc định không lưu. Đọc guidance trong TỪNG phản hồi để biết thiếu gì, phải hỏi/chờ duyệt hay được gọi công cụ nào; không coi số liệu hay confirmationToken là người dùng đã đồng ý. Không gọi lại cùng truy vấn khi không có thay đổi.
+
+## start_guest_session — Mở phiên tạm không cần tài khoản
+
+- Khi dùng: Người dùng cần tra kho chung, tính hoặc lấy Excel mà chưa kết nối tài khoản; không gọi khi đã có phiên còn hạn.
+- Đầu vào: {}; công khai, không cần OAuth. REST có POST /api/nutrition/v1/guest-session với JSON {}.
+- Kết quả: accessToken/tokenType/expiresAt/expiresIn/scopes; phiên30phút chỉ giữ hash token và hạn dùng trong bộ nhớ tạm của máy chủ, không tạo User/Session/Ration.
+- Tiếp theo: MCP: giữ token nội bộ và truyền arguments.sessionToken vào công cụ tra/tính/xuất; REST dùng Authorization: Bearer accessToken. Không đưa token vào URL/câu trả lời. Không lưu hoặc đọc bản riêng; hết hạn mở phiên mới, prepare và duyệt lại. Không tạo phiên mới để vượt429.
 
 ## get_workflow — Đọc hướng dẫn sử dụng
 
@@ -111,6 +118,7 @@ Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Mặc 
 
 ## Các luồng
 
+- **Không cần tài khoản:** get_workflow → start_guest_session → giữ accessToken trong arguments.sessionToken cho mỗi tool tra/tính/xuất → tra kho → prepare → hỏi/chờ người dùng duyệt → calculate hoặc export_workbook saveToAccount=false. Không lưu hoặc đọc dữ liệu cá nhân. Đọc guidance sau từng phản hồi; không tạo phiên mới để vượt hạn mức.
 - **Chỉ tính, không lưu:** Tra kho → prepare_menu → trình review.text, xử lý missingInputs → người dùng đồng ý → calculate_menu → trả chatReport.summaryText. Không save_menu, không export nếu chưa cần file.
 - **Chỉ tải Excel, không lưu:** Tra kho → prepare_menu → người dùng đồng ý → export_workbook với saveToAccount=false → trả downloadUrl. Không cần tạo bản tài khoản và không bắt tải file vào cuộc chat.
 - **Lưu để dùng lại:** Sau khi duyệt đầu vào, save_menu theo yêu cầu → trả ration.url. Lần sau get_saved_menu, hỏi phần muốn đổi, prepare lại trước tính/lưu.
@@ -119,7 +127,7 @@ Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Mặc 
 ## Khi không hoàn thành
 
 - **Không có công cụ trong phiên:** Chỉ giải thích kết nối/cập nhật plugin; vẫn làm rõ bữa ăn. Link/QR/token không tự thêm công cụ cho AI, không giả vờ đã gọi server.
-- **401/403:** Kết nối lại hoặc cấp đúng scope bằng giao diện; không yêu cầu token/mật khẩu trong chat. Thiếu write không ngăn chỉ tính nếu đã có calculate.
+- **401/403:** Phiên tạm hết hạn: start_guest_session rồi prepare và duyệt lại. Thao tác tài khoản cần OAuth đúng scope; không tự nâng quyền. Token cá nhân và mật khẩu không gửi vào chat. Token phiên tạm do công cụ giữ nội bộ, không hiện cho người dùng.
 - **400:** Đọc field/message, sửa đúng tham số theo schema một lần; ID phải lấy từ lookup, mode chỉ menu/recall24h, ngày chưa biết là chuỗi rỗng. Không gửi lại nguyên lỗi.
 - **404:** Mã/ID không tồn tại hoặc không thuộc chủ; tìm lại đúng loại ID. Không thử ID chủ khác và không tự tạo mã.
 - **409:** Ticket khác đầu vào/nguồn hoặc hết hạn: prepare lại. Xung đột expectedRevision: mở bản mới và hỏi thay đổi; không lặp save với revision cũ.
