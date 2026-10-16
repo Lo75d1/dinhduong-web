@@ -1,5 +1,6 @@
 import type { ResolvedMenu } from "./contracts";
 import { aiFilled, AI_NUMBER_LEGEND, displayNumber, wholeVddDish } from "./presentation";
+import { CLINICAL_TARGET_LABELS } from "./clinical";
 
 const plain = (value: string) => value.replace(/[\r\n\t]+/g, " ").replace(/[\\`*_{}\[\]()<>#!|]/g, "\\$&");
 /** Compact approval view of the exact normalized input signed by prepare_menu. */
@@ -7,6 +8,12 @@ export function nutritionMenuReview(menu: ResolvedMenu) {
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
   const shown = rows.slice(0, 100);
   const lines = [`**Bản để duyệt: ${plain(menu.title)}**`, "", "| Ngày | Giờ / bữa | Món ăn | Thành phần | Lượng / suất | Số suất | Cơ sở | Nguồn |", "| --- | --- | --- | --- | ---: | ---: | --- | --- |"];
+  if (menu.clinicalAssessment) {
+    const { context, diet } = menu.clinicalAssessment;
+    lines.splice(1, 0, ...(context.conditions?.length ? [`- Tình trạng đã cung cấp: ${context.conditions.map(plain).join("; ")}.`] : []), ...(context.notes ? [`- Thông tin/chỉ định đã cung cấp: ${plain(context.notes)}.`] : []),
+      diet ? `- Mã chế độ ăn: **${plain(diet.code)} — ${plain(diet.name)}**; ${plain(CLINICAL_TARGET_LABELS[diet.targetGroup] || diet.targetGroup)} · ${plain(diet.diseaseGroup)}. ${context.selection === "proposed" ? "Mới đề xuất, chưa chốt" : context.selection === "prescribed" ? "Chỉ định do người dùng cung cấp" : "Người dùng chọn/xác nhận"}.` : "- Chưa chọn mã chế độ ăn; chưa đối chiếu bệnh lý.",
+      ...(diet ? [`- Khoảng MCDA là tham khảo riêng; không thay mục tiêu cá nhân. Đọc ghi chú nguồn trước khi chốt mã.`] : []));
+  }
   shown.forEach(({ day, row }, i) => {
     const previous = shown[i - 1];
     const whole = wholeVddDish(row);

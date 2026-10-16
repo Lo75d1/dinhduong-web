@@ -1,7 +1,7 @@
 import "server-only";
 import type { NutritionIdentity } from "./contracts";
 import { NUTRIENT_KEYS, NutritionInputError } from "./validation";
-import { searchNutritionFoods, getNutritionFood, searchNutritionDishes, getNutritionDish } from "./repository";
+import { searchNutritionFoods, getNutritionFood, searchNutritionDishes, getNutritionDish, searchNutritionDietCodes, loadNutritionDietCode } from "./repository";
 import { validateOperationObject, operationId, prepareNutritionMenu, confirmedNutritionMenu, saveNutritionMenu, listSavedNutritionMenus, getSavedNutritionMenu } from "./service";
 import { exportNutritionMenu } from "./downloads";
 import { NUTRITION_WORKFLOW, nutritionToolScope } from "./tools";
@@ -17,6 +17,8 @@ export async function executeNutritionTool(name:string,value:unknown,identity:Nu
   if(["prepare_menu","calculate_menu","save_menu"].includes(name))await enforceNutritionRateLimit(`nutrition-compute:${identity.userId}`,{limit:20,windowSeconds:60});
   if(name==="export_workbook")await enforceNutritionRateLimit(`nutrition-export:${identity.userId}`,{limit:4,windowSeconds:60});
   if(name==="get_workflow"){validateOperationObject(value,[]);return NUTRITION_WORKFLOW;}
+  if(name==="search_diet_codes"){const a=validateOperationObject(value,["q","targetGroup","diseaseGroup","limit","offset"]);return searchNutritionDietCodes(a);}
+  if(name==="get_diet_code"){const a=validateOperationObject(value,["id"],["id"]);return loadNutritionDietCode(operationId(a.id,"id"));}
   if(name==="list_personal_library") {
     const a=validateOperationObject(value,["kind","q","page"],["kind"]);
     return listPersonalLibrary(personalLibraryKind(a.kind),a.q===undefined?"":a.q as string,a.page===undefined?0:a.page as number,identity);

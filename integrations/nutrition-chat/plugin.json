@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "dinh-duong-2598",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Chọn món Việt, duyệt khẩu phần và mở kết quả Dinh dưỡng 2598 trên web; tải Excel khi cần.",
   "author": { "name": "Dinh dưỡng 2598", "url": "https://dinhduong2598.food" },
   "homepage": "https://dinhduong2598.food/ket-noi-ai",

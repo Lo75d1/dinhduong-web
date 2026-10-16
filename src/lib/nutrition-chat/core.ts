@@ -8,6 +8,7 @@ import type { MenuDay } from "@/app/tinh-khau-phan/multi-day";
 import type { Row } from "@/app/tinh-khau-phan/types";
 import { CONTRACT_VERSION, type CustomFoodInput, type MenuInput, type MenuRowInput, type NutritionFood, type NutrientTotal, type ResolvedMenu, type ResolvedRow } from "./contracts";
 import { NutritionInputError } from "./validation";
+import { assessClinicalContext, DIET_NUTRIENT_KEYS, type NutritionDietCode } from "./clinical";
 
 export function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
@@ -77,11 +78,14 @@ function totals(rows: ResolvedRow[], keys: string[]): Record<string, NutrientTot
     return [key, { value, incomplete: missingRows.length > 0, missingRows, estimated: relevant.some(row => Boolean(row.actualFoodName) || row.recipeSource.kind === "ai" || row.food.source.kind === "unknown") }];
   }));
 }
-export function resolveMenu(input: MenuInput, catalogue: NutritionFood[], recommendations: RecommendationRow[] = []): ResolvedMenu {
+export function resolveMenu(input: MenuInput, catalogue: NutritionFood[], recommendations: RecommendationRow[] = [], diet?: NutritionDietCode): ResolvedMenu {
+  if (input.clinicalContext?.dietCodeId && input.clinicalContext.dietCodeId !== diet?.id) throw new NutritionInputError("Mã chế độ ăn chưa được đọc đúng từ kho.", "clinicalContext.dietCodeId", 422);
   const foodMap = new Map(catalogue.map(food => [food.id, food]));
   const days = input.days.map(day => ({ ...day, rows: day.rows.map(row => resolveRow(row, foodMap)) }));
   const rows = days.flatMap(day => day.rows), missingInputs: ResolvedMenu["missingInputs"] = [];
   const add = (rowId: string, field: string, message: string) => missingInputs.push({ rowId, field, message });
+  if (diet && input.clinicalContext?.selection === "proposed") add("clinical", "clinicalContext.selection", "Cần xác nhận mã chế độ ăn trước khi chốt; đây mới là mã được đề xuất.");
+  if (diet && input.clinicalContext?.targetGroup !== diet.targetGroup) add("clinical", "clinicalContext.targetGroup", "Đối tượng đã cung cấp không khớp mã chế độ ăn; cần chọn lại mã hoặc xác nhận đối tượng.");
   const customDefinitions = new Map<string,string>();
   for (const row of rows) {
     if (row.customFood) { const definition = canonicalJson(row.customFood), existing = customDefinitions.get(row.food.id); if (existing && existing !== definition) throw new NutritionInputError("Cùng ID nguyên liệu ngoài kho có số liệu/nguồn khác nhau.", row.id); customDefinitions.set(row.food.id, definition); }
@@ -95,7 +99,7 @@ export function resolveMenu(input: MenuInput, catalogue: NutritionFood[], recomm
   }
   const selected = new Set(input.fields ?? CORE_CALC_FIELDS.map(f => f.key));
   const fields = ALL_NUTRIENT_FIELDS.filter(field => selected.has(field.key));
-  const allKeys = [...new Set([...CORE_CALC_FIELDS.map(f => f.key), ...fields.map(f => f.key)])];
+  const allKeys = [...new Set([...CORE_CALC_FIELDS.map(f => f.key), ...fields.map(f => f.key), ...(diet ? DIET_NUTRIENT_KEYS : [])])];
   const dayTotals = days.map(day => ({ id: day.id, label: day.label, date: day.date, hasData: day.rows.length > 0, totals: totals(day.rows, allKeys) }));
   const overall = totals(rows, allKeys);
   const engineDays: MenuDay[] = days.map(day => ({ id: day.id, label: day.label, date: day.date, rows: day.rows.map(engineRow) }));
@@ -178,9 +182,10 @@ export function resolveMenu(input: MenuInput, catalogue: NutritionFood[], recomm
   if (rows.some(row => row.rawGrams === null)) warnings.push("Lượng mua/đi chợ chưa đủ dữ liệu thải bỏ hoặc đổi đơn vị ở một số nguyên liệu.");
   if (Object.values(overall).some(m => m.incomplete)) warnings.push("Một số tổng chỉ gồm phần có số liệu; không dùng để kết luận chắc chắn về mức đáp ứng nhu cầu.");
   const sourceSnapshot = rows.map(row => ({ id: row.id, food: row.food }));
-  const dataVersion = `sha256:${nutritionDigest({ sourceSnapshot, targets })}`;
+  const clinicalAssessment = assessClinicalContext(input, days, overall, diet);
+  const dataVersion = `sha256:${nutritionDigest({ sourceSnapshot, targets, ...(diet ? { dietCode: diet } : {}) })}`;
   const digest = nutritionDigest({ contractVersion: CONTRACT_VERSION, input, dataVersion });
-  return { contractVersion: CONTRACT_VERSION, digest, input, title: input.title, mode: input.mode, days, fields, generatedAt: new Date().toISOString(), dataVersion, aiComment: input.aiComment ?? "", totals: overall, dayTotals, targets, analysis, warnings, missingInputs };
+  return { contractVersion: CONTRACT_VERSION, digest, input, title: input.title, mode: input.mode, days, fields, generatedAt: new Date().toISOString(), dataVersion, aiComment: input.aiComment ?? "", totals: overall, dayTotals, targets, analysis, warnings, missingInputs, ...(clinicalAssessment ? { clinicalAssessment } : {}) };
 }
 
 export function assertMenuComplete(menu: ResolvedMenu) {

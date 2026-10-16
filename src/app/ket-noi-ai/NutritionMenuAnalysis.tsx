@@ -2,6 +2,7 @@ import type { NutrientField } from "@/lib/nutrient-fields";
 import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
 import { aiFilled, AI_NUMBER_LEGEND, displayNumber, wholeVddDish } from "@/lib/nutrition-chat/presentation";
 import NutritionSurvey from "./NutritionSurvey";
+import NutritionClinicalComparison from "./NutritionClinicalComparison";
 
 type Metric = { value: number | null; incomplete: boolean; estimated?: boolean };
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]";
@@ -33,6 +34,7 @@ export default function NutritionMenuAnalysis({ menu }: { menu: ResolvedMenu }) 
   const otherFields = menu.fields.filter(field => !coreFields.some(core => core.key === field.key));
   return (
     <div className="mt-6 space-y-6 text-[#123c36]">
+      {menu.clinicalAssessment ? <NutritionClinicalComparison assessment={menu.clinicalAssessment} /> : null}
       <section aria-label="Tổng dinh dưỡng khẩu phần">
         <h3 className="text-xl font-semibold">Tổng dinh dưỡng cả đợt</h3>
         <p className="mb-3 mt-1 text-sm text-neutral-700">{dataDays}/{menu.days.length} ngày có đầu vào. “Tổng chưa đầy đủ” chỉ cộng phần xác định được; ngày chưa nhập không tính như ngày ăn 0 kcal.</p>

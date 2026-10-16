@@ -7,6 +7,25 @@ import { normalizeVi } from "@/lib/normalize";
 import type { NutritionFood } from "./contracts";
 import { NutritionInputError, NUTRIENT_KEYS, NUTRITION_LIMITS } from "./validation";
 import { sanitizeNutritionFood } from "./core";
+import { nutritionDietCode } from "./clinical";
+
+export async function loadNutritionDietCode(id: string) {
+  const row = await prisma.dietCode.findUnique({ where: { id } });
+  if (!row) throw new NutritionInputError("Không tìm thấy mã chế độ ăn; hãy tra lại đúng ID trong kho.", "clinicalContext.dietCodeId", 404);
+  return nutritionDietCode(row as unknown as Record<string, unknown>);
+}
+export async function searchNutritionDietCodes(args: { q?: string; targetGroup?: string; diseaseGroup?: string; limit?: number; offset?: number }) {
+  if (args.q !== undefined && (typeof args.q !== "string" || args.q.length > 120) || args.diseaseGroup !== undefined && (typeof args.diseaseGroup !== "string" || args.diseaseGroup.length > 150)) throw new NutritionInputError("Bộ lọc mã chế độ ăn không hợp lệ.");
+  if (args.targetGroup !== undefined && !["NguoiLon", "TreEm"].includes(args.targetGroup)) throw new NutritionInputError("Đối tượng mã chế độ ăn không hợp lệ.", "targetGroup");
+  const limit = args.limit ?? 10, offset = args.offset ?? 0;
+  if (!Number.isInteger(limit) || limit < 1 || limit > 20 || !Number.isInteger(offset) || offset < 0 || offset > 1000) throw new NutritionInputError("Phân trang mã chế độ ăn không hợp lệ.");
+  // Same small catalogue as /api/diet-codes; normalized filtering accepts Vietnamese without accents.
+  const catalogue = await prisma.dietCode.findMany({ orderBy: [{ targetGroup: "asc" }, { diseaseGroup: "asc" }, { code: "asc" }, { id: "asc" }] });
+  const query = normalizeVi(args.q?.trim() ?? "").split(/\s+/).filter(Boolean);
+  const filtered = catalogue.filter(row => (!args.targetGroup || row.targetGroup === args.targetGroup) && (!args.diseaseGroup || normalizeVi(row.diseaseGroup) === normalizeVi(args.diseaseGroup)) && query.every(token => normalizeVi(`${row.code} ${row.name} ${row.diseaseGroup}`).includes(token)));
+  return { items: filtered.slice(offset, offset + limit).map(row => ({ id: row.id, code: row.code, name: row.name, targetGroup: row.targetGroup, diseaseGroup: row.diseaseGroup })), total: filtered.length, nextOffset: offset + limit < filtered.length ? offset + limit : null,
+    diseaseGroups: [...new Set(catalogue.filter(row => !args.targetGroup || row.targetGroup === args.targetGroup).map(row => row.diseaseGroup))], note: "Đọc get_diet_code theo ID để xem khoảng, ghi chú và phần cần làm rõ. Không tự chọn kết quả đầu hay suy chỉ định từ tên bệnh." };
+}
 
 function selectFood(fields: string[]): Prisma.FoodSelect {
   return { id: true, name: true, source: true, sourceCode: true, foodType: true, unit: true, wastePercent: true, foodGroup: true, imageUrl: true, aliases: { orderBy:[{aliasNormalized:"asc"},{id:"asc"}],select: { alias: true, verified: true } }, ...Object.fromEntries([...new Set([...fields,...CORE_CALC_FIELDS.map(f => f.key)])].filter(k => NUTRIENT_KEYS.has(k)).map(k => [k,true])), ...Object.fromEntries(SOURCE_ONLY_NUTRIENT_FIELDS.map(field => [field.key, true])) };

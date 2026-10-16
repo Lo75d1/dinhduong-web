@@ -51,6 +51,17 @@ async function main() {
     const firstPreview = await prepare();
     assert.equal(firstPreview.review.rowCount, 1); checks++;
     assert.ok(firstPreview.review.text.includes("Cơm")); checks++;
+    const clinicalInput = input(); clinicalInput.clinicalContext = { conditions: ["Tình trạng giả lập"], targetGroup: "NguoiLon", dietCodeId: "fixture-diet", selection: "user_confirmed" };
+    const clinicalPrepared = await prepare(clinicalInput);
+    assert.equal(clinicalPrepared.preview.clinicalAssessment?.diet?.code, "TEST-01"); checks++;
+    assert.ok(clinicalPrepared.review.text.includes("TEST-01")); checks++;
+    api.setFixtureDietEnergyMax(190);
+    await fails(() => api.confirmedNutritionMenu({ input: clinicalPrepared.input, confirmationToken: clinicalPrepared.confirmationToken }, userA), 409);
+    api.setFixtureDietEnergyMax(200);
+    const clinicalProposed = structuredClone(clinicalInput); clinicalProposed.clinicalContext!.selection = "proposed";
+    const proposedPrepared = await prepare(clinicalProposed);
+    await fails(() => api.confirmedNutritionMenu({ input: proposedPrepared.input, confirmationToken: proposedPrepared.confirmationToken }, userA), 422);
+    await fails(() => prepare({ ...clinicalInput, clinicalContext: { ...clinicalInput.clinicalContext!, dietCodeId: "not-a-real-code" } }), 404);
     const vddInput = input(); vddInput.days[0].rows[0].recipeSource = { kind: "catalog", label: "Tên nguồn do client tự ghi" };
     await fails(() => prepare(vddInput), 422);
     api.setFixtureFoodSource("VDD", "MA");
@@ -208,6 +219,19 @@ async function main() {
     const usage = await api.fixtureQuery<{ bytes: number }>('SELECT SUM(pg_column_size("conversationJson"))::double precision AS bytes FROM "rations" WHERE "ownerId"=$1', [userB.userId]);
     assert.ok(usage[0].bytes > 25 * 1024 * 1024); checks++;
     await fails(async () => api.saveNutritionMenu(await argsFor("bytes-quota-excess", input(), userB), userB), 409);
+    await api.fixtureQuery('DELETE FROM "rations" WHERE "ownerId"=$1', [userB.userId]);
+    const clinicalSaved = await api.saveNutritionMenu(await argsFor("clinical-save", clinicalInput, userB), userB);
+    const clinicalOpened = await api.getSavedNutritionMenu(clinicalSaved.ration.id, userB);
+    assert.deepEqual(clinicalOpened.input.clinicalContext, clinicalInput.clinicalContext); checks++;
+    assert.equal(clinicalOpened.preview.clinicalAssessment?.diet?.code, "TEST-01"); checks++;
+    await fails(() => api.getSavedNutritionMenu(clinicalSaved.ration.id, userA), 404);
+    const revisedClinical = structuredClone(clinicalInput); revisedClinical.clinicalContext!.notes = "Thông tin giả lập đã điều chỉnh";
+    const revisedArgs = { ...await argsFor("clinical-update", revisedClinical, userB), rationId: clinicalSaved.ration.id, expectedRevision: 1 };
+    await api.saveNutritionMenu(revisedArgs, userB);
+    const clinicalHistory = await api.getSavedNutritionMenu(clinicalSaved.ration.id, userB);
+    assert.equal(clinicalHistory.history[1].clinicalChange?.before.context?.notes, undefined); checks++;
+    assert.equal(clinicalHistory.history[1].clinicalChange?.after.context?.notes, revisedClinical.clinicalContext!.notes); checks++;
+    assert.equal(clinicalHistory.history[1].clinicalChange?.after.diet?.code, "TEST-01"); checks++;
     console.log(`Nutrition storage disposable PostgreSQL: ${checks} checks passed. Actual service save/open/list + JSONB migration, idempotency, fixture concurrency, revisions, ownership, quota and source-digest changes verified.`);
     console.log("PGlite + repository/Prisma fixtures only; no live data queries/writes or multi-worker VPS verification.");
   } finally {

@@ -5,6 +5,7 @@ import { getExchangeRule } from "@/app/tinh-khau-phan/exchange-units";
 import { nutritionWebsiteLink } from "./website-links";
 import { markAiNumber } from "./workbook-ai";
 import { AI_NUMBER_LEGEND, briefFoodSource } from "./presentation";
+import { appendClinicalWorkbookSection } from "./workbook-clinical";
 
 export type NutritionReportMeta = {
   subjectName?: string; subjectGroup?: string; clinicalCourse?: string;
@@ -189,6 +190,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   for (const text of [meta.subjectGroup && `Nhóm / mục tiêu: ${meta.subjectGroup}`, meta.clinicalCourse && `Theo dõi: ${meta.clinicalCourse}`, meta.menuNote && `Ghi chú: ${meta.menuNote}`].filter((text): text is string => Boolean(text))) for (let offset = 0; offset < text.length; offset += 1000) {
     const part = text.slice(offset, offset + 1000); context(summary, mainRow, part); summary.getRow(mainRow++).height = Math.max(30, Math.ceil(part.length / 130) * 18);
   }
+  mainRow = appendClinicalWorkbookSection(summary, menu, mainRow, build.inputCapacity);
   summary.pageSetup.printArea = `A1:H${mainRow - 1}`;
 
   const planHeaders = ["Ngày", "Bữa", "Món ăn", "Thực phẩm\nthành phần", "Định lượng", "Đơn vị", "Năng lượng\n(kcal)", "Đạm\n(g)", "Béo\n(g)", "Bột đường\n(g)", "Nguồn / ghi chú"];

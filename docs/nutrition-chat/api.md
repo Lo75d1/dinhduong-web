@@ -26,6 +26,7 @@
 | `get_workflow` | Public qua MCP; `nutrition:read` qua REST | Quy trình, giới hạn, schema đầu vào. |
 | `search_foods`, `get_food` | `nutrition:read` | Food ID, nguồn và dữ liệu trên cơ sở 100 g/ml. |
 | `search_dishes`, `get_dish` | `nutrition:read` | Công thức gốc và liên kết nguyên liệu; định lượng nguồn không mặc định bằng một suất. |
+| `search_diet_codes`, `get_diet_code` | `nutrition:read` | Tra mã MCDA theo bệnh/mã/đối tượng, đọc khoảng và ghi chú nguồn trước khi người dùng chọn. |
 | `list_personal_library`, `get_personal_library_item` | `nutrition:read` | Tìm/đọc thực phẩm hoặc công thức riêng thuộc tài khoản; nguồn theo phiên bản khi sử dụng. |
 | `prepare_menu` | `nutrition:calculate` | Chuẩn hóa đầu vào, preview, token xác nhận 600 giây. |
 | `calculate_menu` | `nutrition:calculate` | Tính đúng bản người dùng đã xem/chốt, trả partial/null và nguồn. |

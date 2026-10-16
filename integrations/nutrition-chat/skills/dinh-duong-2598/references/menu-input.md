@@ -2,6 +2,8 @@
 
 Schema công cụ đang kết nối là nguồn sự thật. Bảng này giải thích nghĩa nghiệp vụ, không thay thế schema.
 
+`clinicalContext` tùy chọn: `conditions` (tối đa10 dữ kiện đã cung cấp), `notes`, `targetGroup` (`NguoiLon`/`TreEm`), `dietCodeId` thật từ kho, `selection` (`proposed`/`user_confirmed`/`prescribed`). Có ID phải kèm đối tượng và trạng thái. Tra bằng `search_diet_codes` rồi `get_diet_code`, không bịa mã hay tự ghép ngưỡng. Khoảng MCDA được đối chiếu riêng; `comparison` tiếp tục giữ mục tiêu cá nhân. Mã đang proposed/chọn sai đối tượng chưa được chốt. Không có mã vẫn tính thành phần được. Ghi chú nguồn theo kg và số nước chưa rõ đơn vị không tự quy đổi.
+
 | Mức | Trường và nghĩa |
 | --- | --- |
 | Menu | `title`; `mode` = `recall24h` / `menu`; `days`; `comparison`; tùy chọn `fields`, `profile`, `aiComment`. |

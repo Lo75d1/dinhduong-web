@@ -17,6 +17,7 @@ export const MENU_INPUT_SCHEMA = {
     title: { type: "string", minLength: 1, maxLength: 160 }, mode: { type: "string", enum: ["recall24h", "menu"] },
     fields: { type: "array", uniqueItems: true, maxItems: NUTRITION_LIMITS.fields, items: { type: "string", enum: [...NUTRIENT_KEYS] } },
     aiComment: { type: "string", maxLength: 8000 },
+    clinicalContext: { type: "object", additionalProperties: false, properties: { conditions: { type: "array", maxItems: 10, uniqueItems: true, items: { type: "string", minLength: 1, maxLength: 200 } }, notes: { type: "string", maxLength: 1500 }, targetGroup: { type: "string", enum: ["NguoiLon", "TreEm"] }, dietCodeId: { type: "string", minLength: 1, maxLength: 100, pattern: "^[A-Za-z0-9_-]+$" }, selection: { type: "string", enum: ["proposed", "user_confirmed", "prescribed"] } } },
     profile: { type: "object", additionalProperties: false, properties: Object.fromEntries(["age", "ageUnit", "gender", "height", "weight", "activityLevel", "physiology", "pregnancyWeek", "prePregnancyWeight", "pregnancyNote"].map(k => [k, { type: "string", maxLength: k === "pregnancyNote" ? 1000 : 100 }])) },
     comparison: { type: "object", additionalProperties: false, required: ["mode"], properties: { mode: { type: "string", enum: ["none", "profile", "manual"] }, targets: { type: "array", maxItems: 40, items: { type: "object", additionalProperties: false, required: ["key", "value", "source"], properties: { key: { type: "string", enum: [...NUTRIENT_KEYS] }, value: numeric, source: { type: "string", minLength: 1, maxLength: 500 }, isUpperLimit: { type: "boolean" } } } } } },
     days: { type: "array", minItems: 1, maxItems: NUTRITION_LIMITS.days, items: { type: "object", additionalProperties: false, required: ["id", "label", "date", "rows"], properties: {
@@ -122,7 +123,7 @@ function profile(value: unknown): Profile {
   return { age: text(d.age, 20, "profile.age"), ageUnit: choice(d.ageUnit, ["tuoi", "thang"] as const, "profile.ageUnit"), gender: choice(d.gender, ["Nam", "Nữ"] as const, "profile.gender"), height: text(d.height ?? "", 20, "profile.height", true), weight: text(d.weight ?? "", 20, "profile.weight", true), activityLevel: choice(d.activityLevel, ["sedentary", "light", "moderate", "heavy", "very_heavy"] as const, "profile.activityLevel"), physiology: choice(d.physiology, ["normal", "pregnant_1", "pregnant_2", "pregnant_3", "lactating_1", "lactating_2"] as const, "profile.physiology"), pregnancyWeek: text(d.pregnancyWeek ?? "", 20, "profile.pregnancyWeek", true), prePregnancyWeight: text(d.prePregnancyWeight ?? "", 20, "profile.prePregnancyWeight", true), pregnancyNote: text(d.pregnancyNote ?? "", 1000, "profile.pregnancyNote", true) };
 }
 export function parseMenuInput(value: unknown): MenuInput {
-  const d = object(value, ["title", "mode", "days", "fields", "comparison", "profile", "aiComment"], "input");
+  const d = object(value, ["title", "mode", "days", "fields", "comparison", "profile", "aiComment", "clinicalContext"], "input");
   if (!Array.isArray(d.days) || !d.days.length || d.days.length > NUTRITION_LIMITS.days) throw new NutritionInputError("Số ngày phải từ 1 đến 90.", "days");
   const ids = new Set<string>(), rowIds = new Set<string>(); let count = 0;
   const days = d.days.map((raw, index) => {
@@ -148,6 +149,24 @@ export function parseMenuInput(value: unknown): MenuInput {
   if (comparison.mode === "manual" && !comparison.targets?.length) throw new NutritionInputError("Cần ít nhất một mục tiêu có nguồn.", "comparison");
   const parsed: MenuInput = { title: text(d.title, 160, "title"), mode: choice(d.mode, ["recall24h", "menu"] as const, "mode"), days, comparison };
   if (d.profile !== undefined) parsed.profile = profile(d.profile);
+  if (d.clinicalContext !== undefined) {
+    const p = "clinicalContext", c = object(d.clinicalContext, ["conditions", "notes", "targetGroup", "dietCodeId", "selection"], p);
+    const clinical: NonNullable<MenuInput["clinicalContext"]> = {};
+    if (c.conditions !== undefined) {
+      if (!Array.isArray(c.conditions) || c.conditions.length > 10) throw new NutritionInputError("Tối đa 10 tình trạng đã được cung cấp.", p);
+      clinical.conditions = c.conditions.map(value => text(value, 200, `${p}.conditions`));
+      if (new Set(clinical.conditions).size !== clinical.conditions.length) throw new NutritionInputError("Tình trạng bị lặp.", p);
+    }
+    if (c.notes !== undefined) clinical.notes = text(c.notes, 1500, `${p}.notes`, true);
+    if (c.targetGroup !== undefined) clinical.targetGroup = choice(c.targetGroup, ["NguoiLon", "TreEm"] as const, `${p}.targetGroup`);
+    if (c.dietCodeId !== undefined) {
+      clinical.dietCodeId = text(c.dietCodeId, 100, `${p}.dietCodeId`);
+      if (!/^[A-Za-z0-9_-]+$/.test(clinical.dietCodeId)) throw new NutritionInputError("ID mã chế độ ăn không hợp lệ.", p);
+      clinical.selection = choice(c.selection, ["proposed", "user_confirmed", "prescribed"] as const, `${p}.selection`);
+      if (!clinical.targetGroup) throw new NutritionInputError("Cần xác nhận đối tượng của mã chế độ ăn.", `${p}.targetGroup`);
+    } else if (c.selection !== undefined) throw new NutritionInputError("Trạng thái chọn mã cần có dietCodeId.", p);
+    parsed.clinicalContext = clinical;
+  }
   if (comparison.mode === "profile" && !parsed.profile) throw new NutritionInputError("Đối chiếu hồ sơ cần hồ sơ, hoặc chọn none để chỉ tính thành phần.", "profile");
   if (d.aiComment !== undefined) parsed.aiComment = text(d.aiComment, 8000, "aiComment", true);
   if (d.fields !== undefined) {

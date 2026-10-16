@@ -6,6 +6,7 @@ import type { MenuInput, ResolvedMenu } from "@/lib/nutrition-chat/contracts";
 import NutritionMenuAnalysis from "../../NutritionMenuAnalysis";
 import { readNutritionResponse } from "../../client-api";
 import LibraryIngredientPicker from "@/app/tai-khoan/LibraryIngredientPicker";
+import ClinicalContextControls from "../../ClinicalContextControls";
 
 type Prepared = { input: MenuInput; preview: ResolvedMenu; confirmationToken: string };
 const control = "mt-1 w-full min-w-0 rounded border border-[#8fa99e] px-3 py-2 text-neutral-900";
@@ -57,6 +58,7 @@ export default function ReuseSavedMenu({ menu, initialInput, initialNames = {} }
   return <section className="mt-5 space-y-4" aria-label="Điều chỉnh và dùng lại thực đơn">
     <p className="text-sm text-neutral-700">Chọn món, thực phẩm, ngày và định lượng; xem kết quả rồi lưu thành bản riêng. Các bản đã lưu trước đó được giữ để đối chiếu.</p>
     <label className="block text-sm font-semibold">Tên bản dùng lại<input value={draft.title} disabled={busy} maxLength={200} onChange={event => change({ ...draft, title: event.target.value })} className={control} /></label>
+    <ClinicalContextControls value={draft.clinicalContext} disabled={busy} onChange={clinicalContext => change({ ...draft, clinicalContext })} />
     {draft.days.map((day, di) => <details key={day.id} className="rounded-lg border border-[#b1c8bd] p-3" open={draft.days.length === 1}>
       <summary className="cursor-pointer font-semibold">{day.label} · {day.rows.length} dòng</summary>
       <label className="mt-3 block text-sm">Ngày dùng lại<input type="date" value={day.date} disabled={busy} onChange={event => { const next = structuredClone(draft); next.days[di].date = event.target.value; change(next); }} className={control} /></label>

@@ -32,6 +32,7 @@ type Manifest = {
   inputCapacity: number; customCapacity: number; dataRows: number; reportFields?: string[];
   digest: string; dataVersion: string; generatedAt: string; aiComment: string;
   savedRecord?: { id: string; revision: number };
+  clinicalContext?: MenuInput["clinicalContext"];
   days: Array<{ id: string; label: string; date: string }>;
   rows: Array<Omit<MenuRowInput, "customFood"> & { customFoodId?: string }>; targets: TargetInput[]; customSources: CustomFoodInput[];
 };
@@ -117,7 +118,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   const fullFields = [...selectedFields, ...ALL_NUTRIENT_FIELDS.filter(field => !selectedFields.some(selected => selected.key === field.key))];
   const catalogued = new Set(catalogue.map(food => food.id));
   const allFoods = [...new Map([...catalogue, ...original.days.flatMap(day => day.rows.filter(row => !row.customFood && !catalogued.has(row.food.id)).map(row => row.food))].map(food => [food.id, food])).values()];
-  const full = complete ? resolveMenu({ ...original.input, fields: fullFields.map(field => field.key), comparison: { mode: "none" } }, allFoods) : original;
+  const full = complete ? resolveMenu({ ...original.input, fields: fullFields.map(field => field.key), comparison: { mode: "none" } }, allFoods, [], original.clinicalAssessment?.diet ?? undefined) : original;
   const menu = complete ? { ...original, fields: fullFields, days: full.days, totals: full.totals, dayTotals: full.dayTotals, dataVersion: full.dataVersion } : original;
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
   if (rows.length > WORKBOOK_LIMITS.rows || menu.days.length > WORKBOOK_LIMITS.days) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Vượt giới hạn 90 ngày hoặc 1.000 dòng.");
@@ -436,6 +437,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   }
   input.addConditionalFormatting({ ref: `Z${FIRST}:Z${lastInput}`, rules: [{ type: "expression", formulae: [`LEN(Z${FIRST})>0`], style: { fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FDE8D7" } }, font: { color: { argb: "9B3C13" } } }, priority: 1 }] });
   const manifest: Manifest = { version: CONTRACT_VERSION, title: menu.title, mode: menu.mode, fields: selectedFields.map(field => field.key), ...(complete ? { reportFields: fields.map(field => field.key) } : {}), sourceFields: sourceFields.map(field => field.key), inputCapacity, customCapacity, dataRows: foods.length, digest: menu.digest, dataVersion: menu.dataVersion, generatedAt: menu.generatedAt, aiComment: menu.aiComment, savedRecord: menu.savedRecord, customSources: customs, days: menu.days.map(day => ({ id: day.id, label: day.label, date: day.date })), rows: rows.map(item => ({ id: item.row.id, meal: item.row.meal, dish: item.row.dish, foodId: item.row.foodId, customFoodId: item.row.customFood?.id, quantity: item.row.quantity, unit: item.row.unit, servings: item.row.servings, basis: item.row.basis, conversionFactor: item.row.conversionFactor, densityGPerMl: item.row.densityGPerMl, ...preservedRowMetadata(item.row), recipeSource: item.row.recipeSource, replacedFromFoodId: item.row.replacedFromFoodId, actualFoodName: item.row.actualFoodName, estimateAccepted: item.row.estimateAccepted, note: item.row.note })), targets: menu.targets.filter(target => target.value !== null).map(target => ({ key: target.key, value: target.value!, source: target.source ?? "Mục tiêu đã chốt", isUpperLimit: target.isUpperLimit })) };
+  if (menu.input.clinicalContext) manifest.clinicalContext = menu.input.clinicalContext;
   const metadata = workbook.addWorksheet(SHEETS.meta, { state: "veryHidden" });
   metadata.getCell("A1").value = "DINHDUONG2598_NUTRITION_CHAT";
   const json = JSON.stringify(manifest);
@@ -693,5 +695,5 @@ export async function parseNutritionWorkbook(bytes: Uint8Array): Promise<MenuInp
   const selectedDays = days.filter(day => day.rows.length > 0 || manifest.days.some(original => original.id === day.id));
   if (new Set(selectedDays.map(day => day.id)).size !== selectedDays.length) failure("ID ngày bị trùng.");
   // Snapshot prose is never attached to a newly calculated menu; AI must analyze the fresh result.
-  return parseMenuInput({ title: manifest.title, mode: manifest.mode, days: selectedDays, fields: manifest.fields, comparison: targets.length ? { mode: "manual", targets } : { mode: "none" } });
+  return parseMenuInput({ title: manifest.title, mode: manifest.mode, days: selectedDays, fields: manifest.fields, comparison: targets.length ? { mode: "manual", targets } : { mode: "none" }, ...(manifest.clinicalContext ? { clinicalContext: manifest.clinicalContext } : {}) });
 }

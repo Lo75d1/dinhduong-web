@@ -1,6 +1,7 @@
 import type { NutrientField } from "@/lib/nutrient-fields";
 import type { Profile } from "@/app/tinh-khau-phan/PersonalProfile";
 import type { PeriodAnalysis } from "@/app/tinh-khau-phan/multi-day-analysis";
+import type { ClinicalContext, ClinicalAssessment } from "./clinical";
 
 export const CONTRACT_VERSION = "1.0";
 export type AmountUnit = "g" | "ml";
@@ -32,7 +33,7 @@ export type MenuInput = {
   title: string; mode: "recall24h" | "menu"; days: MenuDayInput[];
   fields?: string[];
   comparison: { mode: "none" | "profile" | "manual"; targets?: TargetInput[] };
-  profile?: Profile; aiComment?: string;
+  profile?: Profile; aiComment?: string; clinicalContext?: ClinicalContext;
 };
 export type NutritionFood = {
   id: string; name: string; unit: AmountUnit; source: FoodSource;
@@ -61,5 +62,6 @@ export type ResolvedMenu = {
   targets: NutrientComparison[]; analysis: PeriodAnalysis;
   warnings: string[]; missingInputs: Array<{ rowId: string; field: string; message: string }>;
   savedRecord?: {id:string;revision:number};
+  clinicalAssessment?: ClinicalAssessment;
 };
 export type NutritionIdentity = { userId: string; clientId: string; scopes: string[] };

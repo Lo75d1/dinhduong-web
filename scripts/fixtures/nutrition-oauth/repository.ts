@@ -1,5 +1,13 @@
 import type { NutritionFood } from "../../../src/lib/nutrition-chat/contracts";
 import { NutritionInputError } from "../../../src/lib/nutrition-chat/validation";
+import { nutritionDietCode } from "../../../src/lib/nutrition-chat/clinical";
+let dietEnergyMax = 200;
+export function setFixtureDietEnergyMax(value: number) { dietEnergyMax = value; }
+export async function loadNutritionDietCode(id: string) {
+  if (id !== "fixture-diet") throw new NutritionInputError("Không tìm thấy mã fixture.", "clinicalContext.dietCodeId", 404);
+  return nutritionDietCode({ id, code: "TEST-01", name: "Chế độ giả lập chỉ kiểm thử", targetGroup: "NguoiLon", diseaseGroup: "Kiểm thử", energyMinKcal: 100, energyMaxKcal: dietEnergyMax, proteinMinG: 2, proteinMaxG: 5, mealsMin: 1, mealsMax: 3, note: "Dữ liệu giả lập, không dùng cho người bệnh." });
+}
+export async function searchNutritionDietCodes() { return { items: [await loadNutritionDietCode("fixture-diet")], total: 1, nextOffset: null }; }
 let energy = 130;
 let label = "Nguồn giả lập kiểm thử", foodType = "CB";
 export function setFixtureFoodEnergy(value: number) { energy = value; }

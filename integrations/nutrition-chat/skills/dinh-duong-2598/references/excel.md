@@ -9,6 +9,7 @@
 - Dữ liệu nguồn thiếu vẫn thiếu; dữ liệu tự nhập phải có nguồn và đơn vị. Các ô có công thức được bảo vệ chống sửa nhầm; bảo vệ sheet không phải mã hóa file.
 - Nhận xét AI ghi lúc xuất chỉ là nhận xét tại thời điểm đó. Sau khi sửa đầu vào, tính lại trên hệ thống nếu cần nhận xét mới.
 - File trên máy không tự đồng bộ. Người dùng chỉ cần gửi bản cuối khi muốn lưu hoặc tính lại bằng dữ liệu server.
+- Mã và dữ kiện `clinicalContext` giữ theo bản đã xuất; chỉnh mã/tình trạng trên web/chat rồi duyệt lại. Sheet Bao cao có phần đối chiếu khoảng MCDA, liên kết sáu chỉ tiêu dinh dưỡng từ bộ tính; số bữa tham khảo và ghi chú nguồn trình riêng. Nhập lại đọc lại mã từ kho, không tin khoảng hoặc kết luận có sẵn trong file. Không tự đổi đơn vị nước chưa xác minh hoặc coi mức theo kg là mục tiêu cá nhân.
 - Nhập lại dùng trang `https://dinhduong2598.food/ket-noi-ai` hoặc REST `POST /api/nutrition/v1/import`, multipart trường `file`; cần đăng nhập/cấp quyền. Không gửi URL file bất kỳ cho server tải.
 - Server đọc vùng đầu vào được hỗ trợ, bỏ qua số tổng có sẵn và không chạy macro/công thức file tải lên. Preview cho người dùng xem phần thay đổi trước khi gọi `prepare_menu`, xác nhận, tính/lưu.
 - Nếu sửa số hoặc cơ sở phần của nguyên liệu tự nhập, server đổi nguồn thành số người dùng điều chỉnh và bỏ xác nhận cũ. Cho người dùng xem các số/đơn vị/nguồn rồi xác nhận nguồn rõ trước khi chuẩn bị lại; không tự đặt confirmed=true từ việc họ tải file lên. Trang nhập có nút xác nhận số đã sửa riêng và yêu cầu chốt toàn bản lần cuối.

@@ -78,6 +78,12 @@ async function main() {
     assert.ok(missingScope.headers.get("www-authenticate")?.includes("nutrition:calculate")); checks++;
     assert.equal((await rest("unknown", {})).status, 404); checks++;
     assert.equal((await rest("prepare", { input: menu, extra: true })).status, 400); checks++;
+    assert.equal((await rest("get_diet_code", { id: "fixture-diet" }, readToken)).status, 200); checks++;
+    assert.equal((await rest("get_diet_code", { id: "missing-code" }, readToken)).status, 404); checks++;
+    assert.equal((await rest("get_diet_code", { id: "fixture-diet", ownerId: "user-b" }, readToken)).status, 400); checks++;
+    const dietSearch = await rest("search_diet_codes", { q: "TEST", targetGroup: "NguoiLon" }, readToken);
+    assert.equal(dietSearch.status, 200); checks++;
+    assert.equal((await dietSearch.json()).items[0].code, "TEST-01"); checks++;
     const preparedResponse = await rest("prepare", { input: menu });
     assert.equal(preparedResponse.status, 200); checks++;
     const prepared = await preparedResponse.json() as Awaited<ReturnType<typeof Service.prepareNutritionMenu>>;
@@ -115,7 +121,7 @@ async function main() {
     const anonymousList = await api.mcpRoute.POST(rpcRequest("tools/list", {}, ""));
     assert.equal(anonymousList.status, 200); checks++;
     const anonymousTools = (await anonymousList.json()).result.tools;
-    assert.equal(anonymousTools.length, 13); checks++;
+    assert.equal(anonymousTools.length, 15); checks++;
     assert.deepEqual(anonymousTools.find((tool: { name: string }) => tool.name === "get_workflow").securitySchemes, [{ type: "noauth" }]); checks++;
     for (const tool of anonymousTools.filter((item: { name: string }) => item.name !== "get_workflow")) { assert.equal(tool.securitySchemes[0].type, "oauth2"); checks++; }
     const anonymousInit = await api.mcpRoute.POST(rpcRequest("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "anonymous fixture", version: "1" } }, ""));

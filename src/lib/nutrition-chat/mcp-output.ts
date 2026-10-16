@@ -6,6 +6,7 @@ function metric(total:NutrientTotal){return {value:total.value,incomplete:total.
 function summary(menu:ResolvedMenu){
   const keys=menu.fields.map(field=>field.key),selected=(totals:Record<string,NutrientTotal>)=>Object.fromEntries(keys.filter(key=>totals[key]).map(key=>[key,metric(totals[key])]));
   return {title:menu.title,mode:menu.mode,generatedAt:menu.generatedAt,dataVersion:menu.dataVersion,digest:menu.digest,fields:menu.fields,totals:selected(menu.totals),targets:menu.targets,
+    ...(menu.clinicalAssessment?{clinicalAssessment:menu.clinicalAssessment}:{}),
     foodSources:[...new Map(menu.days.flatMap(day=>day.rows).map(row=>[row.food.id,{id:row.food.id,name:row.food.name,unit:row.food.unit,source:row.food.source}])).values()],
     dayTotals:menu.dayTotals.map(day=>({...day,totals:Object.fromEntries(["energyKcal","proteinG","lipidG","glucidG"].map(key=>[key,metric(day.totals[key])]))})),
     analysis:{calendarDayCount:menu.analysis.calendarDayCount,dataDayCount:menu.analysis.dataDayCount,emptyDayCount:menu.analysis.emptyDayCount,averageEnergyKcal:menu.analysis.averageEnergyKcal,periodEnergyStatus:menu.analysis.periodEnergyStatus,macros:menu.analysis.macros,nutrients:menu.analysis.nutrients.map(item=>({...item,total:menu.totals[item.key]?metric(menu.totals[item.key]):item.total})),mealCount:menu.analysis.mealAggregates.length,dishCount:menu.analysis.dishes.length},
