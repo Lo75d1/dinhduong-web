@@ -1,6 +1,6 @@
 # Excel làm việc và nhập lại
 
-- Kết quả chính là số bộ tính và link bản riêng trên web sau khi người dùng chọn lưu. Không cần tạo/tải Excel để xem hoặc tính; chỉ xuất khi cần file. Web tự tính theo nguồn hiện tại và cho chỉnh/lưu dùng lại.
+- Kết quả chính là số bộ tính cùng webUrl/webExpiresAt để xem/sửa/tính lại không đăng nhập; bản tạm có hạn30phút. Không cần tạo/tải Excel hoặc lưu tài khoản để có link web. Chỉ xuất khi cần file, chỉ lưu tài khoản khi người dùng muốn giữ lâu dài. Web đọc nguồn hiện tại khi tính lại.
 - Bản hỏi ghi có `Phieu 24h` và `Quy doi 24h` theo Phụ lục 1/2 mục 11 QĐ 2598/QĐ-BYT. Chỉ số có cơ sở sống sạch mới vào bảng quy đổi; món VDD cả món không tự có nguyên liệu sống sạch. Bảng phân tích vẫn gồm toàn bộ đầu vào.
 - Dấu `*` ở trước mọi số AI tự điền là định dạng, ô vẫn là số/công thức. Nhập lại bỏ dấu xuất xứ AI của giá trị đã bị người dùng đổi; thông tin nguồn vẫn giữ để đối soát.
 - Tải link do `export_workbook` trả. File chứa đầu vào, dữ liệu cần tra, công thức tổng hợp và phần phân tích; link tải chỉ có thời hạn.

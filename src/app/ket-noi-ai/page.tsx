@@ -50,7 +50,7 @@ export default async function ConnectAiPage() {
           {[
             ["Làm rõ món và lượng", "AI tra thực phẩm, mở công thức, hỏi lại chỗ thiếu. Nguyên liệu thay thế và nguồn ước lượng được trình bày để bạn chọn."],
             ["Xem và chốt bản nháp", "Bạn xác nhận ngày, bữa, nguyên liệu và định lượng trước khi hệ thống tính. Chỉ lưu bản cá nhân khi bạn yêu cầu."],
-            ["Nhận báo cáo và chọn cách giữ lại", "Xem số liệu cùng nguồn ngay trong chat. Cần file thì nhận link Excel; muốn dùng lại trên web thì yêu cầu lưu bản riêng."],
+            ["Nhận báo cáo và mở trên web", "Xem số liệu cùng link để sửa và tính lại trên web, không cần đăng nhập; bản tạm có hạn 30 phút. Muốn giữ lâu dài mới lưu tài khoản; Excel là lựa chọn tải thêm."],
           ].map(([title, description], index) => (
             <li key={title} className="flex gap-4">
               <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#dcebe5] font-semibold">{index + 1}</span>
@@ -102,7 +102,7 @@ export default async function ConnectAiPage() {
       <GuestSessionPanel />
       <section className="py-8" aria-labelledby="tools-guide-title">
         <h2 id="tools-guide-title" className="text-2xl font-semibold">Một plugin, {NUTRITION_TOOLS.length} công cụ</h2>
-        <p className="mt-3 text-neutral-700">Mặc định chỉ tính và trả báo cáo. Cần file thì nhận link Excel; chỉ tạo bản trong tài khoản khi bạn yêu cầu lưu. Trong chat, gọi get_workflow để đọc hướng dẫn hiện tại.</p>
+        <p className="mt-3 text-neutral-700">Mặc định nhận báo cáo cùng link tạm để sửa và tính lại trên web trong 30 phút, không cần đăng nhập. Cần file thì tải thêm Excel; chỉ lưu vào tài khoản khi bạn yêu cầu. Trong chat, gọi get_workflow để đọc hướng dẫn hiện tại.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">{NUTRITION_WORKFLOW.recipes.map(recipe => <article key={recipe.goal} className="border border-[#b1c8bd] bg-white p-4"><h3 className="font-semibold">{recipe.goal}</h3><p className="mt-2 text-sm text-neutral-700">{recipe.steps}</p></article>)}</div>
         <details className="mt-5"><summary className={`cursor-pointer font-semibold ${focus}`}>Xem từng công cụ và kết quả</summary><dl className="mt-3 space-y-4">{Object.entries(NUTRITION_WORKFLOW.toolGuide).map(([name, tool]) => <div key={name} className="border-t border-[#dcebe5] pt-3"><dt className="font-semibold">{tool.title} · <code className="text-sm">{name}</code></dt><dd className="mt-1 text-sm text-neutral-700">{tool.when}<br />Kết quả: {tool.returns}</dd></div>)}</dl></details>
       </section>

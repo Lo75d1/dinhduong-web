@@ -5,14 +5,14 @@ description: Tra thực phẩm và công thức trong Dinh dưỡng 2598, hỏi 
 
 # Dinh dưỡng 2598
 
-Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bước: làm rõ đầu vào, duyệt bản nháp, nhận báo cáo. Mặc định chỉ tính, không lưu tài khoản. Chỉ tạo link Excel khi cần file; chỉ tạo bản riêng khi người dùng yêu cầu lưu. Chỉ sử dụng công cụ thật đang có trong phiên; skill không tự cấp quyền kết nối.
+Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bước: làm rõ đầu vào, duyệt bản nháp, nhận báo cáo cùng webUrl để sửa/tính lại không đăng nhập. Đầu vào giữ tạm30phút; mặc định không lưu tài khoản. Chỉ tạo Excel khi cần file; chỉ lưu lâu dài khi người dùng yêu cầu. Chỉ sử dụng công cụ thật đang có trong phiên; skill không tự cấp quyền kết nối.
 
 ## Chọn đúng công cụ, đọc đúng kết quả
 
 - Đây là một plugin với16 công cụ. Đọc [bảng công cụ và luồng xử lý](references/cong-cu.md) khi chưa rõ thao tác nào, đầu vào/kết quả nằm đâu hoặc gặp lỗi. Gọi get_workflow một lần để lấy toolGuide, recipes và recovery hiện hành; không gọi lặp khi không có thay đổi.
 - Không có tài khoản: gọi start_guest_session một lần theo yêu cầu tra/tính/Excel; giữ accessToken trong công cụ và truyền arguments.sessionToken vào từng công cụ tra/tính/xuất tiếp theo. Phiên30phút, không lưu hoặc đọc bản riêng. Không đưa token vào URL/câu trả lời; không tạo lại để vượt429. Đã kết nối OAuth thì tiếp tục dùng quyền hiện có, không gửi sessionToken.
 - Tự xử lý phiên khi được yêu cầu tra/tính; không bắt người dùng bấm tạo/copy token hoặc điền JSON. Cách nói phù hợp bác sĩ/nhân viên y tế: chỉ tên nút, hỏi từng nhóm ngắn. Muốn lưu dùng lâu dài thì hướng dẫn get_workflow.accountUse: đăng ký/đăng nhập website rồi quay lại chat kết nối tài khoản; đăng nhập web chưa tự gắn plugin. Giữ input, prepare lại bằng identity tài khoản và chờ duyệt trước save, không dùng ticket guest để lưu. Không bắt đăng ký khi chỉ tính/Excel.
-- Đọc guidance trong TỪNG phản hồi, kể cả lỗi/rỗng. stage=needs_input: hỏi questions rồi prepare lại; awaiting_user_confirmation hoặc requiresUserConfirmation=true: trình bản và dừng chờ người dùng. calculated: trả chatReport.summaryText, kết thúc nếu chỉ tính. download_ready: trả link thật, không tải file về chat. Token kỹ thuật không chứng minh người dùng đã đồng ý.
+- Đọc guidance trong TỪNG phản hồi, kể cả lỗi/rỗng. stage=needs_input: hỏi questions rồi prepare lại; awaiting_user_confirmation hoặc requiresUserConfirmation=true: trình bản và webUrl nếu có, dừng chờ người dùng. calculated: trả chatReport.summaryText cùng webUrl/webExpiresAt, kết thúc nếu chỉ tính. download_ready: trả link thật, không tải file về chat. Token kỹ thuật không chứng minh người dùng đã đồng ý.
 - Chỉ tính: tra kho → prepare_menu → trình review.text và xử lý missingInputs → người dùng đồng ý → calculate_menu → trả chatReport.summaryText. Đến đây đã hoàn thành, không cần save hoặc file.
 - Chỉ Excel: prepare/chốt → export_workbook với saveToAccount=false → trả downloadUrl. Không bắt tải Excel về chat rồi đọc lại, không cần quyền write.
 - Lưu: chỉ theo yêu cầu rõ của người dùng, gọi save_menu rồi trả ration.url. Quyền write có sẵn không đồng nghĩa được lưu mọi kết quả.

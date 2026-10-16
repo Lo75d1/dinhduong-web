@@ -1,6 +1,6 @@
 # Công cụ, kết quả và cách xử lý
 
-Phiên bản hướng dẫn: 1.0.7. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
+Phiên bản hướng dẫn: 1.0.8. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
 
 Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa kết nối tài khoản và chỉ cần tra/tính/Excel: gọi start_guest_session công khai, dùng accessToken trong arguments.sessionToken của công cụ tiếp theo; phiên 30 phút không tạo tài khoản. Mặc định không lưu. Đọc guidance trong TỪNG phản hồi để biết thiếu gì, phải hỏi/chờ duyệt hay được gọi công cụ nào; không coi số liệu hay confirmationToken là người dùng đã đồng ý. Không gọi lại cùng truy vấn khi không có thay đổi. Người dùng có thể chưa quen kỹ thuật: tự mở phiên cần thiết qua công cụ khi đã được yêu cầu tra/tính/Excel, không bắt họ tự lấy token hoặc học tên API. Muốn lưu/dùng lâu dài thì đọc accountUse để hướng dẫn đăng ký/đăng nhập và kết nối tài khoản; giữ đầu vào, prepare lại bằng tài khoản rồi chờ duyệt trước save, không dùng ticket guest. Ưu tiên trả webUrl thật từ prepare/calculate để mở đầu vào và kết quả trên web, sửa/tính lại không cần tài khoản. Bản tạm lưu đầu vào30phút; không phải bản tài khoản. Không export hoặc save chỉ để có link xem. Món luộc/hấp cần làm rõ nước chấm và lượng thực ăn; tra nguồn thật, không tự thêm vào lịch sử24giờ.
 
