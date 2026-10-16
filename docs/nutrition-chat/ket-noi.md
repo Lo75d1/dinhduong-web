@@ -11,7 +11,7 @@
 ## ChatGPT
 
 1. Mở Plugins, thêm custom MCP server bằng URL trên. Chọn **OAuth or no authentication** nếu có, hoặc OAuth.
-2. Tạo plugin và kiểm danh sách có **13 công cụ**, gồm `get_workflow`. Cài plugin cá nhân, mở hội thoại Work mới và dùng @ chọn plugin.
+2. Tạo plugin và kiểm danh sách có **15 công cụ**, gồm `get_workflow`. Cài plugin cá nhân, mở hội thoại Work mới và dùng @ chọn plugin.
 3. Yêu cầu gọi `get_workflow` để kiểm tra; công cụ hướng dẫn và discovery public không cần token. Khi gọi công cụ dữ liệu, ChatGPT yêu cầu kết nối: đăng nhập Dinh dưỡng 2598, kiểm tên ứng dụng và quyền rồi đồng ý.
 4. Nếu đã thêm plugin nhưng phiên không có công cụ: vào plugin → **Refresh**, kiểm lại danh sách và thử trong hội thoại mới. Tên plugin trong chat không chứng minh đã cấp quyền; server phải có lần đổi code thành token thành công. Gói ZIP là lựa chọn thêm.
 
@@ -45,7 +45,23 @@ Muốn lưu cần kết nối có `nutrition:write`. Nếu đã cấp thiếu qu
 
 1. **Làm rõ:** AI tra data, tách công thức và hỏi lượng/số suất/khối lượng sống hay chín. Món chưa có công thức hoặc nguyên liệu tham chiếu phải ghi là ước lượng. Nhãn ngoài kho chỉ nhập những chất có số và đơn vị được xác minh.
 2. **Chốt:** xem review món/lượng/suất/nguồn gọn, có `*` trước mọi số AI tự điền; xác nhận trước khi tính. Lưu khi chọn nhận link bản riêng trên tài khoản; món thay đổi không sửa kho gốc.
-3. **Kết quả:** nhận tóm tắt kcal/P–L–G và link bản riêng để xem phân tích, chỉnh và dùng lại trên web. Excel chỉ tạo khi cần tải, không bắt tải file để xem số. Chỉ tính thành phần không cần hồ sơ; thiếu mục tiêu không kết luận đạt nhu cầu. Phiếu hỏi ghi 24h bám Phụ lục 1/2 mục 11 QĐ 2598/QĐ-BYT, phần chưa biết để —.
+3. **Kết quả:** nhận tóm tắt kcal/P–L–G ngay trong chat; chỉ tính thì kết thúc, không cần lưu. Cần Excel thì nhận link tải với saveToAccount=false. Chỉ khi yêu cầu lưu mới tạo link bản riêng để dùng lại. Chỉ tính thành phần không cần hồ sơ; thiếu mục tiêu không kết luận đạt nhu cầu. Phiếu hỏi ghi24h bám Phụ lục1/2 mục11 QĐ2598/QĐ-BYT, phần chưa biết để —.
+
+## Plugin nào làm gì, kết quả ở đâu?
+
+- Một plugin Dinh dưỡng2598 chứa15 công cụ; không cài mỗi tool thành plugin riêng. Khi chỉ thêm URL MCP, gọi `get_workflow` để nhận hướng dẫn hiện tại; không giả định skill ZIP đã được nạp.
+- `get_workflow.toolGuide` chỉ rõ khi dùng, đầu vào, trường kết quả và bước tiếp theo; `recipes` chọn luồng chỉ tính/chỉ Excel/lưu/bệnh lý; `recovery` giải thích400/401/403/404/409/422/429/503 và kết quả rút gọn.
+- Gói ZIP có README, SKILL và `references/cong-cu.md` từ cùng hợp đồng với server. Phiên bản hướng dẫn1.0.4. Danh sách và kết quả cũng xem trực tiếp ở trang kết nối.
+- Tìm kiếm trả `items`; `get_food/get_dish/get_diet_code` trả một đối tượng trực tiếp. Code như GU01-X khác ID trong kho. `calculate_menu` trả `chatReport`, không tự có link tải/bản lưu.
+- API token là bí mật đặt trong header xác thực. `confirmationToken` từ prepare chỉ ràng buộc đầu vào đã duyệt; không thay token API hoặc sự đồng ý của người dùng.
+
+## Token API chỉ tính, không lưu
+
+1. Đăng nhập **Tài khoản → Kết nối ứng dụng → Token API**, đặt tên, hạn1giờ/24giờ/7ngày và tùy chọn xuất Excel. Xác nhận mật khẩu hiện tại để tạo; token chỉ hiển thị một lần, máy chủ lưu hash. Tối đa3 token còn hiệu lực; thu hồi trên cùng trang.
+2. Dùng ứng dụng hỗ trợ header `Authorization: Bearer TOKEN_CUA_BAN`, gửi qua HTTPS tới REST `/api/nutrition/v1/...` hoặc MCP. Không đặt token vào URL, QR, JSON đầu vào hay lời nhắn chat. Token không tự tạo khả năng gọi công cụ cho một chat chưa có kết nối.
+3. Quyền cố định `nutrition:read` + `nutrition:calculate`; có thể thêm `nutrition:export`, **không có nutrition:write**. Token đọc được dữ liệu riêng của đúng chủ; hết hạn/thu hồi/khóa tài khoản thì bị từ chối. Không refresh, không đếm thành lần kết nối ChatGPT/Claude.
+4. Chuẩn bị `{input}` → xem/chốt → tính `{input,confirmationToken}` → nhận báo cáo; không tạo Ration. Cần file thì export với `saveToAccount:false`, nhận link tải tạm10phút; việc giữ file tạm khác lưu thực đơn tài khoản.
+5. Nếu giao diện nền tảng không hỗ trợ Bearer token thủ công, tiếp tục dùng OAuth bình thường và luồng chỉ tính; không tắt xác thực hay yêu cầu AI tự dùng công cụ duyệt web để gửi POST.
 
 File sửa trên máy không tự đồng bộ. Khi cần, đăng nhập trang hướng dẫn để tải bản `.xlsx` cuối (tối đa 5 MB), xem preview rồi xác nhận lưu mới hoặc xuất lại. Server đọc đầu vào và tính lại, không tin số tổng/công thức đã có trong file. Không tải file qua URL bất kỳ. Bản đã lưu mở riêng tại `https://dinhduong2598.food/ket-noi-ai/ban-luu` để giữ đúng nhiều ngày và nguồn.
 

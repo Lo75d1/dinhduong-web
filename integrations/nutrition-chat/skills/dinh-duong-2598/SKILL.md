@@ -5,7 +5,16 @@ description: Tra thực phẩm và công thức trong Dinh dưỡng 2598, hỏi 
 
 # Dinh dưỡng 2598
 
-Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bước: chọn món/làm rõ đầu vào, duyệt bản nháp, nhận tóm tắt và link xem kết quả trên web. Excel chỉ tạo khi cần tải. Chỉ sử dụng công cụ Dinh dưỡng 2598 thật đang có trong phiên; skill không tự cấp quyền kết nối.
+Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bước: làm rõ đầu vào, duyệt bản nháp, nhận báo cáo. Mặc định chỉ tính, không lưu tài khoản. Chỉ tạo link Excel khi cần file; chỉ tạo bản riêng khi người dùng yêu cầu lưu. Chỉ sử dụng công cụ thật đang có trong phiên; skill không tự cấp quyền kết nối.
+
+## Chọn đúng công cụ, đọc đúng kết quả
+
+- Đây là một plugin với15 công cụ. Đọc [bảng công cụ và luồng xử lý](references/cong-cu.md) khi chưa rõ thao tác nào, đầu vào/kết quả nằm đâu hoặc gặp lỗi. Gọi get_workflow một lần để lấy toolGuide, recipes và recovery hiện hành; không gọi lặp khi không có thay đổi.
+- Chỉ tính: tra kho → prepare_menu → trình review.text và xử lý missingInputs → người dùng đồng ý → calculate_menu → trả chatReport.summaryText. Đến đây đã hoàn thành, không cần save hoặc file.
+- Chỉ Excel: prepare/chốt → export_workbook với saveToAccount=false → trả downloadUrl. Không bắt tải Excel về chat rồi đọc lại, không cần quyền write.
+- Lưu: chỉ theo yêu cầu rõ của người dùng, gọi save_menu rồi trả ration.url. Quyền write có sẵn không đồng nghĩa được lưu mọi kết quả.
+- Kết quả get_food/get_dish/get_diet_code là đối tượng trực tiếp; tìm kiếm mới có items. code hoặc tên không phải ID. MCP đọc structuredContent hoặc JSON trong content.text và kiểm isError; REST trả đối tượng trực tiếp.
+- Nếu kết nối thiếu công cụ, token/link/QR không tự cấp khả năng gọi API cho AI. Dùng giao diện kết nối; không yêu cầu người dùng dán token vào chat. Token API xác thực khác confirmationToken ngắn hạn từ prepare.
 
 ## Bắt đầu
 
@@ -50,7 +59,7 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bư�
 
 ## Xuất kèm bản lưu và dùng lại
 
-- Mặc định ưu tiên xem kết quả bằng link bản lưu khi người dùng chọn lưu/xem trên tài khoản. Link không chứa token; cần đăng nhập đúng chủ. Thiếu quyền ghi thì hướng dẫn kết nối đúng quyền, không tự mở rộng quyền hoặc tạo link giả. Trang web tự tính theo nguồn hiện tại và cho tải Excel khi cần.
+- Link bản lưu chỉ tạo khi người dùng yêu cầu lưu/xem trên tài khoản; không có link lâu dài nếu chỉ tính. Link không chứa token; cần đăng nhập đúng chủ. Thiếu quyền ghi vẫn trả kết quả tính được, chỉ hướng dẫn cấp quyền nếu họ muốn lưu. Không tạo link giả.
 - Với thư viện cá nhân: gọi `list_personal_library` (kind food/dish), rồi `get_personal_library_item`. Food dùng content làm customFood; món dùng content.days[0].rows, cấp ID dòng riêng và đặt ngày/bữa/lượng. Giữ nguồn, đơn vị, phiên bản rồi prepare/chốt trước khi tính. Thêm/sửa/xóa mục ở Tài khoản trên web; không nói đã lưu thư viện khi chỉ mới lưu một thực đơn.
 
 - Khi xuất, nói rõ lựa chọn lưu thêm bản riêng trong tài khoản. Nếu người dùng đồng ý và đã cấp `nutrition:write`, gọi `export_workbook` với `saveToAccount: true`; trả cả `savedMenuUrl` và link tải file. Chỉ tải file thì dùng false. Không tự mở rộng quyền của kết nối.

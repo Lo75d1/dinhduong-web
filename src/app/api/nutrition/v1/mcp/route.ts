@@ -32,9 +32,9 @@ export async function POST(request:Request) {
     if(rpc.method==="initialize" && !rpc.modern) {
       validateOperationObject(rpc.params,["protocolVersion","capabilities","clientInfo","_meta"],["protocolVersion","capabilities","clientInfo"]);
       const version=NUTRITION_MCP_VERSIONS.slice(1).includes(rpc.params.protocolVersion as "2025-11-25")?rpc.params.protocolVersion:"2025-11-25";
-      return nutritionJson(nutritionRpcResult(rpc,{protocolVersion:version,capabilities:{tools:{listChanged:false}},serverInfo:NUTRITION_SERVER_INFO,instructions:NUTRITION_WORKFLOW.steps.join(" ")}));
+      return nutritionJson(nutritionRpcResult(rpc,{protocolVersion:version,capabilities:{tools:{listChanged:false}},serverInfo:NUTRITION_SERVER_INFO,instructions:NUTRITION_WORKFLOW.start+" "+NUTRITION_WORKFLOW.steps.join(" ")}));
     }
-    if(rpc.method==="server/discover" && rpc.modern){validateOperationObject(rpc.params,["_meta"]);return nutritionJson(nutritionRpcResult(rpc,{supportedVersions:NUTRITION_MCP_VERSIONS,capabilities:{tools:{}},instructions:NUTRITION_WORKFLOW.steps.join(" ")},true));}
+    if(rpc.method==="server/discover" && rpc.modern){validateOperationObject(rpc.params,["_meta"]);return nutritionJson(nutritionRpcResult(rpc,{supportedVersions:NUTRITION_MCP_VERSIONS,capabilities:{tools:{}},instructions:NUTRITION_WORKFLOW.start+" "+NUTRITION_WORKFLOW.steps.join(" ")},true));}
     if(rpc.method==="ping"){validateOperationObject(rpc.params,["_meta"]);return nutritionJson(nutritionRpcResult(rpc,{}));}
     if(rpc.method==="tools/list"){validateOperationObject(rpc.params,["cursor","_meta"]);if(rpc.params.cursor!==undefined)throw new NutritionProtocolError(-32602,"Unknown cursor");return nutritionJson(nutritionRpcResult(rpc,{tools:NUTRITION_TOOLS},true));}
     if(rpc.method!=="tools/call")throw new NutritionProtocolError(-32601,"Method not found",404);

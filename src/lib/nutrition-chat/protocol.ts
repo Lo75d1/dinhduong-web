@@ -1,6 +1,7 @@
 /** Pure JSON-RPC/HTTP validation, shared by the handler and protocol tests. */
+import toolGuide from "./tool-guide.json";
 export const NUTRITION_MCP_VERSIONS=["2026-07-28","2025-11-25","2025-06-18","2025-03-26"] as const;
-export const NUTRITION_SERVER_INFO={name:"dinh-duong-2598",version:"1.0.1"};
+export const NUTRITION_SERVER_INFO={name:"dinh-duong-2598",version:toolGuide.version};
 export class NutritionProtocolError extends Error {
   constructor(public code:number,message:string,public status=400,public data?:unknown){super(message);}
 }

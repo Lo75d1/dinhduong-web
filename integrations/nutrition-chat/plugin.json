@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "dinh-duong-2598",
-  "version": "1.0.3",
-  "description": "Chọn món Việt, duyệt khẩu phần và mở kết quả Dinh dưỡng 2598 trên web; tải Excel khi cần.",
+  "version": "1.0.4",
+  "description": "Tra món và mã chế độ ăn, duyệt khẩu phần, tính và trả báo cáo. Chỉ lưu tài khoản hoặc xuất Excel khi được yêu cầu.",
   "author": { "name": "Dinh dưỡng 2598", "url": "https://dinhduong2598.food" },
   "homepage": "https://dinhduong2598.food/ket-noi-ai",
   "repository": "https://github.com/Lo75d1/dinhduong-web",
@@ -11,8 +11,8 @@
     "com.openai": {
       "interface": {
         "displayName": "Dinh dưỡng 2598",
-        "shortDescription": "Chọn món, tính khẩu phần và mở kết quả trên web.",
-        "longDescription": "Chọn món theo bữa ăn Việt, duyệt lượng và nguồn; mọi số AI tự điền có dấu *. Tính một hoặc nhiều ngày bằng dữ liệu có nguồn, mở bản riêng trên web và tải Excel khi cần.",
+        "shortDescription": "Tra món, chọn mã chế độ ăn và tính khẩu phần.",
+        "longDescription": "15 công cụ tra thực phẩm, món RNI/VDD và mã chế độ ăn; chuẩn bị bản duyệt rồi tính một hoặc nhiều ngày. Mặc định trả báo cáo, không lưu thực đơn vào tài khoản. Chỉ lưu hoặc tạo link Excel khi bạn yêu cầu; có hướng dẫn đầu vào, kết quả và xử lý lỗi cho từng công cụ.",
         "developerName": "Dinh dưỡng 2598",
         "websiteURL": "https://dinhduong2598.food/ket-noi-ai",
         "privacyPolicyURL": "https://dinhduong2598.food/chinh-sach-bao-mat",

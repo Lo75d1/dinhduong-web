@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getNutritionPublicUrl, getNutritionResourceUrl } from "@/lib/nutrition-chat/oauth-validation";
 import { nutritionStartLinks } from "@/lib/nutrition-chat/start-guide";
 import WorkbookImport from "./WorkbookImport";
+import { NUTRITION_TOOLS, NUTRITION_WORKFLOW } from "@/lib/nutrition-chat/tools";
 
 export const metadata: Metadata = {
   title: "Kết nối ChatGPT & Claude | Dinh dưỡng 2598",
@@ -26,8 +27,8 @@ export default async function ConnectAiPage() {
       <section aria-labelledby="connect-title" className="grid gap-8 border-b border-[#b1c8bd] pb-10 md:grid-cols-[1fr_240px] md:items-center">
         <div>
           <p className="mb-3 text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · KẾT NỐI HỘI THOẠI</p>
-          <h1 id="connect-title" className="text-4xl font-semibold leading-[1.12] sm:text-5xl">Nói bữa ăn.<br />Nhận bảng tính.</h1>
-          <p className="mt-5 max-w-lg text-lg text-neutral-700">Tra thực phẩm, chốt khẩu phần và nhận Excel chỉnh được ngay từ ChatGPT hoặc Claude.</p>
+          <h1 id="connect-title" className="text-4xl font-semibold leading-[1.12] sm:text-5xl">Nói bữa ăn.<br />Nhận báo cáo.</h1>
+          <p className="mt-5 max-w-lg text-lg text-neutral-700">Tra món, chọn mã chế độ ăn và tính khẩu phần trong hội thoại. Chỉ lưu tài khoản hoặc tạo Excel khi bạn yêu cầu.</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/ket-noi-ai/bat-dau" className={`rounded-lg bg-[#123c36] px-5 py-3 font-semibold text-white hover:bg-[#0f5c51] ${focus}`}>Bắt đầu bằng QR hoặc link →</Link>
             <a href="#cai-ket-noi" className={`rounded-lg border border-[#123c36] bg-white px-5 py-3 font-semibold hover:bg-[#eaf3ee] ${focus}`}>Cài kết nối lần đầu</a>
@@ -46,7 +47,7 @@ export default async function ConnectAiPage() {
           {[
             ["Làm rõ món và lượng", "AI tra thực phẩm, mở công thức, hỏi lại chỗ thiếu. Nguyên liệu thay thế và nguồn ước lượng được trình bày để bạn chọn."],
             ["Xem và chốt bản nháp", "Bạn xác nhận ngày, bữa, nguyên liệu và định lượng trước khi hệ thống tính. Chỉ lưu bản cá nhân khi bạn yêu cầu."],
-            ["Nhận phân tích và Excel", "Hệ thống trả số liệu cùng nguồn và cảnh báo. Sửa vùng nhập trong Excel để tự tính lại; gửi bản cuối khi cần lưu lên web."],
+            ["Nhận báo cáo và chọn cách giữ lại", "Xem số liệu cùng nguồn ngay trong chat. Cần file thì nhận link Excel; muốn dùng lại trên web thì yêu cầu lưu bản riêng."],
           ].map(([title, description], index) => (
             <li key={title} className="flex gap-4">
               <span aria-hidden="true" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#dcebe5] font-semibold">{index + 1}</span>
@@ -60,6 +61,7 @@ export default async function ConnectAiPage() {
       <section id="cai-ket-noi" aria-labelledby="setup-title" className="scroll-mt-6 rounded-xl border border-[#b1c8bd] bg-white p-5 sm:p-8">
         <h2 id="setup-title" className="text-2xl font-semibold">Kết nối một lần cho mỗi tài khoản</h2>
         <p className="mt-3 text-sm text-neutral-700">Nếu đăng ký tự động không hoạt động: <Link href="/tai-khoan?section=connections#ket-noi-thu-cong" className="font-semibold text-[#123c36] underline">tạo cấu hình OAuth thủ công trong Tài khoản</Link>. Xem và thu hồi quyền tại <Link href="/tai-khoan?section=connections" className="underline">Kết nối ứng dụng</Link>.</p>
+        <p className="mt-3 text-sm text-neutral-700">Ứng dụng có ô Bearer token: <Link href="/tai-khoan?section=connections#api-token" className="font-semibold underline">tạo token API chỉ tính, không lưu</Link>. Token không thay bước bật công cụ trong chat; dùng OAuth khi nền tảng không hỗ trợ nhập token.</p>
         <p className="mt-2 text-neutral-700">Đường dẫn công cụ dùng chung cho cả hai nền tảng:</p>
         <code className="mt-3 block break-all rounded-lg bg-[#edf4f0] p-3 text-sm text-[#123c36]">{resourceUrl}</code>
         <div className="mt-7 grid gap-8 md:grid-cols-2">
@@ -67,7 +69,7 @@ export default async function ConnectAiPage() {
             <h3 className="text-xl font-semibold">ChatGPT</h3>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-neutral-700">
               <li>Mở Plugins, thêm custom MCP server với URL phía trên.</li>
-              <li>Chọn “OAuth or no authentication” nếu có, hoặc OAuth. Tạo plugin rồi kiểm tra danh sách có 13 công cụ, gồm get_workflow.</li>
+              <li>Chọn “OAuth or no authentication” nếu có, hoặc OAuth. Tạo plugin rồi kiểm tra danh sách có {NUTRITION_TOOLS.length} công cụ, gồm get_workflow.</li>
               <li>Cài plugin cá nhân; mở hội thoại Work mới, dùng @ chọn plugin và yêu cầu gọi get_workflow để kiểm tra.</li>
               <li>Khi cần tra dữ liệu hoặc tính khẩu phần, bấm kết nối tài khoản khi ChatGPT yêu cầu; đăng nhập Dinh dưỡng 2598 và xem quyền trước khi cấp.</li>
               <li>Đã cài nhưng không thấy công cụ: mở plugin → Refresh, kiểm lại danh sách công cụ rồi thử trong hội thoại mới. Không cần xóa tài khoản hoặc nhập lại dữ liệu trên website.</li>
@@ -90,6 +92,13 @@ export default async function ConnectAiPage() {
           <a href="/nutrition-chat/huong-dan-ket-noi.md" download className={`px-2 py-2 underline underline-offset-4 ${focus}`}>Tải hướng dẫn chi tiết</a>
         </div>
         <p className="mt-4 text-sm text-neutral-700">Tên mục và quyền cài đặt tùy tài khoản hoặc tổ chức. Gói tải này chưa đồng nghĩa đã được niêm yết trong thư viện công khai. Nếu chưa thấy công cụ, kiểm tra kết nối trước khi tính.</p>
+      </section>
+
+      <section className="py-8" aria-labelledby="tools-guide-title">
+        <h2 id="tools-guide-title" className="text-2xl font-semibold">Một plugin, {NUTRITION_TOOLS.length} công cụ</h2>
+        <p className="mt-3 text-neutral-700">Mặc định chỉ tính và trả báo cáo. Cần file thì nhận link Excel; chỉ tạo bản trong tài khoản khi bạn yêu cầu lưu. Trong chat, gọi get_workflow để đọc hướng dẫn hiện tại.</p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">{NUTRITION_WORKFLOW.recipes.map(recipe => <article key={recipe.goal} className="border border-[#b1c8bd] bg-white p-4"><h3 className="font-semibold">{recipe.goal}</h3><p className="mt-2 text-sm text-neutral-700">{recipe.steps}</p></article>)}</div>
+        <details className="mt-5"><summary className={`cursor-pointer font-semibold ${focus}`}>Xem từng công cụ và kết quả</summary><dl className="mt-3 space-y-4">{Object.entries(NUTRITION_WORKFLOW.toolGuide).map(([name, tool]) => <div key={name} className="border-t border-[#dcebe5] pt-3"><dt className="font-semibold">{tool.title} · <code className="text-sm">{name}</code></dt><dd className="mt-1 text-sm text-neutral-700">{tool.when}<br />Kết quả: {tool.returns}</dd></div>)}</dl></details>
       </section>
 
       <section id="nhap-excel" aria-labelledby="import-title" className="scroll-mt-6 py-10">
