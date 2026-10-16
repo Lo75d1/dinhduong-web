@@ -20,4 +20,6 @@
 
 - Theo yêu cầu tiếp theo của chủ dự án, thêm một thẻ “Suất ăn bệnh viện” ở trang chủ, ngay sau phần chức năng tra cứu/tính khẩu phần; dẫn chính xác tới `https://suatanbv.io.vn/` trong tab mới, có nhãn truy cập và `noopener noreferrer`.
 - Tái dùng bố cục, màu và lớp giao diện trang chủ; không thêm package, API hay dữ liệu. Các URL suất ăn nội bộ đã gỡ vẫn trả404; đây là liên kết sang ứng dụng riêng của chủ dự án.
-- Prisma generate, TypeScript và ESLint file sửa đạt; kiểm HTTPS sau khi cập nhật ứng dụng.
+- Source ứng dụng **aae66a7b7f45f7ae0b096763e53bd4ecb80176e1** healthy trên VPS; Prisma generate, TypeScript, ESLint file sửa và Linux build đạt. Backup `/opt/dinhduong-release-backups/nutrition-meal-link-20261016-140215-codex`.
+- **HTTPS24 đạt**: có đúng một link/đích/nhãn/tab mới/rel an toàn; đặt trước tài liệu tham khảo; canonical Dinh dưỡng giữ nguyên; redirect Facebook/UTM vẫn307 về `/`; ba URL suất ăn nội bộ404; health/OAuth/OpenAPI/trang bắt đầu chat200, tổ chức cũ vẫn trống/bộ đếm còn số. Canonical count/digest,25migration và SHA env/layout/Caddy/Google khớp; timer active/enabled, không OOM/swap.
+- Trang đích `suatanbv.io.vn` timeout: curl Windows15s; DNS VPS trả162.4.177.119 và fetch HTTPS báo `UND_ERR_CONNECT_TIMEOUT`. Không đổi địa chỉ người dùng cung cấp, không sửa máy chủ/DNS của ứng dụng khác; chưa xác nhận website đích mở được. Công cụ browser không có phiên kết nối nên chưa thử bấm/ảnh trực tiếp; không coi SSR/HTTPS là kiểm browser.

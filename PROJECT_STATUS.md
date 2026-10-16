@@ -1,5 +1,10 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Liên kết ứng dụng suất ăn — 16/10/2026
+
+- App **aae66a7** healthy trên VPS: trang chủ có thẻ “Suất ăn bệnh viện” sau phần chức năng, mở `https://suatanbv.io.vn/` trong tab mới. Theo yêu cầu chủ dự án, chỉ thêm liên kết sang ứng dụng riêng; các URL suất ăn nội bộ tiếp tục404.
+- Prisma/TypeScript/ESLint file sửa/Linux build và HTTPS24 đạt; canonical/cấu hình/25migration giữ nguyên, timer active, không OOM/swap. Trang đích chưa xác nhận mở được: HTTPS timeout từ máy Windows và VPS, DNS lúc kiểm tra trỏ162.4.177.119. Không coi link đúng là trang đích hoạt động; chưa kiểm click bằng browser do công cụ không kết nối. Chi tiết ở `docs/nutrition-chat/project-scope-2026-10-16.md`.
+
 ## Gỡ nội dung dự án khác — 16/10/2026
 
 - Theo yêu cầu chủ dự án, app **b60b934** healthy trên VPS: gỡ lối vào quản lý/báo suất ăn/ca trực bếp trong menu tài khoản và quản trị, bỏ hướng dẫn gán khoa; ba URL cũ trả404. Bỏ tổ chức PC07 khỏi giá trị mặc định, xóa placeholder tổ chức trên VPS bằng cập nhật có backup/audit, giữ địa chỉ bệnh viện và các liên hệ/bộ đếm.
