@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ALL_NUTRIENT_FIELDS, NUTRIENT_GROUPS, type NutrientField } from "@/lib/nutrient-fields";
+import { ALL_NUTRIENT_FIELDS, type NutrientField } from "@/lib/nutrient-fields";
 import { aggregateIngredients, buildDetailRows, buildReportLines, type FoodReportValues } from "./ration-detail";
 import type { RationMode, Row } from "./types";
 import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
 import ResolvedRationDetail from "./ResolvedRationDetail";
+import NutrientFieldPicker, { DETAIL_NUTRIENT_KEYS } from "./NutrientFieldPicker";
 
-const DEFAULT_FIELDS = ["proteinG", "lipidG", "glucidG", "fiberG"];
 const round = (value: number) => Math.round(value * 10) / 10;
 const grams = (value: number | null) => (value === null ? "—" : `${round(value)} g`);
 
@@ -21,7 +21,7 @@ export default function RationDetail(props: { rows: Row[]; mode: RationMode; com
 }
 
 function ManualRationDetail({ rows, mode, compact = false }: { rows: Row[]; mode: RationMode; compact?: boolean }) {
-  const [selectedKeys, setSelectedKeys] = useState<string[]>(DEFAULT_FIELDS);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(DETAIL_NUTRIENT_KEYS);
   const [reportValues, setReportValues] = useState<FoodReportValues>({});
   const foodRows = rows.filter((row) => row.foodId);
   const idsKey = foodRows.map((row) => row.foodId).sort().join(",");
@@ -87,10 +87,6 @@ function ManualRationDetail({ rows, mode, compact = false }: { rows: Row[]; mode
   const displayMass = (line: { edibleGrams: number }) => grams(line.edibleGrams);
   if (!foodRows.length) return null;
 
-  function toggleField(key: string) {
-    setSelectedKeys((current) => (current.includes(key) ? current.filter((item) => item !== key) : [...current, key]));
-  }
-
   return (
     <section className="flex flex-col gap-4" aria-label="Báo cáo chi tiết khẩu phần">
       <div className="rounded-lg border border-neutral-200 bg-white p-4">
@@ -100,32 +96,16 @@ function ManualRationDetail({ rows, mode, compact = false }: { rows: Row[]; mode
             <p className="mt-1 text-xs text-neutral-700">{mode === "menu" ? "Chế độ Lập thực đơn: hiển thị gram sống sạch dùng để lập món và tính dinh dưỡng." : "Chế độ Khẩu phần 24 giờ: lượng đã ăn được đổi bằng hệ số về gram sống sạch trước khi tính dinh dưỡng."} Dữ liệu VDD/RNI được áp dụng trên 100 g phần ăn được ở trạng thái sống sạch.</p>
             <p className="mt-1 text-xs text-neutral-700">Dòng vàng = tổng món · xanh nhạt = tổng bữa · xanh đậm = tổng cả ngày. Dấu ≥ cho biết còn thực phẩm thiếu số liệu chất đó.</p>
           </div>
-          <details className="rounded-md border border-neutral-300 bg-white text-sm">
-            <summary className="cursor-pointer px-3 py-1.5 font-medium text-neutral-700">⚙ Chọn chất ({fields.length})</summary>
-            <div className="max-h-80 w-80 overflow-auto border-t border-neutral-200 p-3">
-              {NUTRIENT_GROUPS.map((group) => (
-                <fieldset key={group.title} className="mb-3">
-                  <legend className="mb-1 text-xs font-semibold text-neutral-600">{group.title}</legend>
-                  <div className="grid gap-1">
-                    {group.fields.filter((field) => field.key !== "energyKcal").map((field) => (
-                      <label key={field.key} className="flex items-center gap-2 text-xs text-neutral-700">
-                        <input type="checkbox" checked={selectedKeys.includes(field.key)} onChange={() => toggleField(field.key)} />
-                        {field.label} ({field.unit})
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              ))}
-            </div>
-          </details>
+          <NutrientFieldPicker selectedKeys={selectedKeys} onChange={setSelectedKeys} />
         </div>
-        <div className="mt-3 overflow-x-auto">
-          <table className="min-w-[840px] w-full table-fixed text-sm">
+        <p className="mt-3 text-xs text-neutral-600">Đang hiện {reportFields.length}/{ALL_NUTRIENT_FIELDS.length} chỉ tiêu. Vuốt hoặc cuộn ngang để xem các cột bên phải.</p>
+        <div className="mt-2 max-w-full overflow-x-auto">
+          <table data-nutrient-detail-table className="w-max min-w-full text-sm [&_th]:min-w-28 [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap">
             <thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-500">
               <tr>
-                <th className="w-[7%] px-2 py-2 font-medium">Bữa</th><th className="w-[12%] px-2 py-2 font-medium">Món</th><th className="w-[22%] px-2 py-2 font-medium">Thực phẩm</th>
+                <th className="px-2 py-2 font-medium">Bữa</th><th className="px-2 py-2 font-medium">Món</th><th className="px-2 py-2 font-medium">Thực phẩm</th>
                 <th className="px-2 py-2 text-right font-medium">{massLabel}</th><th className="px-2 py-2 text-right font-medium">Kcal</th>
-                {fields.map((field) => <th key={field.key} className="px-2 py-2 text-right font-medium">{field.label} ({field.unit})</th>)}
+                {fields.map((field) => <th key={field.key} data-nutrient-key={field.key} className="px-2 py-2 text-right font-medium">{field.label} ({field.unit})</th>)}
               </tr>
             </thead>
             <tbody>

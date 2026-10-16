@@ -4,7 +4,7 @@ import { parseMenuInput, NutritionInputError } from "./validation";
 import { resolveMenu, assertMenuComplete, nutritionDigest } from "./core";
 import { createNutritionTicket, verifyNutritionTicket } from "./approval";
 import { loadNutritionFoods, loadNutritionRecommendations, loadNutritionDietCode } from "./repository";
-import { DIET_NUTRIENT_KEYS } from "./clinical";
+import { ALL_NUTRIENT_FIELDS } from "@/lib/nutrient-fields";
 import type { NutritionIdentity, ResolvedMenu } from "./contracts";
 import type { Prisma } from "@/generated/prisma/client";
 import { nutritionWebsiteLink } from "./website-links";
@@ -36,7 +36,7 @@ export async function prepareNutritionMenu(value: unknown, identity: NutritionId
   const foodIds = rows.flatMap(row => [row.foodId, row.replacedFromFoodId].filter((id): id is string => Boolean(id)));
   const recipeIds = [...new Set(rows.flatMap(row => row.recipeSource.dishId ? [row.recipeSource.dishId] : []))];
   const [foods, recommendations, recipes, diet] = await Promise.all([
-    loadNutritionFoods(foodIds, [...new Set([...input.fields!, ...(input.clinicalContext?.dietCodeId ? DIET_NUTRIENT_KEYS : [])])]),
+    loadNutritionFoods(foodIds, ALL_NUTRIENT_FIELDS.map(field => field.key)),
     input.comparison.mode === "profile" ? loadNutritionRecommendations() : Promise.resolve([]),
     recipeIds.length ? prisma.dish.findMany({ where: { id: { in: recipeIds } }, select: { id: true, name: true, source: true } }) : Promise.resolve([]),
     input.clinicalContext?.dietCodeId ? loadNutritionDietCode(input.clinicalContext.dietCodeId) : Promise.resolve(undefined),

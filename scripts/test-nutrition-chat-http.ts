@@ -21,6 +21,7 @@ import type * as GuestStore from "../src/lib/nutrition-chat/guest-store";
 import type * as WebRoute from "../src/app/api/nutrition/v1/web-menu/route";
 import type * as WebItemRoute from "../src/app/api/nutrition/v1/web-menu/[id]/route";
 import type { MenuInput } from "../src/lib/nutrition-chat/contracts";
+import { ALL_NUTRIENT_FIELDS } from "../src/lib/nutrient-fields";
 import { getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken, randomNutritionToken } from "../src/lib/nutrition-chat/oauth-validation";
 type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & typeof GuestStore & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport; guestRoute: typeof GuestRoute;webRoute:typeof WebRoute;webItemRoute:typeof WebItemRoute };
 let checks = 0;
@@ -93,6 +94,10 @@ async function main() {
     const preparedResponse = await rest("prepare", { input: menu });
     assert.equal(preparedResponse.status, 200); checks++;
     const prepared = await preparedResponse.json() as Awaited<ReturnType<typeof Service.prepareNutritionMenu>>;
+    assert.deepEqual(api.fixtureRequestedNutrientFields(), ALL_NUTRIENT_FIELDS.map(field => field.key)); checks++;
+    assert.equal(Object.keys(prepared.preview.totals).length, ALL_NUTRIENT_FIELDS.length); checks++;
+    assert.equal(prepared.preview.analysis.nutrients.length, ALL_NUTRIENT_FIELDS.length - 4); checks++;
+    assert.equal(prepared.preview.totals.seleniumMcg.value, null); checks++;
     const confirmedArgs = { input: prepared.input, confirmationToken: prepared.confirmationToken };
     assert.equal((await rest("calculate", { input: menu, confirmationToken: "bad" })).status, 409); checks++;
     const calculated = await rest("calculate", confirmedArgs);

@@ -1,13 +1,14 @@
 import assert from "node:assert/strict";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import MultiDayAnalysis from "../src/app/tinh-khau-phan/MultiDayAnalysis";
+import MultiDayAnalysis, { NutrientSummaryTable } from "../src/app/tinh-khau-phan/MultiDayAnalysis";
 import RationDetail from "../src/app/tinh-khau-phan/RationDetail";
 import { resolvedAmountText, resolvedDetailLines, resolvedDisplayTotal, resolvedShoppingItems } from "../src/app/tinh-khau-phan/resolved-ration-detail";
 import { resolveMenu } from "../src/lib/nutrition-chat/core";
 import { ALL_NUTRIENT_FIELDS } from "../src/lib/nutrient-fields";
 import type { MenuInput, NutritionFood } from "../src/lib/nutrition-chat/contracts";
 import { DEFAULT_PROFILE } from "../src/app/tinh-khau-phan/PersonalProfile";
+import { makeRow } from "../src/app/tinh-khau-phan/types";
 
 let checks = 0;
 const equal = (actual: unknown, expected: unknown) => { assert.deepEqual(actual, expected); checks++; };
@@ -53,6 +54,41 @@ has(renderToStaticMarkup(<MultiDayAnalysis days={[]} profile={null} recommendati
 const wrongProfile = { ...DEFAULT_PROFILE, age: "99", weight: "777", height: "999" };
 absent(renderToStaticMarkup(<MultiDayAnalysis days={[]} profile={wrongProfile} recommendations={[]} resolvedMenu={menu} />), "777 kg");
 const detail = renderToStaticMarkup(<RationDetail rows={[]} mode="menu" resolvedMenu={menu} dayId="day1" />);
+const summary = renderToStaticMarkup(<NutrientSummaryTable nutrients={menu.analysis.nutrients} />);
+for (const field of ALL_NUTRIENT_FIELDS) {
+  has(detail, `data-nutrient-key="${field.key}"`);
+  if (!["energyKcal", "proteinG", "lipidG", "glucidG"].includes(field.key)) has(summary, `data-nutrient-summary-key="${field.key}"`);
+}
+has(detail, "Hiện toàn bộ 160 chỉ tiêu");
+has(detail, "Đang hiện 160/160 chỉ tiêu");
+absent(html, "Xem thêm 6 vi chất khác");
+const conciseInput = structuredClone(input);
+conciseInput.fields = ["energyKcal", "proteinG"];
+const conciseMenu = resolveMenu(conciseInput, foods);
+equal(conciseMenu.fields.map(field => field.key), ["energyKcal", "proteinG"]);
+equal(Object.keys(conciseMenu.totals).length, ALL_NUTRIENT_FIELDS.length);
+equal(conciseMenu.analysis.nutrients.length, ALL_NUTRIENT_FIELDS.length - 4);
+const b12 = conciseMenu.analysis.nutrients.find(metric => metric.key === "vitB12Mcg")!;
+equal(b12.total, { value: conciseMenu.totals.vitB12Mcg.value, incomplete: true });
+equal(b12.targetPerDay, null);
+equal(b12.percentOfTarget, null);
+equal(b12.status, "unknown");
+const sparse = structuredClone(foods);
+for (const food of sparse) { food.nutrients.seleniumMcg = null; food.nutrients.vitB12Mcg = 0; }
+const sparseMenu = resolveMenu({ ...conciseInput, days: [conciseInput.days[0]] }, sparse);
+equal(sparseMenu.totals.seleniumMcg.value, null);
+equal(sparseMenu.analysis.nutrients.find(metric => metric.key === "seleniumMcg")!.total.value, null);
+equal(sparseMenu.totals.vitB12Mcg.value, 0);
+const targeted = structuredClone(conciseInput);
+targeted.days = [targeted.days[0]];
+targeted.comparison = { mode: "manual", targets: [{ key: "vitB12Mcg", value: 1, source: "Chỉ định kiểm thử bổ sung" }] };
+const targetedMenu = resolveMenu(targeted, foods);
+equal(targetedMenu.analysis.nutrients.find(metric => metric.key === "vitB12Mcg")!.targetPerDay, 1);
+equal(targetedMenu.analysis.nutrients.find(metric => metric.key === "vitB12Mcg")!.comparableDays, 1);
+const manualRow = { ...makeRow("Trưa", "Món thử"), foodId: "g", foodName: foods[0].name, nutrients: foods[0].nutrients, grams: 100, inputGrams: 100 };
+const manualDetail = renderToStaticMarkup(<RationDetail rows={[manualRow]} mode="menu" />);
+for (const field of ALL_NUTRIENT_FIELDS.filter(field => field.key !== "energyKcal")) has(manualDetail, `data-nutrient-key="${field.key}"`);
+has(manualDetail, "Đang hiện 160/160 chỉ tiêu");
 for (const text of ["Bữa", "Món", "Thực phẩm", "Lượng nhập × suất", "Lượng dùng tính", "Tổng món", "Tổng bữa", "Tổng Ngày 1", "Nhãn đồ uống"]) has(detail, text);
 has(detail, "100 ml"); has(detail, "Phiên bản dữ liệu:");
 const partialInput = structuredClone(input);

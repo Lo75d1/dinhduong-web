@@ -12,7 +12,10 @@ let energy = 130;
 let label = "Nguồn giả lập kiểm thử", foodType = "CB";
 export function setFixtureFoodEnergy(value: number) { energy = value; }
 export function setFixtureFoodSource(value: string, type: string) { label = value; foodType = type; }
-export async function loadNutritionFoods(ids: string[]): Promise<NutritionFood[]> {
+let requestedFields: string[] = [];
+export function fixtureRequestedNutrientFields() { return requestedFields; }
+export async function loadNutritionFoods(ids: string[], fields: string[] = []): Promise<NutritionFood[]> {
+  requestedFields = fields;
   return ids.includes("fixture-rice") ? [{
     id: "fixture-rice", name: "Cơm (fixture)", unit: "g", source: { kind: "catalog", label, confirmed: true },
     foodType, wastePercent: null, foodGroup: "Lương thực", nutrients: {

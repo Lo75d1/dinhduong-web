@@ -99,11 +99,19 @@ export function resolveMenu(input: MenuInput, catalogue: NutritionFood[], recomm
   }
   const selected = new Set(input.fields ?? CORE_CALC_FIELDS.map(f => f.key));
   const fields = ALL_NUTRIENT_FIELDS.filter(field => selected.has(field.key));
-  const allKeys = [...new Set([...CORE_CALC_FIELDS.map(f => f.key), ...fields.map(f => f.key), ...(diet ? DIET_NUTRIENT_KEYS : [])])];
+  // The requested fields only choose the concise chat output. The web report
+  // and its source snapshot must retain the complete nutrient registry.
+  const allKeys = [...new Set([...ALL_NUTRIENT_FIELDS.map(f => f.key), ...(diet ? DIET_NUTRIENT_KEYS : [])])];
   const dayTotals = days.map(day => ({ id: day.id, label: day.label, date: day.date, hasData: day.rows.length > 0, totals: totals(day.rows, allKeys) }));
   const overall = totals(rows, allKeys);
   const engineDays: MenuDay[] = days.map(day => ({ id: day.id, label: day.label, date: day.date, rows: day.rows.map(engineRow) }));
   const analysis = analyzeMenuPeriod(engineDays, input.comparison.mode === "profile" ? input.profile ?? null : null, input.comparison.mode === "profile" ? recommendations : []);
+  const existingNutrients = new Map(analysis.nutrients.map(metric => [metric.key, metric]));
+  analysis.nutrients = ALL_NUTRIENT_FIELDS.filter(field => !["energyKcal", "proteinG", "lipidG", "glucidG"].includes(field.key)).map(field => existingNutrients.get(field.key) ?? {
+    ...field, total: { value: null, incomplete: false }, averagePerDay: null,
+    targetPerDay: null, targetPeriod: null, percentOfTarget: null,
+    comparableDays: 0, achievedDays: 0, status: "unknown", isUpperLimit: false, targetType: null,
+  });
   let targets: ResolvedMenu["targets"] = [];
   if (input.comparison.mode === "manual") targets = input.comparison.targets!.map(t => ({ key: t.key, value: t.value, source: t.source, isUpperLimit: t.isUpperLimit ?? false }));
   if (input.comparison.mode === "profile") {
