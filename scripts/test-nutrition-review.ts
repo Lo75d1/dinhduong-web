@@ -57,7 +57,7 @@ async function main() {
   const bytes = await buildNutritionWorkbook(menu, foods);
   await fs.mkdir("evidence/nutrition-chat", { recursive: true }); await fs.writeFile("evidence/nutrition-chat/recall-2598-test.xlsx", bytes);
   const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);
-  equal(workbook.worksheets[0].name, "Phieu 24h");
+  equal(workbook.worksheets[0].name, "Phan tich chi tiet");
   const survey = workbook.getWorksheet("Phieu 24h")!, energy = workbook.getWorksheet("Quy doi 24h")!;
   equal((survey.getRow(6).values as unknown[]).slice(1), RECALL_HEADERS); equal((energy.getRow(6).values as unknown[]).slice(1), RECALL_ENERGY_HEADERS);
   equal(survey.getCell("A7").value, "11:30"); equal(survey.getCell("E7").result, "*1 bát"); equal(survey.getCell("F7").result, 200); equal(survey.getCell("G7").result, 0.4); equal(survey.getCell("H7").result, 80);

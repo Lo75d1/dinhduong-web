@@ -6,6 +6,7 @@ import { nutritionWebsiteLink } from "./website-links";
 import { markAiNumber } from "./workbook-ai";
 import { AI_NUMBER_LEGEND, briefFoodSource,standaloneVddDish } from "./presentation";
 import { appendClinicalWorkbookSection } from "./workbook-clinical";
+import { addNutritionDetailSheet } from "./workbook-detail";
 
 export type NutritionReportMeta = {
   subjectName?: string; subjectGroup?: string; clinicalCourse?: string;
@@ -185,7 +186,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     calc(summary.getCell(mainRow, 3), `'Thanh phan day du'!C${output + 1 + i}`, report.getCell(output + 1 + i, 3).result as string | number | null);
     summary.getCell(mainRow++, 3).numFmt = "0.0%";
   }
-  context(summary, mainRow++, "Bảng này trình bày các chỉ tiêu chính và chất đã chọn. Toàn bộ 160 trường xem tại Thanh phan day du; theo từng ngày xem Dinh duong theo ngay nếu có.");
+  context(summary, mainRow++, "Từng thực phẩm và toàn bộ 160 chất cùng một bảng: Phan tich chi tiet. Tổng theo chất: Thanh phan day du; theo ngày: Dinh duong theo ngay nếu có.");
   context(summary, mainRow++, "Dấu — là chưa có số liệu hoặc mốc. Tổng một phần chỉ gồm các dòng đã biết. Trung bình chia cho ngày có nhập; dòng thiếu không được coi bằng 0.");
   for (const text of [meta.subjectGroup && `Nhóm / mục tiêu: ${meta.subjectGroup}`, meta.clinicalCourse && `Theo dõi: ${meta.clinicalCourse}`, meta.menuNote && `Ghi chú: ${meta.menuNote}`].filter((text): text is string => Boolean(text))) for (let offset = 0; offset < text.length; offset += 1000) {
     const part = text.slice(offset, offset + 1000); context(summary, mainRow, part); summary.getRow(mainRow++).height = Math.max(30, Math.ceil(part.length / 130) * 18);
@@ -204,6 +205,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   context(plan, 5, planNotice);
   calc(plan.getCell("A5"), `IF(${structureNotice},"Đã thay đổi số dòng/ngày; cần xuất lại để bảng thực đơn bao phủ đủ đầu vào mới.","${planNotice}")`, planNotice);
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
+  addNutritionDetailSheet(workbook, menu, build.inputCapacity);
   const wholeDishRange = `'_lists'!$F$${FIRST}:$F$${FIRST + Math.max(1, catalogue.length) - 1}`;
   const selectedNameAt = (r: number) => `IF('Nhap khau phan'!O${r}<>"",'Nhap khau phan'!O${r},'Nhap khau phan'!S${r})`;
   const wholeDishAt = (r: number) => rows[r-FIRST]?.row.recipeSource.dishId ? "FALSE" : `IF('Nhap khau phan'!R${r}="catalog",IF('Nhap khau phan'!Q${r}="",FALSE,INDEX(${wholeDishRange},'Nhap khau phan'!Q${r})),FALSE)`;

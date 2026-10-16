@@ -18,6 +18,7 @@ async function main() {
   fixture.foods[0].nutrients.vitDMcg = 3;
   fixture.foods[0].nutrients.vitKMcg = 0;
   fixture.foods[0].nutrients.tocopherolBetaMg = 1.5;
+  fixture.foods[0].nutrients[ALL_NUTRIENT_FIELDS.at(-1)!.key] = 2.5;
   fixture.foods[0].sourceOnlyNutrients = { vitAMgVdd: 99, rniUnknownFattyAcidG: 8 };
   const menu = resolveMenu(fixture.menu.input, fixture.foods);
   const catalogue = [...Array.from({ length: 240 }, (_, i) => ({ ...fixture.foods[0], id: `padding-food-${i}` })), ...fixture.foods];
@@ -25,7 +26,47 @@ async function main() {
   await fs.mkdir("evidence/nutrition-chat", { recursive: true });
   await fs.writeFile("evidence/nutrition-chat/complete-report-test.xlsx", bytes);
   const wb = new ExcelJS.Workbook(); await wb.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);
-  assert.equal(wb.worksheets[0].name, "Bao cao");
+  assert.equal(wb.worksheets[0].name, "Phan tich chi tiet");
+  const matrix = wb.getWorksheet("Phan tich chi tiet")!;
+  const intake = wb.getWorksheet("Nhap khau phan")!;
+  const nutrientHeaders = Array.from({ length: 160 }, (_, i) => String(intake.getCell(6, 29 + i).value));
+  assert.deepEqual(Array.from({ length: 160 }, (_, i) => String(matrix.getCell(6, 9 + i).value).replace("\n", " ")), nutrientHeaders);
+  assert.equal(matrix.columnCount, 169, "eight identifiers/quantities, all 160 nutrients and one source column");
+  assert.equal(matrix.rowCount, 19, "four ingredients, consecutive dish/meal/day subtotals and period total");
+  const foodOutputs = [7, 8, 11, 15];
+  for (const [i, out] of foodOutputs.entries()) {
+    assert.equal(matrix.getCell(out, 4).result, intake.getCell(7 + i, 19).result);
+    for (let f = 0; f < 160; f++) {
+      const original = intake.getCell(7 + i, 29 + f).result;
+      assert.equal(matrix.getCell(out, 9 + f).result, typeof original === "number" ? original : "—", "each ingredient retains every known/missing nutrient");
+      assert.match(matrix.getCell(out, 9 + f).formula, /'Nhap khau phan'!/, "no second nutrition engine in presentation");
+    }
+  }
+  const matrixColumn = (key: string) => 9 + nutrientHeaders.findIndex(header => header === `${ALL_NUTRIENT_FIELDS.find(field => field.key === key)!.label} (${ALL_NUTRIENT_FIELDS.find(field => field.key === key)!.unit})`);
+  assert.equal(matrix.getCell(9, matrixColumn("energyKcal")).result, 360, "dish total");
+  assert.equal(matrix.getCell(10, matrixColumn("energyKcal")).result, 360, "meal total does not double-count the dish subtotal");
+  assert.equal(matrix.getCell(14, matrixColumn("energyKcal")).result, 460, "day total excludes intermediate subtotals");
+  assert.equal(matrix.getCell(19, matrixColumn("energyKcal")).result, 660, "period total reconciles with calculator");
+  assert.equal(matrix.getCell(9, matrixColumn("calciumMg")).result, 20, "partial total preserves known calcium");
+  assert.equal(matrix.getCell(8, matrixColumn("calciumMg")).result, "—", "unknown calcium is not zero");
+  assert.equal(matrix.getCell(7, matrixColumn("vitKMcg")).result, 0, "real zero micronutrient");
+  assert.equal(matrix.getCell(7, matrixColumn(ALL_NUTRIENT_FIELDS.at(-1)!.key)).result, 5, "last source field is not truncated");
+  assert.equal(matrix.getCell("F11").result, "ml");
+  assert.equal(matrix.getCell("G11").result, 200, "custom portion is displayed in its source quantity");
+  assert.equal(matrix.getCell("H11").result, "ml");
+  assert.equal(matrix.views[0].state, "normal");
+  assert.equal(matrix.views[0].zoomScale, 100);
+  assert.equal(matrix.pageSetup.fitToPage, false, "160 nutrient columns must not shrink onto one page");
+  assert.equal(matrix.pageSetup.printTitlesColumn, "A:D");
+  assert.equal(matrix.getColumn(169).hidden, false);
+  assert.match(matrix.getCell(9, 9).formula, /'_source'!\$A\$1/, "regrouped rows require a new presentation instead of misleading subtotals");
+  const formats = (matrix as unknown as { conditionalFormattings: ExcelJS.ConditionalFormattingOptions[] }).conditionalFormattings;
+  assert.ok(formats.some(format => format.ref === "I9:FL9" && JSON.stringify(format.rules[0].style?.numFmt).includes("≥")), "partial subtotals get a numeric marker across all nutrient columns");
+  await fs.writeFile("evidence/nutrition-chat/detail-matrix-proof.json", JSON.stringify({
+    fields: nutrientHeaders, foodOutputs,
+    foods: foodOutputs.map((out, i) => ({ output: out, input: 7 + i, name: matrix.getCell(out, 4).result, values: Array.from({ length: 160 }, (_, f) => matrix.getCell(out, 9 + f).result) })),
+    columns: { energy: matrixColumn("energyKcal"), calcium: matrixColumn("calciumMg"), vitaminK: matrixColumn("vitKMcg"), last: matrixColumn(ALL_NUTRIENT_FIELDS.at(-1)!.key) }
+  }, null, 2));
   const report = wb.getWorksheet("Bao cao")!;
   const find = (label: string) => { let result = 0; report.eachRow((row, i) => { if (row.getCell(1).value === label) result = i; }); assert.ok(result, label); return result; };
   const cached = (row: number, col: number) => report.getCell(row, col).result;
@@ -147,6 +188,9 @@ async function main() {
   const dense = Object.fromEntries(ALL_NUTRIENT_FIELDS.map(field => [field.key, field.key === "energyKcal" ? 130 : 1]));
   const oversizedCatalogue = [...fixture.foods, ...Array.from({ length: 5900 }, (_, i) => ({ ...fixture.foods[0], id: `dense-test-${i}`, nutrients: dense }))];
   await assert.rejects(buildNutritionWorkbook(menu, oversizedCatalogue), /an toàn/, "reject excessive allocation before constructing a full workbook");
+  const manyGroups = structuredClone(menu.input);
+  manyGroups.days = [{ ...manyGroups.days[0], rows: Array.from({ length: 600 }, (_, i) => ({ ...manyGroups.days[0].rows[0], id: `matrix-limit-${i}`, dish: `Món kiểm thử ${i}` })) }];
+  await assert.rejects(buildNutritionWorkbook(resolveMenu(manyGroups, fixture.foods), fixture.foods), /an toàn/, "allocation budget includes the wide ingredient matrix and all its subtotals");
   console.log(JSON.stringify({ sourceFields: fields.length, calculated: ALL_NUTRIENT_FIELDS.length, sourceOnly: SOURCE_ONLY_NUTRIENT_FIELDS.length, bytes: bytes.length, reportRows: report.rowCount, result: "complete report and import checks passed" }));
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
