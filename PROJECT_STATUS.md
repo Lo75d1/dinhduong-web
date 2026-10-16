@@ -1,5 +1,10 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Phiên tạm không tài khoản — 16/10/2026, đang nghiệm thu VPS
+
+- Bổ sung start_guest_session và token khách30phút, không tạo tài khoản hoặc lưu thực đơn; chỉ kho chung/tính/Excel, không thư viện/bản lưu riêng. Có tạo/kết thúc trên `/ket-noi-ai#phien-tam`;16tool/gói1.0.5. Mỗi kết quả/lỗi API có guidance hỏi phần thiếu/chờ duyệt/bước tiếp, giữ cả khi MCP rút gọn.
+- Full suite/HTTP308/guide77/React12/Prisma/TypeScript/lint đạt; không migration. App92b4eb8 đã build/healthy và checksum nguồn/cấu hình giữ nguyên sau deploy. Khi nghiệm thu HTTPS, web/SSH bắt đầu timeout dù ping18ms; chưa kết luận nguyên nhân, chưa xác nhận nghiệm thu Excel hoặc dọn fixture production. Chủ dự án đã mở Console/VNC, đang chờ chẩn đoán. Chi tiết `docs/nutrition-chat/guest-session-2026-10-16.md`; PR#4 draft/chưa merge. Không coi phần này đã hoàn tất.
+
 ## Hướng dẫn plugin và token API chỉ tính — 16/10/2026
 
 - App **23457e0** healthy: hướng dẫn1.0.4 dùng chung cho15tool, QR/TXT/web/ZIP; sửa lời nhắn mặc định lưu, phân biệt chỉ tính/chỉ Excel/lưu. Onboarding và2skill/6file có thể import qua MCP extension/digest; host cần Scan Tools/cập nhật snapshot, không tự giả định đã cài skill.
