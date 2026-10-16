@@ -4,6 +4,12 @@
 - Source of truth: `src/lib/nutrition-chat/contracts.ts`, `validation.ts`, `tools.ts`, `protocol.ts`. Không copy thêm một schema độc lập vào plugin; `get_workflow` và tools/list trả schema phiên đang chạy.
 - Contract `1.0`; hỗ trợ MCP `2026-07-28` và compatibility `2025-11-25`, `2025-06-18`, `2025-03-26`. Client mới dùng envelope `_meta` và header method/name/version theo protocol; legacy dùng initialize. List/discover mới có `resultType`, `_meta` server info, `ttlMs`, `cacheScope: private`.
 
+## Token vận chuyển và hồ sơ — server 1.0.11
+
+- MCP phiên tạm dùng `arguments.sessionToken`; REST dùng header Bearer. Với công cụ hỗ trợ guest, nếu client gửi cả header hợp lệ và argument đúng dạng, handler tiêu thụ argument trước kiểm tham số nghiệp vụ; identity/scope từ header ưu tiên. Header sai/thiếu quyền không được fallback sang guest. Có OAuth thì client nên bỏ sessionToken; công cụ tài khoản vẫn từ chối trường ngoài schema.
+- `profile` tùy chọn. Nếu gửi, phải có age/ageUnit/gender/activityLevel/physiology như schema; số hồ sơ là chuỗi. Thiếu trường bắt buộc trả422 và guidance needs_input, không tự đoán số/giới/sinh lý. REST trả HTTP422; MCP trả result.isError với status422 trong nội dung lỗi.
+- Chỉ cộng thành phần dùng comparison.mode=none, mục tiêu xác nhận có nguồn dùng manual: không cần profile/tuổi/giới. Tính nhu cầu theo hồ sơ thì hỏi phần còn thiếu; giữ dữ kiện đã có và giải thích lựa chọn trước khi bỏ profile hoặc đổi chế độ. Biên bản [kiểm hai lỗi gọi công cụ](tool-input-fixes-2026-10-16.md).
+
 ## Discovery trước khi cấp quyền — server 1.0.1
 
 - MCP initialize/discover/tools-list/ping/initialized và `get_workflow` cho phép không có Authorization để client đọc schema/hướng dẫn trước khi kết nối. Không trả dữ liệu Food/Dish, bản lưu hoặc tài khoản trong các phản hồi public này. Dùng hạn mức global/per-IP hiện có, không tạo hệ thống quota mới.

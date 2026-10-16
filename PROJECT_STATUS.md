@@ -1,5 +1,10 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Sửa token MCP gửi trùng và hướng dẫn hồ sơ thiếu — 16/10/2026
+
+- App **4c2a23c** đã build/healthy trên VPS; guide/plugin **1.0.11**,16tool. Tái hiện rồi sửa sessionToken lọt vào allowlist nghiệp vụ khi client có cả Authorization và argument; header identity/scope vẫn ưu tiên, không fallback khi sai/thiếu quyền. Schema profile khai đúng required/enums; thiếu tuổi/giới trả422/needs_input và hỏi phần thiếu, không bịa. None/manual có mục tiêu nguồn không cần profile; không tự đổi chế độ để qua lỗi.
+- Prisma/TypeScript/lint6file/full suite đạt: core86/HTTP389/guide97, các hồi quy khác giữ đạt. **HTTPS72** trên VPS gồm MCP cũ/mới/ba đường token, schema/4góiSHA, thiếu và đủ hồ sơ, none/manual không hồ sơ, tính đúng Food nguồn và auth/private guards. Token/snapshot kỹ thuật dọn, account counts/canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm nền tảng AI thật; Windows có kết nối SSH/HTTPS timeout xen kẽ dù lượt kiểm VPS hoàn tất healthy, chưa rõ nguyên nhân. Chi tiết `docs/nutrition-chat/tool-input-fixes-2026-10-16.md`; PR#4 draft/chưa merge main.
+
 ## Bổ sung các bảng phân tích web vào Excel — 16/10/2026
 
 - App **8e20d14** healthy trên VPS: thêm `Can doi nang luong` và `Dong gop bua mon`; đủ bảng ngày/kỳ, P:L:G và theo cân nặng, đóng góp bữa/món, ngày đủ cơ sở/đạt, nhóm thực phẩm/ngày, số bữa theo mã chế độ ăn và bảng WHO trẻ em khi đủ hồ sơ/nguồn. Ma trận từng thực phẩm×160 chỉ tiêu vẫn là tab đầu. Không bổ sung biểu đồ.
