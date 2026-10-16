@@ -1,5 +1,12 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Link bản tạm sửa trên web và nước chấm — 16/10/2026
+
+- App **ea26cdf** healthy trên VPS, nhánh `codex/nutrition-chat-api`/PR#4 draft/chưa merge. Prepare có link đầu vào nháp, calculate/export có link bản đã tính; mở/sửa/tính lại không cần đăng nhập, hạn30phút. Đầu vào giữ riêng trong vùng tạm, không tạo tài khoản/Ration. Link mới giữ bản cập nhật, link cũ giữ đầu vào cũ; Excel là tải thêm. Muốn giữ lâu dài mới đăng nhập tab mới, prepare bằng tài khoản và duyệt lại để save.
+- Tái dùng bộ tính/nguồn/biểu mẫu dùng lại/báo cáo/limiter/vùng tạm/timer; không model/migration hoặc sửa kho. Capability fragment đổi lấy cookie từng bản HttpOnly/Secure/Strict; ID không cookie không mở được. Không đưa token tài khoản vào link. Đọc tra nguồn hiện tại, TTL/quota/Origin/allowlist phía server; dọn file hết hạn qua maintenance15phút đã cập nhật image và kiểm chạy.
+- Hướng dẫn1.0.8/16tool trên workflow/QR/TXT/web/ZIP/skill: món luộc/hấp phải hỏi nước chấm/lượng thực dùng, tra và tính nguồn thật, không cộng trùng hoặc thêm vào lịch sử24h khi chưa ăn. Rà bỏ câu cũ bắt lưu tài khoản mới có link web; cần Refresh/Scan Tools để nhận hướng dẫn mới.
+- Full suite/HTTP347/guide89/React SSR10, Prisma/TypeScript/lint file sửa/Linux build đạt. **HTTPS99 + smoke20**: chỉnh100→150g tính đúng theo hai Food thật, bản cũ/mới tách biệt, cookie/Origin/TTL/save-denied, Excel1.550.729byte; account/session/Ration/OAuth count không đổi, fixture dọn. Canonical5bảng/25migration/cấu hình giữ nguyên, timer active/enabled, không OOM/swap. Chưa kiểm browser tương tác/hydration/mobile hoặc hội thoại AI thật do browser không kết nối. Chi tiết `docs/nutrition-chat/web-edit-and-sauces-2026-10-16.md`.
+
 ## QR/hướng dẫn dành cho bác sĩ và dùng lâu dài — 16/10/2026
 
 - App7d3ecf1 healthy: trang chủ có QR/ba bước/nút bắt đầu, trang QR có lời nhắn ngắn và hướng dẫn bật kết nối lần đầu. Chat được chỉ tự mở phiên tạm, không bắt bác sĩ lấy token; manual token nằm trong phần mở rộng. QR/link không tự cài plugin vào chat chưa có công cụ.
