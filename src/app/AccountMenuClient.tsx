@@ -140,36 +140,6 @@ export default function AccountMenuClient({
                 Chỉ định chế độ ăn
               </Link>
             )}
-            {user.role === "DEPARTMENT_STAFF" && (
-              <Link
-                href="/bao-suat-an"
-                onClick={() => setOpen(false)}
-                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
-                role="menuitem"
-              >
-                Báo suất ăn
-              </Link>
-            )}
-            {user.role === "KITCHEN_STAFF" && (
-              <Link
-                href="/bep"
-                onClick={() => setOpen(false)}
-                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
-                role="menuitem"
-              >
-                Ca trực bếp
-              </Link>
-            )}
-            {["ADMIN", "DIETITIAN", "KITCHEN_MANAGER"].includes(user.role) && (
-              <Link
-                href="/quan-tri/suat-an"
-                onClick={() => setOpen(false)}
-                className="px-4 py-2 text-neutral-800 hover:bg-[#f1f6f3]"
-                role="menuitem"
-              >
-                Quản lý suất ăn
-              </Link>
-            )}
             {user.role === "ADMIN" && (
               <Link
                 href="/quan-tri"

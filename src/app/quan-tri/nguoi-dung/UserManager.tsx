@@ -285,11 +285,7 @@ export default function UserManager({ initial }: { initial: UserList }) {
           </button>
         </form>
         <p className="mt-4 text-sm text-neutral-600">
-          Nhân viên khoa cần được gán đúng khoa tại{" "}
-          <Link href="/quan-tri/suat-an" className="underline">
-            Quản lý suất ăn
-          </Link>
-          . Người dùng có thể tự đổi mật khẩu sau khi đăng nhập.
+          Người dùng có thể tự đổi mật khẩu sau khi đăng nhập.
         </p>
       </details>
       <form onSubmit={search} className="my-6 flex flex-wrap items-end gap-3">
