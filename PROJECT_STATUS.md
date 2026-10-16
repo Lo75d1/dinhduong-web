@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Bổ sung các bảng phân tích web vào Excel — 16/10/2026
+
+- App **8e20d14** healthy trên VPS: thêm `Can doi nang luong` và `Dong gop bua mon`; đủ bảng ngày/kỳ, P:L:G và theo cân nặng, đóng góp bữa/món, ngày đủ cơ sở/đạt, nhóm thực phẩm/ngày, số bữa theo mã chế độ ăn và bảng WHO trẻ em khi đủ hồ sơ/nguồn. Ma trận từng thực phẩm×160 chỉ tiêu vẫn là tab đầu. Không bổ sung biểu đồ.
+- Tái dùng builder, số/công thức nhập/tổng và hàm WHO chung web; không engine/model/migration hoặc sửa kho. Xuất web giữ lựa chọn bếp/tỷ lệ bữa/mã canonical hiện có. Thiếu `—`, zero giữ0, phần thiếu đánh `≥`; không tự chia mục tiêu bữa. Bếp chỉ tham khảo nhu cầu cả ngày. File cũ cần xuất lại.
+- Prisma/TypeScript/lint15file/full suite và Linux build đạt; test phân tích56, native fixture28/hồi quy668; **HTTPS82**, file chat1.619.009byte/native971 và file web1.621.525byte/native366 đạt, mọi sheet không lỗi công thức. PDF bảng cân đối/đóng góp đã xem. Browser không kết nối nên chưa kiểm click/hydration/AI thật. Account counts/canonical5bảng/25migration/cấu hình giữ nguyên, token/file tạm dọn, timer active/enabled, không OOM/swap. Guide/plugin1.0.10/16tool, PR#4 draft/chưa merge main. Biên bản: `docs/nutrition-chat/analysis-tables-2026-10-16.md`.
+
 ## Bảng Excel từng thực phẩm và đầy đủ vi chất — 16/10/2026
 
 - App **981579e** healthy trên VPS; `Phan tich chi tiet` là tab đầu của Excel đầy đủ dùng chung web/hội thoại. Một bảng gồm ngày/bữa/món, từng thực phẩm, lượng g/ml/suất và lượng nguồn dùng tính, **160 cột dinh dưỡng**, nguồn cuối bảng; có cộng món/bữa/ngày/toàn khẩu phần. Không chỉ bốn chất hoặc tổng dọc theo chất.

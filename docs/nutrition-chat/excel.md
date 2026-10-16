@@ -1,5 +1,13 @@
 # Excel chỉnh được
 
+## Các bảng phân tích web trong file chung (16/10/2026)
+
+- `Can doi nang luong`: năng lượng/mục tiêu/chênh lệch/tỷ lệ/P–L–G/số bữa theo ngày; tổng quan kỳ/ngày đạt-thiếu-vượt; hồ sơ, cân đối P:L:G, g/kg/ngày và kcal/kg/ngày. Bảng WHO trẻ em dùng chung hàm/nguồn với web, xuất khi có hồ sơ/chuẩn phù hợp. Hồ sơ/WHO là snapshot khi xuất, không tự đổi khi sửa bảng khẩu phần.
+- `Dong gop bua mon`: kcal/tỷ lệ/chất theo bữa/món toàn kỳ và mục tiêu bữa do người dùng nhập; không tự chia phần trăm khi chưa có bộ tỷ lệ đủ100%. Web nhiều ngày truyền lựa chọn bếp/tỷ lệ bữa/mã; một ngày giữ mã đang chọn. Mã tra lại canonical; không coi dropdown là kê đơn. Bếp chỉ tham khảo so với nhu cầu cả ngày.
+- `Thanh phan day du`: bổ sung đối chiếu160 chỉ tiêu với nhu cầu cả kỳ, số ngày đủ cơ sở/đạt, loại mốc và nguồn. `Nhom thuc pham`: bổ sung tỷ lệ năng lượng, số ngày và danh sách số thứ tự ngày dùng. `Bao cao`: đối chiếu mã có thêm số bữa thực dùng; ngày thiếu định lượng chưa so sánh.
+- Giữ ma trận160 chỉ tiêu ở tab đầu, thực đơn/phiếu24h/quy đổi, đơn vị ăn/đi chợ/nguồn/thuốc-TPBS và các bảng hiện có. Không bổ sung biểu đồ. Các bảng điều kiện cần đủ hồ sơ/mục tiêu/nguồn, thiếu ghi `—`/chưa đủ cơ sở; số0 giữ0, số một phần đánh `≥` nhưng vẫn tính được.
+- Tái dùng công thức đầu vào/tổng; sửa lượng/suất tự cập nhật, thay cấu trúc nhóm cần xuất lại. Guard dung lượng đã tính các bảng/helpers mới. File cũ cần tải lại. Kiểm chứng file thật từ cả web/hội thoại, Excel native và PDF: [biên bản](analysis-tables-2026-10-16.md).
+
 ## Bảng phân tích chính theo từng thực phẩm (16/10/2026)
 
 - Tab đầu **`Phan tich chi tiet`** của bản xuất đầy đủ: ngày, bữa, món, từng thực phẩm/món có số liệu, lượng nhập×số suất, đơn vị nhập, lượng nguồn ăn được, đơn vị nguồn, **toàn bộ 160 trường dinh dưỡng trên cùng một bảng** và một cột nguồn ở cuối. Có cộng món, cộng bữa, tổng ngày và tổng khẩu phần; tổng chỉ cộng dòng thực phẩm, không cộng lại các subtotal. VDD dùng số liệu món gốc không tự sinh nguyên liệu; nguyên liệu VDD thuộc công thức RNI giữ đúng tên và số riêng.
