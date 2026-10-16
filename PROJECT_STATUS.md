@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Bản tính nháp dùng giao diện Tính khẩu phần hiện có — 16/10/2026
+
+- App **4339c73** healthy trên VPS. Link chat mở ngay bước Kết quả, bản nháp có nhãn chưa chốt; dùng chính bảng/thẻ của MultiDayAnalysis và RationDetail nguồn server. Phần nhập chia sẻ cây bữa/món, khung món và thanh bước với trang tính thường; mobile một pane cây hoặc nguyên liệu, không còn danh sách thẻ dài nằm trên bảng nhập. Không chỉ bọc form riêng bằng URL/tiêu đề Calculator.
+- MenuInput gốc giữ ml/suất/nguồn/quy đổi/mã/dấu sao; không ép về Row gam hay lấy cấu hình manual. Sửa đầu vào xóa kết quả/ticket/xác nhận cũ; dùng lại payload/ticket mới để xem và duyệt/tính lại/tải Excel. Tổng thiếu—/≥,0 giữ0, ratio thiếu cơ sở—. Không thay engine/kho/quyền/migration hoặc gói1.0.11/16tool.
+- Prisma/TypeScript/lint14file (0error,4warning cũ ở MealInput)/full suite đạt; native results217/160fields, CalculatorSSR27, **HTTPS98** và SSR dữ liệu VPS22 đạt. Browser/IAB không kết nối nên chưa kiểm click/hydration/ảnh mobile thật. Token/file thử dọn, account counts/canonical5bảng/25migration/cấu hình giữ nguyên; timer active/enabled, không OOM/swap, curl Windows200. PR#4 draft/chưa merge. Biên bản `docs/nutrition-chat/native-calculator-2026-10-16.md`.
+
 ## Sửa token MCP gửi trùng và hướng dẫn hồ sơ thiếu — 16/10/2026
 
 - App **4c2a23c** đã build/healthy trên VPS; guide/plugin **1.0.11**,16tool. Tái hiện rồi sửa sessionToken lọt vào allowlist nghiệp vụ khi client có cả Authorization và argument; header identity/scope vẫn ưu tiên, không fallback khi sai/thiếu quyền. Schema profile khai đúng required/enums; thiếu tuổi/giới trả422/needs_input và hỏi phần thiếu, không bịa. None/manual có mục tiêu nguồn không cần profile; không tự đổi chế độ để qua lỗi.
