@@ -45,7 +45,7 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bư�
 
 ## Bước 2: xác nhận và gửi
 
-- Trình `review.text` của đúng bản server chuẩn bị: món theo ngày/bữa, thành phần, lượng, số suất, cơ sở và nguồn; giữ dấu sao. Chỉ nêu gọn thông tin cần bổ sung; không dán JSON/token/ghi chú dài. `review.truncated=true` phải chia kỳ để duyệt đủ. Token xác nhận không phải bằng chứng người dùng đồng ý.
+- Ngay bản nháp đầu tiên và mọi bản sửa, trình `review.text` đầy đủ trong chat theo ngày/bữa → món → từng thực phẩm/nguyên liệu, lượng/đơn vị, số suất/cơ sở/nguồn; giữ dấu sao. Không rút thành bảng chỉ có tên món, không giấu thành phần trong link web hoặc chờ người dùng hỏi. RNI đọc đủ get_dish và dùng lượng của bản đang duyệt; VDD chỉ có số cả món ghi Kho chưa có thành phần nguyên liệu, không tự suy công thức. Gọn là bớt ghi chú, không bớt nguyên liệu; không dán JSON/token. `review.truncated=true` phải chia kỳ để duyệt đủ. Token xác nhận không phải bằng chứng người dùng đồng ý.
 - Sau khi người dùng xác nhận rõ bản đang xem, dùng đúng đầu vào và `confirmationToken` để gọi `calculate_menu`. Nếu thay đầu vào hoặc token hết hạn, chuẩn bị lại rồi xác nhận lại phần thay đổi.
 - Chỉ gọi `save_menu` khi người dùng yêu cầu lưu. Xác định lưu bản mới hay sửa bản đã mở; cập nhật dùng revision của bản đã đọc và khóa chống trùng cho cùng một thao tác. Lỗi xung đột phải đọc lại rồi trình bày khác biệt, không ghi đè âm thầm.
 - `list_saved_menus` / `get_saved_menu` chỉ làm việc với tài khoản đang được cấp quyền. ID không cho phép truy cập bản của người khác. Mở lại tính theo nguồn hiện tại; nếu `sourceChanged`, nêu nguồn đã đổi so với lần lưu và dùng `input` chuẩn hóa trả về trước khi chốt thao tác tiếp (`preview.input` chỉ khi kết quả đầy đủ có trường đó).

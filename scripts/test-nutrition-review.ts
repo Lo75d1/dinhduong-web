@@ -11,6 +11,7 @@ import { displayNumber, recallAmounts, RECALL_HEADERS, RECALL_ENERGY_HEADERS } f
 import { nutritionChatReport } from "../src/lib/nutrition-chat/chat-report";
 import { NUTRITION_WORKFLOW } from "../src/lib/nutrition-chat/tools";
 import { nutritionStartMessage } from "../src/lib/nutrition-chat/start-guide";
+import { nutritionResponseGuidance } from "../src/lib/nutrition-chat/response-guidance";
 
 let checks = 0;
 function equal(actual: unknown, expected: unknown, message?: string) { if (message) assert.deepEqual(actual, expected, message); else assert.deepEqual(actual, expected); checks++; }
@@ -33,6 +34,13 @@ async function main() {
   equal(displayNumber(0, true), "*0"); equal(displayNumber(null, true), "—"); equal(typeof normalized.days[0].rows[0].quantity, "number");
   const review = nutritionMenuReview(menu);
   check(review.text.includes("\\*200 g")); check(review.text.includes("\\*")); check(!review.text.includes("confirmationToken")); equal(review.truncated, false); equal(review.rowCount, 4);
+  check(review.text.includes("Kho chưa có thành phần nguyên liệu"), "whole VDD dish explicitly reports unavailable ingredients");
+  const recipeFoods = [foods[0], foods[2], foods[3]].map((food, i) => ({ ...food, name: ["Cá kiểm thử", "Rau kiểm thử", "Dầu kiểm thử"][i], source: { ...food.source, label: "RNI" } }));
+  const recipeInput = parseMenuInput({ title: "Kiểm duyệt món nhiều nguyên liệu", mode: "menu", comparison: { mode: "none" }, days: [{ id: "recipe-day", label: "Ngày 1", date: "", rows: recipeFoods.map((food, i) => ({ id: `ingredient-${i}`, foodId: food.id, meal: "Trưa", dish: "Canh kiểm thử", quantity: [80, 120, 5][i], unit: "g", servings: 1, basis: "edible", recipeSource: { kind: "catalog", label: "RNI", dishId: "fixture-recipe" } })) }] });
+  const recipeMenu = resolveMenu(recipeInput, recipeFoods), recipeReview = nutritionMenuReview(recipeMenu);
+  equal(recipeReview.rowCount, 3); equal(recipeReview.shownRows, 3);
+  for (const [i, food] of recipeFoods.entries()) check(recipeReview.text.split("\n").some(line => line.includes(food.name) && line.includes(`| ${[80, 120, 5][i]} g |`)), "each ingredient keeps its own draft amount");
+  for (const name of ["prepare_menu", "get_saved_menu"]) check(nutritionResponseGuidance(name, { preview: recipeMenu, review: recipeReview }).instruction.includes(NUTRITION_WORKFLOW.approvalPresentation), "approval responses retain the ingredient display requirement");
   const long = structuredClone(normalized); long.days = [{ ...long.days[0], rows: Array.from({ length: 101 }, (_, i) => ({ ...long.days[0].rows[0], id: `long-${i}` })) }];
   const bounded = nutritionMenuReview(resolveMenu(long, foods)); equal(bounded.shownRows, 100); equal(bounded.truncated, true); check(bounded.text.includes("100/101"));
   for (const patch of [{ mealTime: "25:00" }, { aiFilledFields: ["quantity", "quantity"] }, { aiFilledFields: ["profile.weight"] }, { quantity: "*200" }]) {

@@ -1,8 +1,12 @@
 # Công cụ, kết quả và cách xử lý
 
-Phiên bản hướng dẫn: 1.0.8. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
+Phiên bản hướng dẫn: 1.0.9. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
 
 Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa kết nối tài khoản và chỉ cần tra/tính/Excel: gọi start_guest_session công khai, dùng accessToken trong arguments.sessionToken của công cụ tiếp theo; phiên 30 phút không tạo tài khoản. Mặc định không lưu. Đọc guidance trong TỪNG phản hồi để biết thiếu gì, phải hỏi/chờ duyệt hay được gọi công cụ nào; không coi số liệu hay confirmationToken là người dùng đã đồng ý. Không gọi lại cùng truy vấn khi không có thay đổi. Người dùng có thể chưa quen kỹ thuật: tự mở phiên cần thiết qua công cụ khi đã được yêu cầu tra/tính/Excel, không bắt họ tự lấy token hoặc học tên API. Muốn lưu/dùng lâu dài thì đọc accountUse để hướng dẫn đăng ký/đăng nhập và kết nối tài khoản; giữ đầu vào, prepare lại bằng tài khoản rồi chờ duyệt trước save, không dùng ticket guest. Ưu tiên trả webUrl thật từ prepare/calculate để mở đầu vào và kết quả trên web, sửa/tính lại không cần tài khoản. Bản tạm lưu đầu vào30phút; không phải bản tài khoản. Không export hoặc save chỉ để có link xem. Món luộc/hấp cần làm rõ nước chấm và lượng thực ăn; tra nguồn thật, không tự thêm vào lịch sử24giờ.
+
+## Bản nháp để duyệt thành phần
+
+Bản nháp đầu tiên và mọi bản sửa phải hiện ngay trong chat từng món kèm TẤT CẢ thực phẩm/nguyên liệu của món đó, mỗi nguyên liệu một dòng với lượng, đơn vị, số suất/cơ sở và nguồn; giữ dấu * trước số AI tự điền. Có thể nhóm theo ngày/bữa/món hoặc dùng bảng, không rút thành danh sách chỉ có tên món, không giấu nguyên liệu trong link web hoặc chờ người dùng hỏi mới đưa. RNI lấy thành phần từ get_dish, dùng lượng của bản nháp đang duyệt, không mặc định lượng công thức nguồn là một suất. VDD chỉ có số cả món thì ghi Kho chưa có thành phần nguyên liệu, không tự suy công thức. Phần chưa rõ để — và hỏi lại. Bản bị rút gọn phải chia kỳ để duyệt đủ, không coi phần chưa hiện là đã được đồng ý.
 
 ## start_guest_session — Mở phiên tạm không cần tài khoản
 
@@ -44,7 +48,7 @@ Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa 
 - Khi dùng: Cần thành phần của một món RNI đã tìm thấy.
 - Đầu vào: {id} từ search_dishes.
 - Kết quả: Một món trực tiếp với ingredients[] và liên kết food. Đọc số lượng/cơ sở nguồn; mục chưa liên kết cần làm rõ.
-- Tiếp theo: Tạo từng dòng nguyên liệu với Food ID thật, lượng đã làm rõ và recipeSource.dishId. Không coi định lượng nguồn mặc định bằng một suất.
+- Tiếp theo: Trình từng nguyên liệu cùng lượng công thức nguồn để người dùng điều chỉnh, không chỉ tên món. Tạo từng dòng với Food ID thật, lượng đã làm rõ và recipeSource.dishId; lượng chưa biết để thiếu. Không coi định lượng nguồn là một suất. Bản nháp sau prepare phải hiện đủ từng nguyên liệu với lượng của bản đang duyệt.
 
 ## search_diet_codes — Tìm mã chế độ ăn
 
@@ -79,7 +83,7 @@ Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa 
 - Khi dùng: Đã có đầu vào theo menuSchema; cần kiểm phần thiếu hoặc chuẩn bị chốt.
 - Đầu vào: {input}; mode=menu hoặc recall24h; mỗi ngày có id,label,date,rows, date chưa biết dùng chuỗi rỗng.
 - Kết quả: input chuẩn hóa, preview.missingInputs, review.text, review.truncated, confirmationToken và expiresAt. Đây chưa phải người dùng đồng ý. Có webUrl/webExpiresAt để mở bản nháp và sửa trên web, không cần đăng nhập; đầu vào được giữ tạm30phút, chưa phải bản đã chốt.
-- Tiếp theo: Sửa các missingInputs ảnh hưởng tính rồi prepare lại; khi đủ, trình review.text một lần và chờ đồng ý. Dùng input/token cùng phản hồi cho calculate/export/save. Trả webUrl thật để người dùng có thể chuyển sang chỉnh/duyệt trên web; không bắt lưu tài khoản hoặc tải Excel.
+- Tiếp theo: Trình review.text đầy đủ từng thực phẩm/nguyên liệu và lượng dưới mỗi món ngay bản nháp đầu tiên; không rút thành tên món hoặc chỉ gửi link web. Theo approvalPresentation, giữ dấu *, hỏi người dùng xác nhận đúng thành phần/định lượng rồi DỪNG CHỜ. Có thay đổi thì prepare lại; chưa đồng ý không calculate/save/export.
 
 ## calculate_menu — Tính và trả báo cáo, không lưu
 

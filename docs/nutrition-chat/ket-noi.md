@@ -44,14 +44,14 @@ Muốn lưu cần kết nối có `nutrition:write`. Nếu đã cấp thiếu qu
 - Chat tra bằng `list_personal_library` / `get_personal_library_item`; thêm/sửa/xóa thư viện trên web. Sửa thư viện không tự thay những thực đơn đã lưu.
 
 1. **Làm rõ:** AI tra data, tách công thức và hỏi lượng/số suất/khối lượng sống hay chín. Món chưa có công thức hoặc nguyên liệu tham chiếu phải ghi là ước lượng. Nhãn ngoài kho chỉ nhập những chất có số và đơn vị được xác minh.
-2. **Chốt:** xem review món/lượng/suất/nguồn gọn, có `*` trước mọi số AI tự điền; xác nhận trước khi tính. Lưu khi chọn nhận link bản riêng trên tài khoản; món thay đổi không sửa kho gốc.
+2. **Chốt:** bản nháp đầu tiên hiện ngày/bữa, từng món và từng thực phẩm/nguyên liệu kèm lượng/đơn vị, số suất/cơ sở/nguồn để điều chỉnh. Không chỉ tên món hoặc link web. RNI có công thức thì hiện đủ thành phần; VDD không có thì ghi rõ, không tự đoán. Có `*` trước mọi số AI tự điền; xác nhận trước khi tính. Lưu khi chọn nhận link bản riêng trên tài khoản; món thay đổi không sửa kho gốc.
 3. **Kết quả:** nhận tóm tắt kcal/P–L–G cùng link bản tạm để sửa/tính lại trên web, không cần đăng nhập, có hạn30phút. Không cần lưu tài khoản hoặc tải Excel để dùng link này. Muốn giữ lâu dài mới lưu vào tài khoản; cần Excel thì tải thêm với saveToAccount=false. Chỉ tính thành phần không cần hồ sơ; thiếu mục tiêu không kết luận đạt nhu cầu. Phiếu hỏi ghi24h bám Phụ lục1/2 mục11 QĐ2598/QĐ-BYT, phần chưa biết để —.
 
 ## Plugin nào làm gì, kết quả ở đâu?
 
 - Một plugin Dinh dưỡng2598 chứa16 công cụ; không cài mỗi tool thành plugin riêng. Khi chỉ thêm URL MCP, gọi `get_workflow` để nhận hướng dẫn hiện tại; không giả định skill ZIP đã được nạp.
 - `get_workflow.toolGuide` chỉ rõ khi dùng, đầu vào, trường kết quả và bước tiếp theo; `recipes` chọn luồng chỉ tính/chỉ Excel/lưu/bệnh lý; `recovery` giải thích400/401/403/404/409/422/429/503 và kết quả rút gọn.
-- Gói ZIP có README, SKILL và `references/cong-cu.md` từ cùng hợp đồng với server. Phiên bản hướng dẫn1.0.8. Danh sách và kết quả cũng xem trực tiếp ở trang kết nối.
+- Gói ZIP có README, SKILL và `references/cong-cu.md` từ cùng hợp đồng với server. Phiên bản hướng dẫn1.0.9. Danh sách và kết quả cũng xem trực tiếp ở trang kết nối.
 - Tìm kiếm trả `items`; `get_food/get_dish/get_diet_code` trả một đối tượng trực tiếp. Code như GU01-X khác ID trong kho. `calculate_menu` trả `chatReport` cùng `webUrl/webExpiresAt`, không tự tạo file tải hoặc bản tài khoản.
 - API token là bí mật đặt trong header xác thực. `confirmationToken` từ prepare chỉ ràng buộc đầu vào đã duyệt; không thay token API hoặc sự đồng ý của người dùng.
 
@@ -91,9 +91,9 @@ Ngày đối chiếu tài liệu nền tảng: 15/10/2026; [OpenAI Quickstart](h
 - Trang chủ có QR và nút Bắt đầu và xem hướng dẫn. QR/link cùng mở /ket-noi-ai/bat-dau; sao chép lời nhắn ngắn, mở chat đã bật kết nối, dán và gửi. Chat tự gọi get_workflow/start_guest_session theo yêu cầu, giữ token nội bộ. Không bắt người dùng tự tạo token hoặc đọc JSON.
 - Chưa có kết nối: trang bắt đầu có mục Lần đầu dùng, chỉ tên nút và địa chỉ server; QR/link không tự cài plugin. Trong ChatGPT ưu tiên OAuth or no authentication để dùng cả phiên tạm và tài khoản, hoặc No authentication khi chỉ dùng phiên tạm.
 - Muốn giữ lâu dài: mở /dang-nhap?next=%2Ftai-khoan, chọn Đăng ký mới/Tạo tài khoản hoặc Đăng nhập, rồi quay lại chat kết nối tài khoản và yêu cầu lưu. Đăng nhập web chưa tự gắn tài khoản với chat; nếu kết nối hiện tại chỉ No authentication, thêm kết nối hỗ trợ OAuth. Giữ input, prepare lại bằng identity tài khoản, chờ duyệt trước save; không dùng confirmationToken guest. Trả ration.url để mở lại trong Thực đơn của tôi, không bắt nhập lại hoặc gửi Excel.
-- Hướng dẫn web/QR/TXT/skill và workflow.accountUse cùng phiên bản1.0.8. Tùy chọn token thủ công nằm trong phần mở rộng dành cho phần mềm khác, không phải thao tác bắt buộc cho bác sĩ.
+- Hướng dẫn web/QR/TXT/skill và workflow.accountUse cùng phiên bản1.0.9. Tùy chọn token thủ công nằm trong phần mở rộng dành cho phần mềm khác, không phải thao tác bắt buộc cho bác sĩ.
 
-## Link sửa/tính lại trên web —1.0.8
+## Link sửa/tính lại trên web —1.0.9
 
 - prepare_menu trả webUrl/webExpiresAt cho đầu vào ban đầu, calculate_menu trả link bản đã tính; mở/sửa/tính lại không cần tài khoản. Đầu vào giữ tạm30phút trong vùng riêng, không tạo tài khoản/Ration. Ai có link đầy đủ mở được đúng bản, không mở dữ liệu khác; chỉ chia sẻ theo ý bạn. Link có fragment trao đổi lấy cookie HttpOnly/Secure/SameSiteStrict rồi được gỡ khỏi thanh địa chỉ, không đưa Bearer/OAuth token vào URL/log truy cập.
 - Sửa món/thực phẩm/lượng trên web, xem trước/duyệt lại rồi Tính lại để mở bản cập nhật. Bản cũ giữ để đối chiếu. Sao chép link đầy đủ bằng nút trên trang; địa chỉ có ID rút gọn chỉ mở lại được trong trình duyệt đã nhận quyền. Excel giữ làm nút tải thêm.
