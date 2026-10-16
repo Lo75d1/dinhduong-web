@@ -3,6 +3,8 @@ import { ALL_NUTRIENT_FIELDS, CORE_CALC_FIELDS, NUTRIENT_GROUPS, SOURCE_ONLY_NUT
 import type { NutritionFood, ResolvedMenu } from "./contracts";
 import { getExchangeRule } from "@/app/tinh-khau-phan/exchange-units";
 import { nutritionWebsiteLink } from "./website-links";
+import { markAiNumber } from "./workbook-ai";
+import { AI_NUMBER_LEGEND, briefFoodSource } from "./presentation";
 
 export type NutritionReportMeta = {
   subjectName?: string; subjectGroup?: string; clinicalCourse?: string;
@@ -196,7 +198,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
   plan.properties.defaultRowHeight = 28;
   context(plan, 3, menu.title);
   context(plan, 4, "Định lượng = lượng nhập × số suất. Chỉnh tại Nhap khau phan; dinh dưỡng tự cập nhật từ dữ liệu.");
-  const planNotice = "Món VDD loại MA có số liệu tổng hợp của cả món, không có danh sách nguyên liệu. Dấu — là thiếu dữ liệu.";
+  const planNotice = `Món VDD loại MA: số liệu cả món, không có danh sách nguyên liệu. ${AI_NUMBER_LEGEND}`;
   context(plan, 5, planNotice);
   calc(plan.getCell("A5"), `IF(${structureNotice},"Đã thay đổi số dòng/ngày; cần xuất lại để bảng thực đơn bao phủ đủ đầu vào mới.","${planNotice}")`, planNotice);
   const rows = menu.days.flatMap(day => day.rows.map(row => ({ day, row })));
@@ -229,11 +231,8 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
       const value = row.referenceAmount === 0 ? 0 : row.referenceAmount !== null && row.food.nutrients[key] != null ? row.referenceAmount * row.food.nutrients[key]! / 100 : "—";
       calc(plan.getCell(targetRow, 7 + i), `IF(ISNUMBER(${valueRef}),${valueRef},"—")`, value);
     }
-    const basis = row.basis === "raw" ? "lượng sống" : row.basis === "cooked" ? "lượng chín" : "";
-    const recipeNote = row.recipeSource.kind === "ai" ? "; công thức ước tính" : "";
-    const referenceNote = row.actualFoodName ? "dùng thực phẩm tham chiếu" : "";
-    const missingNote = row.quantity === null ? "Thiếu định lượng" : row.referenceAmount === null ? "Thiếu dữ liệu quy đổi" : "";
-    calc(plan.getCell(targetRow, 11), `${ref("T")}&"${recipeNote}"&IF(${ref("J")}="raw","; lượng sống",IF(${ref("J")}="cooked","; lượng chín",""))&IF(${ref("O")}="","","; dùng thực phẩm tham chiếu")&IF(${ref("Z")}="","","; "&${ref("Z")})&IF(${ref("AB")}="","","; "&${ref("AB")})`, [row.food.source.label + recipeNote, basis, referenceNote, missingNote, row.note].filter(Boolean).join("; "));
+    const brief = `IF(${ref("R")}="custom","Nguồn riêng",IF(OR(${ref("T")}="VDD",${ref("T")}="RNI"),${ref("T")},"Kho"))`;
+    calc(plan.getCell(targetRow, 11), `${brief}&IF(${ref("Z")}="","","; cần xác minh")`, (row.food.source.kind === "catalog" ? briefFoodSource(row.food.source) : "Nguồn riêng") + (row.quantity === null || row.referenceAmount === null ? "; cần xác minh" : ""));
   });
   body(plan, FIRST + rows.length - 1);
   for (let r = 1; r <= plan.rowCount; r++) {
@@ -254,6 +253,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
       if (!previous || previous.day.id !== day.id) cell.border = { ...border, top: { style: "medium", color: { argb: "000000" } } };
       else if (previous.row.meal !== row.meal) cell.border = { ...border, top: { style: "thin", color: { argb: "000000" } } };
     });
+    markAiNumber(plan, `E${r}`, row, r, ["quantity", "servings"]);
   });
   const exchanges = workbook.addWorksheet("Nhom thuc pham");
   reportSheet(exchanges, "NHÓM THỰC PHẨM VÀ ĐƠN VỊ ĂN", ["Nhóm thực phẩm", "Số dòng", "Ăn được (g)", "Năng lượng (kcal)", "Đạm (g)", "Béo (g)", "Bột đường (g)", "Đơn vị ăn", "Ghi chú quy đổi"], [34, 10, 16, 19, 14, 14, 17, 15, 42]);
@@ -330,6 +330,7 @@ export function addNutritionReportSheets(workbook: ExcelJS.Workbook, menu: Resol
     sources.getRow(sourceRow++).values = [field.label, food.name, `${food.source.label}. ${field.note}`, `${field.unit}/100 ${food.unit}`, value ?? "—"];
   }
   for (const { row } of rows.filter(item => item.row.recipeSource.dishId || item.row.replacedFromFoodId)) sources.getRow(sourceRow++).values = ["Công thức / thay nguyên liệu", row.dish, row.recipeSource.label, row.recipeSource.dishId || "Bản riêng", `Dòng ${row.id}${row.replacedFromFoodId ? `; thay từ ${row.replacedFromFoodId} sang ${row.food.id}` : ""}`];
+  for (const { row } of rows.filter(item => item.row.note || item.row.warnings.length || item.row.aiFilledFields?.length)) sources.getRow(sourceRow++).values = ["Chi tiết dòng", `${row.dish} · ${row.id}`, row.recipeSource.label, row.sourceState || "Theo nguồn", [row.note, ...row.warnings, row.aiFilledFields?.length ? `Số AI điền: ${row.aiFilledFields.join(", ")}` : ""].filter(Boolean).join("; ")];
   if (menu.savedRecord) sources.getRow(sourceRow++).values = ["Bản đã lưu", menu.savedRecord.id, "Đăng nhập tài khoản chủ sở hữu để mở", `Phiên bản ${menu.savedRecord.revision}`, { text: nutritionWebsiteLink("saved", menu.savedRecord.id), hyperlink: nutritionWebsiteLink("saved", menu.savedRecord.id) }];
   body(sources, sourceRow - 1);
   for (let r = FIRST; r < sourceRow; r++) {

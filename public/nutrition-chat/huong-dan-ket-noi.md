@@ -44,8 +44,8 @@ Muốn lưu cần kết nối có `nutrition:write`. Nếu đã cấp thiếu qu
 - Chat tra bằng `list_personal_library` / `get_personal_library_item`; thêm/sửa/xóa thư viện trên web. Sửa thư viện không tự thay những thực đơn đã lưu.
 
 1. **Làm rõ:** AI tra data, tách công thức và hỏi lượng/số suất/khối lượng sống hay chín. Món chưa có công thức hoặc nguyên liệu tham chiếu phải ghi là ước lượng. Nhãn ngoài kho chỉ nhập những chất có số và đơn vị được xác minh.
-2. **Chốt:** xem bản chuẩn bị và cảnh báo, xác nhận trước khi tính. Lưu chỉ khi yêu cầu; món thay đổi thuộc bản riêng, không thay kho gốc.
-3. **Kết quả:** số từ server kèm nguồn và chất còn thiếu; chọn nhận Excel. Chỉ tính thành phần không cần hồ sơ, không kết luận đạt nhu cầu khi chưa có mục tiêu.
+2. **Chốt:** xem review món/lượng/suất/nguồn gọn, có `*` trước mọi số AI tự điền; xác nhận trước khi tính. Lưu khi chọn nhận link bản riêng trên tài khoản; món thay đổi không sửa kho gốc.
+3. **Kết quả:** nhận tóm tắt kcal/P–L–G và link bản riêng để xem phân tích, chỉnh và dùng lại trên web. Excel chỉ tạo khi cần tải, không bắt tải file để xem số. Chỉ tính thành phần không cần hồ sơ; thiếu mục tiêu không kết luận đạt nhu cầu. Phiếu hỏi ghi 24h bám Phụ lục 1/2 mục 11 QĐ 2598/QĐ-BYT, phần chưa biết để —.
 
 File sửa trên máy không tự đồng bộ. Khi cần, đăng nhập trang hướng dẫn để tải bản `.xlsx` cuối (tối đa 5 MB), xem preview rồi xác nhận lưu mới hoặc xuất lại. Server đọc đầu vào và tính lại, không tin số tổng/công thức đã có trong file. Không tải file qua URL bất kỳ. Bản đã lưu mở riêng tại `https://dinhduong2598.food/ket-noi-ai/ban-luu` để giữ đúng nhiều ngày và nguồn.
 

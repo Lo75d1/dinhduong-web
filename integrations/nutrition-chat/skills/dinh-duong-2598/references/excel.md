@@ -1,5 +1,8 @@
 # Excel làm việc và nhập lại
 
+- Kết quả chính là số bộ tính và link bản riêng trên web sau khi người dùng chọn lưu. Không cần tạo/tải Excel để xem hoặc tính; chỉ xuất khi cần file. Web tự tính theo nguồn hiện tại và cho chỉnh/lưu dùng lại.
+- Bản hỏi ghi có `Phieu 24h` và `Quy doi 24h` theo Phụ lục 1/2 mục 11 QĐ 2598/QĐ-BYT. Chỉ số có cơ sở sống sạch mới vào bảng quy đổi; món VDD cả món không tự có nguyên liệu sống sạch. Bảng phân tích vẫn gồm toàn bộ đầu vào.
+- Dấu `*` ở trước mọi số AI tự điền là định dạng, ô vẫn là số/công thức. Nhập lại bỏ dấu xuất xứ AI của giá trị đã bị người dùng đổi; thông tin nguồn vẫn giữ để đối soát.
 - Tải link do `export_workbook` trả. File chứa đầu vào, dữ liệu cần tra, công thức tổng hợp và phần phân tích; link tải chỉ có thời hạn.
 - Hướng dẫn sửa trong vùng nhập được đánh dấu: lượng, số suất, ngày/bữa và thực phẩm đã có trong dữ liệu nhúng. Mã được chọn phải đi cùng nguồn; không sửa riêng tên để biến một thực phẩm thành thực phẩm khác.
 - Kết quả công thức/biểu đồ cập nhật khi Excel tính lại. Ứng dụng mở file khác Excel cần được kiểm tra riêng; không hứa mọi trình xem hỗ trợ đầy đủ.

@@ -49,6 +49,15 @@ async function main() {
       await assert.rejects(fn, error => !!error && typeof error === "object" && "status" in error && error.status === status); checks++;
     }
     const firstPreview = await prepare();
+    assert.equal(firstPreview.review.rowCount, 1); checks++;
+    assert.ok(firstPreview.review.text.includes("Cơm")); checks++;
+    const vddInput = input(); vddInput.days[0].rows[0].recipeSource = { kind: "catalog", label: "Tên nguồn do client tự ghi" };
+    await fails(() => prepare(vddInput), 422);
+    api.setFixtureFoodSource("VDD", "MA");
+    const vddPreview = await prepare(vddInput);
+    assert.equal(vddPreview.input.days[0].rows[0].recipeSource.label, "VDD: Cơm (fixture)"); checks++;
+    assert.equal(vddPreview.preview.totals.energyKcal.value, 130); checks++;
+    api.setFixtureFoodSource("Nguồn giả lập kiểm thử", "CB");
     assert.equal(firstPreview.preview.totals.energyKcal.value, 130); checks++;
     assert.equal(firstPreview.preview.dayTotals[1].hasData, false); checks++;
     assert.equal(firstPreview.preview.dayTotals[1].totals.energyKcal.value, null); checks++;

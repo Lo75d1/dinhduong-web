@@ -22,6 +22,9 @@ export type MenuRowInput = {
   densityGPerMl?: number; densitySource?: string;
   actualFoodName?: string; estimateAccepted?: boolean;
   recipeSource: RecipeSource; replacedFromFoodId?: string; note?: string;
+  mealTime?: string; householdMeasure?: string;
+  sourceState?: "raw_clean" | "cooked" | "as_sold";
+  aiFilledFields?: string[];
 };
 export type MenuDayInput = { id: string; label: string; date: string; rows: MenuRowInput[] };
 export type TargetInput = { key: string; value: number; source: string; isUpperLimit?: boolean };

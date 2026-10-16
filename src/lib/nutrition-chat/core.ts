@@ -86,6 +86,7 @@ export function resolveMenu(input: MenuInput, catalogue: NutritionFood[], recomm
   for (const row of rows) {
     if (row.customFood) { const definition = canonicalJson(row.customFood), existing = customDefinitions.get(row.food.id); if (existing && existing !== definition) throw new NutritionInputError("Cùng ID nguyên liệu ngoài kho có số liệu/nguồn khác nhau.", row.id); customDefinitions.set(row.food.id, definition); }
     if (row.quantity === null) add(row.id, "quantity", "Cần xác nhận định lượng.");
+    if (row.sourceState === "raw_clean" && row.food.foodType === "MA") add(row.id, "sourceState", "Món hoàn chỉnh chưa có cơ sở sống sạch; cần xác minh nguyên liệu và quy đổi.");
     if (row.quantity!==0 && row.unit !== row.food.unit && (!row.densityGPerMl || !row.densitySource)) add(row.id, "density", "Đổi ml/g cần khối lượng riêng và nguồn; không quy đổi 1:1.");
     if (row.quantity!==0 && row.basis === "cooked" && (!row.conversionFactor || !row.conversionSource)) add(row.id, "conversion", "Lượng chín cần hệ số quy về trạng thái nguồn và nguồn hệ số.");
     if (row.quantity!==0 && row.basis === "raw" && row.food.wastePercent === null) add(row.id, "wastePercent", "Chưa có tỷ lệ thải bỏ để tính phần ăn được từ lượng mua vào.");

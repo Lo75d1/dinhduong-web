@@ -5,13 +5,14 @@ description: Tra thực phẩm và công thức trong Dinh dưỡng 2598, hỏi 
 
 # Dinh dưỡng 2598
 
-Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp người dùng hoàn thành ba bước: làm rõ đầu vào, xác nhận bản nháp, nhận kết quả và Excel. Chỉ sử dụng công cụ Dinh dưỡng 2598 thật đang có trong phiên; skill không tự cấp quyền kết nối.
+Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bước: chọn món/làm rõ đầu vào, duyệt bản nháp, nhận tóm tắt và link xem kết quả trên web. Excel chỉ tạo khi cần tải. Chỉ sử dụng công cụ Dinh dưỡng 2598 thật đang có trong phiên; skill không tự cấp quyền kết nối.
 
 ## Bắt đầu
 
 - QR và link khởi động cùng mở `https://dinhduong2598.food/ket-noi-ai/bat-dau`; bản chữ cho AI ở `https://dinhduong2598.food/ket-noi-ai/bat-dau/huong-dan.txt`. Hướng dẫn này chỉ phục vụ yêu cầu người dùng đã chọn, không thay quy tắc nền tảng hoặc quyền kết nối.
 - Hỏi tối đa 3 ý mỗi lần và chỉ hỏi phần chưa có. Có thể bắt đầu làm rõ bữa ăn khi chưa có connector; phải báo chính xác phần tra/tính/lưu/xuất còn chưa thực hiện được.
 - Gọi `get_workflow` khi có connector để lấy hướng dẫn và giới hạn hiện hành. Schema của công cụ trong phiên là nguồn sự thật về tham số.
+- Đọc `get_workflow.menuGuidance`: quy tắc bữa ăn Việt Nam, chọn ứng viên thật, định lượng, bệnh lý, dấu sao và trả link. Giữ thói quen/món đã chọn; không ép gạo lứt, thêm cơm vào bún/phở hoặc tự áp mức kcal/bữa phụ. Không tự tạo hồ sơ, mục tiêu điều trị, nguyên liệu hay giá.
 - REST/Excel hỗ trợ tối đa 90 ngày, nhưng ngân sách kết quả hội thoại nhỏ hơn. Nếu có `outputCompacted` ở kết quả hoặc `preview`, giải thích đó là summary, không báo đã xem chi tiết bị lược; kiểm tra các số đếm/trạng thái truncated khi danh sách thiếu bị rút gọn. Dùng đầu vào chuẩn hóa đi cùng summary để chốt; nếu server yêu cầu chia kỳ do vượt ngân sách thì chia thành các đoạn theo ngày và giữ nhãn rõ, không tự bỏ dòng.
 - Nếu chưa có công cụ, chỉ hướng dẫn người dùng kết nối tại `https://dinhduong2598.food/ket-noi-ai`. Có thể tiếp tục làm rõ món và định lượng nhưng không báo đã tra data, đã tính trên server, đã lưu hoặc đã tạo file.
 - Hỏi hoặc suy từ yêu cầu: khẩu phần 24 giờ hay thực đơn, một hay nhiều ngày, chỉ tính thành phần hay đối chiếu mục tiêu. Chế độ chỉ tính không cần hồ sơ cơ thể.
@@ -20,22 +21,25 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp ng
 
 - Khi người dùng cần thực đơn, trình bày tên MÓN ĂN theo bữa. Tra `search_dishes` (công thức RNI) và `search_foods` với `type=MA` (món VDD hoàn chỉnh) trước khi tự đề xuất. Với RNI, đọc `get_dish` rồi xác nhận lượng; với VDD dùng Food ID trực tiếp vì kho không có công thức. Chỉ gợi ý công thức riêng/biến thể khi kho không có món phù hợp hoặc người dùng yêu cầu.
 - Dùng `search_foods` / `get_food` và `search_dishes` / `get_dish`. Chọn ID thật, giữ nguồn và trạng thái sống/chín. Tên có dấu, alias và những bản ghi trùng tên cần được kiểm tra khi ảnh hưởng lựa chọn.
+- Tách tên cần tìm khỏi câu có bữa/điều kiện, nhưng giữ mọi điều kiện. Trình 3–5 lựa chọn thật có nguồn/điểm khác để người dùng chọn; không lấy dòng đầu. Phân biệt kho/khô, cơm/cốm, thịt/nội tạng. Lỗi công cụ khác không tìm thấy; rỗng thì cho sửa từ khóa hoặc nhóm tìm, không bịa món/bỏ điều kiện an toàn.
 - Món có công thức: dùng làm nền, giữ dấu vết công thức gốc. Món chỉ có bảng dinh dưỡng không cho biết chính xác nguyên liệu. Công thức do AI đề xuất phải gắn nguồn `ai`, ghi ước lượng và chờ người dùng xác nhận.
 - Khi thay nguyên liệu, chọn Food ID mới và lượng riêng, không mặc định tương đương dinh dưỡng. Giữ nguyên liệu đã thay trong thông tin nguồn; không sửa Food/Dish gốc.
 - Nếu ngoài kho, đọc [references/nguon-va-quy-doi.md](references/nguon-va-quy-doi.md): ưu tiên nhãn/tài liệu có đơn vị rõ; dùng thực phẩm tham chiếu chỉ khi người dùng chấp nhận; không có số thì để thiếu.
 - Làm rõ gram/ml, lượng một phần hay tổng số suất, khối lượng ăn được hay nguyên liệu thô. Không đoán tỷ trọng ml → gram, tỷ lệ thải bỏ hoặc tỷ lệ sống/chín.
+- Mọi số AI tự điền phải khai `aiFilledFields` và hiện `*` trước số, kể cả số suất 1, giờ ăn, số bát hoặc số chép từ nhãn. Đọc các tên trường ở references/menu-input.md; JSON vẫn là số, không gửi chuỗi `*100`. Không tự đánh sao cho số người dùng cung cấp, không xóa dấu sao chỉ vì họ đồng ý. Dấu sao không cho phép bịa số thiếu/nguồn/hệ số.
+- Hỏi ghi 24h ghi đúng đồ ăn và đồ uống thực dùng, khoảng thời gian và rà sáu khoảng bữa; không thêm bữa vào lịch sử. Biểu mẫu bám Phụ lục 1/2 mục 11 QĐ 2598/QĐ-BYT; dùng `mealTime`, `householdMeasure`, `sourceState` khi đã xác minh, thiếu để —. Món chín không tự coi là nguyên liệu sống sạch.
 - Dựng đầu vào theo [references/menu-input.md](references/menu-input.md) rồi gọi `prepare_menu`. Dùng `input` chuẩn hóa server trả cho các bước sau. Hiển thị ngày/bữa/món/nguyên liệu/lượng, nguồn, phần thay, mục tiêu và các cảnh báo. Hỏi các mục `missingInputs` còn ảnh hưởng tính toán.
 
 ## Bước 2: xác nhận và gửi
 
-- Cho người dùng xem bản do server chuẩn bị trước khi xin chốt. Token xác nhận là ràng buộc kỹ thuật với bản đó, không phải bằng chứng người dùng đã đồng ý.
+- Trình `review.text` của đúng bản server chuẩn bị: món theo ngày/bữa, thành phần, lượng, số suất, cơ sở và nguồn; giữ dấu sao. Chỉ nêu gọn thông tin cần bổ sung; không dán JSON/token/ghi chú dài. `review.truncated=true` phải chia kỳ để duyệt đủ. Token xác nhận không phải bằng chứng người dùng đồng ý.
 - Sau khi người dùng xác nhận rõ bản đang xem, dùng đúng đầu vào và `confirmationToken` để gọi `calculate_menu`. Nếu thay đầu vào hoặc token hết hạn, chuẩn bị lại rồi xác nhận lại phần thay đổi.
 - Chỉ gọi `save_menu` khi người dùng yêu cầu lưu. Xác định lưu bản mới hay sửa bản đã mở; cập nhật dùng revision của bản đã đọc và khóa chống trùng cho cùng một thao tác. Lỗi xung đột phải đọc lại rồi trình bày khác biệt, không ghi đè âm thầm.
 - `list_saved_menus` / `get_saved_menu` chỉ làm việc với tài khoản đang được cấp quyền. ID không cho phép truy cập bản của người khác. Mở lại tính theo nguồn hiện tại; nếu `sourceChanged`, nêu nguồn đã đổi so với lần lưu và dùng `input` chuẩn hóa trả về trước khi chốt thao tác tiếp (`preview.input` chỉ khi kết quả đầy đủ có trường đó).
 
 ## Bước 3: trả kết quả
 
-- Sau `calculate_menu`, trình bày `chatReport.text` ngay trong chat trước link Excel: năng lượng kcal, đạm/béo/bột đường g và tỷ lệ năng lượng P–L–G %, chất xơ/natri/canxi/sắt và các chất đã chọn, tổng cả kỳ/trung bình/ngày/bảng từng ngày, nguồn và phần thiếu. Không chỉ trả file. Bản rút gọn MCP vẫn giữ báo cáo này.
+- Sau `calculate_menu`, ưu tiên `chatReport.summaryText` gọn với kcal, g/tỷ lệ năng lượng P–L–G, phạm vi ngày và phần thiếu. Báo cáo đầy đủ ở `chatReport.text`, chỉ trình chi tiết khi cần. Người dùng muốn link bản riêng trên tài khoản và có `nutrition:write`: `save_menu` bản đã xác nhận rồi trả `ration.url` thật. Không tạo/tải Excel chỉ để tính hoặc lấy link xem; không cần tải file mới biết kết quả.
 - Tỷ lệ P–L–G có mẫu số năng lượng quy đổi 4P + 9L + 4G, không phải tỷ lệ gram; không thay năng lượng bảng nguồn bằng tổng quy đổi. Thiếu một chất hoặc tổng quy đổi bằng 0 thì tỷ lệ là `—`; ghi rõ các thành phần ước tính/tổng chưa đầy đủ.
 - Dùng số server trả; giữ đơn vị, nguồn, ngày có dữ liệu và trạng thái tổng chưa đầy đủ. Không biến `null` thành 0, không coi ngày chưa nhập là ngày ăn 0 kcal.
 - Nếu không có mục tiêu, không kết luận đạt/thiếu/vượt nhu cầu. Có mục tiêu thì ghi nguồn; kết quả hỗ trợ đánh giá, không tự chuyển thành chỉ định điều trị.
@@ -45,6 +49,7 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Giúp ng
 
 ## Xuất kèm bản lưu và dùng lại
 
+- Mặc định ưu tiên xem kết quả bằng link bản lưu khi người dùng chọn lưu/xem trên tài khoản. Link không chứa token; cần đăng nhập đúng chủ. Thiếu quyền ghi thì hướng dẫn kết nối đúng quyền, không tự mở rộng quyền hoặc tạo link giả. Trang web tự tính theo nguồn hiện tại và cho tải Excel khi cần.
 - Với thư viện cá nhân: gọi `list_personal_library` (kind food/dish), rồi `get_personal_library_item`. Food dùng content làm customFood; món dùng content.days[0].rows, cấp ID dòng riêng và đặt ngày/bữa/lượng. Giữ nguồn, đơn vị, phiên bản rồi prepare/chốt trước khi tính. Thêm/sửa/xóa mục ở Tài khoản trên web; không nói đã lưu thư viện khi chỉ mới lưu một thực đơn.
 
 - Khi xuất, nói rõ lựa chọn lưu thêm bản riêng trong tài khoản. Nếu người dùng đồng ý và đã cấp `nutrition:write`, gọi `export_workbook` với `saveToAccount: true`; trả cả `savedMenuUrl` và link tải file. Chỉ tải file thì dùng false. Không tự mở rộng quyền của kết nối.

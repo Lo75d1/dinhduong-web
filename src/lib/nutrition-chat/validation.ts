@@ -9,6 +9,7 @@ export const NUTRIENT_KEYS = new Set(ALL_NUTRIENT_FIELDS.map(f => f.key));
 export const NUTRITION_LIMITS = { days: 90, rows: 1000, fields: 40, customFoods:100, catalogue: 6000, uploadBytes: 5 * 1024 * 1024, jsonBytes: 512 * 1024 } as const;
 export const SOURCE_SCHEMA = { type: "object", additionalProperties: false, required: ["kind", "label", "confirmed"], properties: { kind: { type: "string", enum: ["catalog", "label", "document", "user", "reference", "unknown"] }, label: { type: "string", maxLength: 500 }, url: { type: "string", maxLength: 2083 }, confirmed: { type: "boolean" } } };
 const numeric = { type: "number", minimum: 0, maximum: 1000000 };
+export const AI_FILLED_FIELDS = ["quantity", "servings", "conversionFactor", "densityGPerMl", "mealTime", "householdMeasure", "customFood.portionAmount", "customFood.wastePercent", ...[...NUTRIENT_KEYS].map(key => `customFood.nutrients.${key}`)];
 const recipeSchema = { type: "object", additionalProperties: false, required: ["kind", "label"], properties: { kind: { type: "string", enum: ["catalog", "user", "ai"] }, label: { type: "string", maxLength: 500 }, dishId: { type: "string", maxLength: 100 }, url: { type: "string", maxLength: 2083 } } };
 export const MENU_INPUT_SCHEMA = {
   type: "object", additionalProperties: false, required: ["title", "mode", "days", "comparison"],
@@ -25,6 +26,8 @@ export const MENU_INPUT_SCHEMA = {
         quantity: { anyOf: [numeric, { type: "null" }] }, unit: { type: "string", enum: ["g", "ml"] }, servings: { type: "number", exclusiveMinimum: 0, maximum: 10000 }, basis: { type: "string", enum: ["edible", "raw", "cooked"] },
         conversionFactor: { type: "number", exclusiveMinimum: 0, maximum: 1000 }, conversionSource: { type: "string", maxLength: 500 }, densityGPerMl: { type: "number", exclusiveMinimum: 0, maximum: 100 }, densitySource: { type: "string", maxLength: 500 },
         actualFoodName: { type: "string", maxLength: 300 }, estimateAccepted: { type: "boolean" }, recipeSource: recipeSchema, replacedFromFoodId: { type: "string", maxLength: 100 }, note: { type: "string", maxLength: 1000 },
+        mealTime: { type: "string", pattern: "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$" }, householdMeasure: { type: "string", maxLength: 100 }, sourceState: { type: "string", enum: ["raw_clean", "cooked", "as_sold"] },
+        aiFilledFields: { type: "array", uniqueItems: true, maxItems: AI_FILLED_FIELDS.length, items: { type: "string", enum: AI_FILLED_FIELDS } },
         customFood: { type: "object", additionalProperties: false, required: ["id", "name", "source", "basis", "nutrients"], properties: {
           id: { type: "string", minLength: 1, maxLength: 100 }, name: { type: "string", minLength: 1, maxLength: 300 }, source: SOURCE_SCHEMA, basis: { type: "string", enum: ["100g", "100ml", "portion"] },
           portionAmount: { type: "number", exclusiveMinimum: 0, maximum: 1000000 }, portionUnit: { type: "string", enum: ["g", "ml"] }, wastePercent: { anyOf: [{ type: "number", minimum: 0, exclusiveMaximum: 100 }, { type: "null" }] }, foodGroup: { anyOf: [{ type: "string", maxLength: 100 }, { type: "null" }] },
@@ -86,7 +89,7 @@ export function parseCustomFoodInput(value: unknown, path = "food"): CustomFoodI
   return result;
 }
 function row(value: unknown, path: string): MenuRowInput {
-  const d = object(value, ["id", "meal", "dish", "foodId", "customFood", "quantity", "unit", "servings", "basis", "conversionFactor", "conversionSource", "densityGPerMl", "densitySource", "actualFoodName", "estimateAccepted", "recipeSource", "replacedFromFoodId", "note"], path);
+  const d = object(value, ["id", "meal", "dish", "foodId", "customFood", "quantity", "unit", "servings", "basis", "conversionFactor", "conversionSource", "densityGPerMl", "densitySource", "actualFoodName", "estimateAccepted", "recipeSource", "replacedFromFoodId", "note", "mealTime", "householdMeasure", "sourceState", "aiFilledFields"], path);
   if ((d.foodId !== undefined) === (d.customFood !== undefined)) throw new NutritionInputError("Mỗi nguyên liệu phải chọn đúng một Food ID hoặc nguồn ngoài kho.", path);
   const r: MenuRowInput = { id: text(d.id, 100, `${path}.id`), meal: text(d.meal, 160, `${path}.meal`), dish: text(d.dish, 160, `${path}.dish`), quantity: d.quantity === null ? null : number(d.quantity, 0, 1000000, `${path}.quantity`), unit: choice(d.unit, ["g", "ml"] as const, `${path}.unit`), servings: number(d.servings, 0, 10000, `${path}.servings`, true), basis: choice(d.basis, ["edible", "raw", "cooked"] as const, `${path}.basis`), recipeSource: recipe(d.recipeSource, `${path}.recipeSource`) };
   if (d.foodId !== undefined) r.foodId = text(d.foodId, 100, `${path}.foodId`);
@@ -95,6 +98,17 @@ function row(value: unknown, path: string): MenuRowInput {
   if (d.conversionFactor !== undefined) r.conversionFactor = number(d.conversionFactor, 0, 1000, `${path}.conversionFactor`, true);
   if (d.densityGPerMl !== undefined) r.densityGPerMl = number(d.densityGPerMl, 0, 100, `${path}.densityGPerMl`, true);
   if (d.estimateAccepted !== undefined) r.estimateAccepted = boolean(d.estimateAccepted, `${path}.estimateAccepted`);
+  if (d.mealTime !== undefined) {
+    r.mealTime = text(d.mealTime, 5, `${path}.mealTime`);
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.mealTime)) throw new NutritionInputError("Giờ ăn cần dạng HH:mm.", `${path}.mealTime`);
+  }
+  if (d.householdMeasure !== undefined) r.householdMeasure = text(d.householdMeasure, 100, `${path}.householdMeasure`, true);
+  if (d.sourceState !== undefined) r.sourceState = choice(d.sourceState, ["raw_clean", "cooked", "as_sold"] as const, `${path}.sourceState`);
+  if (d.aiFilledFields !== undefined) {
+    if (!Array.isArray(d.aiFilledFields) || d.aiFilledFields.length > AI_FILLED_FIELDS.length || new Set(d.aiFilledFields).size !== d.aiFilledFields.length || d.aiFilledFields.some(key => typeof key !== "string" || !AI_FILLED_FIELDS.includes(key))) throw new NutritionInputError("Danh sách số AI điền không hợp lệ.", `${path}.aiFilledFields`);
+    if (!r.customFood && d.aiFilledFields.some(key => key.startsWith("customFood."))) throw new NutritionInputError("Dấu AI của nguồn tự nhập cần nguồn tự nhập.", `${path}.aiFilledFields`);
+    r.aiFilledFields = [...d.aiFilledFields];
+  }
   if (r.actualFoodName && !r.foodId) throw new NutritionInputError("Tham chiếu tương tự cần Food ID trong kho.", path);
   return r;
 }

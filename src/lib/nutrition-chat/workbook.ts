@@ -10,6 +10,9 @@ import { addNativeWorkbookCharts } from "./workbook-charts";
 import { assertNutritionWorkbookExportBudget, inspectWorkbookArchive, NutritionWorkbookError, WORKBOOK_LIMITS } from "./workbook-security";
 import { workbookInputView } from "./workbook-reader";
 import { nutritionWebsiteLink } from "./website-links";
+import { preservedRowMetadata } from "./presentation";
+import { AI_INPUT_COLUMNS, markAiNumber, markAiCustomNumber } from "./workbook-ai";
+import { addRecallWorkbookSheets } from "./workbook-recall";
 
 const SHEETS = { analysis: "Phan tich", input: "Nhap khau phan", targets: "Ngay va muc tieu", shopping: "Di cho", custom: "Tu nhap", data: "Du lieu", meals: "Theo bua", dishes: "Theo mon", comparison: "Doi chieu", meta: "_meta", originalInput: "_input", originalCustom: "_custom", originalTargets: "_targets" };
 const FIRST = 7;
@@ -131,7 +134,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   if (complete) {
     // Bound live object/formula allocation before constructing ExcelJS cells on the 2 GB VPS.
     const dataCells = foods.reduce((sum, food) => sum + 10 + sourceFields.filter(field => food.nutrients[field.key] != null).length, 0);
-    const estimatedCells = dataCells + wholeDishRows.length + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2;
+    const estimatedCells = dataCells + wholeDishRows.length + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2 + (menu.mode === "recall24h" ? rows.length * 16 + menu.days.length * 60 : 0);
     if (estimatedCells > 400_000) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Báo cáo đầy đủ vượt dung lượng xử lý an toàn. Chia thành các đợt ít ngày hoặc ít dòng hơn rồi xuất lại.");
   }
   const lastInput = FIRST + inputCapacity - 1;
@@ -142,7 +145,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   workbook.title = menu.title;
   workbook.created = new Date(menu.generatedAt);
   workbook.calcProperties.fullCalcOnLoad = true;
-  if (complete) for (const name of ["Bao cao", "Thuc don", "Thanh phan day du", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
+  if (complete) for (const name of [...(menu.mode === "recall24h" ? ["Phieu 24h", "Quy doi 24h"] : []), "Bao cao", "Thuc don", "Thanh phan day du", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
   const analysis = workbook.addWorksheet(SHEETS.analysis);
   const comparison = workbook.addWorksheet(SHEETS.comparison);
   const targetSheet = workbook.addWorksheet(SHEETS.targets);
@@ -432,12 +435,23 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     shopping.pageSetup.printArea = `A1:J${FIRST + rows.length - 1}`;
   }
   input.addConditionalFormatting({ ref: `Z${FIRST}:Z${lastInput}`, rules: [{ type: "expression", formulae: [`LEN(Z${FIRST})>0`], style: { fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FDE8D7" } }, font: { color: { argb: "9B3C13" } } }, priority: 1 }] });
-  const manifest: Manifest = { version: CONTRACT_VERSION, title: menu.title, mode: menu.mode, fields: selectedFields.map(field => field.key), ...(complete ? { reportFields: fields.map(field => field.key) } : {}), sourceFields: sourceFields.map(field => field.key), inputCapacity, customCapacity, dataRows: foods.length, digest: menu.digest, dataVersion: menu.dataVersion, generatedAt: menu.generatedAt, aiComment: menu.aiComment, savedRecord: menu.savedRecord, customSources: customs, days: menu.days.map(day => ({ id: day.id, label: day.label, date: day.date })), rows: rows.map(item => ({ id: item.row.id, meal: item.row.meal, dish: item.row.dish, foodId: item.row.foodId, customFoodId: item.row.customFood?.id, quantity: item.row.quantity, unit: item.row.unit, servings: item.row.servings, basis: item.row.basis, recipeSource: item.row.recipeSource, replacedFromFoodId: item.row.replacedFromFoodId, actualFoodName: item.row.actualFoodName, estimateAccepted: item.row.estimateAccepted, note: item.row.note })), targets: menu.targets.filter(target => target.value !== null).map(target => ({ key: target.key, value: target.value!, source: target.source ?? "Mục tiêu đã chốt", isUpperLimit: target.isUpperLimit })) };
+  const manifest: Manifest = { version: CONTRACT_VERSION, title: menu.title, mode: menu.mode, fields: selectedFields.map(field => field.key), ...(complete ? { reportFields: fields.map(field => field.key) } : {}), sourceFields: sourceFields.map(field => field.key), inputCapacity, customCapacity, dataRows: foods.length, digest: menu.digest, dataVersion: menu.dataVersion, generatedAt: menu.generatedAt, aiComment: menu.aiComment, savedRecord: menu.savedRecord, customSources: customs, days: menu.days.map(day => ({ id: day.id, label: day.label, date: day.date })), rows: rows.map(item => ({ id: item.row.id, meal: item.row.meal, dish: item.row.dish, foodId: item.row.foodId, customFoodId: item.row.customFood?.id, quantity: item.row.quantity, unit: item.row.unit, servings: item.row.servings, basis: item.row.basis, conversionFactor: item.row.conversionFactor, densityGPerMl: item.row.densityGPerMl, ...preservedRowMetadata(item.row), recipeSource: item.row.recipeSource, replacedFromFoodId: item.row.replacedFromFoodId, actualFoodName: item.row.actualFoodName, estimateAccepted: item.row.estimateAccepted, note: item.row.note })), targets: menu.targets.filter(target => target.value !== null).map(target => ({ key: target.key, value: target.value!, source: target.source ?? "Mục tiêu đã chốt", isUpperLimit: target.isUpperLimit })) };
   const metadata = workbook.addWorksheet(SHEETS.meta, { state: "veryHidden" });
   metadata.getCell("A1").value = "DINHDUONG2598_NUTRITION_CHAT";
   const json = JSON.stringify(manifest);
   for (let offset = 0, row = 2; offset < json.length; offset += 30000, row++) metadata.getCell(row, 1).value = json.slice(offset, offset + 30000);
   copySnapshot(workbook, input, SHEETS.originalInput, lastInput); copySnapshot(workbook, custom, SHEETS.originalCustom, lastCustom); copySnapshot(workbook, targetSheet, SHEETS.originalTargets, FIRST + WORKBOOK_LIMITS.days - 1);
+  rows.forEach(({ row }, index) => {
+    for (const [field, column] of Object.entries(AI_INPUT_COLUMNS)) markAiNumber(input, `${column}${FIRST + index}`, row, FIRST + index, [field as keyof typeof AI_INPUT_COLUMNS]);
+  });
+  for (const [index, food] of customs.entries()) {
+    const marked = new Set(rows.filter(item => item.row.customFood?.id === food.id).flatMap(item => item.row.aiFilledFields || []));
+    for (const field of marked) {
+      const nutrient = sourceFields.findIndex(item => field === `customFood.nutrients.${item.key}`);
+      const column = field === "customFood.portionAmount" ? 8 : field === "customFood.wastePercent" ? 10 : nutrient >= 0 ? 12 + nutrient : 0;
+      if (column) markAiCustomNumber(custom, `${col(column)}${FIRST + index}`);
+    }
+  }
   if (complete) {
     formula(analysis.getCell("A4"), `IF((${editableFormulaComparison})>0,"Đã sửa Excel; kết quả tính lại từ đầu vào mới. Nhận xét lúc xuất cần xem lại.","Chưa sửa đầu vào; kết quả tại thời điểm xuất.")`, "Chưa sửa đầu vào; kết quả tại thời điểm xuất.");
     const cache = (cell: ExcelJS.Cell, value: number | string) => formula(cell, cell.formula!, value);
@@ -479,6 +493,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
       cache(shopping.getCell(r, 10), used.some(({ row }) => row.rawGrams === null) ? "Thiếu thải bỏ/mật độ/đầu vào; chưa đủ lượng mua" : "Đủ dữ liệu quy đổi");
     });
     addNutritionReportSheets(workbook, menu, allFoods, options, { inputCapacity, sourceFields: sourceFields.length });
+    addRecallWorkbookSheets(workbook, menu, options);
     const plain = { name: "Times New Roman", size: 12, color: { argb: "000000" } };
     for (const sheet of [analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data]) {
       sheet.views = [{ state: "normal", showGridLines: sheet === input, zoomScale: sheet === input ? 100 : 85 }];
@@ -507,7 +522,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     input.getCell("A2").value = `Chỉnh ngày, bữa/món, mã thực phẩm, lượng, đơn vị và số suất tại các cột nhập. Dòng dự phòng được ẩn theo nhóm; có thể hiện thêm dòng khi cần (tối đa ${inputCapacity} dòng). Tra mã tại Du lieu. Bản in gọn ở Thuc don.`;
   }
   const protectionPassword = randomBytes(18).toString("base64url");
-  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Bao cao", "Thuc don", "Thanh phan day du", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
+  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Phieu 24h", "Quy doi 24h", "Bao cao", "Thuc don", "Thanh phan day du", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
   const chartStart = noteRow + 5;
   const charts = [];
   const labelRange = range(SHEETS.targets, "C", FIRST + WORKBOOK_LIMITS.days - 1);
@@ -644,7 +659,25 @@ export async function parseNutritionWorkbook(bytes: Uint8Array): Promise<MenuInp
     const conversionFactor = inputNumber(input, row, 11, 1000, true, 0.000001); const density = inputNumber(input, row, 13, 100, true, 0.000001);
     const userNote = inputText(input, row, 28, 1000);
     const substitutionNote = baseline?.customFoodId && baseline.customFoodId !== customId ? `Đổi nguồn tự nhập từ ${baseline.customFoodId}. ` : "";
-    day.rows.push({ id, meal: inputText(input, row, 3, 120), dish: inputText(input, row, 4, 200), ...(foodId ? { foodId } : { customFood }), quantity: inputNumber(input, row, 7, 1000000), unit: unit as "g" | "ml", servings: inputNumber(input, row, 9, 10000, false, 0.000001)!, basis: basis as MenuRowInput["basis"], ...(conversionFactor === null ? {} : { conversionFactor }), conversionSource: inputText(input, row, 12, 1000) || undefined, ...(density === null ? {} : { densityGPerMl: density }), densitySource: inputText(input, row, 14, 1000) || undefined, actualFoodName: inputText(input, row, 15, 200) || undefined, estimateAccepted: accepted === "Có", recipeSource: baseline?.recipeSource ?? { kind: "user", label: "Bổ sung trong Excel" }, replacedFromFoodId: baseline?.foodId && foodId !== baseline.foodId ? baseline.foodId : baseline?.replacedFromFoodId, note: (substitutionNote + userNote).slice(0, 1000) || undefined });
+    const parsedRow: MenuRowInput = { id, meal: inputText(input, row, 3, 120), dish: inputText(input, row, 4, 200), ...(foodId ? { foodId } : { customFood }), quantity: inputNumber(input, row, 7, 1000000), unit: unit as "g" | "ml", servings: inputNumber(input, row, 9, 10000, false, 0.000001)!, basis: basis as MenuRowInput["basis"], ...(conversionFactor === null ? {} : { conversionFactor }), conversionSource: inputText(input, row, 12, 1000) || undefined, ...(density === null ? {} : { densityGPerMl: density }), densitySource: inputText(input, row, 14, 1000) || undefined, actualFoodName: inputText(input, row, 15, 200) || undefined, estimateAccepted: accepted === "Có", recipeSource: baseline?.recipeSource ?? { kind: "user", label: "Bổ sung trong Excel" }, replacedFromFoodId: baseline?.foodId && foodId !== baseline.foodId ? baseline.foodId : baseline?.replacedFromFoodId, note: (substitutionNote + userNote).slice(0, 1000) || undefined };
+    if (baseline) {
+      parsedRow.mealTime = baseline.mealTime;
+      const sameSource = baseline.foodId === parsedRow.foodId && (baseline.customFoodId || undefined) === (customId || undefined);
+      const sameAmount = baseline.quantity === parsedRow.quantity && baseline.servings === parsedRow.servings && baseline.unit === parsedRow.unit;
+      if (sameSource) parsedRow.sourceState = baseline.sourceState;
+      if (!sameSource) { parsedRow.conversionSource = undefined; parsedRow.densitySource = undefined; }
+      if (sameSource && sameAmount) parsedRow.householdMeasure = baseline.householdMeasure;
+      const originalCustom = manifest.customSources.find(item => item.id === baseline.customFoodId);
+      parsedRow.aiFilledFields = baseline.aiFilledFields?.filter(field => {
+        if (field === "mealTime") return true;
+        if (field === "householdMeasure") return sameSource && sameAmount;
+        if (field.startsWith("customFood.nutrients.")) { const key = field.slice("customFood.nutrients.".length); return sameSource && originalCustom?.nutrients[key] === customFood?.nutrients[key]; }
+        if (field.startsWith("customFood.")) { const key = field.slice("customFood.".length) as "portionAmount" | "wastePercent"; return sameSource && originalCustom?.[key] === customFood?.[key]; }
+        const key = field as keyof typeof AI_INPUT_COLUMNS;
+        return baseline[key] === parsedRow[key];
+      });
+    }
+    day.rows.push(parsedRow);
   }
   const targets: TargetInput[] = [];
   const targetKeys = new Set<string>();

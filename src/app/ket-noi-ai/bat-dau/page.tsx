@@ -7,7 +7,7 @@ import StartInChat from "../StartInChat";
 
 export const metadata: Metadata = {
   title: "Bắt đầu bằng QR hoặc link | Dinh dưỡng 2598",
-  description: "Quét QR, dán lời nhắn vào ChatGPT hoặc Claude: làm rõ bữa ăn, chốt khẩu phần, nhận phân tích và Excel chỉnh được.",
+  description: "Quét QR, dán lời nhắn vào ChatGPT hoặc Claude: chọn món, duyệt khẩu phần và mở kết quả trên web; tải Excel khi cần.",
   alternates: { canonical: "/ket-noi-ai/bat-dau" },
 };
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default function StartNutritionChatPage() {
     <header className="border-b border-[#b1c8bd] pb-6">
       <p className="text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · BẮT ĐẦU HỘI THOẠI</p>
       <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">Quét QR hoặc dán link vào chat.</h1>
-      <p className="mt-4 max-w-3xl text-lg text-neutral-700">Kể bữa ăn, để AI hỏi chỗ thiếu, xem bản nháp rồi chốt. Hệ thống trả phân tích và Excel có thể chỉnh lại.</p>
+      <p className="mt-4 max-w-3xl text-lg text-neutral-700">Chọn món, xem bản nháp rồi chốt. Mở kết quả đã tính trên web để xem, điều chỉnh và dùng lại; tải Excel khi cần.</p>
     </header>
     <div className="grid items-start gap-6 md:grid-cols-[1fr_220px]">
       <StartInChat message={nutritionStartMessage(origin)} link={links.start} mcp={links.mcp} />

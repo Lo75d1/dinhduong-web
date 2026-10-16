@@ -53,5 +53,11 @@ export function nutritionChatReport(menu: ResolvedMenu) {
   lines.push("", `- Dữ liệu: ${missing} chỉ số có tổng chưa đầy đủ; ${menu.missingInputs.length} thông tin đầu vào còn thiếu. — là chưa tính được, khác với số 0 có nguồn.`, `- Nguồn số liệu: ${sources.slice(0, 5).map(plain).join("; ") || "Chưa có đầu vào"}${sources.length > 5 ? `; còn ${sources.length - 5} nguồn trong dữ liệu/Excel chi tiết` : ""}.`);
   for (const warning of menu.warnings.slice(0, 5)) lines.push(`- Lưu ý: ${plain(warning)}`);
   if (menu.warnings.length > 5) lines.push(`- Còn ${menu.warnings.length - 5} lưu ý trong dữ liệu/Excel chi tiết.`);
-  return { format: "markdown" as const, text: lines.join("\n") };
+  const summaryText = [
+    `**${plain(menu.title)}**`,
+    `- Năng lượng: ${metric(menu.totals.energyKcal)} kcal; trung bình ${number(analysis.averageEnergyKcal)} kcal/ngày có đầu vào.`,
+    `- Đạm / béo / bột đường: ${macroKeys.map(key => metric(menu.totals[key])).join(" / ")} g. Tỷ lệ năng lượng: ${macroKeys.map(key => number(analysis.macros.find(item => item.key === key)?.energySharePct)).join(" / ")} % (4P + 9L + 4G).`,
+    `- ${analysis.dataDayCount}/${analysis.calendarDayCount} ngày có đầu vào.${analysis.emptyDayCount ? ` ${analysis.emptyDayCount} ngày chưa nhập.` : ""} ${missing ? `${missing} chỉ số chưa đủ dữ liệu.` : ""}${!targets.length ? " Chưa có mục tiêu nên chỉ tính thành phần." : " Đối chiếu mục tiêu và nguồn trong báo cáo chi tiết."}`,
+  ].join("\n");
+  return { format: "markdown" as const, summaryText, text: lines.join("\n") };
 }

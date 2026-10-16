@@ -7,6 +7,7 @@ import { loadNutritionFoods, loadNutritionRecommendations } from "./repository";
 import type { NutritionIdentity, ResolvedMenu } from "./contracts";
 import type { Prisma } from "@/generated/prisma/client";
 import { nutritionWebsiteLink } from "./website-links";
+import { nutritionMenuReview } from "./menu-review";
 
 type AuditRow={rowId:string;before:unknown;after:unknown};
 type AuditEntry={revision:number;confirmedAt:string;clientId:string;dataVersion:string;changes:AuditRow[]};
@@ -32,7 +33,6 @@ export async function prepareNutritionMenu(value: unknown, identity: NutritionId
   const input = parseMenuInput(value), rows = input.days.flatMap(day => day.rows);
   const foodIds = rows.flatMap(row => [row.foodId, row.replacedFromFoodId].filter((id): id is string => Boolean(id)));
   const recipeIds = [...new Set(rows.flatMap(row => row.recipeSource.dishId ? [row.recipeSource.dishId] : []))];
-  for (const row of rows) if (row.recipeSource.kind === "catalog" && !row.recipeSource.dishId) throw new NutritionInputError("Công thức kho cần Dish ID; món tự nhập chọn nguồn user hoặc ai.", `row.${row.id}.recipeSource`, 422);
   const [foods, recommendations, recipes] = await Promise.all([
     loadNutritionFoods(foodIds, input.fields!),
     input.comparison.mode === "profile" ? loadNutritionRecommendations() : Promise.resolve([]),
@@ -40,6 +40,11 @@ export async function prepareNutritionMenu(value: unknown, identity: NutritionId
   ]);
   const known = new Set(foods.map(food => food.id)), recipeMap = new Map(recipes.map(dish => [dish.id,dish]));
   for (const row of rows) {
+    if (row.recipeSource.kind === "catalog" && !row.recipeSource.dishId) {
+      const food = foods.find(food => food.id === row.foodId);
+      if (food?.source.kind !== "catalog" || food.source.label !== "VDD" || food.foodType !== "MA") throw new NutritionInputError("Công thức kho cần Dish ID; món tự nhập chọn nguồn user hoặc ai.", `row.${row.id}.recipeSource`, 422);
+      row.recipeSource.label = `VDD: ${food.name}`;
+    }
     if (row.replacedFromFoodId && !known.has(row.replacedFromFoodId)) throw new NutritionInputError("Food ID nguyên liệu được thay không còn tồn tại.", `row.${row.id}.replacedFromFoodId`, 422);
     if (row.recipeSource.dishId) {
       const original = recipeMap.get(row.recipeSource.dishId);
@@ -49,7 +54,7 @@ export async function prepareNutritionMenu(value: unknown, identity: NutritionId
     }
   }
   const preview = resolveMenu(input, foods, recommendations);
-  return { input, preview, confirmationToken: createNutritionTicket("confirm", preview.digest, identity), expiresAt: new Date(Date.now()+600_000).toISOString() };
+  return { input, preview, review: nutritionMenuReview(preview), confirmationToken: createNutritionTicket("confirm", preview.digest, identity), expiresAt: new Date(Date.now()+600_000).toISOString() };
 }
 export async function confirmedNutritionMenu(args: Record<string,unknown>, identity: NutritionIdentity) {
   const prepared = await prepareNutritionMenu(args.input, identity);
@@ -125,7 +130,7 @@ export async function getSavedNutritionMenu(id: string, identity: NutritionIdent
   if (!ration) throw new NutritionInputError("Không tìm thấy bản thuộc tài khoản.","rationId",404);
   const saved = savedResult(ration), prepared = await prepareNutritionMenu(saved.input,identity);
   const history=snapshot(ration.conversationJson);
-  return {...saved,input:prepared.input,preview:prepared.preview,confirmationToken:prepared.confirmationToken,sourceChanged:prepared.preview.dataVersion !== saved.preview.dataVersion,savedDataVersion:saved.preview.dataVersion,history:history.history??[],historyTruncated:history.historyTruncated??false};
+  return {...saved,input:prepared.input,preview:prepared.preview,review:prepared.review,confirmationToken:prepared.confirmationToken,sourceChanged:prepared.preview.dataVersion !== saved.preview.dataVersion,savedDataVersion:saved.preview.dataVersion,history:history.history??[],historyTruncated:history.historyTruncated??false};
 }
 export async function listSavedNutritionMenus(offset: number, identity: NutritionIdentity) {
   if (!Number.isInteger(offset) || offset < 0 || offset > 200) throw new NutritionInputError("Phân trang không hợp lệ.","offset");

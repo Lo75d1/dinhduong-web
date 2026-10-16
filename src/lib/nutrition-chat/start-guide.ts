@@ -1,4 +1,5 @@
 import { NUTRITION_WORKFLOW } from "./tools";
+import { VIETNAMESE_MENU_GUIDANCE } from "./menu-guidance";
 
 export function nutritionStartLinks(origin: string) {
   return {
@@ -15,20 +16,22 @@ export function nutritionStartLinks(origin: string) {
 
 export function nutritionStartMessage(origin: string) {
   const links = nutritionStartLinks(origin);
-  return `Tôi muốn dùng Dinh dưỡng 2598 để làm khẩu phần và nhận Excel chỉnh được. Hãy đọc hướng dẫn tại ${links.text} rồi dẫn tôi từ đầu đến cuối.
+  return `Tôi muốn dùng Dinh dưỡng 2598 để chọn món, duyệt khẩu phần và xem kết quả qua link trên web; Excel chỉ tải khi tôi cần. Hãy đọc hướng dẫn tại ${links.text} rồi dẫn tôi từ đầu đến cuối.
 
 Trả lời tiếng Việt bằng gạch đầu dòng. Trước tiên kiểm tra công cụ Dinh dưỡng 2598 trong phiên và gọi get_workflow nếu có. Nếu chưa có hoặc chưa đọc được link, nói rõ và hướng dẫn kết nối tại ${links.setup}; vẫn có thể làm rõ bữa ăn, nhưng chỉ báo đã tra data, tính, lưu hoặc xuất Excel khi công cụ thật trả kết quả.
 
 Hỏi các phần tôi chưa cung cấp: muốn lập thực đơn hay ghi lại ăn 24 giờ, một hay nhiều ngày, các món/thực phẩm và lượng. Hỏi tối đa 3 ý mỗi lần; không hỏi lại thông tin đã có. Mặc định chỉ tính thành phần, chỉ hỏi hồ sơ cơ thể khi tôi muốn đối chiếu nhu cầu.
 
-Tra món và thực phẩm trong kho, trình bày nguyên liệu/định lượng/nguồn; món ngoài kho hoặc thay nguyên liệu phải làm rõ nguồn và hỏi tôi chấp nhận. Không tự bịa số còn thiếu. Cho tôi xem bản chuẩn bị và chờ tôi xác nhận trước khi tính. Sau khi tính, trình bày báo cáo ngay trong chat trước link Excel: tổng năng lượng, đạm/béo/bột đường (g), tỷ lệ năng lượng P–L–G (%), chất xơ/natri/canxi/sắt, kết quả từng ngày và trung bình/ngày, nguồn và phần còn thiếu. Dùng chatReport công cụ trả; chỉ so nhu cầu khi có mục tiêu. Sau đó trả Excel chỉnh được bằng công cụ thật. Chỉ lưu bản cá nhân khi tôi yêu cầu. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
+Chọn món theo bữa ăn và thói quen Việt Nam. Tra cả công thức RNI và món VDD, cho tôi xem vài lựa chọn thật cùng điểm khác, không tự lấy dòng đầu. Giữ món tôi đã chọn; không ép thêm bữa phụ hay đổi cơm trắng. Mọi số AI tự điền phải có * ở trước và khai aiFilledFields; không thêm * vào số JSON. Không tự bịa số còn thiếu, thông tin cơ thể hoặc hệ số quy đổi.
+
+Gọi prepare_menu, đưa review.text gọn để tôi duyệt món, lượng, suất, nguồn rồi chờ xác nhận. Sau calculate_menu, dùng chatReport.summaryText trả kcal, P–L–G, phạm vi ngày và phần thiếu. Tôi muốn xem kết quả bằng link bản riêng trên tài khoản: nếu đã có quyền ghi thì save_menu rồi trả ration.url thật; thiếu quyền thì hướng dẫn cấp quyền. Trang web cho xem kết quả đã tính và tải Excel khi cần, không tự tạo/tải Excel để tính. Bản hỏi ghi 24 giờ bám Phụ lục 1 và 2 của mục 11 QĐ 2598/QĐ-BYT. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
 }
 
 export const NUTRITION_START_STEPS = [
   { title: "Nói mục đích và bữa ăn", text: "Chọn thực đơn hoặc ghi lại ăn 24 giờ, số ngày và món đã biết. AI chỉ hỏi các phần còn thiếu, gồm lượng, đơn vị và số suất." },
   { title: "Tra kho và làm rõ nguyên liệu", text: "AI tra thực phẩm/công thức của Dinh dưỡng 2598, đưa lựa chọn có nguồn. Nguyên liệu thay, món mới và số liệu ngoài kho được trình bày để bạn xác nhận." },
   { title: "Xem bản nháp rồi chốt", text: "Bạn xem ngày, bữa, nguyên liệu, định lượng và các cảnh báo. Chỉ sau khi bạn đồng ý, AI gửi đúng bản đó đến hệ thống để tính." },
-  { title: "Nhận báo cáo ngay trong chat và Excel", text: "Xem năng lượng, đạm/béo/bột đường, tỷ lệ năng lượng, các chất cơ bản, kết quả theo ngày, nguồn và phần thiếu ngay trong chat. Sau đó nhận Excel có vùng nhập chỉnh được và tự tính lại; lưu bản cá nhân khi bạn yêu cầu." },
+  { title: "Xem kết quả qua link trên web", text: "Nhận tóm tắt năng lượng và P–L–G, rồi mở bản riêng để xem khẩu phần/phân tích, chỉnh và dùng lại. Excel chỉ tạo khi bạn cần tải; không phải tải file mới xem được số liệu." },
   { title: "Dùng lại hoặc gửi bản đã sửa", text: "Mở bản cá nhân đã lưu, hoặc gửi Excel đã chỉnh vào trang nhập lại để xem trước, chốt và tính lại. Công thức kho gốc được giữ nguyên." },
 ] as const;
 
@@ -94,13 +97,14 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 - Khi người dùng đồng ý xuất kèm bản lưu, gọi export_workbook với saveToAccount=true (cần nutrition:write). Trả cả savedMenuUrl để mở lại lâu dài bằng đúng tài khoản và link tải Excel có thời hạn. Nếu chỉ tải file hoặc chưa cấp quyền lưu thì để false; không tự mở rộng quyền.
 - Dùng lại bản đã lưu: lấy ID trong link qua get_saved_menu hoặc list_saved_menus, rồi hỏi điều chỉnh và prepare/chốt/tính lại. Có thể mở link trên web để đổi ngày/lượng/suất và lưu bản dùng lại. Không yêu cầu tải Excel lên cho bước này; chỉ nhập lại khi cần lấy những sửa đổi riêng trong file offline.
 
-## 4. Trả phân tích và Excel chỉnh được
+## 4. Trả kết quả bằng link và tải Excel khi cần
 
-- Sau calculate_menu, trình bày chatReport.text ngay trong hội thoại trước link Excel. Báo cáo có tổng năng lượng (kcal), đạm/béo/bột đường (g) và tỷ lệ năng lượng P–L–G (%), chất xơ/natri/canxi/sắt và các chất đã chọn, tổng cả kỳ/trung bình/ngày/bảng từng ngày, mục tiêu/nguồn và phần thiếu. Không chỉ gửi file rồi bắt người dùng mở mới thấy số.
+- Sau calculate_menu, ưu tiên chatReport.summaryText gọn: kcal, g và tỷ lệ năng lượng P–L–G, phạm vi ngày và phần thiếu. chatReport.text giữ báo cáo đầy đủ để xem khi cần; không dán mọi ghi chú dài vào phần chính.
+- Người dùng chọn nhận link bản riêng trên tài khoản: gọi save_menu với bản đã xác nhận khi có nutrition:write rồi trả ration.url thật. Mở link để xem kết quả đã tính, chỉnh và dùng lại; không phải tạo/tải Excel. Nếu chưa có quyền lưu thì báo cần kết nối/cấp quyền, không tự tạo link hoặc mở rộng quyền.
 - Tỷ lệ P–L–G dùng tổng năng lượng quy đổi 4P + 9L + 4G của ba chất làm mẫu số, không phải tỷ lệ gram hoặc tự thay số năng lượng từ nguồn. Thiếu một chất thì giữ tỷ lệ —; số ước tính/tổng một phần phải ghi rõ. Ngày chưa nhập không là ngày ăn 0 kcal.
 - Trả số công cụ thật theo ngày và cả kỳ, đơn vị/nguồn, phần thiếu và phần ước lượng. Không biến null thành 0 hoặc coi ngày chưa nhập là ăn 0 kcal.
 - Không có mục tiêu thì không kết luận đủ/thiếu/vượt nhu cầu. Kết quả hỗ trợ đánh giá, không thay chỉ định điều trị.
-- Gọi export_workbook cho đúng bản đã chốt, trả link tải công cụ cung cấp. Link hết hạn sau 10 phút: xuất lại khi cần, không tạo link giả hoặc lặp lại link đã hết hạn.
+- Chỉ gọi export_workbook khi người dùng cần file; cũng có thể bấm tải từ trang bản lưu. Trả link tải công cụ cung cấp, không cần AI tải file rồi đọc lại. Link tải hết hạn sau 10 phút: xuất lại khi cần, không tạo link giả hoặc lặp lại link đã hết hạn.
 - Excel là bản làm việc có ô nhập/công thức/biểu đồ tự tính. Nhận xét AI ban đầu là snapshot, không tự cập nhật sau khi sửa.
 - Muốn đưa file đã sửa về hệ thống: mở ${links.upload}, đăng nhập, upload .xlsx tối đa 5 MB, xem preview/xác nhận/tính lại. Không tin các tổng/cache/công thức do file gửi lên cung cấp; không tự lấy file từ URL tùy ý.
 - Muốn dùng lại: list_saved_menus/get_saved_menu chỉ đọc bản của chủ đã cấp quyền. Có sourceChanged thì nói rõ nguồn đổi và chốt lại trước sửa/xuất.
@@ -114,5 +118,7 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 ## Lời nhắn người dùng có thể sao chép
 
 ${nutritionStartMessage(origin)}
+
+${VIETNAMESE_MENU_GUIDANCE}
 `;
 }

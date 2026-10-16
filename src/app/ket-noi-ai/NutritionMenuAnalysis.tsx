@@ -1,5 +1,7 @@
 import type { NutrientField } from "@/lib/nutrient-fields";
 import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
+import { aiFilled, AI_NUMBER_LEGEND, displayNumber, wholeVddDish } from "@/lib/nutrition-chat/presentation";
+import NutritionSurvey from "./NutritionSurvey";
 
 type Metric = { value: number | null; incomplete: boolean; estimated?: boolean };
 const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]";
@@ -67,5 +69,12 @@ export default function NutritionMenuAnalysis({ menu }: { menu: ResolvedMenu }) 
 }
 
 export function NutritionMenuInput({ menu }: { menu: ResolvedMenu }) {
-  return <div className="mt-4 space-y-3">{menu.days.map(day => <details key={day.id} className="rounded-lg border border-[#dcebe5] p-3"><summary className={`cursor-pointer font-semibold ${focus}`}>{day.label}{day.date ? ` (${day.date})` : ""} · {day.rows.length} dòng nguyên liệu</summary><ul className="mt-3 space-y-2 text-sm text-neutral-700">{day.rows.map(row => <li key={row.id}>{row.meal} · {row.dish} · {row.actualFoodName ? `${row.actualFoodName} (tham chiếu ${row.food.name})` : row.food.name}: {row.quantity ?? "chưa có lượng"} {row.unit} × {row.servings} suất; {row.basis === "raw" ? "nguyên liệu thô" : row.basis === "cooked" ? "đã nấu" : "ăn được"}. Nguồn: {row.food.source.label || "Chưa có nguồn"}. Công thức: {row.recipeSource.label}.</li>)}</ul></details>)}</div>;
+  if (menu.mode === "recall24h") return <div className="mt-4"><NutritionSurvey menu={menu} /></div>;
+  return <div className="mt-4 space-y-4">{menu.days.map(day => <section key={day.id} className="border border-neutral-300 p-3"><h3 className="font-semibold">{day.label}{day.date ? ` · ${day.date}` : ""}</h3><div className="mt-3 space-y-2">{day.rows.map((row, i) => {
+    const whole = wholeVddDish(row), previous = day.rows[i - 1];
+    const dish = whole ? row.actualFoodName || row.food.name : row.dish;
+    const same = previous && previous.meal === row.meal && previous.dish === row.dish && !whole && !wholeVddDish(previous);
+    const basis = row.basis === "raw" ? "Mua vào" : row.basis === "cooked" ? "Chín" : row.sourceState === "raw_clean" ? "Sống sạch" : "Ăn được";
+    return <div key={row.id} className="border-t border-neutral-200 pt-2 text-sm">{same ? null : <p className="mb-1 font-semibold">{row.meal} · {dish}</p>}<p>{whole ? "Cả món" : row.actualFoodName || row.food.name}: {displayNumber(row.quantity, aiFilled(row, "quantity"))} {row.unit} × {displayNumber(row.servings, aiFilled(row, "servings"))} suất <span className="text-neutral-600">· {basis} · {row.food.source.label || "—"}</span></p></div>;
+  })}</div></section>)}<p className="text-sm">{AI_NUMBER_LEGEND}</p></div>;
 }
