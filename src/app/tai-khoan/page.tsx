@@ -11,14 +11,18 @@ export const dynamic = "force-dynamic";
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ section?: string }>;
+  searchParams: Promise<{ section?: string; focus?: string }>;
 }) {
-  const section = (await searchParams).section;
+  const {section,focus} = await searchParams;
   if (!(await getSessionUser()))
     redirect(
-      `/dang-nhap?next=${encodeURIComponent(section === "connections" ? "/tai-khoan?section=connections#ket-noi-thu-cong" : "/tai-khoan")}`,
+      `/dang-nhap?next=${encodeURIComponent(section === "connections" ? `/tai-khoan?section=connections${focus==="api-token"?"&focus=api-token#api-token":"#ket-noi-thu-cong"}` : "/tai-khoan")}`,
     );
-  const data = await accountSnapshot().catch(() => null);
+  const data = await accountSnapshot().catch(error => {
+    // Diagnose server-render-only failures without logging messages, queries or credentials.
+    console.error("ACCOUNT_SNAPSHOT_FAILED", {name:error instanceof Error?error.name:"unknown",code:error&&typeof error==="object"&&"code" in error?String(error.code).slice(0,30):undefined,frames:error instanceof Error?error.stack?.split("\n").filter(line=>/^\s+at /.test(line)).slice(0,3):undefined});
+    return null;
+  });
   if (!data) {
     return (
       <section className="mx-auto max-w-3xl p-6">
