@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "dinh-duong-2598",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Tra món và mã chế độ ăn, duyệt khẩu phần, tính và trả báo cáo. Chỉ lưu tài khoản hoặc xuất Excel khi được yêu cầu.",
   "author": {
     "name": "Dinh dưỡng 2598",

@@ -1,5 +1,5 @@
 import { NUTRITION_WORKFLOW, NUTRITION_TOOLS } from "./tools";
-import { VIETNAMESE_MENU_GUIDANCE } from "./menu-guidance";
+import { MENU_PLANNING_SUMMARY, VIETNAMESE_MENU_GUIDANCE } from "./menu-guidance";
 
 export function nutritionStartLinks(origin: string) {
   return {
@@ -29,6 +29,8 @@ export function nutritionDoctorStartMessage(origin: string) {
   const links = nutritionStartLinks(origin);
   return `Hãy đọc hướng dẫn tại ${links.text} rồi giúp tôi lập thực đơn hoặc đánh giá khẩu phần bằng Dinh dưỡng 2598 từ đầu đến cuối, cho một ngày hoặc nhiều ngày.
 
+${MENU_PLANNING_SUMMARY}
+
 Tự mở phiên làm việc tạm khi cần, không bắt tôi tạo tài khoản hoặc sao chép mã truy cập. Chỉ hỏi phần còn thiếu, tối đa 3 ý mỗi lần và giữ thông tin tôi đã cung cấp. Đưa bản nháp theo ngày → bữa → món → từng nguyên liệu, lượng/đơn vị và số suất để tôi kiểm tra, duyệt rồi mới tính.
 
 ${calculatorHandoff(origin)}
@@ -54,7 +56,7 @@ Hỏi các phần tôi chưa cung cấp: muốn lập thực đơn hay ghi lại
 
 Nếu tôi có bệnh lý/chỉ định, đọc clinicalWorkflow, dùng search_diet_codes và get_diet_code để tra mã/tên/đối tượng/ghi chú thật. Hỏi phần còn thiếu liên quan, đưa mã để tôi xác nhận rồi lưu trong clinicalContext cùng khẩu phần. Không tự chẩn đoán/chọn mã đầu/ghép nhiều mã hoặc biến khoảng tham khảo thành mục tiêu cá nhân; phần chưa rõ để chưa có dữ liệu.
 
-Chọn món theo bữa ăn và thói quen Việt Nam. Tra cả công thức RNI và món VDD, cho tôi xem vài lựa chọn thật cùng điểm khác, không tự lấy dòng đầu. Giữ món tôi đã chọn; không ép thêm bữa phụ hay đổi cơm trắng. Mọi số AI tự điền phải có * ở trước và khai aiFilledFields; không thêm * vào số JSON. Không tự bịa số còn thiếu, thông tin cơ thể hoặc hệ số quy đổi.
+${MENU_PLANNING_SUMMARY} Giữ món tôi đã chọn; không ép thêm bữa phụ hay đổi cơm trắng. Mọi số AI tự điền phải có * ở trước và khai aiFilledFields; không thêm * vào số JSON. Không tự bịa số còn thiếu, thông tin cơ thể hoặc hệ số quy đổi.
 
 Gọi prepare_menu, đưa review.text đầy đủ ngay bản nháp đầu tiên: ngày/bữa → món → từng thực phẩm/nguyên liệu và lượng/đơn vị, số suất/cơ sở/nguồn; không chỉ liệt kê tên món hoặc gửi link web. RNI đọc đủ get_dish, dùng lượng bản nháp; VDD phải đọc nutrientBasis: chưa xác minh mẫu số100g/một phần thì tự tìm công thức RNI tương ứng để tôi duyệt, không chỉ hứa kiểm tra thêm rồi dừng, không tự suy công thức. Giữ dấu * rồi chờ xác nhận. Sau calculate_menu, trả webUrl thật cùng chatReport.summaryText với kcal, P–L–G, phạm vi ngày và phần thiếu; như vậy đã hoàn tất nếu tôi chỉ cần tính. Chỉ save_menu khi tôi yêu cầu lưu để dùng lại; chỉ export_workbook khi cần file và mặc định saveToAccount=false, trả link tải thật ngay, không cần tải về chat. Đọc toolGuide/recipes/recovery trong get_workflow khi chưa rõ công cụ hoặc gặp lỗi; không gọi lặp nguyên yêu cầu đang lỗi. Bản hỏi ghi 24 giờ bám Phụ lục 1 và 2 của mục 11 QĐ 2598/QĐ-BYT. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
 }
@@ -123,7 +125,7 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 
 - Xác định thực đơn hoặc ghi lại ăn 24 giờ, một hoặc nhiều ngày (giới hạn ${NUTRITION_WORKFLOW.limits.days} ngày), các bữa/món/thực phẩm và lượng đã biết.
 - Chỉ tính thành phần: comparison none. Người dùng muốn so nhu cầu: hỏi chọn mục tiêu có nguồn hoặc hồ sơ; chỉ thu thông tin cần cho lựa chọn đó.
-- Khi lập thực đơn, ưu tiên tra và trình bày MÓN ĂN có sẵn: search_dishes cho công thức RNI và search_foods với type=MA cho món VDD. Đọc get_dish để lấy nguyên liệu công thức; món VDD hoàn chỉnh phải đọc nutrientBasis; chưa xác minh mẫu số thì tự tìm công thức RNI tương ứng, trình nguyên liệu/lượng để người dùng duyệt. Không lấy unit=g làm bằng chứng100g và không chỉ hứa kiểm tra thêm rồi dừng. Không chỉ đưa danh sách gạo/thịt/rau khi người dùng muốn tên món. Sau khi chọn món mới hỏi lượng và chốt nguyên liệu.
+- Khi lập thực đơn, ưu tiên MÓN ĂN RNI có sẵn qua search_dishes/get_dish, lập khung toàn kỳ và rà món lặp theo menuGuidance. Chỉ tra món VDD nguyên khối qua search_foods type=MA khi cần; dùng Food ID trực tiếp chỉ khi nutrientBasis đã xác minh. Chưa rõ mẫu số thì tìm công thức RNI tương ứng để người dùng duyệt, không suy100g từ unit=g hoặc chỉ hứa kiểm tra rồi dừng. Không chỉ đưa danh sách gạo/thịt/rau khi người dùng muốn tên món. Sau khi chọn món mới chốt nguyên liệu và lượng.
 - Tra search_foods/get_food và search_dishes/get_dish để lấy Food ID, công thức và nguồn thật. Không đoán ID hay coi định lượng công thức gốc mặc định bằng một suất.
 - Món suy từ AI phải ghi là ước lượng và chờ người dùng chấp nhận. Thay nguyên liệu cần Food ID/lượng/nguồn/quy đổi riêng; không tự coi tương đương.
 - Ngoài kho: ưu tiên nhãn/tài liệu có cơ sở 100 g, 100 ml hoặc lượng mỗi phần và đơn vị rõ. Dùng thực phẩm tham chiếu chỉ khi người dùng chấp nhận; không có số thì giữ null và ghi thiếu.

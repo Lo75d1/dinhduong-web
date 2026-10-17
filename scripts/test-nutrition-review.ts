@@ -70,7 +70,7 @@ async function main() {
   const sheetXml = async (name: string) => archive.file(`xl/worksheets/sheet${workbook.getWorksheet(name)!.id}.xml`)!.async("string");
   const surveyXml = await sheetXml("Phieu 24h");
   check(surveyXml.includes('sqref="F7"')); check((await sheetXml("Nhap khau phan")).includes('sqref="G7"'));
-  check((await sheetXml("Tu nhap")).includes("conditionalFormatting")); check(surveyXml.includes("<sheetProtection"));
+  check((await sheetXml("Tu nhap")).includes("conditionalFormatting")); check(!surveyXml.includes("<sheetProtection"));
   const roundTrip = await parseNutritionWorkbook(bytes);
   equal(roundTrip.days[0].rows[0].mealTime, "11:30"); equal(roundTrip.days[0].rows[0].householdMeasure, "1 bát"); equal(roundTrip.days[0].rows[0].sourceState, "raw_clean"); equal(roundTrip.days[0].rows[0].aiFilledFields, rice.aiFilledFields); equal(roundTrip.days[0].rows[2].aiFilledFields, ["customFood.nutrients.energyKcal"]);
   workbook.getWorksheet("Nhap khau phan")!.getCell("G7").value = 300;
