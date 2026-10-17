@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import AiRationInput, { type AiRationItem } from "./AiRationInput";
 import Modal from "./Modal";
+import CalculatorInputToolbar from "./CalculatorInputToolbar";
 import MealInputWorkspace, { EditableTitle, DishInputFrame } from "./MealInputWorkspace";
 import {
   loadMedicationRows,
@@ -570,13 +571,12 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
 
   return (
     <section className="flex flex-col gap-2 pb-2 lg:min-h-0 lg:flex-1" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
-      <div className="flex flex-wrap items-center gap-2">
-        <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
+      <CalculatorInputToolbar mode={mode} disabled={!hydrated} onModeChange={changeMode}>
         {profileSlot}
         {savedMenuSlot}
         <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
         <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
-      </div>
+      </CalculatorInputToolbar>
       <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
       {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
@@ -734,20 +734,6 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   );
 }
 
-function ModeSelector({ mode, disabled, onChange }: { mode: RationMode; disabled: boolean; onChange: (mode: RationMode) => void }) {
-  const isRecall = mode === "recall24h";
-  // Gọn thành segmented control 1 hàng để chừa tối đa chiều dọc cho 2 khung cây/chi tiết.
-  return (
-    <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-neutral-300 bg-white p-0.5" role="group" aria-label="Chế độ nhập khẩu phần">
-      <button disabled={disabled} onClick={() => onChange("recall24h")} aria-pressed={isRecall} title="Khẩu phần 24 giờ: nhập lượng đã ăn + hệ số đổi về sống sạch" className={`rounded px-2.5 py-1.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-60 ${isRecall ? "bg-emerald-700 text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>
-        Khẩu phần 24h
-      </button>
-      <button disabled={disabled} onClick={() => onChange("menu")} aria-pressed={!isRecall} title="Lập thực đơn: nhập trực tiếp lượng sống sạch" className={`rounded px-2.5 py-1.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-60 ${!isRecall ? "bg-emerald-700 text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>
-        Lập thực đơn
-      </button>
-    </div>
-  );
-}
 
 function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDuplicateDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
   node: MealNode; canMoveUp: boolean; canMoveDown: boolean; onMoveUp: () => void; onMoveDown: () => void; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDuplicateDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onUpdateMedication: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDeleteMedication: (uid: string) => void;

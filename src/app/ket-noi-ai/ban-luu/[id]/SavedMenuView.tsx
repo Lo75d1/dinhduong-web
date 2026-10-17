@@ -11,7 +11,8 @@ import { readNutritionResponse } from "../../client-api";
 import ReuseSavedMenu, { type Prepared, type SavedTarget } from "./ReuseSavedMenu";
 import SavedLibraryLinks from "@/app/tai-khoan/SavedLibraryLinks";
 import CalculatorNavigation, { useCalculatorHeader } from "@/app/tinh-khau-phan/CalculatorNavigation";
-import { LinkedCalculatorResults } from "../../ban-tam/WebMenuView";
+import LinkedCalculatorResults from "@/app/tinh-khau-phan/LinkedCalculatorResults";
+import { CalculatorInputPanel } from "@/app/tinh-khau-phan/CalculatorLayout";
 
 type Saved = Prepared & { ration: SavedTarget; sourceChanged?: boolean };
 type Initial = { input: MenuInput; names: Record<string, string> };
@@ -19,6 +20,7 @@ const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visi
 
 export function AccountMenuWorkspace({ result, initial, onSaved, onDelete, onRefresh }: { result?: Saved; initial?: Initial; onSaved?: (ration: SavedTarget, prepared: Prepared) => void; onDelete?: () => void; onRefresh?: () => void }) {
   const headerSlot = useCalculatorHeader();
+  const [actionsContainer,setActionsContainer]=useState<HTMLDivElement|null>(null);
   const [view, setView] = useState<"entry" | "analysis">(result ? "analysis" : "entry");
   const [preview, setPreview] = useState<ResolvedMenu | null>(result?.preview ?? null);
   const [dirty, setDirty] = useState(false), [draftResult, setDraftResult] = useState(false);
@@ -35,10 +37,10 @@ export function AccountMenuWorkspace({ result, initial, onSaved, onDelete, onRef
     {result?.sourceChanged ? <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Nguồn đã đổi từ lần lưu trước. Báo cáo được tính lại theo dữ liệu hiện tại; kiểm tra và xác nhận trước khi lưu thay đổi.</p> : null}
     {dirty ? <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Đã sửa đầu vào. Bấm Xem trước và tính lại để cập nhật kết quả trước khi lưu.</p> : null}
     {!dirty && preview?.warnings.length ? <details className="rounded border border-[#d4dfd8] bg-white p-3 text-sm"><summary className="cursor-pointer font-semibold">Lưu ý về nguồn và số liệu ({preview.warnings.length})</summary><ul className="mt-3 list-disc space-y-1 pl-5 text-neutral-700">{[...new Set(preview.warnings)].map(warning=><li key={warning}>{warning}</li>)}</ul></details> : null}
-    <section className={view === "entry" ? "clinical-panel flex min-w-0 flex-col lg:h-[calc(100vh-10rem)]" : "clinical-panel min-w-0"}>
-      <ReuseSavedMenu menu={result?.preview} initialInput={initial?.input} initialNames={initial?.names} initialPrepared={result} savedTarget={result?.ration} layout="calculator" view={view} onDraftChange={() => setDirty(true)} onPrepared={value => { setPreview(value); setDirty(false); setDraftResult(true); setView("analysis"); }} onSaved={(ration, prepared) => { setDraftResult(false); onSaved?.(ration, prepared); }}/>
-    </section>
-    {view === "analysis" && !dirty && preview ? <LinkedCalculatorResults menu={preview} draft={draftResult}/> : null}
+    <CalculatorInputPanel active={view === "entry"}>
+      <ReuseSavedMenu menu={result?.preview} initialInput={initial?.input} initialNames={initial?.names} initialPrepared={result} savedTarget={result?.ration} layout="calculator" view={view} actionsContainer={actionsContainer} onDraftChange={() => setDirty(true)} onPrepared={value => { setPreview(value); setDirty(false); setDraftResult(true); setView("analysis"); }} onSaved={(ration, prepared) => { setDraftResult(false); onSaved?.(ration, prepared); }}/>
+    </CalculatorInputPanel>
+    {view === "analysis" && !dirty && preview ? <LinkedCalculatorResults menu={preview} draft={draftResult} actionsRef={setActionsContainer} onEdit={() => setView("entry")}/> : null}
     {view === "analysis" && !preview ? <p className="clinical-panel text-sm text-neutral-700">Chưa có kết quả. Nhập món và thực phẩm rồi bấm Xem trước và tính lại.</p> : null}
     {result && !dirty && !draftResult ? <SavedLibraryLinks menu={preview ?? result.preview} rationId={result.ration.id}/> : null}
   </>;
