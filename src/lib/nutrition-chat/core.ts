@@ -9,6 +9,7 @@ import type { Row } from "@/app/tinh-khau-phan/types";
 import { CONTRACT_VERSION, type CustomFoodInput, type MenuInput, type MenuRowInput, type NutritionFood, type NutrientTotal, type ResolvedMenu, type ResolvedRow } from "./contracts";
 import { NutritionInputError } from "./validation";
 import { assessClinicalContext, DIET_NUTRIENT_KEYS, type NutritionDietCode } from "./clinical";
+import { nutritionFoodBasis } from "./food-basis";
 
 export function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
@@ -37,7 +38,12 @@ function sourceQuality(food: NutritionFood): { food: NutritionFood; warnings: st
     for (const key of ["energyKcal","proteinG","lipidG","glucidG"]) nutrients[key] = null;
     warnings.push(`${food.name}: tổng đạm/béo/bột đường không phù hợp cơ sở 100 g; cần xác minh trước khi tính các chất chính.`);
   }
-  return { food: { ...food, nutrients, qualityWarnings: [...(food.qualityWarnings ?? []), ...warnings] }, warnings: [...(food.qualityWarnings ?? []), ...warnings] };
+  const nutrientBasis = nutritionFoodBasis(food);
+  const unverified = nutrientBasis.status === "unverified";
+  if (unverified) warnings.push(`${food.name}: ${nutrientBasis.note}`);
+  const qualityWarnings = [...new Set([...(food.qualityWarnings ?? []), ...warnings])];
+  return { food: { ...food, nutrientBasis, nutrients: unverified ? Object.fromEntries(Object.keys(nutrients).map(key => [key, null])) : nutrients,
+    ...(unverified ? { unverifiedSourceNutrients: { ...(food.unverifiedSourceNutrients ?? food.nutrients) } } : {}), qualityWarnings }, warnings: qualityWarnings };
 }
 export function sanitizeNutritionFood(food: NutritionFood): NutritionFood { return sourceQuality(food).food; }
 function resolveRow(row: MenuRowInput, catalogue: Map<string, NutritionFood>): ResolvedRow {
@@ -51,6 +57,9 @@ function resolveRow(row: MenuRowInput, catalogue: Map<string, NutritionFood>): R
   if (amount !== null && amount!==0 && row.unit !== food.unit) amount = !row.densityGPerMl || !row.densitySource ? null : row.unit === "ml" ? amount * row.densityGPerMl : amount / row.densityGPerMl;
   if (amount !== null && amount!==0 && row.basis === "cooked") amount = !row.conversionFactor || !row.conversionSource ? null : amount * row.conversionFactor;
   if (amount !== null && amount!==0 && row.basis === "raw") amount = food.wastePercent === null ? null : amount * (1 - food.wastePercent / 100);
+  // Unknown source denominator cannot be scaled by grams or servings. Keep the
+  // original input/source numbers visible, but exclude this row from totals.
+  if (amount !== 0 && food.nutrientBasis?.status === "unverified") amount = null;
   let edibleGrams: number | null = null, rawGrams: number | null = null;
   if (amount !== null) {
     edibleGrams = food.unit === "g" ? amount : row.densityGPerMl && row.densitySource ? amount * row.densityGPerMl : null;
@@ -90,6 +99,7 @@ export function resolveMenu(input: MenuInput, catalogue: NutritionFood[], recomm
   for (const row of rows) {
     if (row.customFood) { const definition = canonicalJson(row.customFood), existing = customDefinitions.get(row.food.id); if (existing && existing !== definition) throw new NutritionInputError("Cùng ID nguyên liệu ngoài kho có số liệu/nguồn khác nhau.", row.id); customDefinitions.set(row.food.id, definition); }
     if (row.quantity === null) add(row.id, "quantity", "Cần xác nhận định lượng.");
+    if (row.quantity !== 0 && row.food.nutrientBasis?.status === "unverified") add(row.id, "nutrientBasis", `${row.food.name}: ${row.food.nutrientBasis.note}`);
     if (row.sourceState === "raw_clean" && row.food.foodType === "MA") add(row.id, "sourceState", "Món hoàn chỉnh chưa có cơ sở sống sạch; cần xác minh nguyên liệu và quy đổi.");
     if (row.quantity!==0 && row.unit !== row.food.unit && (!row.densityGPerMl || !row.densitySource)) add(row.id, "density", "Đổi ml/g cần khối lượng riêng và nguồn; không quy đổi 1:1.");
     if (row.quantity!==0 && row.basis === "cooked" && (!row.conversionFactor || !row.conversionSource)) add(row.id, "conversion", "Lượng chín cần hệ số quy về trạng thái nguồn và nguồn hệ số.");

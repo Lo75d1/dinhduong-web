@@ -27,9 +27,9 @@ async function main(){let checks=0;const check=(value:unknown,message:string)=>{
   const markup=renderToStaticMarkup(createElement(MenuDraftEditor,{input,menu,names,disabled:false,onChange:()=>undefined,onNames:()=>undefined,onAmount:()=>undefined}));
   for(const name of [names["row-rice"],names["row-beef"],names["row-milk"]])check(markup.includes(name),"selected dish shows every ingredient");
   check(markup.includes('value="200"')&&markup.includes('value="50"'),"original quantities remain editable");
-  check(markup.includes(">ml</span>"),"millilitres remain ml rather than silently converted to g");
+  check(/<option[^>]*value="ml"[^>]*selected/.test(markup),"millilitres remain ml rather than silently converted to g");
   check(markup.includes("Ngày 2"),"all days remain reachable");
-  check(markup.includes("Số suất")&&markup.includes("Cơ sở · nguồn"),"portions and source basis remain visible");
+  check(markup.includes("Số suất")&&markup.includes("Cơ sở, quy đổi và nguồn"),"portions and source basis remain visible");
   check(normal.includes("data-calculator-meal-workspace")&&markup.includes("data-calculator-meal-workspace"),"manual and conversation entry share the actual native workspace");
   check(markup.includes("data-calculator-dish-panel"),"conversation ingredients use the native dish panel");
   check(!markup.includes("Bữa → Món ăn"),"old separate card navigation removed");

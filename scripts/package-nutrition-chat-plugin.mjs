@@ -16,6 +16,9 @@ const fixedDate = new Date("2026-10-14T00:00:00.000Z");
 const guide = JSON.parse(await readFile(join(root, "src/lib/nutrition-chat/tool-guide.json"), "utf8"));
 const guideText = ["# Công cụ, kết quả và cách xử lý", "", `Phiên bản hướng dẫn: ${guide.version}. Một plugin Dinh dưỡng 2598 chứa ${Object.keys(guide.tools).length} công cụ; không phải cài mỗi công cụ thành một plugin.`, "", guide.start, "", "## Bản nháp để duyệt thành phần", "", guide.approvalPresentation, "", ...Object.entries(guide.tools).flatMap(([name, tool]) => [`## ${name} — ${tool.title}`, "", `- Khi dùng: ${tool.when}`, `- Đầu vào: ${tool.input}`, `- Kết quả: ${tool.returns}`, `- Tiếp theo: ${tool.next}`, ""]), "## Các luồng", "", ...guide.recipes.map(recipe => `- **${recipe.goal}:** ${recipe.steps}`), "", "## Khi không hoàn thành", "", ...guide.recovery.map(item => `- **${item.case}:** ${item.action}`), ""].join("\n");
 await writeFile(join(source, "skills/dinh-duong-2598/references/cong-cu.md"), guideText);
+const menuPlanning = JSON.parse(await readFile(join(root, "src/lib/nutrition-chat/menu-planning-guide.json"), "utf8"));
+const planningText = ["# Lập thực đơn RNI và đổi món trong kỳ", "", ...menuPlanning.sections.flatMap(section => [`## ${section.title}`, "", ...section.rules.map(rule => `- ${rule}`), ""]), ""].join("\n");
+await writeFile(join(source, "skills/dinh-duong-2598/references/lap-thuc-don.md"), planningText);
 
 async function sourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });

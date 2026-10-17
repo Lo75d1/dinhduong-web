@@ -5,7 +5,7 @@ import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import { CLASSIFY_SELECT_KEYS } from "@/lib/food-classify";
 
 const FOOD_SELECT = {
-  id: true, name: true, wastePercent: true,
+  id: true, name: true, source: true, foodType: true, unit: true, wastePercent: true,
   ...Object.fromEntries(CORE_CALC_FIELDS.map((field) => [field.key, true])),
   ...Object.fromEntries(CLASSIFY_SELECT_KEYS.map((key) => [key, true])),
 } as const;

@@ -107,6 +107,10 @@ a:active {
   box-shadow: 0 6px 18px rgba(18, 60, 54, 0.045);
 }
 
+@media (max-width: 639px) {
+  .calculation-workspace .clinical-page-heading::after { display: none; }
+}
+
 /* Khu tính khẩu phần có bảng dài và nhiều cột: chừa mép để đọc như phiếu bệnh viện. */
 .calculation-workspace .overflow-x-auto {
   border-radius: 0.5rem;

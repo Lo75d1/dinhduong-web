@@ -1,6 +1,6 @@
 ---
 name: dinh-duong-2598
-description: Tra thực phẩm và công thức trong Dinh dưỡng 2598, hỏi lại để chốt khẩu phần một hoặc nhiều ngày, tính dinh dưỡng, lưu bản cá nhân khi được yêu cầu và xuất Excel chỉnh được qua connector MCP. Dùng khi người dùng muốn phân tích bữa ăn hoặc lập thực đơn từ nguồn Dinh dưỡng 2598.
+description: Tra thực phẩm và công thức trong Dinh dưỡng 2598, hỏi lại để chốt khẩu phần một hoặc nhiều ngày, tính dinh dưỡng, lưu bản cá nhân khi được yêu cầu và xuất Excel chỉnh được qua connector MCP hoặc REST phiên tạm khi môi trường có công cụ gửi HTTP. Dùng khi người dùng muốn phân tích bữa ăn hoặc lập thực đơn từ nguồn Dinh dưỡng 2598.
 ---
 
 # Dinh dưỡng 2598
@@ -18,7 +18,7 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bư�
 - Chỉ Excel: prepare/chốt → export_workbook với saveToAccount=false → trả downloadUrl. Không bắt tải Excel về chat rồi đọc lại, không cần quyền write.
 - Lưu: chỉ theo yêu cầu rõ của người dùng, gọi save_menu rồi trả ration.url. Quyền write có sẵn không đồng nghĩa được lưu mọi kết quả.
 - Kết quả get_food/get_dish/get_diet_code là đối tượng trực tiếp; tìm kiếm mới có items. code hoặc tên không phải ID. MCP đọc structuredContent hoặc JSON trong content.text và kiểm isError; REST trả đối tượng trực tiếp.
-- Nếu kết nối thiếu công cụ, token/link/QR không tự cấp khả năng gọi API cho AI. Dùng giao diện kết nối; không yêu cầu người dùng dán token vào chat. Token API xác thực khác confirmationToken ngắn hạn từ prepare.
+- Nếu chưa có MCP, đọc [REST trực tiếp](references/rest-phien-tam.md): có công cụ HTTP gửi được POST/header/JSON thì dùng phiên tạm, không bắt đăng ký. Nếu không có cả hai khả năng mới dùng giao diện kết nối; token/link/QR không tự thêm công cụ. không yêu cầu người dùng dán token vào chat. Token API xác thực khác confirmationToken ngắn hạn từ prepare.
 
 ## Bắt đầu
 
@@ -26,17 +26,18 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bư�
 - Hỏi tối đa 3 ý mỗi lần và chỉ hỏi phần chưa có. Có thể bắt đầu làm rõ bữa ăn khi chưa có connector; phải báo chính xác phần tra/tính/lưu/xuất còn chưa thực hiện được.
 - Gọi `get_workflow` khi có connector để lấy hướng dẫn và giới hạn hiện hành. Schema của công cụ trong phiên là nguồn sự thật về tham số.
 - Đọc `get_workflow.menuGuidance`: quy tắc bữa ăn Việt Nam, chọn ứng viên thật, định lượng, bệnh lý, dấu sao và trả link. Giữ thói quen/món đã chọn; không ép gạo lứt, thêm cơm vào bún/phở hoặc tự áp mức kcal/bữa phụ. Không tự tạo hồ sơ, mục tiêu điều trị, nguyên liệu hay giá.
+- Khi lập thực đơn mới, đọc [ưu tiên RNI và đổi món](references/lap-thuc-don.md). Lập khung toàn kỳ trước, rà nền bữa sáng, món đạm/rau và cách nấu lặp. Mặc định7ngày cùng món/nền bữa sáng không quá 2 lần, tránh liền ngày; khoai luộc/hấp/nướng vẫn cùng nền khoai. Đây là tiêu chí sản phẩm, có ngoại lệ theo lựa chọn/chỉ định; cơm trắng ở bữa chính có thể lặp. Không áp vào khẩu phần24giờ đã ăn.
 - REST/Excel hỗ trợ tối đa 90 ngày, nhưng ngân sách kết quả hội thoại nhỏ hơn. Nếu có `outputCompacted` ở kết quả hoặc `preview`, giải thích đó là summary, không báo đã xem chi tiết bị lược; kiểm tra các số đếm/trạng thái truncated khi danh sách thiếu bị rút gọn. Dùng đầu vào chuẩn hóa đi cùng summary để chốt; nếu server yêu cầu chia kỳ do vượt ngân sách thì chia thành các đoạn theo ngày và giữ nhãn rõ, không tự bỏ dòng.
-- Nếu chưa có công cụ, chỉ hướng dẫn người dùng kết nối tại `https://dinhduong2598.food/ket-noi-ai`. Có thể tiếp tục làm rõ món và định lượng nhưng không báo đã tra data, đã tính trên server, đã lưu hoặc đã tạo file.
+- Nếu không có cả MCP lẫn công cụ HTTP gửi POST/header/JSON, hướng dẫn kết nối tại `https://dinhduong2598.food/ket-noi-ai`. Có thể tiếp tục làm rõ món và định lượng nhưng không báo đã tra data, đã tính trên server, đã lưu hoặc đã tạo file.
 - Hỏi hoặc suy từ yêu cầu: khẩu phần 24 giờ hay thực đơn, một hay nhiều ngày, chỉ tính thành phần hay đối chiếu mục tiêu. Chế độ chỉ tính không cần hồ sơ cơ thể.
 
 ## Bước 1: làm rõ đầu vào
 
 - Có bệnh lý/chỉ định: đọc `get_workflow.clinicalWorkflow`; dùng `search_diet_codes` và `get_diet_code` theo ID thật, trình mã/tên/đối tượng/ghi chú để xác nhận. Điền `clinicalContext` với dữ kiện người dùng cung cấp. `selection=proposed` chưa được chốt; `user_confirmed` là người dùng chọn; `prescribed` là chỉ định họ cung cấp, không phải hệ thống xác minh chuyên môn. Không tự chẩn đoán, ghép ngưỡng nhiều mã, suy ý nghĩa hậu tố hoặc lấy khoảng MCDA làm mục tiêu cá nhân. Mức theo kg cần làm rõ riêng; nước chưa xác minh đơn vị không được tự đổi/đối chiếu. Không có mã vẫn tính thành phần được, không kết luận đạt chế độ bệnh lý.
-- Khi người dùng cần thực đơn, trình bày tên MÓN ĂN theo bữa. Tra `search_dishes` (công thức RNI) và `search_foods` với `type=MA` (món VDD hoàn chỉnh) trước khi tự đề xuất. Với RNI, đọc `get_dish` rồi xác nhận lượng; với VDD dùng Food ID trực tiếp vì kho không có công thức. Chỉ gợi ý công thức riêng/biến thể khi kho không có món phù hợp hoặc người dùng yêu cầu.
+- Khi người dùng cần thực đơn, ưu tiên MÓN ĂN RNI có sẵn phù hợp qua `search_dishes` rồi đọc `get_dish` và chốt lượng. Chỉ tra món VDD nguyên khối qua `search_foods type=MA` khi cần; `nutrientBasis=unverified` thì tìm công thức RNI tương ứng để duyệt, không suy100g từ unit=g. Đọc [nguồn và quy đổi](references/nguon-va-quy-doi.md). Chỉ gợi ý công thức riêng/biến thể khi kho không có món phù hợp hoặc có yêu cầu điều chỉnh/sáng tạo; không ghép nguyên liệu chỉ để khớp kcal. Biến thể AI dùng kind=ai, giữ dishId RNI gốc nếu có, nêu cách nấu/phần thay và chờ chấp nhận.
 - Dùng `search_foods` / `get_food` và `search_dishes` / `get_dish`. Chọn ID thật, giữ nguồn và trạng thái sống/chín. Tên có dấu, alias và những bản ghi trùng tên cần được kiểm tra khi ảnh hưởng lựa chọn.
-- Tách tên cần tìm khỏi câu có bữa/điều kiện, nhưng giữ mọi điều kiện. Trình 3–5 lựa chọn thật có nguồn/điểm khác để người dùng chọn; không lấy dòng đầu. Phân biệt kho/khô, cơm/cốm, thịt/nội tạng. Lỗi công cụ khác không tìm thấy; rỗng thì cho sửa từ khóa hoặc nhóm tìm, không bịa món/bỏ điều kiện an toàn.
-- Món có công thức: dùng làm nền, giữ dấu vết công thức gốc. Món chỉ có bảng dinh dưỡng không cho biết chính xác nguyên liệu. Công thức do AI đề xuất phải gắn nguồn `ai`, ghi ước lượng và chờ người dùng xác nhận.
+- Tách tên cần tìm khỏi câu có bữa/điều kiện, giữ mọi điều kiện. Khi cần phân biệt ứng viên, trình 3–5 lựa chọn thật có nguồn/điểm khác; không lấy dòng đầu. Khi được giao lập thực đơn, chọn một phương án có lý do để trình duyệt, không bắt chọn từng món cho mọi bữa. Phân biệt kho/khô, cơm/cốm, thịt/nội tạng. Lỗi công cụ khác không tìm thấy; rỗng thì đổi từ khóa/nhóm tìm, không bịa món hoặc bỏ điều kiện an toàn.
+- Món có công thức: dùng làm nền, giữ dấu vết công thức gốc. Món chỉ có bảng dinh dưỡng không cho biết chính xác nguyên liệu. Công thức do AI đề xuất phải gắn nguồn `ai`, ghi ước lượng và chờ người dùng xác nhận. Trước prepare tự rà độ lặp cả kỳ, tính hợp món, lượng/số suất, khả năng mua/nấu và các hạn chế; bảng tổng quan ngày × bữa không thay bản duyệt từng nguyên liệu.
 - Khi thay nguyên liệu, chọn Food ID mới và lượng riêng, không mặc định tương đương dinh dưỡng. Giữ nguyên liệu đã thay trong thông tin nguồn; không sửa Food/Dish gốc.
 - Nếu ngoài kho, đọc [references/nguon-va-quy-doi.md](references/nguon-va-quy-doi.md): ưu tiên nhãn/tài liệu có đơn vị rõ; dùng thực phẩm tham chiếu chỉ khi người dùng chấp nhận; không có số thì để thiếu.
 - Làm rõ gram/ml, lượng một phần hay tổng số suất, khối lượng ăn được hay nguyên liệu thô. Không đoán tỷ trọng ml → gram, tỷ lệ thải bỏ hoặc tỷ lệ sống/chín.

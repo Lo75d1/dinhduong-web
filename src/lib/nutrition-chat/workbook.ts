@@ -1,5 +1,4 @@
 import ExcelJS from "exceljs";
-import { randomBytes } from "node:crypto";
 import type { CustomFoodInput, FoodSource, MenuInput, MenuRowInput, NutritionFood, ResolvedMenu, TargetInput } from "./contracts";
 import { CONTRACT_VERSION } from "./contracts";
 import { ALL_NUTRIENT_FIELDS } from "../nutrient-fields";
@@ -8,6 +7,7 @@ import { addNutritionReportSheets, isVddWholeDish, type NutritionWorkbookOptions
 import { nutritionDetailCellCount } from "./workbook-detail";
 import { nutritionAnalysisCellCount } from "./workbook-analysis";
 import { NUTRIENT_KEYS, parseMenuInput } from "./validation";
+import { finalizeNutritionWorkbookLayout } from "./workbook-layout";
 import { addNativeWorkbookCharts } from "./workbook-charts";
 import { assertNutritionWorkbookExportBudget, inspectWorkbookArchive, NutritionWorkbookError, WORKBOOK_LIMITS } from "./workbook-security";
 import { workbookInputView } from "./workbook-reader";
@@ -42,21 +42,21 @@ type Manifest = {
 function heading(sheet: ExcelJS.Worksheet, title: string, subtitle: string, headers: string[], widths: number[]) {
   sheet.properties.defaultRowHeight = 23;
   sheet.properties.tabColor = { argb: GREEN };
-  sheet.views = [{ state: "frozen", xSplit: 2, ySplit: 6, activeCell: "G7", showGridLines: false }];
+  sheet.views = [{ state: "normal", showGridLines: false }];
   sheet.columns = headers.map((_, i) => ({ width: widths[i] ?? 17 }));
   sheet.mergeCells(1, 1, 1, Math.min(headers.length, 12));
   sheet.getCell("A1").value = title;
-  sheet.getCell("A1").font = { name: "Calibri", size: 20, bold: true, color: { argb: GREEN } };
+  sheet.getCell("A1").font = { name: "Times New Roman", size: 20, bold: true, color: { argb: GREEN } };
   sheet.getRow(1).height = 35;
   sheet.mergeCells(2, 1, 3, Math.min(headers.length, 12));
   sheet.getCell("A2").value = subtitle;
   sheet.getCell("A2").alignment = { vertical: "middle", wrapText: true };
-  sheet.getCell("A2").font = { name: "Calibri", size: 11, color: { argb: "344C45" } };
+  sheet.getCell("A2").font = { name: "Times New Roman", size: 11, color: { argb: "344C45" } };
   sheet.getRow(2).height = 28;
   sheet.getRow(3).height = 25;
   sheet.getRow(6).values = headers;
   sheet.getRow(6).height = 38;
-  sheet.getRow(6).eachCell(cell => { cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GREEN } }; cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FFFFFF" } }; cell.alignment = { vertical: "middle", wrapText: true }; });
+  sheet.getRow(6).eachCell(cell => { cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: GREEN } }; cell.font = { name: "Times New Roman", size: 11, bold: true, color: { argb: "FFFFFF" } }; cell.alignment = { vertical: "middle", wrapText: true }; });
   sheet.pageSetup = { paperSize: 9, orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0, margins: { left: 0.25, right: 0.25, top: 0.35, bottom: 0.35, header: 0.15, footer: 0.15 } };
   sheet.headerFooter.oddFooter = "Dinh dưỡng 2598 | Trang &P / &N";
   sheet.pageSetup.printTitlesRow = "1:6";
@@ -64,8 +64,8 @@ function heading(sheet: ExcelJS.Worksheet, title: string, subtitle: string, head
 
 function styleRows(sheet: ExcelJS.Worksheet, last: number, editable: number[] = [], sparse = false) {
   const columnCount = sheet.columnCount;
-  const regularFont = { name: "Calibri", size: 11, color: { argb: "17201D" } };
-  const editableFont = { name: "Calibri", size: 11, color: { argb: "175387" } };
+  const regularFont = { name: "Times New Roman", size: 11, color: { argb: "17201D" } };
+  const editableFont = { name: "Times New Roman", size: 11, color: { argb: "175387" } };
   const fills: Record<string, ExcelJS.Fill> = Object.fromEntries([INPUT, "FFFFFF", "F3F7F5"].map(color => [color, { type: "pattern", pattern: "solid", fgColor: { argb: color } }])) as Record<string, ExcelJS.Fill>;
   const border: Partial<ExcelJS.Borders> = { bottom: { style: "hair", color: { argb: "D7E2DC" } } };
   const wrapped = { vertical: "middle" as const, wrapText: true };
@@ -149,7 +149,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   workbook.title = menu.title;
   workbook.created = new Date(menu.generatedAt);
   workbook.calcProperties.fullCalcOnLoad = true;
-  if (complete) for (const name of ["Phan tich chi tiet", ...(menu.mode === "recall24h" ? ["Phieu 24h", "Quy doi 24h"] : []), "Bao cao", "Can doi nang luong", "Dong gop bua mon", "Thuc don", "Thanh phan day du", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
+  if (complete) for (const name of ["Thuc don", "Bao cao", "Can doi nang luong", "Dong gop bua mon", "Phan tich chi tiet", ...(menu.mode === "recall24h" ? ["Phieu 24h", "Quy doi 24h"] : []), "Thanh phan day du", ...(menu.days.length > 1 ? ["Dinh duong theo ngay"] : []), "Nguon doi soat"]) workbook.addWorksheet(name);
   const analysis = workbook.addWorksheet(SHEETS.analysis);
   const comparison = workbook.addWorksheet(SHEETS.comparison);
   const targetSheet = workbook.addWorksheet(SHEETS.targets);
@@ -308,7 +308,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   const totalEnergyRef = `${col(4 + energyIndex * 2)}${totalRow}`;
   const averageEnergyRef = `${col(4 + energyIndex * 2)}${averageRow}`;
   formula(analysis.getCell("A5"), energyIndex < 0 ? `"Số dòng đã chọn: "&C${totalRow}&" · Ngày có nhập: "&C${averageRow}` : `"Tổng đã biết: "&IF(ISNUMBER(${totalEnergyRef}),TEXT(${totalEnergyRef},"0.0"),"—")&" kcal · TB/ngày có nhập: "&IF(ISNUMBER(${averageEnergyRef}),TEXT(${averageEnergyRef},"0.0"),"—")&" kcal · Ngày có nhập: "&C${averageRow}`);
-  analysis.getCell("A5").font = { name: "Calibri", size: 13, bold: true, color: { argb: GREEN } };
+  analysis.getCell("A5").font = { name: "Times New Roman", size: 13, bold: true, color: { argb: GREEN } };
   analysis.getCell("A5").fill = { type: "pattern", pattern: "solid", fgColor: { argb: LIGHT } }; analysis.getCell("A5").alignment = { wrapText: true }; analysis.getRow(5).height = 33;
   for (const row of [...Array.from({ length: WORKBOOK_LIMITS.days }, (_, i) => FIRST + i), totalRow, averageRow]) {
     const refs = macros.map(i => `${col(4 + i * 2)}${row}`);
@@ -331,7 +331,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     for (let i = 0; i < 3; i++) analysis.getCell(row, macroColumn + i).numFmt = "0.0%";
     analysis.getCell(row, macroColumn + 4).numFmt = "0.0%";
   }
-  for (const row of [totalRow, averageRow]) analysis.getRow(row).eachCell(cell => { cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: row === totalRow ? GREEN : LIGHT } }; cell.font = { bold: true, name: "Calibri", size: 11, color: { argb: row === totalRow ? "FFFFFF" : GREEN } }; });
+  for (const row of [totalRow, averageRow]) analysis.getRow(row).eachCell(cell => { cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: row === totalRow ? GREEN : LIGHT } }; cell.font = { bold: true, name: "Times New Roman", size: 11, color: { argb: row === totalRow ? "FFFFFF" : GREEN } }; });
   heading(comparison, "Đối chiếu mục tiêu · trung bình ngày có nhập", "Mục tiêu lấy từ Ngay va muc tieu. Thiếu dữ liệu thì chỉ hiện số đã biết và dòng thiếu; không kết luận đạt/thiếu/vượt. Đây là so sánh số học, không tự thay chỉ định chuyên môn. Chất chưa chọn phân tích thì chưa có kết quả.", ["Chất", "Đơn vị", "Trung bình / ngày", "Dòng thiếu cả đợt", "Mục tiêu / ngày", "Tỷ lệ / mục tiêu", "Chênh lệch", "Giới hạn trên?", "Nguồn mục tiêu", "Trạng thái"], [27, 13, 23, 24, 23, 22, 21, 20, 48, 50]);
   for (let i = 0; i < WORKBOOK_LIMITS.days; i++) {
     const row = FIRST + i;
@@ -526,8 +526,8 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     analysis.state = "hidden";
     input.getCell("A2").value = `Chỉnh ngày, bữa/món, mã thực phẩm, lượng, đơn vị và số suất tại các cột nhập. Dòng dự phòng được ẩn theo nhóm; có thể hiện thêm dòng khi cần (tối đa ${inputCapacity} dòng). Tra mã tại Du lieu. Bản in gọn ở Thuc don.`;
   }
-  const protectionPassword = randomBytes(18).toString("base64url");
-  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Phan tich chi tiet", "Can doi nang luong", "Dong gop bua mon", "Phieu 24h", "Quy doi 24h", "Bao cao", "Thuc don", "Thanh phan day du", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
+  // Leave sheets unprotected so Excel's Page Setup and formatting remain usable.
+  // Formula cells are retained; imports still validate inputs and resolve catalogue IDs on the server.
   const chartStart = noteRow + 5;
   const charts = [];
   const labelRange = range(SHEETS.targets, "C", FIRST + WORKBOOK_LIMITS.days - 1);
@@ -554,6 +554,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
   if (menu.savedRecord) for (const sheet of workbook.worksheets.filter(sheet => ["Bao cao", "Thuc don", "Nguon doi soat", "Phan tich"].includes(sheet.name))) {
     sheet.getCell("A1").value = { text: "DINH DƯỠNG 2598 · MỞ BẢN THỰC ĐƠN ĐÃ LƯU", hyperlink: nutritionWebsiteLink("saved", menu.savedRecord.id) };
   }
+  finalizeNutritionWorkbookLayout(workbook);
   const finalBytes = new Uint8Array(await workbook.xlsx.writeBuffer());
   const result = await addNativeWorkbookCharts(finalBytes, analysis.id, charts, names);
   assertNutritionWorkbookExportBudget(result);

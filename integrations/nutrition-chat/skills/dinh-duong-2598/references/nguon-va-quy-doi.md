@@ -1,5 +1,11 @@
 # Nguồn và quy đổi
 
+## Cơ sở dinh dưỡng trong kho
+
+- Đọc nutrientBasis của từng Food: per100 có amount=100 và unit g/ml. Đây là mẫu số của số liệu, khác lượng thực ăn và số suất.
+- Món VDD loại MA chưa có bằng chứng về mẫu số: unverified, amount=null. nutrients=null; unverifiedSourceNutrients chỉ giữ số gốc để đối soát, không được sao chép sang customFood để tính. Không tự coi là100g hoặc một bát/phần từ tên món hay năng lượng.
+- Thiếu công thức nguyên liệu và chưa rõ mẫu số là hai việc riêng. Tự tra công thức RNI tương ứng, kiểm Food của từng thành phần và trình phương án cho người dùng duyệt. Không có công thức có nguồn thì giữ phần chưa tính và làm rõ lựa chọn; không âm thầm bỏ món hay bỏ nguyên liệu chưa liên kết.
+
 ## Ngoài kho
 
 | Trường hợp | Cách nhập và trình bày |

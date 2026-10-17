@@ -3,9 +3,10 @@
 - Đây là một plugin có16 công cụ; không cần cài từng công cụ thành plugin riêng.
 - `plugin.json`: tên/mô tả. `mcp.json`: địa chỉ máy chủ và kết nối OAuth. `skills/dinh-duong-2598/SKILL.md`: quy trình hội thoại.
 - [Bảng công cụ](skills/dinh-duong-2598/references/cong-cu.md): công cụ nào làm gì, nhận gì, kết quả nằm ở trường nào, bước tiếp theo và cách xử lý lỗi.
+- [Lập thực đơn](skills/dinh-duong-2598/references/lap-thuc-don.md): ưu tiên công thức RNI phù hợp, rà món lặp cả kỳ, phối món thực tế và phân biệt biến thể AI với công thức gốc.
 - Mặc định: chuẩn bị → bạn xem/chốt → tính → trả báo cáo. Chỉ gọi lưu khi bạn yêu cầu; chỉ tạo Excel khi cần file. Quyền ghi không tự cho phép lưu mọi kết quả.
 - Cài bằng URL MCP chỉ thêm công cụ; không nên giả định toàn bộ file hướng dẫn trong ZIP đã được nạp. Chat phải gọi `get_workflow` để nhận hướng dẫn hiện tại từ máy chủ. Khi cài ZIP, kiểm tra có skill đi kèm.
-- Đã cài mà thiếu công cụ: cập nhật kết nối và kiểm danh sách. Nếu phiên không cung cấp công cụ thì link/QR hoặc API token không tự tạo khả năng gọi API cho AI.
+- Đã cài mà thiếu công cụ: cập nhật kết nối và kiểm danh sách. Nếu chưa có MCP nhưng có công cụ gửi HTTP, dùng REST phiên tạm theo skills/dinh-duong-2598/references/rest-phien-tam.md. Không có cả hai thì link/QR/token không tự tạo khả năng gọi API.
 - Token xác nhận từ prepare là dữ liệu kỹ thuật ngắn hạn, khác token API trong cài đặt kết nối. Không dán mật khẩu/token bí mật vào hội thoại.
 
 - Phiên không tài khoản: start_guest_session → arguments.sessionToken cho công cụ kho chung/tính/xuất. Mã30phút, không lưu thực đơn hoặc mở thư viện riêng. Đọc guidance sau mỗi kết quả/lỗi và dừng chờ khi cần xác nhận.
