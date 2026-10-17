@@ -5,6 +5,7 @@ export function nutritionStartLinks(origin: string) {
   return {
     start: `${origin}/ket-noi-ai/bat-dau`,
     text: `${origin}/ket-noi-ai/bat-dau/huong-dan.txt`,
+    calculator: `${origin}/tinh-khau-phan`,
     qr: `${origin}/ket-noi-ai/bat-dau/qr.png`,
     setup: `${origin}/ket-noi-ai#cai-ket-noi`,
     mcp: `${origin}/api/nutrition/v1/mcp`,
@@ -15,20 +16,33 @@ export function nutritionStartLinks(origin: string) {
   };
 }
 
+function calculatorHandoff(origin: string) {
+  const links = nutritionStartLinks(origin);
+  return `Trả nguyên link bản nháp/kết quả do hệ thống cung cấp, kèm thời hạn, để tôi mở trực tiếp trên trang Tính khẩu phần (${links.calculator}) với dữ liệu đã nạp sẵn. Với nhiều ngày, giữ đầy đủ từng ngày và báo cáo toàn kỳ; cho tôi chọn ngày để sửa rồi xem trước, xác nhận và tính lại. Không tự ghép link hoặc chỉ gửi trang tính trống.`;
+}
+
 export function nutritionDoctorStartMessage(origin: string) {
-  const links=nutritionStartLinks(origin);
-  return `Hãy đọc hướng dẫn tại ${links.text} rồi giúp tôi lập thực đơn hoặc đánh giá khẩu phần bằng Dinh dưỡng 2598 từ đầu đến cuối. Tự mở phiên làm việc tạm khi cần, không bắt tôi tạo tài khoản hoặc sao chép mã truy cập. Hỏi từng phần còn thiếu, đưa bản để tôi duyệt rồi mới tính; trả báo cáo cùng link mở trên web để tôi sửa/tính lại; Excel là tải thêm khi tôi cần. Không lưu thực đơn vào tài khoản nếu tôi chưa yêu cầu. Nếu tôi muốn lưu và dùng lại lâu dài, hướng dẫn tôi tạo/đăng nhập tài khoản và kết nối trong chat. Nếu cuộc chat chưa có công cụ Dinh dưỡng 2598, chỉ tôi cách bật kết nối tại ${links.setup}; không báo đã tính khi chưa gọi được hệ thống.`;
+  const links = nutritionStartLinks(origin);
+  return `Hãy đọc hướng dẫn tại ${links.text} rồi giúp tôi lập thực đơn hoặc đánh giá khẩu phần bằng Dinh dưỡng 2598 từ đầu đến cuối, cho một ngày hoặc nhiều ngày.
+
+Tự mở phiên làm việc tạm khi cần, không bắt tôi tạo tài khoản hoặc sao chép mã truy cập. Chỉ hỏi phần còn thiếu, tối đa 3 ý mỗi lần và giữ thông tin tôi đã cung cấp. Đưa bản nháp theo ngày → bữa → món → từng nguyên liệu, lượng/đơn vị và số suất để tôi kiểm tra, duyệt rồi mới tính.
+
+${calculatorHandoff(origin)}
+
+Trả báo cáo tóm tắt trong chat; Excel là tải thêm khi tôi cần. Không lưu thực đơn vào tài khoản nếu tôi chưa yêu cầu. Nếu tôi muốn lưu và dùng lại lâu dài, hướng dẫn tôi tạo/đăng nhập tài khoản và kết nối trong chat. Nếu cuộc chat chưa có công cụ Dinh dưỡng 2598, nói rõ và chỉ tôi cách bật kết nối tại ${links.setup}; không báo đã tra dữ liệu, tính hoặc lưu khi chưa gọi được hệ thống.`;
 }
 
 export function nutritionStartMessage(origin: string) {
   const links = nutritionStartLinks(origin);
-  return `Tôi muốn dùng Dinh dưỡng 2598 để chọn món, duyệt khẩu phần và nhận báo cáo. Mặc định chỉ tính, không lưu thực đơn vào tài khoản; Excel chỉ tạo link tải khi tôi cần. Hãy đọc hướng dẫn tại ${links.text} rồi dẫn tôi từ đầu đến cuối.
+  return `Tôi muốn dùng Dinh dưỡng 2598 để chọn món, duyệt khẩu phần và nhận báo cáo cho một ngày hoặc nhiều ngày. Mặc định chỉ tính, không lưu thực đơn vào tài khoản; Excel chỉ tạo link tải khi tôi cần. Hãy đọc hướng dẫn tại ${links.text} rồi dẫn tôi từ đầu đến cuối.
 
 Trả lời tiếng Việt bằng gạch đầu dòng. Trước tiên kiểm tra công cụ Dinh dưỡng 2598 trong phiên và gọi get_workflow nếu có. Nếu chưa có hoặc chưa đọc được link, nói rõ và hướng dẫn kết nối tại ${links.setup}; vẫn có thể làm rõ bữa ăn, nhưng chỉ báo đã tra data, tính, lưu hoặc xuất Excel khi công cụ thật trả kết quả.
 
 Nếu chưa kết nối tài khoản, dùng start_guest_session để tra kho chung/tính/xuất không cần đăng nhập; giữ accessToken trong arguments.sessionToken, không in token. Đọc guidance sau từng phản hồi, hỏi đúng phần thiếu và dừng chờ khi requiresUserConfirmation=true. Lưu/mở bản riêng mới cần OAuth.
 
 Tự xử lý phiên tạm khi cần làm việc, không yêu cầu tôi bấm tạo token, sao chép accessToken hoặc học tên công cụ. Nếu tôi muốn lưu/dùng lâu dài, hướng dẫn tại ${links.start}#luu-lau-dai; đăng nhập website chưa đồng nghĩa kết nối chat. Giữ nguyên đầu vào khi chuyển sang tài khoản, prepare lại bằng kết nối tài khoản và chờ tôi duyệt trước save_menu; không dùng confirmationToken của phiên tạm để lưu tài khoản.
+
+${calculatorHandoff(origin)}
 
 Có món luộc/hấp thì hỏi nước chấm và lượng thực dùng, tra dữ liệu thật rồi đưa vào tính sau khi tôi chọn; không tự thêm nước chấm vào khẩu phần24giờ đã ăn. Trả webUrl từ prepare để tôi có thể sửa đầu vào trên web; bản tạm30phút không cần đăng nhập.
 
@@ -43,8 +57,8 @@ Gọi prepare_menu, đưa review.text đầy đủ ngay bản nháp đầu tiên
 
 export const NUTRITION_START_STEPS = [
   { title: "Sao chép lời nhắn, mở chat và gửi", text: "Dùng ChatGPT hoặc Claude đã bật kết nối Dinh dưỡng 2598. Chat tự mở phiên làm việc tạm; bạn không cần lấy mã truy cập hoặc tạo tài khoản trên website." },
-  { title: "Cung cấp thông tin và duyệt bản nháp", text: "Nói mục đích, số ngày, món và lượng đã biết. Chat tra dữ liệu, hỏi từng phần còn thiếu và đưa bản để bạn kiểm tra. Có bệnh lý hoặc mã chế độ ăn thì cung cấp thêm khi được hỏi." },
-  { title: "Nhận báo cáo; chọn tải hoặc lưu", text: "Sau khi bạn đồng ý, hệ thống tính và trả báo cáo trong chat. Mở link kết quả để sửa và tính lại trên web. Excel là tải thêm khi cần. Muốn giữ thực đơn để dùng nhiều lần, xem hướng dẫn tài khoản bên dưới." },
+  { title: "Cung cấp thông tin và duyệt bản nháp", text: "Nói mục đích, muốn làm một ngày hoặc nhiều ngày, món và lượng đã biết. Chat tra dữ liệu, hỏi từng phần còn thiếu và đưa bản để bạn kiểm tra. Có bệnh lý hoặc mã chế độ ăn thì cung cấp thêm khi được hỏi." },
+  { title: "Nhận báo cáo; chọn tải hoặc lưu", text: "Sau khi bạn đồng ý, hệ thống tính và trả báo cáo trong chat. Link kết quả mở trang Tính khẩu phần với dữ liệu đã nạp sẵn. Chọn ngày để xem, sửa và duyệt lại trước khi tính. Excel là tải thêm khi cần. Muốn giữ thực đơn để dùng nhiều lần, xem hướng dẫn tài khoản bên dưới." },
 ] as const;
 
 export function nutritionStartGuide(origin: string) {
@@ -55,6 +69,7 @@ Tài liệu cho người dùng và AI khi người dùng chủ động yêu cầ
 
 - Trang bắt đầu / link dán vào chat: ${links.start}
 - Bản chữ đầy đủ: ${links.text}
+- Giao diện làm việc: ${links.calculator}
 - QR cùng link: ${links.qr}
 - Máy chủ MCP: ${links.mcp}
 - Kết nối một lần: ${links.setup}
@@ -111,6 +126,8 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 - Dùng lại bản đã lưu: lấy ID trong link qua get_saved_menu hoặc list_saved_menus, rồi hỏi điều chỉnh và prepare/chốt/tính lại. Có thể mở link trên web để đổi ngày/lượng/suất và lưu bản dùng lại. Không yêu cầu tải Excel lên cho bước này; chỉ nhập lại khi cần lấy những sửa đổi riêng trong file offline.
 
 ## 4. Trả link web để sửa/tính lại; Excel là tải thêm
+
+- ${calculatorHandoff(origin)}
 
 - prepare_menu có webUrl/webExpiresAt cho đầu vào ban đầu, calculate_menu có link bản đã tính. Link mở ngay trang Tính khẩu phần với món/nguyên liệu nạp sẵn, hai bước Nhập khẩu phần và Kết quả; không đưa người dùng đến trang JSON/API. Luôn trả link thật cùng thời hạn30phút; mở/sửa/tính lại không cần tài khoản. Đầu vào được giữ tạm trong hệ thống để mở link, không tạo Ration. Không save/export chỉ để lấy link xem. Trên web sửa bản, xem trước, xác nhận rồi Tính lại để mở link bản cập nhật; bản cũ giữ để đối chiếu. Link đầy đủ cấp quyền mở đúng bản, không phải token tài khoản; không tự bỏ phần fragment khi trả link.
 

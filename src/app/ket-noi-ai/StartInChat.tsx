@@ -13,6 +13,7 @@ export default function StartInChat({ message, fallbackMessage, link, mcp }: { m
     <h2 id="start-in-chat-title" className="text-2xl font-semibold">Dán vào chat để bắt đầu</h2>
     <p className="mt-2 text-lg text-neutral-700">Bấm sao chép, mở ChatGPT hoặc Claude, dán vào ô chat rồi gửi. Chat đọc hướng dẫn và hỏi bạn từng bước.</p>
     <p className="mt-2 text-neutral-700">Đã bật kết nối Dinh dưỡng 2598: chat tự mở phiên tạm, bạn không cần tạo tài khoản hoặc lấy mã truy cập. Lần đầu dùng thì làm theo <a href="#lan-dau" className="font-semibold underline">hướng dẫn kết nối bên dưới</a>.</p>
+    <p className="mt-2 text-neutral-700">Có thể làm một ngày hoặc nhiều ngày. Link bản nháp/kết quả mở trang <b>Tính khẩu phần</b> với dữ liệu đã nạp sẵn để bạn chọn ngày, xem, sửa và tính lại sau khi xác nhận.</p>
     <label htmlFor="nutrition-start-message" className="mt-4 block font-semibold">Lời nhắn bắt đầu</label>
     <textarea id="nutrition-start-message" readOnly value={message} rows={6} className="mt-2 w-full resize-y rounded-lg border border-[#9bb6ab] bg-[#f7faf8] p-3 text-base leading-7 text-neutral-800" />
     <div className="mt-3 flex flex-wrap gap-3">
