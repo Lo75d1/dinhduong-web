@@ -112,6 +112,11 @@ async function main() {
   assert.equal(charts.length, 2, "two native live charts");
   for (const entry of charts) assert.match(await entry.async("string"), /<c:f>.*Phan tich.*<\/c:f>/, "charts linked to formulas");
   const sheet = await read(bytes);
+  for (const page of sheet.worksheets.filter(page => page.state === "visible")) {
+    const xml = await archive.file(`xl/worksheets/sheet${page.id}.xml`)!.async("string");
+    assert.doesNotMatch(xml, /<pane\b/, `${page.name}: scrolling must not freeze or split`);
+    assert.doesNotMatch(xml, /<sheetProtection\b/, `${page.name}: users can adjust margins and formatting without a password`);
+  }
   if (process.env.WORKBOOK_DEBUG === "1") await sheet.xlsx.writeFile(path.join(folder, "no-charts.xlsx"));
   assert.equal(sheet.getWorksheet("Nhap khau phan")!.getCell("G7").protection.locked, false);
   assert.notEqual(sheet.getWorksheet("Nhap khau phan")!.getCell("AC7").protection?.locked, false);
@@ -187,7 +192,7 @@ async function main() {
   await assert.rejects(inspectWorkbookArchive(forged), /giải nén|khớp/, "actual inflation bound detects forged central size");
   const hostile = await JSZip.loadAsync(bytes); hostile.file("xl/worksheets/bomb.xml", "x".repeat(WORKBOOK_LIMITS.worksheetBytes + 1));
   await assert.rejects(inspectWorkbookArchive(await hostile.generateAsync({ type: "uint8array", compression: "DEFLATE" })), /giới hạn/);
-  const report = { verified: ["source null/zero", "editable cells and protection", "stable duplicate-name IDs", "recipe substitutions", "editable label portion", "server parity", "ignore cached/canonical results", "target provenance", "input formula rejection", "duplicate/custom-source rejection", "row limits", "external/macro rejection", "ZIP expansion limits"], nativeRecalculation: "separate PowerShell Excel verification required", bytes: bytes.byteLength, output: path.join(folder, "editable-workbook-test.xlsx"), chartParts: charts.length };
+  const report = { verified: ["source null/zero", "editable cells, margins and formatting without frozen panes", "stable duplicate-name IDs", "recipe substitutions", "editable label portion", "server parity", "ignore cached/canonical results", "target provenance", "input formula rejection", "duplicate/custom-source rejection", "row limits", "external/macro rejection", "ZIP expansion limits"], nativeRecalculation: "separate PowerShell Excel verification required", bytes: bytes.byteLength, output: path.join(folder, "editable-workbook-test.xlsx"), chartParts: charts.length };
   await fs.writeFile(path.join(folder, "workbook-structure-tests.json"), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
   if (process.env.MAX_WORKBOOK === "1") {

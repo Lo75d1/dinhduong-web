@@ -1,5 +1,4 @@
 import ExcelJS from "exceljs";
-import { randomBytes } from "node:crypto";
 import type { CustomFoodInput, FoodSource, MenuInput, MenuRowInput, NutritionFood, ResolvedMenu, TargetInput } from "./contracts";
 import { CONTRACT_VERSION } from "./contracts";
 import { ALL_NUTRIENT_FIELDS } from "../nutrient-fields";
@@ -43,7 +42,7 @@ type Manifest = {
 function heading(sheet: ExcelJS.Worksheet, title: string, subtitle: string, headers: string[], widths: number[]) {
   sheet.properties.defaultRowHeight = 23;
   sheet.properties.tabColor = { argb: GREEN };
-  sheet.views = [{ state: "frozen", xSplit: 2, ySplit: 6, activeCell: "G7", showGridLines: false }];
+  sheet.views = [{ state: "normal", showGridLines: false }];
   sheet.columns = headers.map((_, i) => ({ width: widths[i] ?? 17 }));
   sheet.mergeCells(1, 1, 1, Math.min(headers.length, 12));
   sheet.getCell("A1").value = title;
@@ -527,8 +526,8 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     analysis.state = "hidden";
     input.getCell("A2").value = `Chỉnh ngày, bữa/món, mã thực phẩm, lượng, đơn vị và số suất tại các cột nhập. Dòng dự phòng được ẩn theo nhóm; có thể hiện thêm dòng khi cần (tối đa ${inputCapacity} dòng). Tra mã tại Du lieu. Bản in gọn ở Thuc don.`;
   }
-  const protectionPassword = randomBytes(18).toString("base64url");
-  for (const sheet of [...[analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data], ...(complete ? workbook.worksheets.filter(sheet => ["Phan tich chi tiet", "Can doi nang luong", "Dong gop bua mon", "Phieu 24h", "Quy doi 24h", "Bao cao", "Thuc don", "Thanh phan day du", "Dinh duong theo ngay", "Nguon doi soat", "Thuoc TPBS", "Nhom thuc pham"].includes(sheet.name)) : [])]) await sheet.protect(protectionPassword, { selectLockedCells: true, selectUnlockedCells: true, autoFilter: true, sort: false, formatCells: false, formatRows: complete, insertRows: false, deleteRows: false, spinCount: 1000 });
+  // Leave sheets unprotected so Excel's Page Setup and formatting remain usable.
+  // Formula cells are retained; imports still validate inputs and resolve catalogue IDs on the server.
   const chartStart = noteRow + 5;
   const charts = [];
   const labelRange = range(SHEETS.targets, "C", FIRST + WORKBOOK_LIMITS.days - 1);

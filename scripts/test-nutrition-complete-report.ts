@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import { ALL_NUTRIENT_FIELDS, SOURCE_ONLY_NUTRIENT_FIELDS } from "../src/lib/nutrient-fields";
 import { resolveMenu } from "../src/lib/nutrition-chat/core";
 import { buildNutritionWorkbook, parseNutritionWorkbook } from "../src/lib/nutrition-chat/workbook";
+import { inspectWorkbookArchive } from "../src/lib/nutrition-chat/workbook-security";
 import { workbookFixture } from "./test-nutrition-chat-workbook";
 import { webNutritionReportInput } from "../src/app/tinh-khau-phan/nutrition-excel-download";
 
@@ -26,6 +27,12 @@ async function main() {
   await fs.mkdir("evidence/nutrition-chat", { recursive: true });
   await fs.writeFile("evidence/nutrition-chat/complete-report-test.xlsx", bytes);
   const wb = new ExcelJS.Workbook(); await wb.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);
+  const archive = await inspectWorkbookArchive(bytes);
+  for (const page of wb.worksheets.filter(page => page.state === "visible")) {
+    const xml = await archive.file(`xl/worksheets/sheet${page.id}.xml`)!.async("string");
+    assert.doesNotMatch(xml, /<pane\b/, `${page.name}: scrolling must not freeze or split`);
+    assert.doesNotMatch(xml, /<sheetProtection\b/, `${page.name}: users can adjust margins and formatting without a password`);
+  }
   assert.equal(wb.worksheets[0].name, "Thuc don");
   const matrix = wb.getWorksheet("Phan tich chi tiet")!;
   const intake = wb.getWorksheet("Nhap khau phan")!;

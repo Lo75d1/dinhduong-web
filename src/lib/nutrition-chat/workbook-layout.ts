@@ -11,7 +11,7 @@ const textValue = (cell:ExcelJS.Cell):string|null => {
 export function finalizeNutritionWorkbookLayout(workbook:ExcelJS.Workbook){
   for(const sheet of workbook.worksheets){
     if(sheet.state!=="visible")continue;
-    sheet.views=sheet.views.map(view=>({...view,showGridLines:false}));
+    sheet.views=[{state:"normal",showGridLines:false,zoomScale:sheet.views[0]?.zoomScale??100}];
     sheet.pageSetup.margins={left:0.45,right:0.45,top:0.5,bottom:0.5,header:0.2,footer:0.2};
     if(sheet.columnCount<=12){sheet.pageSetup.fitToPage=true;sheet.pageSetup.fitToWidth=1;sheet.pageSetup.fitToHeight=0;}
     else{sheet.pageSetup.fitToPage=false;sheet.pageSetup.scale=90;sheet.pageSetup.printTitlesColumn=sheet.name==="Phan tich chi tiet"?"A:D":"A:B";}

@@ -26,7 +26,8 @@
 
 ## Excel
 
-- Mở file đầy đủ tại Thuc don, rồi Bao cao và các phụ lục. Giữ tên sheet, ID thực phẩm, công thức nhập/sửa/tự tính, nguồn, biểu đồ, validation, bảo vệ và hợp đồng import; thay thứ tự hiển thị, không trải dữ liệu thành giá trị tĩnh.
+- Mở file đầy đủ tại Thuc don, rồi Bao cao và các phụ lục. Giữ tên sheet, ID thực phẩm, công thức nhập/sửa/tự tính, nguồn, biểu đồ, validation và hợp đồng import; thay thứ tự hiển thị, không trải dữ liệu thành giá trị tĩnh.
+- Không đóng băng hoặc tách khung ở các sheet hiển thị, cả bản đầy đủ lẫn bản gọn. Bỏ khóa sheet bằng mật khẩu ngẫu nhiên để người dùng chỉnh lề in, căn ô, độ rộng cột và chiều cao dòng trực tiếp. Công thức vẫn có trong file; bảo vệ sheet không phải cơ chế xác thực dữ liệu: import vẫn kiểm đầu vào và tính lại Food theo ID trên máy chủ. Đã kiểm XML xuất không có pane/sheetProtection ở mọi sheet hiển thị và các kiểm công thức/import hiện có vẫn đạt.
 - Đồng bộ Times New Roman; căn phải số, không ngắt chữ số hoặc thu phông; tăng chiều cao dòng theo nội dung bọc. Lề trái/phải0,45 inch, trên/dưới0,5 inch. Bảng hẹp vừa chiều ngang A4; ma trận rộng được chia trang và lặp cột nhận diện thay vì ép160 chất vào một trang.
 - Đã render các vùng Thuc don/Bao cao/Phan tich chi tiet trước/sau, xem ảnh và kiểm trường hợp tên món dài. Artifact Tool import không tính đúng một số công thức hiện có, nên ảnh bố cục dùng bản sao tạm lấy giá trị cache và bỏ công thức chỉ trong bản sao QA. Không xuất bản sao đó cho người dùng, không dùng ảnh làm bằng chứng Excel tính lại. File thật vẫn giữ công thức; kiểm số/công thức/import bằng các fixture hiện hành. Chưa mở Microsoft Excel thật hoặc nghiệm thu in giấy cho đợt này.
 
