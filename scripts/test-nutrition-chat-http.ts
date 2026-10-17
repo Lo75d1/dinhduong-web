@@ -23,7 +23,7 @@ import type * as WebItemRoute from "../src/app/api/nutrition/v1/web-menu/[id]/ro
 import type { MenuInput } from "../src/lib/nutrition-chat/contracts";
 import { ALL_NUTRIENT_FIELDS } from "../src/lib/nutrient-fields";
 import { getNutritionPublicUrl, getNutritionResourceUrl, hashNutritionToken, randomNutritionToken } from "../src/lib/nutrition-chat/oauth-validation";
-type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & typeof GuestStore & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport; guestRoute: typeof GuestRoute;webRoute:typeof WebRoute;webItemRoute:typeof WebItemRoute };
+type Runtime = typeof Service & typeof Workbook & typeof Database & typeof State & typeof Repository & typeof Output & typeof GuestStore & { restRoute: typeof Rest; mcpRoute: typeof Mcp; importRoute: typeof Upload; webReportRoute: typeof WebReport; guestRoute: typeof GuestRoute;webRoute:typeof WebRoute;webItemRoute:typeof WebItemRoute;openapiRoute:{GET:()=>Promise<Response>} };
 let checks = 0;
 
 async function main() {
@@ -38,7 +38,7 @@ async function main() {
     delete process.env.NUTRITION_ALLOWED_ORIGINS;
     delete process.env.NUTRITION_TRUST_PROXY;
     const sources = ["src/lib/nutrition-chat/service.ts", "src/lib/nutrition-chat/workbook.ts", "src/lib/nutrition-chat/mcp-output.ts", "src/lib/nutrition-chat/guest-store.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts", "scripts/fixtures/nutrition-oauth/repository.ts"];
-    const routes = { restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts", webReportRoute: "src/app/api/nutrition-report/export/route.ts", guestRoute: "src/app/api/nutrition/v1/guest-session/route.ts",webRoute:"src/app/api/nutrition/v1/web-menu/route.ts",webItemRoute:"src/app/api/nutrition/v1/web-menu/[id]/route.ts" };
+    const routes = { openapiRoute:"src/app/api/nutrition/v1/openapi/route.ts", restRoute: "src/app/api/nutrition/v1/[action]/route.ts", mcpRoute: "src/app/api/nutrition/v1/mcp/route.ts", importRoute: "src/app/api/nutrition/v1/import/route.ts", webReportRoute: "src/app/api/nutrition-report/export/route.ts", guestRoute: "src/app/api/nutrition/v1/guest-session/route.ts",webRoute:"src/app/api/nutrition/v1/web-menu/route.ts",webItemRoute:"src/app/api/nutrition/v1/web-menu/[id]/route.ts" };
     const outfile = join(directory, "http-fixture.cjs");
     await build({ stdin: { contents: sources.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n") + "\n" + Object.entries(routes).map(([label, path]) => `import * as ${label} from ${JSON.stringify(resolve(path))}; export {${label}};`).join("\n"), resolveDir: process.cwd(), loader: "ts" }, outfile,
       bundle: true, platform: "node", format: "cjs", logLevel: "silent", plugins: [{ name: "disposable-http", setup(builder) {
@@ -74,6 +74,20 @@ async function main() {
     async function get(action: string, access: string | undefined = token, query = "") {
       return api.restRoute.GET(new Request(`${base}/api/nutrition/v1/${action}${query}`, { headers: access ? { Authorization: `Bearer ${access}` } : {} }), context(action));
     }
+    const publicWorkflow=await api.restRoute.GET(new Request(`${base}/api/nutrition/v1/workflow`),context("workflow"));
+    assert.equal(publicWorkflow.status,200);checks++;
+    assert.equal(publicWorkflow.headers.get("cache-control"),"no-store");checks++;
+    assert.equal((await publicWorkflow.json()).guestSession.accountRequired,false);checks++;
+    assert.equal((await api.restRoute.POST(request("get_workflow",{},undefined),context("get_workflow"))).status,200);checks++;
+    assert.equal((await api.restRoute.POST(request("get_workflow",{ownerId:"user-b"},undefined),context("get_workflow"))).status,400);checks++;
+    assert.equal((await get("workflow","invalid-header")).status,401);checks++;
+    assert.equal((await api.restRoute.POST(request("get_workflow",{},undefined,{Origin:"https://evil.test"}),context("get_workflow"))).status,403);checks++;
+    const spec=await (await api.openapiRoute.GET()).json();
+    assert.deepEqual(spec.paths["/api/nutrition/v1/workflow"].get.security,[{}]);checks++;
+    assert.deepEqual(spec.paths["/api/nutrition/v1/guest-session"].post.security,[{}]);checks++;
+    assert.ok(spec.paths["/api/nutrition/v1/search_foods"].post.security.some((item:Record<string,unknown>)=>"nutritionGuest" in item));checks++;
+    assert.ok(!spec.paths["/api/nutrition/v1/save_menu"].post.security.some((item:Record<string,unknown>)=>"nutritionGuest" in item));checks++;
+    assert.ok(!("sessionToken" in spec.paths["/api/nutrition/v1/search_foods"].post.requestBody.content["application/json"].schema.properties));checks++;
     let noAuth = await api.restRoute.POST(request("prepare", { input: menu }, undefined, { Origin: base }), context("prepare"));
     assert.equal(noAuth.status, 401); checks++;
     assert.ok(noAuth.headers.get("www-authenticate")?.includes("oauth-protected-resource")); checks++;
@@ -317,6 +331,25 @@ async function main() {
     assert.equal(busyWorkbook.status, 503); checks++;
     assert.equal(busyWorkbook.headers.get("retry-after"), "15"); checks++;
     api.setFixtureWorkbookBusy(false);
+    await api.fixtureQuery('DELETE FROM "nutrition_api_windows"');
+    const knownFood=await rest("get_food",{id:"fixture-rice"},token);assert.equal(knownFood.status,200);checks++;
+    assert.deepEqual((await knownFood.json()).nutrientBasis.amount,100);checks++;
+    api.setFixtureFoodSource("VDD","MA");
+    const uncertainLookup=await api.mcpRoute.POST(rpcRequest("tools/call",{name:"search_foods",arguments:{q:"rice"}},token,true));
+    assert.equal(uncertainLookup.status,200);checks++;
+    const uncertainFoods=(await uncertainLookup.json()).result.structuredContent;
+    assert.equal(uncertainFoods.items[0].nutrientBasis.status,"unverified");checks++;
+    assert.equal(uncertainFoods.items[0].nutrients.energyKcal,null);checks++;
+    assert.equal(uncertainFoods.items[0].unverifiedSourceNutrients.energyKcal,130);checks++;
+    assert.ok(uncertainFoods.guidance.nextTools.includes("search_dishes"));checks++;
+    const uncertainPrepared=await rest("prepare",{input:menu},token);assert.equal(uncertainPrepared.status,200);checks++;
+    const uncertainPreview=await uncertainPrepared.json();
+    assert.equal(uncertainPreview.guidance.stage,"source_basis_unverified");checks++;
+    assert.equal(uncertainPreview.preview.totals.energyKcal.value,null);checks++;
+    const uncertainArgs={input:uncertainPreview.input,confirmationToken:uncertainPreview.confirmationToken};
+    assert.equal((await rest("calculate",uncertainArgs,token)).status,422);checks++;
+    assert.equal((await rest("export",{...uncertainArgs,saveToAccount:false},token)).status,422);checks++;
+    api.setFixtureFoodSource("Nguồn giả lập kiểm thử","CB");
     await api.fixtureQuery('DELETE FROM "nutrition_api_windows"');
     // Anonymous sessions exercise the same handlers without browser/account auth.
     const privateCounts=()=>api.fixtureQuery('SELECT (SELECT count(*) FROM app_users)::int AS users,(SELECT count(*) FROM app_sessions)::int AS sessions,(SELECT count(*) FROM rations)::int AS rations,(SELECT count(*) FROM nutrition_oauth_tokens)::int AS tokens,(SELECT count(*) FROM nutrition_oauth_clients)::int AS clients');

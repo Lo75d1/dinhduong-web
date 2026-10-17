@@ -44,7 +44,7 @@ export default function MealInputWorkspace({ meals, selection, disabled, initial
 }
 
 export function DishInputFrame({ name, onRename, onDelete, onDuplicate, disabled, leading, quantity, children }: { name: string; onRename: (name: string) => void; onDelete: () => void; onDuplicate: () => void; disabled?: boolean; leading?: ReactNode; quantity?: ReactNode; children: ReactNode }) {
-  return <div className="overflow-hidden rounded-lg border border-[#7f948d] bg-white shadow-sm" data-calculator-dish-panel>
+  return <div className="overflow-hidden rounded-lg border border-[#7f948d] bg-white shadow-sm" data-calculator-dish-panel aria-label="Thành phần món ăn">
     <div className="flex items-center gap-1.5 border-l-4 border-[#52786d] bg-[#dceee1] px-2 py-1.5">
       {leading}<span className="shrink-0 text-base" aria-hidden="true">🍽️</span><EditableTitle key={name} value={name} onCommit={onRename} disabled={disabled} placeholder="Tên món" className="min-w-0 flex-1 rounded border border-[#8ba39b] bg-white px-2 py-0.5 text-sm font-semibold text-neutral-950 placeholder-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#123c36]" />{quantity}
       <button type="button" disabled={disabled} onClick={onDuplicate} className="shrink-0 rounded px-2 py-1 text-sm text-[#0c5f4d] hover:bg-white/70" title="Nhân đôi món">⧉</button><button type="button" disabled={disabled} onClick={onDelete} className="shrink-0 rounded px-2 py-1 text-sm text-[#6d1f1f] hover:bg-[#fff0f0]" title="Xóa món">✕</button>

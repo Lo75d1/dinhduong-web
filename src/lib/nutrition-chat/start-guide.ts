@@ -21,6 +21,10 @@ function calculatorHandoff(origin: string) {
   return `Trả nguyên link bản nháp/kết quả do hệ thống cung cấp, kèm thời hạn, để tôi mở trực tiếp trên trang Tính khẩu phần (${links.calculator}) với dữ liệu đã nạp sẵn. Với nhiều ngày, giữ đầy đủ từng ngày và báo cáo toàn kỳ; cho tôi chọn ngày để sửa rồi xem trước, xác nhận và tính lại. Không tự ghép link hoặc chỉ gửi trang tính trống.`;
 }
 
+function transportHandoff(origin: string) {
+  return `Ưu tiên công cụ Dinh dưỡng 2598 nếu đã bật. Nếu chưa có MCP nhưng môi trường có công cụ HTTP thực thi được POST với JSON và header, dùng REST trực tiếp: đọc GET ${origin}/api/nutrition/v1/workflow, mở POST ${origin}/api/nutrition/v1/guest-session với {}, rồi gọi POST ${origin}/api/nutrition/v1/<tên_công_cụ> với Bearer phiên tạm theo schema. Giữ token nội bộ, không bắt tôi tạo tài khoản hoặc sao chép mã. Chỉ khi không có cả MCP lẫn khả năng gửi HTTP mới hướng dẫn bật kết nối tại ${origin}/ket-noi-ai#cai-ket-noi. Chỉ đọc được trang web không đồng nghĩa gọi được API; nói rõ khả năng thật và không báo đã tính khi chưa nhận kết quả.`;
+}
+
 export function nutritionDoctorStartMessage(origin: string) {
   const links = nutritionStartLinks(origin);
   return `Hãy đọc hướng dẫn tại ${links.text} rồi giúp tôi lập thực đơn hoặc đánh giá khẩu phần bằng Dinh dưỡng 2598 từ đầu đến cuối, cho một ngày hoặc nhiều ngày.
@@ -29,14 +33,14 @@ Tự mở phiên làm việc tạm khi cần, không bắt tôi tạo tài kho�
 
 ${calculatorHandoff(origin)}
 
-Trả báo cáo tóm tắt trong chat; Excel là tải thêm khi tôi cần. Không lưu thực đơn vào tài khoản nếu tôi chưa yêu cầu. Nếu tôi muốn lưu và dùng lại lâu dài, hướng dẫn tôi tạo/đăng nhập tài khoản và kết nối trong chat. Nếu cuộc chat chưa có công cụ Dinh dưỡng 2598, nói rõ và chỉ tôi cách bật kết nối tại ${links.setup}; không báo đã tra dữ liệu, tính hoặc lưu khi chưa gọi được hệ thống.`;
+Trả báo cáo tóm tắt trong chat; Excel là tải thêm khi tôi cần. Không lưu thực đơn vào tài khoản nếu tôi chưa yêu cầu. Nếu tôi muốn lưu và dùng lại lâu dài, hướng dẫn tôi tạo/đăng nhập tài khoản và kết nối trong chat. ${transportHandoff(origin)} Không báo đã tra dữ liệu, tính hoặc lưu khi chưa gọi được hệ thống.`;
 }
 
 export function nutritionStartMessage(origin: string) {
   const links = nutritionStartLinks(origin);
   return `Tôi muốn dùng Dinh dưỡng 2598 để chọn món, duyệt khẩu phần và nhận báo cáo cho một ngày hoặc nhiều ngày. Mặc định chỉ tính, không lưu thực đơn vào tài khoản; Excel chỉ tạo link tải khi tôi cần. Hãy đọc hướng dẫn tại ${links.text} rồi dẫn tôi từ đầu đến cuối.
 
-Trả lời tiếng Việt bằng gạch đầu dòng. Trước tiên kiểm tra công cụ Dinh dưỡng 2598 trong phiên và gọi get_workflow nếu có. Nếu chưa có hoặc chưa đọc được link, nói rõ và hướng dẫn kết nối tại ${links.setup}; vẫn có thể làm rõ bữa ăn, nhưng chỉ báo đã tra data, tính, lưu hoặc xuất Excel khi công cụ thật trả kết quả.
+Trả lời tiếng Việt bằng gạch đầu dòng. ${transportHandoff(origin)} Nếu không đọc được link, dùng hướng dẫn tự đủ này và kiểm tra khả năng thực thi thay vì kết luận phải đăng ký tài khoản.
 
 Nếu chưa kết nối tài khoản, dùng start_guest_session để tra kho chung/tính/xuất không cần đăng nhập; giữ accessToken trong arguments.sessionToken, không in token. Đọc guidance sau từng phản hồi, hỏi đúng phần thiếu và dừng chờ khi requiresUserConfirmation=true. Lưu/mở bản riêng mới cần OAuth.
 
@@ -52,11 +56,11 @@ Nếu tôi có bệnh lý/chỉ định, đọc clinicalWorkflow, dùng search_d
 
 Chọn món theo bữa ăn và thói quen Việt Nam. Tra cả công thức RNI và món VDD, cho tôi xem vài lựa chọn thật cùng điểm khác, không tự lấy dòng đầu. Giữ món tôi đã chọn; không ép thêm bữa phụ hay đổi cơm trắng. Mọi số AI tự điền phải có * ở trước và khai aiFilledFields; không thêm * vào số JSON. Không tự bịa số còn thiếu, thông tin cơ thể hoặc hệ số quy đổi.
 
-Gọi prepare_menu, đưa review.text đầy đủ ngay bản nháp đầu tiên: ngày/bữa → món → từng thực phẩm/nguyên liệu và lượng/đơn vị, số suất/cơ sở/nguồn; không chỉ liệt kê tên món hoặc gửi link web. RNI đọc đủ get_dish, dùng lượng bản nháp; VDD thiếu thành phần ghi rõ, không tự suy công thức. Giữ dấu * rồi chờ xác nhận. Sau calculate_menu, trả webUrl thật cùng chatReport.summaryText với kcal, P–L–G, phạm vi ngày và phần thiếu; như vậy đã hoàn tất nếu tôi chỉ cần tính. Chỉ save_menu khi tôi yêu cầu lưu để dùng lại; chỉ export_workbook khi cần file và mặc định saveToAccount=false, trả link tải thật ngay, không cần tải về chat. Đọc toolGuide/recipes/recovery trong get_workflow khi chưa rõ công cụ hoặc gặp lỗi; không gọi lặp nguyên yêu cầu đang lỗi. Bản hỏi ghi 24 giờ bám Phụ lục 1 và 2 của mục 11 QĐ 2598/QĐ-BYT. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
+Gọi prepare_menu, đưa review.text đầy đủ ngay bản nháp đầu tiên: ngày/bữa → món → từng thực phẩm/nguyên liệu và lượng/đơn vị, số suất/cơ sở/nguồn; không chỉ liệt kê tên món hoặc gửi link web. RNI đọc đủ get_dish, dùng lượng bản nháp; VDD phải đọc nutrientBasis: chưa xác minh mẫu số100g/một phần thì tự tìm công thức RNI tương ứng để tôi duyệt, không chỉ hứa kiểm tra thêm rồi dừng, không tự suy công thức. Giữ dấu * rồi chờ xác nhận. Sau calculate_menu, trả webUrl thật cùng chatReport.summaryText với kcal, P–L–G, phạm vi ngày và phần thiếu; như vậy đã hoàn tất nếu tôi chỉ cần tính. Chỉ save_menu khi tôi yêu cầu lưu để dùng lại; chỉ export_workbook khi cần file và mặc định saveToAccount=false, trả link tải thật ngay, không cần tải về chat. Đọc toolGuide/recipes/recovery trong get_workflow khi chưa rõ công cụ hoặc gặp lỗi; không gọi lặp nguyên yêu cầu đang lỗi. Bản hỏi ghi 24 giờ bám Phụ lục 1 và 2 của mục 11 QĐ 2598/QĐ-BYT. Không yêu cầu mật khẩu, token hoặc thông tin định danh sức khỏe trong chat.`;
 }
 
 export const NUTRITION_START_STEPS = [
-  { title: "Sao chép lời nhắn, mở chat và gửi", text: "Dùng ChatGPT hoặc Claude đã bật kết nối Dinh dưỡng 2598. Chat tự mở phiên làm việc tạm; bạn không cần lấy mã truy cập hoặc tạo tài khoản trên website." },
+  { title: "Sao chép lời nhắn, mở chat và gửi", text: "Chat có kết nối Dinh dưỡng 2598 hoặc công cụ gửi HTTP thì tự mở phiên làm việc tạm, không cần tài khoản website hay sao chép mã. Nếu chat chỉ đọc được link, làm theo hướng dẫn kết nối; dán lời nhắn không tự thêm công cụ." },
   { title: "Cung cấp thông tin và duyệt bản nháp", text: "Nói mục đích, muốn làm một ngày hoặc nhiều ngày, món và lượng đã biết. Chat tra dữ liệu, hỏi từng phần còn thiếu và đưa bản để bạn kiểm tra. Có bệnh lý hoặc mã chế độ ăn thì cung cấp thêm khi được hỏi." },
   { title: "Nhận báo cáo; chọn tải hoặc lưu", text: "Sau khi bạn đồng ý, hệ thống tính và trả báo cáo trong chat. Link kết quả mở trang Tính khẩu phần với dữ liệu đã nạp sẵn. Chọn ngày để xem, sửa và duyệt lại trước khi tính. Excel là tải thêm khi cần. Muốn giữ thực đơn để dùng nhiều lần, xem hướng dẫn tài khoản bên dưới." },
 ] as const;
@@ -81,9 +85,18 @@ Tài liệu cho người dùng và AI khi người dùng chủ động yêu cầ
 
 - Có công cụ Dinh dưỡng 2598: gọi get_workflow, đọc schema/giới hạn thật của phiên. Quy trình và schema từ công cụ đang chạy là nguồn hiện hành.
 - Người dùng chính là bác sĩ/nhân viên y tế, có thể chưa quen thao tác kỹ thuật: hướng dẫn bằng tên nút và từng bước ngắn, không bắt học tên API, copy token hoặc điền JSON. Có công cụ và cần tra/tính/Excel thì tự gọi start_guest_session khi chưa có phiên còn hạn; giữ accessToken nội bộ, truyền arguments.sessionToken. Không cần hỏi thêm quyền mở phiên khi việc này đã nằm trong yêu cầu tra/tính. Không tự mở phiên chỉ vì người dùng đang đọc hướng dẫn hoặc chỉ muốn xem cách dùng.
-- Chưa có công cụ: nói rõ, hướng dẫn bật kết nối lần đầu; có thể tiếp tục làm rõ món/định lượng nhưng không khẳng định đã tra kho, tính trên hệ thống, lưu hoặc tạo file. Phiên tạm hết hạn không phải lỗi tài khoản: giữ đầu vào, tạo phiên mới khi cần và prepare/duyệt lại; không tự gia hạn liên tục hoặc tạo phiên để vượt hạn mức.
-- Không có khả năng mở link: dùng lời nhắn tự đủ ở cuối tài liệu; không giả vờ đã đọc trang. Không tự gửi POST từ công cụ duyệt web hoặc yêu cầu người dùng dán token để vượt bước OAuth.
+- ${transportHandoff(origin)} Có thể tiếp tục làm rõ món/định lượng khi chưa có khả năng gọi hệ thống, nhưng không khẳng định đã tra kho, tính, lưu hoặc tạo file. Phiên tạm hết hạn không phải lỗi tài khoản: giữ đầu vào, tạo phiên mới khi cần và prepare/duyệt lại; không tự gia hạn liên tục hoặc tạo phiên để vượt hạn mức.
+- Không có khả năng mở link: dùng lời nhắn tự đủ ở cuối tài liệu; không giả vờ đã đọc trang. Không dùng công cụ chỉ đọc trang để giả làm POST. REST phiên tạm là luồng được hỗ trợ, không phải cách vượt OAuth; chỉ dùng khi công cụ thực sự gửi được phương thức/header/body và chính sách môi trường cho phép. Không yêu cầu người dùng dán token hoặc tìm cách vượt chặn của nền tảng.
 - Trả lời tiếng Việt bằng gạch đầu dòng. Hỏi tối đa 3 ý mỗi lần, chỉ hỏi thông tin còn thiếu. Không hỏi hồ sơ cơ thể khi chỉ tính thành phần.
+
+## 0a. REST trực tiếp khi AI có khả năng gửi HTTP
+
+- GET ${origin}/api/nutrition/v1/workflow trả hướng dẫn công khai, không cần tài khoản. Không gửi GET để thay các thao tác POST.
+- Khi cần tra/tính: POST ${origin}/api/nutrition/v1/guest-session, Content-Type: application/json, body {}. Giữ accessToken nội bộ; phiên30phút không tạo tài khoản.
+- POST ${origin}/api/nutrition/v1/search_foods, /get_food, /search_dishes, /get_dish, /prepare_menu, /calculate_menu hoặc /export_workbook. Dùng Authorization: Bearer <accessToken> và Content-Type: application/json; body là arguments đúng schema get_workflow, không bọc thêm JSON-RPC hoặc params. REST không gửi sessionToken trong body.
+- Thiếu Bearer hoặc gọi nhầm endpoint không chứng minh người dùng phải đăng ký. Đọc lỗi, dùng phiên tạm còn hạn; không đổi sang tài khoản hoặc yêu cầu người dùng copy token chỉ để tính.
+- Vẫn phải trình bản nháp và chờ người dùng duyệt trước calculate/export; trả webUrl/webExpiresAt thật, không tự save. Sau khi xong có thể DELETE /api/nutrition/v1/guest-session với Bearer để kết thúc đúng phiên đã mở.
+- Nếu không có công cụ HTTP gửi được POST/header/JSON hoặc mạng bị chặn, nói rõ giới hạn và dùng kết nối MCP ở mục1. Không tuyên bố mọi cuộc chat đều gọi REST trực tiếp được; link/QR không cấp khả năng này.
 
 ## 1. Kết nối một lần, trên chính tài khoản của người dùng
 
@@ -110,7 +123,7 @@ Tên mục/quyền thêm kết nối tùy tài khoản và tổ chức. Link ho�
 
 - Xác định thực đơn hoặc ghi lại ăn 24 giờ, một hoặc nhiều ngày (giới hạn ${NUTRITION_WORKFLOW.limits.days} ngày), các bữa/món/thực phẩm và lượng đã biết.
 - Chỉ tính thành phần: comparison none. Người dùng muốn so nhu cầu: hỏi chọn mục tiêu có nguồn hoặc hồ sơ; chỉ thu thông tin cần cho lựa chọn đó.
-- Khi lập thực đơn, ưu tiên tra và trình bày MÓN ĂN có sẵn: search_dishes cho công thức RNI và search_foods với type=MA cho món VDD. Đọc get_dish để lấy nguyên liệu công thức; món VDD hoàn chỉnh dùng Food ID trực tiếp vì không có công thức trong kho. Không chỉ đưa danh sách gạo/thịt/rau khi người dùng muốn tên món. Sau khi chọn món mới hỏi lượng và chốt nguyên liệu.
+- Khi lập thực đơn, ưu tiên tra và trình bày MÓN ĂN có sẵn: search_dishes cho công thức RNI và search_foods với type=MA cho món VDD. Đọc get_dish để lấy nguyên liệu công thức; món VDD hoàn chỉnh phải đọc nutrientBasis; chưa xác minh mẫu số thì tự tìm công thức RNI tương ứng, trình nguyên liệu/lượng để người dùng duyệt. Không lấy unit=g làm bằng chứng100g và không chỉ hứa kiểm tra thêm rồi dừng. Không chỉ đưa danh sách gạo/thịt/rau khi người dùng muốn tên món. Sau khi chọn món mới hỏi lượng và chốt nguyên liệu.
 - Tra search_foods/get_food và search_dishes/get_dish để lấy Food ID, công thức và nguồn thật. Không đoán ID hay coi định lượng công thức gốc mặc định bằng một suất.
 - Món suy từ AI phải ghi là ước lượng và chờ người dùng chấp nhận. Thay nguyên liệu cần Food ID/lượng/nguồn/quy đổi riêng; không tự coi tương đương.
 - Ngoài kho: ưu tiên nhãn/tài liệu có cơ sở 100 g, 100 ml hoặc lượng mỗi phần và đơn vị rõ. Dùng thực phẩm tham chiếu chỉ khi người dùng chấp nhận; không có số thì giữ null và ghi thiếu.

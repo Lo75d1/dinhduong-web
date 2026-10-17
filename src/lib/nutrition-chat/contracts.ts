@@ -37,6 +37,8 @@ export type MenuInput = {
 };
 export type NutritionFood = {
   id: string; name: string; unit: AmountUnit; source: FoodSource;
+  nutrientBasis?: { status: "per100" | "unverified"; amount: 100 | null; unit: AmountUnit; note: string };
+  unverifiedSourceNutrients?: Record<string, number | null>;
   sourceCode?: string | null; foodType?: string | null; imageUrl?: string | null;
   wastePercent: number | null; foodGroup: string | null;
   nutrients: Record<string, number | null>;

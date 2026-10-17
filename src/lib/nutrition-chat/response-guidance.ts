@@ -1,5 +1,6 @@
 import toolGuide from "./tool-guide.json";
 import type { NutritionIdentity } from "./contracts";
+import { VDD_BASIS_NOTICE } from "./food-basis";
 
 export const GUEST_TOOL_NAMES = ["get_workflow", "search_foods", "get_food", "search_dishes", "get_dish", "search_diet_codes", "get_diet_code", "prepare_menu", "calculate_menu", "export_workbook"];
 type Guide = { stage: string; instruction: string; nextTools: string[]; requiresUserConfirmation: boolean; questions?: unknown[]; questionCount?: number; questionsTruncated?: boolean; session?: { kind: "guest"; expiresAt?: string; persistence: "temporary-web" } };
@@ -11,10 +12,15 @@ export function nutritionResponseGuidance(name: string, result: unknown, identit
   const guidance: Guide = { stage: "read_result", instruction: entry?.next ?? "Đọc get_workflow và chọn công cụ theo yêu cầu.", nextTools: [], requiresUserConfirmation: false };
   const next: Record<string, string[]> = { get_workflow: ["start_guest_session", "search_dishes"], search_foods: ["get_food"], search_dishes: ["get_dish"], search_diet_codes: ["get_diet_code"], get_food: ["prepare_menu"], get_dish: ["prepare_menu"], get_diet_code: ["prepare_menu"], list_personal_library: ["get_personal_library_item"], get_personal_library_item: ["prepare_menu"], list_saved_menus: ["get_saved_menu"] };
   guidance.nextTools = next[name] ?? [];
+  const foodResult = result as { nutrientBasis?: { status: string }; items?: Array<{ nutrientBasis?: { status: string } }> };
+  if ((name === "get_food" && foodResult.nutrientBasis?.status === "unverified") || (name === "search_foods" && foodResult.items?.some(food => food.nutrientBasis?.status === "unverified"))) {
+    Object.assign(guidance, { stage: "source_basis_unverified", nextTools: ["search_dishes", "get_dish"], instruction: VDD_BASIS_NOTICE });
+  }
   if (Array.isArray(data.items) && data.items.length === 0) Object.assign(guidance, { stage: "no_matches", nextTools: [], instruction: "Không tìm thấy mục phù hợp. Làm rõ tên hoặc thử từ khóa gần nghĩa một lần; không bịa ID, không coi đây là kết quả đã tính. Thực phẩm ngoài kho cần nguồn và cơ sở quy đổi; nutrient chưa có để null." });
   if (name === "prepare_menu" || name === "get_saved_menu") {
     const missing = data.preview?.missingInputs ?? [];
     Object.assign(guidance, missing.length ? { stage: "needs_input", questions: missing.slice(0,20), questionCount: missing.length, questionsTruncated: missing.length>20, nextTools: ["prepare_menu"], instruction: "Hỏi gọn đúng các missingInputs; giữ dữ kiện đã có, không tự điền số thay người dùng. questions tối đa20mục, toàn bộ có trong preview.missingInputs; hỏi từng nhóm, không coi danh sách rút gọn là đầy đủ. Sửa đầu vào rồi prepare_menu lại. Chưa calculate/export/save." } : data.review?.truncated ? { stage: "review_too_large", nextTools: ["prepare_menu"], instruction: "Bản duyệt bị rút gọn. Chia kỳ theo ngày và prepare lại để người dùng duyệt đủ, chưa tính/xuất/lưu." } : { stage: "awaiting_user_confirmation", nextTools: ["calculate_menu", "export_workbook"], requiresUserConfirmation: true, instruction: "Trình review.text cho người dùng, giữ dấu * ở mọi số AI tự điền; hỏi họ có đồng ý đúng bản này không rồi DỪNG CHỜ câu trả lời. confirmationToken chỉ ràng buộc bản nháp, không chứng minh người dùng đồng ý. Sau đồng ý mới dùng input chuẩn hóa và token cùng phản hồi để calculate; export chỉ khi cần file, save chỉ khi được yêu cầu và có tài khoản." });
+    if (missing.some(item => (item as { field?: string }).field === "nutrientBasis")) Object.assign(guidance, { stage: "source_basis_unverified", nextTools: ["search_dishes", "get_dish", "prepare_menu"], instruction: `${VDD_BASIS_NOTICE} Không chỉ thông báo sẽ kiểm tra thêm rồi dừng. Tự tra lựa chọn có nguồn, giữ món đã chọn và trình phương án thay để người dùng duyệt; không hỏi người dùng xác nhận một mẫu số chưa có bằng chứng. Các missingInputs khác vẫn cần làm rõ.` });
   }
   if (name === "prepare_menu" || name === "get_saved_menu") guidance.instruction += ` ${toolGuide.approvalPresentation}`;
   if (name === "get_diet_code") Object.assign(guidance, { stage: "diet_choice", requiresUserConfirmation: true });

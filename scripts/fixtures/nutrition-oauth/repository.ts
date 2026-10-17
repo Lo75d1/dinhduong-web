@@ -1,6 +1,7 @@
 import type { NutritionFood } from "../../../src/lib/nutrition-chat/contracts";
 import { NutritionInputError } from "../../../src/lib/nutrition-chat/validation";
 import { nutritionDietCode } from "../../../src/lib/nutrition-chat/clinical";
+import { sanitizeNutritionFood } from "../../../src/lib/nutrition-chat/core";
 let dietEnergyMax = 200;
 export function setFixtureDietEnergyMax(value: number) { dietEnergyMax = value; }
 export async function loadNutritionDietCode(id: string) {
@@ -16,12 +17,12 @@ let requestedFields: string[] = [];
 export function fixtureRequestedNutrientFields() { return requestedFields; }
 export async function loadNutritionFoods(ids: string[], fields: string[] = []): Promise<NutritionFood[]> {
   requestedFields = fields;
-  return ids.includes("fixture-rice") ? [{
+  return ids.includes("fixture-rice") ? [sanitizeNutritionFood({
     id: "fixture-rice", name: "Cơm (fixture)", unit: "g", source: { kind: "catalog", label, confirmed: true },
     foodType, wastePercent: null, foodGroup: "Lương thực", nutrients: {
       energyKcal: energy, proteinG: 2.5, lipidG: 0.3, glucidG: 28, calciumMg: null,
     },
-  }] : [];
+  })] : [];
 }
 export async function loadNutritionRecommendations() { return []; }
 export async function loadNutritionCatalogue() { return loadNutritionFoods(["fixture-rice"]); }

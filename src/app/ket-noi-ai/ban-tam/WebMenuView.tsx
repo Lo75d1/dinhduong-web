@@ -23,7 +23,7 @@ export default function WebMenuView(){
       const response=key?await fetch("/api/nutrition/v1/web-menu",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key}),signal:controller.signal}):await fetch(`/api/nutrition/v1/web-menu/${id}`,{cache:"no-store",signal:controller.signal});
       const value=await readNutritionResponse<Data>(response);
       if(!/^[a-f0-9]{64}$/.test(value.id)||!Array.isArray(value.preview?.days))throw new Error("Chưa đọc được khẩu phần hợp lệ.");
-      if(!controller.signal.aborted){setData(value);setPreview(value.preview);setView("analysis");setUnconfirmed(value.stage==="draft");window.history.replaceState(null,"",`/tinh-khau-phan?banTam=${value.id}`);}
+      if(!controller.signal.aborted){setData(value);setPreview(value.preview);setView(value.stage==="draft"?"entry":"analysis");setUnconfirmed(value.stage==="draft");window.history.replaceState(null,"",`/tinh-khau-phan?banTam=${value.id}`);}
     }
     void load().catch(cause=>{if(!controller.signal.aborted)setError(cause instanceof Error?cause.message:"Chưa mở được khẩu phần.");});
     return()=>controller.abort();

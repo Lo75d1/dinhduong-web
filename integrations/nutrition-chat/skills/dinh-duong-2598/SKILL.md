@@ -1,6 +1,6 @@
 ---
 name: dinh-duong-2598
-description: Tra thực phẩm và công thức trong Dinh dưỡng 2598, hỏi lại để chốt khẩu phần một hoặc nhiều ngày, tính dinh dưỡng, lưu bản cá nhân khi được yêu cầu và xuất Excel chỉnh được qua connector MCP. Dùng khi người dùng muốn phân tích bữa ăn hoặc lập thực đơn từ nguồn Dinh dưỡng 2598.
+description: Tra thực phẩm và công thức trong Dinh dưỡng 2598, hỏi lại để chốt khẩu phần một hoặc nhiều ngày, tính dinh dưỡng, lưu bản cá nhân khi được yêu cầu và xuất Excel chỉnh được qua connector MCP hoặc REST phiên tạm khi môi trường có công cụ gửi HTTP. Dùng khi người dùng muốn phân tích bữa ăn hoặc lập thực đơn từ nguồn Dinh dưỡng 2598.
 ---
 
 # Dinh dưỡng 2598
@@ -18,7 +18,7 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bư�
 - Chỉ Excel: prepare/chốt → export_workbook với saveToAccount=false → trả downloadUrl. Không bắt tải Excel về chat rồi đọc lại, không cần quyền write.
 - Lưu: chỉ theo yêu cầu rõ của người dùng, gọi save_menu rồi trả ration.url. Quyền write có sẵn không đồng nghĩa được lưu mọi kết quả.
 - Kết quả get_food/get_dish/get_diet_code là đối tượng trực tiếp; tìm kiếm mới có items. code hoặc tên không phải ID. MCP đọc structuredContent hoặc JSON trong content.text và kiểm isError; REST trả đối tượng trực tiếp.
-- Nếu kết nối thiếu công cụ, token/link/QR không tự cấp khả năng gọi API cho AI. Dùng giao diện kết nối; không yêu cầu người dùng dán token vào chat. Token API xác thực khác confirmationToken ngắn hạn từ prepare.
+- Nếu chưa có MCP, đọc [REST trực tiếp](references/rest-phien-tam.md): có công cụ HTTP gửi được POST/header/JSON thì dùng phiên tạm, không bắt đăng ký. Nếu không có cả hai khả năng mới dùng giao diện kết nối; token/link/QR không tự thêm công cụ. không yêu cầu người dùng dán token vào chat. Token API xác thực khác confirmationToken ngắn hạn từ prepare.
 
 ## Bắt đầu
 
@@ -33,7 +33,7 @@ Trả lời tiếng Việt bằng gạch đầu dòng hoặc mũi tên. Ba bư�
 ## Bước 1: làm rõ đầu vào
 
 - Có bệnh lý/chỉ định: đọc `get_workflow.clinicalWorkflow`; dùng `search_diet_codes` và `get_diet_code` theo ID thật, trình mã/tên/đối tượng/ghi chú để xác nhận. Điền `clinicalContext` với dữ kiện người dùng cung cấp. `selection=proposed` chưa được chốt; `user_confirmed` là người dùng chọn; `prescribed` là chỉ định họ cung cấp, không phải hệ thống xác minh chuyên môn. Không tự chẩn đoán, ghép ngưỡng nhiều mã, suy ý nghĩa hậu tố hoặc lấy khoảng MCDA làm mục tiêu cá nhân. Mức theo kg cần làm rõ riêng; nước chưa xác minh đơn vị không được tự đổi/đối chiếu. Không có mã vẫn tính thành phần được, không kết luận đạt chế độ bệnh lý.
-- Khi người dùng cần thực đơn, trình bày tên MÓN ĂN theo bữa. Tra `search_dishes` (công thức RNI) và `search_foods` với `type=MA` (món VDD hoàn chỉnh) trước khi tự đề xuất. Với RNI, đọc `get_dish` rồi xác nhận lượng; với VDD dùng Food ID trực tiếp vì kho không có công thức. Chỉ gợi ý công thức riêng/biến thể khi kho không có món phù hợp hoặc người dùng yêu cầu.
+- Khi người dùng cần thực đơn, trình bày tên MÓN ĂN theo bữa. Tra `search_dishes` (công thức RNI) và `search_foods` với `type=MA` (món VDD hoàn chỉnh) trước khi tự đề xuất. Với RNI, đọc `get_dish` rồi xác nhận lượng; với VDD đọc `nutrientBasis`: unverified thì tự tìm công thức RNI tương ứng và trình phương án để người dùng duyệt, không coi unit=g là bằng chứng100g. Đọc [nguồn và quy đổi](references/nguon-va-quy-doi.md); không chỉ hứa kiểm tra rồi dừng. Chỉ gợi ý công thức riêng/biến thể khi kho không có món phù hợp hoặc người dùng yêu cầu.
 - Dùng `search_foods` / `get_food` và `search_dishes` / `get_dish`. Chọn ID thật, giữ nguồn và trạng thái sống/chín. Tên có dấu, alias và những bản ghi trùng tên cần được kiểm tra khi ảnh hưởng lựa chọn.
 - Tách tên cần tìm khỏi câu có bữa/điều kiện, nhưng giữ mọi điều kiện. Trình 3–5 lựa chọn thật có nguồn/điểm khác để người dùng chọn; không lấy dòng đầu. Phân biệt kho/khô, cơm/cốm, thịt/nội tạng. Lỗi công cụ khác không tìm thấy; rỗng thì cho sửa từ khóa hoặc nhóm tìm, không bịa món/bỏ điều kiện an toàn.
 - Món có công thức: dùng làm nền, giữ dấu vết công thức gốc. Món chỉ có bảng dinh dưỡng không cho biết chính xác nguyên liệu. Công thức do AI đề xuất phải gắn nguồn `ai`, ghi ước lượng và chờ người dùng xác nhận.
