@@ -120,6 +120,9 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   const [searchNotice, setSearchNotice] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [manualEntryKind, setManualEntryKind] = useState<"food" | "dish">("food");
+  const [manualDishName, setManualDishName] = useState("");
+  const [manualDishMeal, setManualDishMeal] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualEnergy, setManualEnergy] = useState("");
   const [manualProtein, setManualProtein] = useState("");
@@ -281,13 +284,16 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
     setWork({ meal, dish: name });
   }
 
-  function addQuickDish() {
-    const meal = work?.meal ?? tree[0]?.meal ?? `Bữa ${tree.length + 1}`;
-    const suggestedName = "Món / đồ ăn nhanh";
-    const dish = window.prompt("Tên món cần thêm", suggestedName)?.trim();
+  function addQuickDish(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const meal = manualDishMeal || activeWork?.meal || tree[0]?.meal || `Bữa ${tree.length + 1}`;
+    const dish = manualDishName.trim();
     if (!dish) return;
     setRows((previous) => [...previous, makeRow(meal, dish, null, mode)]);
     setWork({ meal, dish });
+    setManualDishName("");
+    setShowManualForm(false);
+    setShouldScrollToMealPlan(true);
   }
 
   // Di chuyển bữa lên/xuống: sắp lại thứ tự các nhóm row theo bữa (buildTree giữ
@@ -609,17 +615,27 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
       {!controlled&&<CalculatorInputToolbar mode={mode} disabled={!hydrated} onModeChange={changeMode}>
         {profileSlot}
         {savedMenuSlot}
-        <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
-        <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
+        <button type="button" aria-haspopup="dialog" aria-expanded={showManualForm} onClick={() => { setManualDishMeal(activeWork?.meal ?? tree[0]?.meal ?? ""); setShowManualForm(true); }} className="w-full rounded-md border border-emerald-700 px-3 py-2 text-left text-sm font-medium whitespace-normal text-emerald-700 hover:bg-emerald-50 sm:w-auto">＋ Thêm thực phẩm và món ăn ngoài hệ thống</button>
       </CalculatorInputToolbar>}
       <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
-      {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
+      <Modal open={showManualForm} onClose={() => setShowManualForm(false)} title="Thêm thực phẩm và món ăn ngoài hệ thống">
+        <p className="text-sm text-neutral-800">Dùng khi thực phẩm hoặc món ăn chưa có trong dữ liệu hệ thống.</p>
+        <div role="group" aria-label="Cách thêm ngoài hệ thống" className="my-3 grid gap-2 sm:grid-cols-2">
+          {([{ value: "food", label: "Nhập số liệu dinh dưỡng" }, { value: "dish", label: "Tạo món từ nguyên liệu" }] as const).map((item) => <button key={item.value} type="button" aria-pressed={manualEntryKind === item.value} onClick={() => setManualEntryKind(item.value)} className={`min-h-11 rounded-md border px-3 py-2 text-sm font-semibold ${manualEntryKind === item.value ? "border-[#123c36] bg-[#123c36] text-white" : "border-neutral-400 bg-white text-neutral-900 hover:bg-neutral-50"}`}>{item.label}</button>)}
+        </div>
+        {manualEntryKind === "dish" ? <form onSubmit={addQuickDish} className="space-y-3">
+          <p className="text-sm text-neutral-800">Đặt tên món, sau đó thêm từng nguyên liệu và khối lượng vào món vừa tạo để tính dinh dưỡng.</p>
+          <label className="block text-sm font-semibold text-neutral-950">Tên món ăn<input required value={manualDishName} onChange={(event) => setManualDishName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label>
+          <label className="block text-sm font-semibold text-neutral-950">Thêm vào bữa<select aria-label="Thêm vào bữa" value={manualDishMeal} onChange={(event) => setManualDishMeal(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5">{tree.length === 0 ? <option value="">Tạo bữa mới</option> : tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}</select></label>
+          <button className="rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Tạo món và thêm nguyên liệu</button>
+        </form> : <form onSubmit={addManualFood}>
+        <p className="text-sm text-neutral-800">Nhập thực phẩm hoặc món ăn có số liệu dinh dưỡng trên 100 g. Bấm thêm để dùng ngay trong khẩu phần; có thể gửi đề xuất kèm nguồn để kiểm duyệt.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm / món ăn<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
         <label className="mt-4 flex items-start gap-2 rounded border border-[#a77b10] bg-[#fff8df] p-3 text-sm font-semibold text-neutral-950"><input type="checkbox" checked={submitManualForReview} onChange={(event) => setSubmitManualForReview(event.target.checked)} className="mt-1" />Đồng thời gửi bản nháp để quản trị viên kiểm duyệt dùng chung</label>
         {submitManualForReview && <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Mô tả / căn cứ đề xuất<textarea value={manualDescription} onChange={(event) => setManualDescription(event.target.value)} placeholder="Ví dụ: sản phẩm nào, phần ăn, thông tin nhãn..." className="mt-1 min-h-20 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Nguồn tham khảo<textarea value={manualSourceNote} onChange={(event) => setManualSourceNote(event.target.value)} placeholder="Nhãn sản phẩm, tài liệu hoặc đường dẫn để đối chiếu..." className="mt-1 min-h-16 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>}
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
       </form>}
+      </Modal>
 
       {searchNotice?<p role="status" className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-950">{searchNotice}</p>:null}
       {searchError?<p role="alert" className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-950">{searchError}</p>:null}
