@@ -21,8 +21,8 @@ import {
   type StrictMetric,
 } from "./multi-day-analysis";
 import { buildMultiDayWordHtml } from "./multi-day-export";
-import { downloadNutritionExcel, webReportDietCode } from "./nutrition-excel-download";
-import NutritionExcelExport from "./NutritionExcelExport";
+import { webReportDietCode } from "./nutrition-excel-download";
+import MultiDayExcelExport from "./MultiDayExcelExport";
 import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
 import NutritionClinicalComparison from "@/app/ket-noi-ai/NutritionClinicalComparison";
 import WhoGrowthAssessment from "./WhoGrowthAssessment";
@@ -176,7 +176,7 @@ export default function MultiDayAnalysis({
         <div className="flex flex-wrap gap-2" data-no-print>
           {resolvedMenu ? reportActions : <>
           <button type="button" onClick={() => download(buildMultiDayWordHtml(days, analysis, shopping, profile), "application/msword;charset=utf-8", "bao-cao-dinh-duong-toan-ky.doc")} className="rounded-md border-2 border-[#185FA5] bg-white px-3 py-1.5 text-sm font-semibold text-[#0C447C] hover:bg-[#E6F1FB]">⬇ Word</button>
-          <NutritionExcelExport label="Excel đầy đủ" onExport={saveToAccount => downloadNutritionExcel(days, profile, { saveToAccount, reportContext: { kitchenMode, mealShares: shares, dietCodeId: webReportDietCode(true) } })} />
+          <MultiDayExcelExport days={days} profile={profile} reportContext={{ kitchenMode, mealShares: shares, dietCodeId: webReportDietCode(true) }} />
           </>}
         </div>
       </header>

@@ -12,6 +12,7 @@ import LibraryIngredientPicker from "@/app/tai-khoan/LibraryIngredientPicker";
 import ClinicalContextControls from "../../ClinicalContextControls";
 import MenuDraftEditor from "@/app/tinh-khau-phan/MenuDraftEditor";
 import { savedCalculatorUrl } from "@/lib/nutrition-chat/calculator-links";
+import { downloadNutritionInputExcel, selectNutritionDay } from "@/app/tinh-khau-phan/nutrition-excel-download";
 
 export type Prepared = { input: MenuInput; preview: ResolvedMenu; confirmationToken: string };
 export type SavedTarget = { id: string; title: string; revision: number };
@@ -32,6 +33,7 @@ export default function ReuseSavedMenu({ menu, initialInput, initialNames = {}, 
   const [prepared, setPrepared] = useState<Prepared | null>(()=>initialPrepared??null);
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [exportDayId, setExportDayId] = useState("");
   const [error, setError] = useState("");
   const [saved, setSaved] = useState<{ id: string; title: string } | null>(null);
   const [latestTarget, setLatestTarget] = useState<SavedTarget | null>(null);
@@ -87,8 +89,21 @@ export default function ReuseSavedMenu({ menu, initialInput, initialNames = {}, 
       else{const value=await readNutritionResponse<{webUrl:string}>(response),url=new URL(value.webUrl,window.location.origin);if(url.origin!==window.location.origin||url.pathname!=="/tinh-khau-phan"||url.search!=="?banTam=1"||!/^[A-Za-z0-9_-]{43}$/.test(url.hash.slice(1)))throw new Error("Link bản cập nhật chưa hợp lệ.");window.location.assign(url.href);}
     }catch(cause){setError(cause instanceof Error?cause.message:"Chưa xử lý được bản điều chỉnh.");}finally{setBusy(false);}
   }
+  const exportDay = prepared?.input.days.find(day => day.id === exportDayId) ?? prepared?.input.days[0];
+  async function exportSelectedDay() {
+    if (!prepared || !exportDay || !confirmed || busy || prepared.preview.missingInputs.length) return;
+    setBusy(true); setError("");
+    try { await downloadNutritionInputExcel(selectNutritionDay(prepared.input, exportDay.id)); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa tải được thực đơn ngày đã chọn."); }
+    finally { setBusy(false); }
+  }
   const actions = <div className="w-full min-w-0 space-y-3">
     {error ? <p role="alert" className="text-sm text-red-800">{error}</p> : null}
+    {prepared&&prepared.input.days.length>1&&exportDay?<div className="flex flex-wrap items-center gap-2 rounded border border-[#b1c8bd] bg-white p-3" data-no-print>
+      <label className="flex min-w-0 items-center gap-2 text-sm">Ngày muốn gửi<select aria-label="Ngày xuất Excel" disabled={busy} value={exportDay.id} onChange={event=>setExportDayId(event.target.value)} className="min-w-0 max-w-full rounded border border-[#8fa99e] px-2 py-2">{prepared.input.days.map(day=><option key={day.id} value={day.id}>{day.label}{day.date?` · ${day.date}`:""}</option>)}</select></label>
+      <button type="button" disabled={busy||!confirmed||!!prepared.preview.missingInputs.length} onClick={()=>void exportSelectedDay()} className="rounded border border-[#123c36] px-3 py-2 text-sm font-semibold text-[#123c36] disabled:opacity-50">Excel riêng ngày này</button>
+      <p className="w-full text-xs text-neutral-600">Excel cả kỳ có sheet riêng cho từng ngày. Xác nhận bản xem trước để tải ngày đã chọn.</p>
+    </div>:null}
     {prepared ? <div className="border-t border-[#b1c8bd] pt-3">{layout==="form"?<><NutritionMenuInput menu={prepared.preview}/><NutritionMenuAnalysis menu={prepared.preview}/></>:null}{prepared.preview.missingInputs.length ? <ul className="mt-3 list-disc pl-5 text-sm text-amber-900">{prepared.preview.missingInputs.map((item, i) => <li key={i}>{item.message}</li>)}</ul> : null}<label className="mt-2 flex gap-2 text-sm"><input type="checkbox" checked={confirmed} disabled={busy || !!saved} onChange={event => setConfirmed(event.target.checked)} className="accent-[#123c36]" /><span>Tôi xác nhận đầu vào và nguồn của khẩu phần.</span></label>{temporary&&!accountMode?<div className="mt-3 flex flex-wrap gap-4"><button type="button" disabled={busy||!confirmed||!!prepared.preview.missingInputs.length} onClick={()=>void temporaryResult("calculate")} className={button}>Tính lại và mở bản cập nhật</button><button type="button" disabled={busy||!confirmed||!!prepared.preview.missingInputs.length} onClick={()=>void temporaryResult("export")} className="text-sm underline">Tải thêm Excel</button></div>:<div className="mt-3 flex flex-wrap items-center gap-3"><button type="button" disabled={busy || !confirmed || !!prepared.preview.missingInputs.length || !!saved} onClick={() => void save()} className={button}>{saved ? "Đã lưu vào tài khoản" : target ? "Lưu thay đổi" : "Lưu thực đơn vào tài khoản"}</button>{target&&!saved?<button type="button" disabled={busy||!confirmed||!!prepared.preview.missingInputs.length} onClick={()=>void save(true)} className="rounded border border-[#123c36] px-4 py-2 text-sm font-semibold text-[#123c36] disabled:opacity-50">Lưu thành bản mới</button>:null}<button type="button" disabled={busy||!confirmed||!!prepared.preview.missingInputs.length} onClick={()=>void accountExport()} className="rounded border border-[#9bb6ab] px-4 py-2 text-sm font-semibold disabled:opacity-50">Tải thêm Excel</button></div>}</div> : null}
     {download?<p role="status"><a href={download.downloadUrl} download={download.filename} className="font-semibold underline">Tải {download.filename}</a> · Link tải có thời hạn10phút.</p>:null}
     {temporary?<details className="rounded border border-[#b1c8bd] p-3"><summary className="cursor-pointer font-semibold">Muốn lưu vào tài khoản để dùng lâu dài?</summary><p className="mt-3 text-sm">Đăng nhập trong tab mới rồi quay lại đây. Giữ nguyên các chỉnh sửa, chuẩn bị bản dành cho tài khoản và xác nhận lại trước khi lưu.</p><Link href="/dang-nhap" target="_blank" rel="noopener noreferrer" className="mt-3 inline-block underline">Đăng nhập / Đăng ký trong tab mới</Link><button type="button" disabled={busy} onClick={()=>void preview(true)} className="mt-3 block font-semibold underline">Chuẩn bị bản để lưu vào tài khoản</button></details>:null}

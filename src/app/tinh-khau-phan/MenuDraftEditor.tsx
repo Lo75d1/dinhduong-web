@@ -9,6 +9,8 @@ import { DishInputFrame } from "./MealInputWorkspace";
 import type { Row } from "./types";
 import { resolvedDisplayTotal } from "./resolved-ration-detail";
 import LibraryIngredientPicker from "@/app/tai-khoan/LibraryIngredientPicker";
+import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
+import { webNutritionReportInput, webRowFoodSource } from "./nutrition-excel-download";
 
 type Props = { input: MenuInput; menu?: ResolvedMenu; names: Record<string,string>; disabled: boolean; sourceMode?: "all"|"catalog"; onChange: (next: MenuInput) => void; onNames: (names: Record<string,string>) => void; onAmount: (day:number,row:number,field:"quantity"|"servings",value:string) => void };
 type DisplayRow = Row & { sourceRow?: MenuRowInput };
@@ -36,7 +38,12 @@ export default function MenuDraftEditor({ input, menu, names, disabled, sourceMo
     const next=structuredClone(input), placeholders:Row[]=[];
     next.days[dayIndex].rows=rows.flatMap(display=>{
       const original=(display as DisplayRow).sourceRow;
-      if(!original){placeholders.push(display);return [];}
+      if(!original){
+        if(!display.foodId){placeholders.push(display);return [];}
+        const added=webNutritionReportInput([{id:day.id,label:day.label,date:day.date,rows:[display]}],null,input.mode).days[0].rows[0];
+        if(display.note.startsWith("AI")){added.recipeSource={kind:"ai",label:"AI hỗ trợ nhập liệu; người dùng cần kiểm tra nguồn và định lượng"};added.aiFilledFields=["quantity","servings"];}
+        return [{...added,id:display.uid}];
+      }
       return [{...structuredClone(original),id:display.uid,meal:display.meal,dish:display.dish,note:display.note}];
     });
     setEmptyRows(current=>({...current,[day.id]:placeholders})); onNames(Object.fromEntries(rows.filter(row=>row.foodId).map(row=>[row.uid,row.foodName]))); onChange(next);
@@ -53,7 +60,8 @@ export default function MenuDraftEditor({ input, menu, names, disabled, sourceMo
   }
   function pickFood(food:FoodResult,target:{meal:string;dish:string}) {
     const id=crypto.randomUUID();
-    append([{id,meal:target.meal,dish:target.dish,foodId:food.id,quantity:null,unit:food.unit==="ml"?"ml":"g",servings:1,basis:"edible",recipeSource:{kind:"user",label:"Người dùng chọn thực phẩm trong kho"}}],{[id]:food.name});
+    const source=webRowFoodSource({foodId:food.id,foodName:food.name,nutrients:Object.fromEntries(CORE_CALC_FIELDS.map(field=>[field.key,typeof food[field.key]==="number"?food[field.key] as number:null])),wastePercent:typeof food.wastePercent==="number"?food.wastePercent:null});
+    append([{id,meal:target.meal,dish:target.dish,...source,quantity:null,unit:food.unit==="ml"?"ml":"g",servings:1,basis:"edible",recipeSource:{kind:"user",label:source.customFood?"Người dùng tự nhập số liệu trên website":"Người dùng chọn thực phẩm trong kho"}}],{[id]:food.name});
   }
   function pickDish(dish:DishResult,meal:string) {
     if(!dish.ingredients.length||dish.ingredients.some(item=>!item.food||item.quantityG===null)) {setError("Công thức còn nguyên liệu chưa liên kết hoặc thiếu lượng. Chọn nguyên liệu có nguồn; hệ thống giữ toàn bộ bản đang nhập.");return;}
@@ -70,7 +78,7 @@ export default function MenuDraftEditor({ input, menu, names, disabled, sourceMo
   }
   const mealNames=[...new Set(displayRows.map(row=>row.meal))];
   const tree=mealNames.map(meal=>({meal,kcal:energy(day.rows.filter(row=>row.meal===meal)),dishes:[...new Set(displayRows.filter(row=>row.meal===meal).map(row=>row.dish))].map(dish=>({dish,kcal:energy(day.rows.filter(row=>row.meal===meal&&row.dish===dish))}))}));
-  const controlled:ControlledMealInput={rows:displayRows,mode:input.mode,disabled,onChange:structuralChange,onModeChange:mode=>onChange({...input,mode}),onPickFood:pickFood,onPickDish:pickDish,tree,renderDish:(meal,dish,actions)=><DishInputFrame name={dish.dish} disabled={disabled} onRename={actions.rename} onDelete={actions.remove} onDuplicate={actions.duplicate}>
+  const controlled:ControlledMealInput={rows:displayRows,mode:input.mode,disabled,showActions:true,onChange:structuralChange,onModeChange:mode=>onChange({...input,mode}),onPickFood:pickFood,onPickDish:pickDish,tree,renderDish:(meal,dish,actions)=><DishInputFrame name={dish.dish} disabled={disabled} onRename={actions.rename} onDelete={actions.remove} onDuplicate={actions.duplicate}>
     <div className="relative overflow-x-auto"><table className="w-full min-w-[980px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]">
       <caption className="p-2 text-left text-sm font-semibold">Thực phẩm / nguyên liệu của món · lượng, đơn vị và số suất giữ theo bản đang mở</caption>
       <colgroup><col className="w-[24%]"/><col className="w-[12%]"/><col className="w-[10%]"/><col className="w-[11%]"/><col className="w-[10%]"/><col className="w-[8%]"/><col className="w-[8%]"/><col className="w-[13%]"/><col className="w-[4%]"/></colgroup>

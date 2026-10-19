@@ -28,6 +28,10 @@ import { restrictToHorizontalAxis, restrictToVerticalAxis } from "@dnd-kit/modif
 import MenuFoodSearch from "./MenuFoodSearch";
 import MultiDayAnalysis from "./MultiDayAnalysis";
 import PersonalProfile, { DEFAULT_PROFILE, type Profile } from "./PersonalProfile";
+import MealInput, { type ControlledMealInput } from "./MealInput";
+import ServerRationActions from "./ServerRationActions";
+import MultiDayExcelExport from "./MultiDayExcelExport";
+import { webReportDietCode } from "./nutrition-excel-download";
 import { CLASSIFY_SELECT_KEYS, EMPTY_CLASSIFY } from "@/lib/food-classify";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import type { RecommendationRow } from "./matchRecommendation";
@@ -398,6 +402,32 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
     finally { setPublishing(false); }
   }
 
+  const actionDay = openDay ?? days[0];
+  function selectActionDay(dayId: string) {
+    const selected = days.find(day => day.id === dayId);
+    if (!selected) return;
+    setExpanded({ dayId, meal: dayMealsOrdered(selected)[0]?.meal ?? "Bữa 1" });
+    setSelDish(null);
+  }
+  const actionControls: ControlledMealInput | undefined = actionDay ? {
+    rows: actionDay.rows,
+    mode: "menu",
+    selection: expanded?.dayId === actionDay.id ? { meal: expanded.meal, dish: targetDish ?? "(Chưa phân món)" } : null,
+    onSelectionChange: selection => {
+      if (!selection) return;
+      setExpanded({ dayId: actionDay.id, meal: selection.meal });
+      setSelDish(selection.dish);
+    },
+    onChange: rows => {
+      patchDayRows(actionDay.id, () => rows);
+      const added = rows.find(row => !actionDay.rows.some(previous => previous.uid === row.uid));
+      if (added) { setExpanded({ dayId: actionDay.id, meal: added.meal }); setSelDish(added.dish); }
+    },
+    onModeChange: () => {},
+    onPickFood: (food, target) => addFood(actionDay.id, target.meal, target.dish, food),
+    onPickDish: (dish, meal) => addRecipe(actionDay.id, meal, dish.name, dish.ingredients),
+    renderDish: () => null,
+  } : undefined;
   return (
     <section className="flex flex-col gap-3" aria-label="Thực đơn nhiều ngày">
       {view === "entry" && <>
@@ -405,11 +435,21 @@ export default function MultiDayBoard({ view = "entry" }: { view?: "entry" | "an
       <div className="flex flex-wrap items-center gap-2 rounded-lg border p-2.5" style={{ borderColor: "#B5D4F4", background: "#F4F9FE" }}>
         <span className="text-base font-semibold" style={{ color: INK }}>🍽️ Thực đơn nhiều ngày</span>
         <PersonalProfile onChange={setProfile} />
+        <ServerRationActions rows={actionDay?.rows ?? []} profile={profile} variant="load" />
         <span className="rounded-full bg-[#e6f7ef] px-2 py-0.5 text-xs font-semibold text-[#0c5f4d]" title="Thực đơn được tự động lưu vào trình duyệt máy này (chưa đăng nhập/lưu server)">✓ Tự lưu trên máy này</span>
         <span className="ml-auto text-sm" style={{ color: "#5a708c" }}>
           {days.length} ngày · tổng <b style={{ color: INK }}>{round(totalKcalAll)}</b> kcal
         </span>
       </div>
+      {actionDay && actionControls && <div className="flex flex-col gap-3 rounded-lg border border-[#B5D4F4] bg-white p-3">
+        <label className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#0C447C]">Ngày đang thao tác
+          <select aria-label="Ngày đang thao tác" value={actionDay.id} onChange={event => selectActionDay(event.target.value)} className="min-w-0 max-w-full rounded border border-[#B5D4F4] px-2 py-2">
+            {days.map(day => <option key={day.id} value={day.id}>{day.label}{day.date ? ` · ${day.date}` : ""}</option>)}
+          </select>
+        </label>
+        <MealInput key={actionDay.id} actionsOnly controlled={actionControls} />
+        <MultiDayExcelExport days={days} profile={profile} reportContext={{ dietCodeId: webReportDietCode(true) }} />
+      </div>}
 
       {moveNotice && (
         <div className="menu-day-enter flex items-center gap-2 rounded-lg border px-3 py-2 text-sm" style={{ borderColor: ACCENT, background: "#E6F1FB", color: INK }}>

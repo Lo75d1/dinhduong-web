@@ -87,13 +87,16 @@ function fmtKcal(value: number): string {
 
 export type ControlledMealInput = {
   rows: Row[]; mode: RationMode; disabled?: boolean;
+  showActions?: boolean;
+  selection?: { meal: string; dish: string } | null;
+  onSelectionChange?: (value: { meal: string; dish: string } | null) => void;
   onChange: (rows: Row[]) => void; onModeChange: (mode: RationMode) => void;
   onPickFood: (food: FoodResult, target: {meal:string;dish:string}) => void;
   onPickDish: (dish: DishResult, meal: string) => void;
   renderDish: (meal: string, dish: DishNode, actions: {rename:(name:string)=>void;remove:()=>void;duplicate:()=>void}) => ReactNode;
   tree?: import("./MealInputWorkspace").InputMeal[];
 };
-export default function MealInput({ onRowsChange, onModeChange, onMedsChange, profileSlot, analysisSlot, savedMenuSlot, controlled }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; onMedsChange?: (meds: MedicationRow[]) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode; savedMenuSlot?: ReactNode; controlled?: ControlledMealInput }) {
+export default function MealInput({ onRowsChange, onModeChange, onMedsChange, profileSlot, analysisSlot, savedMenuSlot, controlled, actionsOnly = false }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; onMedsChange?: (meds: MedicationRow[]) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode; savedMenuSlot?: ReactNode; controlled?: ControlledMealInput; actionsOnly?: boolean }) {
   const [storedRows, setStoredRows] = useState<Row[]>([]);
   const [storedMode, setStoredMode] = useState<RationMode>("recall24h");
   const isControlled = controlled !== undefined;
@@ -101,7 +104,12 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   const setRows = (update: SetStateAction<Row[]>) => { if(controlled){if(!controlled.disabled)controlled.onChange(typeof update === "function" ? update(rows) : update);} else setStoredRows(update); };
   const setMode = (value: RationMode) => { if(controlled)controlled.onModeChange(value); else setStoredMode(value); };
   const [hydrated, setHydrated] = useState(false);
-  const [work, setWork] = useState<{ meal: string; dish: string } | null>(null);
+  const [localWork, setLocalWork] = useState<{ meal: string; dish: string } | null>(null);
+  const work = controlled?.selection ?? localWork;
+  function setWork(update: SetStateAction<{ meal: string; dish: string } | null>) {
+    const next = typeof update === "function" ? update(work) : update;
+    setLocalWork(next); controlled?.onSelectionChange?.(next);
+  }
   const [q, setQ] = useState("");
   const [searchKind, setSearchKind] = useState<SearchKind>("food");
   const [foodType, setFoodType] = useState<FoodType>("");
@@ -165,25 +173,28 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   }, [shouldScrollToMealPlan, rows.length]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     fetch("/api/dishes/filter-options")
       .then((response) => response.json())
       .then((data) => setDishFilterOptions({ categories: data.categories ?? [], ageGroups: data.ageGroups ?? [], diseaseGroups: data.diseaseGroups ?? [] }))
       .catch(() => setDishFilterOptions({ categories: [], ageGroups: [], diseaseGroups: [] }));
-  }, []);
+  }, [actionsOnly]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     fetch("/api/foods/filter-options")
       .then((response) => response.json())
       .then((data) => setFilterOptions({ sources: data.sources ?? [], groups: data.groups ?? [] }))
       .catch(() => setFilterOptions({ sources: [], groups: [] }));
-  }, []);
+  }, [actionsOnly]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     fetch("/api/medications")
       .then((response) => response.json())
       .then((data) => setDbMedRefs(data.items ?? []))
       .catch(() => setDbMedRefs([]));
-  }, []);
+  }, [actionsOnly]);
 
   useEffect(() => {
     if (!hydrated || isControlled) return;
@@ -206,6 +217,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   }, [medRows, hydrated, isControlled]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (q.trim().length < 1 || searchKind === "medication") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -238,7 +250,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
       if (debounceRef.current) clearTimeout(debounceRef.current);
       controller.abort();
     };
-  }, [q, searchKind, foodType, sourceFilter, groupFilter, dishCategory, dishAge, dishDisease]);
+  }, [q, searchKind, foodType, sourceFilter, groupFilter, dishCategory, dishAge, dishDisease, actionsOnly]);
 
   const tree = buildTree(rows);
   const activeWork = work && tree.some(meal=>meal.meal===work.meal&&meal.dishes.some(dish=>dish.dish===work.dish)) ? work : tree[0]?.dishes[0] ? {meal:tree[0].meal,dish:tree[0].dishes[0].dish} : null;
@@ -513,10 +525,10 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
       name,
       source: "Tự nhập — chỉ trong khẩu phần này",
       foodType: manualType,
-      energyKcal: toInputNumber(manualEnergy),
-      proteinG: toInputNumber(manualProtein),
-      lipidG: toInputNumber(manualLipid),
-      glucidG: toInputNumber(manualGlucid),
+      energyKcal: manualEnergy.trim() ? toInputNumber(manualEnergy) : null,
+      proteinG: manualProtein.trim() ? toInputNumber(manualProtein) : null,
+      lipidG: manualLipid.trim() ? toInputNumber(manualLipid) : null,
+      glucidG: manualGlucid.trim() ? toInputNumber(manualGlucid) : null,
     };
     // Luôn thêm bản tạm vào phiếu trước, không chờ quy trình kiểm duyệt.
     pickFood(proposal);
@@ -610,12 +622,13 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   const selDishNode = selMealNode?.dishes.find((dish) => dish.dish === selDish);
 
   return (
-    <section className="flex flex-col gap-2 pb-2 lg:min-h-0 lg:flex-1" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
+    <section className={actionsOnly ? "min-w-0" : "flex flex-col gap-2 pb-2 lg:min-h-0 lg:flex-1"} aria-label={actionsOnly ? "Thao tác nhập thực đơn" : "Nhập khẩu phần"} aria-busy={!hydrated}>
       <fieldset disabled={controlled?.disabled} className="contents">
-      {!controlled&&<CalculatorInputToolbar mode={mode} disabled={!hydrated} onModeChange={changeMode}>
+      {(!controlled||controlled.showActions||actionsOnly)&&<CalculatorInputToolbar mode={mode} disabled={!hydrated||!!controlled?.disabled} onModeChange={changeMode} hideMode={actionsOnly||!!controlled}>
         {profileSlot}
         {savedMenuSlot}
         <button type="button" aria-haspopup="dialog" aria-expanded={showManualForm} onClick={() => { setManualDishMeal(activeWork?.meal ?? tree[0]?.meal ?? ""); setShowManualForm(true); }} className="w-full rounded-md border border-emerald-700 px-3 py-2 text-left text-sm font-medium whitespace-normal text-emerald-700 hover:bg-emerald-50 sm:w-auto">＋ Thêm thực phẩm và món ăn ngoài hệ thống</button>
+        {(actionsOnly||controlled?.showActions)&&<button type="button" onClick={() => setAiOpen(true)} className="rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00]">✨ AI hỗ trợ nhập liệu</button>}
       </CalculatorInputToolbar>}
       <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
       <Modal open={showManualForm} onClose={() => setShowManualForm(false)} title="Thêm thực phẩm và món ăn ngoài hệ thống">
@@ -637,6 +650,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
       </form>}
       </Modal>
 
+      {!actionsOnly&&<>
       {searchNotice?<p role="status" className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-950">{searchNotice}</p>:null}
       {searchError?<p role="alert" className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-950">{searchError}</p>:null}
       <MealInputWorkspace meals={controlled?.tree ?? tree.map(meal => ({ meal: meal.meal, kcal: fmtKcal(mealKcal(meal)), dishes: meal.dishes.map(dish => ({ dish: dish.dish, kcal: fmtKcal(dishKcal(dish)) })) }))} selection={{meal:selMeal,dish:selDish}} disabled={!hydrated} onSelect={setWork} onRenameMeal={renameMeal} onMoveMeal={moveMeal} onAddDish={addDish} onDeleteMeal={deleteMeal} onAddMeal={addMeal} listRef={mealPlanRef} mealExtra={controlled?undefined:meal => <MealMedications meds={medRows.filter(med => med.meal === meal)} onUpdate={updateMedication} onDelete={deleteMedication}/>} mealActions={controlled?undefined:meal => <button type="button" onClick={() => activateMedicationSearch(meal)} title="Thuốc / TPBS" className="shrink-0 rounded px-1 text-sm hover:bg-white/70">💊</button>}>
@@ -782,6 +796,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
           </div>
         </div>
       </div>
+      </>}
       </fieldset>
       <MedicationModal open={medModalOpen} onClose={() => setMedModalOpen(false)} meals={tree.map((m) => m.meal)} initialMeal={medTargetMeal} medRefs={dbMedRefs} placed={medRows} onPlace={placeMedication} onDelete={deleteMedication} />
     </section>

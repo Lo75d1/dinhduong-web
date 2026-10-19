@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import type { RationMode } from "./types";
 
-export default function CalculatorInputToolbar({mode,disabled,onModeChange,children}:{mode:RationMode;disabled:boolean;onModeChange:(mode:RationMode)=>void;children?:ReactNode}) {
-  return <div className="flex shrink-0 flex-wrap items-center gap-2" data-calculator-input-toolbar><ModeSelector mode={mode} disabled={disabled} onChange={onModeChange}/>{children}</div>;
+export default function CalculatorInputToolbar({mode,disabled,onModeChange,children,hideMode=false}:{mode:RationMode;disabled:boolean;onModeChange:(mode:RationMode)=>void;children?:ReactNode;hideMode?:boolean}) {
+  return <div className="flex shrink-0 flex-wrap items-center gap-2" data-calculator-input-toolbar>{!hideMode&&<ModeSelector mode={mode} disabled={disabled} onChange={onModeChange}/>}<fieldset disabled={disabled} className="contents">{children}</fieldset></div>;
 }
 
 function ModeSelector({ mode, disabled, onChange }: { mode: RationMode; disabled: boolean; onChange: (mode: RationMode) => void }) {

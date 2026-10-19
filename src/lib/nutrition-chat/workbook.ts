@@ -15,6 +15,7 @@ import { nutritionWebsiteLink } from "./website-links";
 import { preservedRowMetadata } from "./presentation";
 import { AI_INPUT_COLUMNS, markAiNumber, markAiCustomNumber } from "./workbook-ai";
 import { addRecallWorkbookSheets } from "./workbook-recall";
+import { addDailyMenuSheets, dailyMenuCellCount } from "./workbook-daily-menu";
 
 const SHEETS = { analysis: "Phan tich", input: "Nhap khau phan", targets: "Ngay va muc tieu", shopping: "Di cho", custom: "Tu nhap", data: "Du lieu", meals: "Theo bua", dishes: "Theo mon", comparison: "Doi chieu", meta: "_meta", originalInput: "_input", originalCustom: "_custom", originalTargets: "_targets" };
 const FIRST = 7;
@@ -139,7 +140,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     const dataCells = foods.reduce((sum, food) => sum + 10 + sourceFields.filter(field => food.nutrients[field.key] != null).length, 0);
     const groupCount = new Set([...foods.map(food => food.foodGroup || "Chưa phân nhóm"), ...customs.map(food => food.foodGroup || "Chưa phân nhóm")]).size;
     const estimatedCells = dataCells + wholeDishRows.length + inputCapacity * (sourceFields.length * 2 + 45) + WORKBOOK_LIMITS.days * fields.length * 2 + menu.days.length * fields.length * 8 + inputCapacity * 10 + customCapacity * (sourceFields.length + 11) * 2 + nutritionDetailCellCount(menu) + nutritionAnalysisCellCount(menu, groupCount) + (menu.mode === "recall24h" ? rows.length * 16 + menu.days.length * 60 : 0);
-    if (estimatedCells > 400_000) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Báo cáo đầy đủ vượt dung lượng xử lý an toàn. Chia thành các đợt ít ngày hoặc ít dòng hơn rồi xuất lại.");
+    if (estimatedCells + dailyMenuCellCount(menu) > 400_000) throw new NutritionWorkbookError("WORKBOOK_LIMIT", "Báo cáo đầy đủ vượt dung lượng xử lý an toàn. Chia thành các đợt ít ngày hoặc ít dòng hơn rồi xuất lại.");
   }
   const lastInput = FIRST + inputCapacity - 1;
   const lastCustom = FIRST + customCapacity - 1;
@@ -499,6 +500,7 @@ export async function buildNutritionWorkbook(original: ResolvedMenu, catalogue: 
     });
     addNutritionReportSheets(workbook, menu, allFoods, options, { inputCapacity, sourceFields: sourceFields.length });
     addRecallWorkbookSheets(workbook, menu, options);
+    addDailyMenuSheets(workbook, menu);
     const plain = { name: "Times New Roman", size: 12, color: { argb: "000000" } };
     for (const sheet of [analysis, comparison, targetSheet, input, meals, dishes, shopping, custom, data]) {
       sheet.views = [{ state: "normal", showGridLines: sheet === input, zoomScale: sheet === input ? 100 : 85 }];
