@@ -21,8 +21,8 @@ import {
   type StrictMetric,
 } from "./multi-day-analysis";
 import { buildMultiDayWordHtml } from "./multi-day-export";
-import { downloadNutritionExcel, webReportDietCode } from "./nutrition-excel-download";
-import NutritionExcelExport from "./NutritionExcelExport";
+import { webReportDietCode } from "./nutrition-excel-download";
+import MultiDayExcelExport from "./MultiDayExcelExport";
 import type { ResolvedMenu } from "@/lib/nutrition-chat/contracts";
 import NutritionClinicalComparison from "@/app/ket-noi-ai/NutritionClinicalComparison";
 import WhoGrowthAssessment from "./WhoGrowthAssessment";
@@ -176,7 +176,7 @@ export default function MultiDayAnalysis({
         <div className="flex flex-wrap gap-2" data-no-print>
           {resolvedMenu ? reportActions : <>
           <button type="button" onClick={() => download(buildMultiDayWordHtml(days, analysis, shopping, profile), "application/msword;charset=utf-8", "bao-cao-dinh-duong-toan-ky.doc")} className="rounded-md border-2 border-[#185FA5] bg-white px-3 py-1.5 text-sm font-semibold text-[#0C447C] hover:bg-[#E6F1FB]">⬇ Word</button>
-          <NutritionExcelExport label="Excel đầy đủ" onExport={saveToAccount => downloadNutritionExcel(days, profile, { saveToAccount, reportContext: { kitchenMode, mealShares: shares, dietCodeId: webReportDietCode(true) } })} />
+          <MultiDayExcelExport days={days} profile={profile} reportContext={{ kitchenMode, mealShares: shares, dietCodeId: webReportDietCode(true) }} />
           </>}
         </div>
       </header>
@@ -339,7 +339,7 @@ export default function MultiDayAnalysis({
   );
 }
 
-function ResolvedTargets({ menu }: { menu: ResolvedMenu }) {
+export function ResolvedTargets({ menu }: { menu: ResolvedMenu }) {
   const active = menu.targets.filter(target => target.value !== null);
   return <div className="rounded-lg border border-[#B5D4F4] bg-white p-3">
     <h4 className="text-base font-bold text-[#0C447C]">Mục tiêu đối chiếu đã cung cấp</h4>
@@ -348,13 +348,13 @@ function ResolvedTargets({ menu }: { menu: ResolvedMenu }) {
   </div>;
 }
 
-function ResolvedGrowth({ menu }: { menu: ResolvedMenu }) {
+export function ResolvedGrowth({ menu }: { menu: ResolvedMenu }) {
   const profile = menu.input.profile;
   if (!profile) return null;
   const age = Number(profile.age), ageMonths = profile.ageUnit === "thang" ? age : age * 12;
   const weight = Number(profile.weight), height = Number(profile.height);
   if (!(ageMonths > 0 && ageMonths <= 228 && weight > 0 && height > 0)) return null;
-  return <WhoGrowthAssessment entries={WHO_GROWTH_ENTRIES.filter(entry => entry.sex === profile.gender)} ageMonths={ageMonths} weightKg={weight} heightCm={height} />;
+  return <WhoGrowthAssessment entries={WHO_GROWTH_ENTRIES.filter(entry => entry.sex === (profile.gender === "Nữ" ? "Nu" : "Nam"))} ageMonths={ageMonths} weightKg={weight} heightCm={height} />;
 }
 
 function ResolvedMealPlanOverview({ menu }: { menu: ResolvedMenu }) {
@@ -366,7 +366,7 @@ function ResolvedMealPlanOverview({ menu }: { menu: ResolvedMenu }) {
   })}</div></div>;
 }
 
-function ResolvedShopping({ menu }: { menu: ResolvedMenu }) {
+export function ResolvedShopping({ menu, singleDay = false }: { menu: ResolvedMenu; singleDay?: boolean }) {
   const rows = menu.days.flatMap(day => day.rows), items = resolvedShoppingItems(rows);
   const groups = new Map<string, typeof rows>();
   for (const row of rows) { const key = row.food.foodGroup ?? "Chưa phân nhóm"; groups.set(key, [...(groups.get(key) ?? []), row]); }
@@ -379,7 +379,7 @@ function ResolvedShopping({ menu }: { menu: ResolvedMenu }) {
       const value = rule?.type === "qty" ? massKnown ? groupRows.reduce((sum, row) => sum + row.edibleGrams!, 0) / rule.divisor : null : rule && nutrient?.value !== null && nutrient?.value !== undefined && !nutrient.incomplete ? nutrient.value / rule.divisor : null;
       return <tr key={group} className="border-t border-[#E1E9F5]"><td className="p-2">{group}</td><td className="p-2">{rule?.unitText ?? "Chưa có quy tắc quy đổi"}</td><td className="p-2 text-right">{displayNumber(value)}</td></tr>;
     })}</tbody></table></div></div>
-    <div className="rounded-lg border border-[#B5D4F4] bg-white p-3"><h4 className="mb-2 text-sm font-bold text-[#0C447C]">🛒 Danh sách đi chợ / xuất kho toàn kỳ</h4><p className="text-xs text-neutral-700">Không tự đổi ml thành g. Chưa đủ khối lượng riêng hoặc thải bỏ thì lượng mua để —.</p><div className="mt-2 overflow-x-auto"><table className="w-full min-w-[620px] text-sm"><thead className="bg-[#E6F1FB] text-left"><tr><th className="p-2">Thực phẩm</th><th className="p-2 text-right">Lượng dùng tính</th><th className="p-2 text-right">Mua / xuất kho (g)</th><th className="p-2">Nguồn</th></tr></thead><tbody>{items.map(item => <tr key={item.id} className="border-t border-[#E1E9F5]"><td className="p-2">{item.name}</td><td className="p-2 text-right">{item.amount}</td><td className="p-2 text-right">{displayNumber(item.rawGrams)}</td><td className="p-2">{item.source || "—"}</td></tr>)}</tbody></table></div></div>
+    <div className="rounded-lg border border-[#B5D4F4] bg-white p-3"><h4 className="mb-2 text-sm font-bold text-[#0C447C]">🛒 Danh sách đi chợ / xuất kho{singleDay ? "" : " toàn kỳ"}</h4><p className="text-xs text-neutral-700">Không tự đổi ml thành g. Chưa đủ khối lượng riêng hoặc thải bỏ thì lượng mua để —.</p><div className="mt-2 overflow-x-auto"><table className="w-full min-w-[620px] text-sm"><thead className="bg-[#E6F1FB] text-left"><tr><th className="p-2">Thực phẩm</th><th className="p-2 text-right">Lượng dùng tính</th><th className="p-2 text-right">Mua / xuất kho (g)</th><th className="p-2">Nguồn</th></tr></thead><tbody>{items.map(item => <tr key={item.id} className="border-t border-[#E1E9F5]"><td className="p-2">{item.name}</td><td className="p-2 text-right">{item.amount}</td><td className="p-2 text-right">{displayNumber(item.rawGrams)}</td><td className="p-2">{item.source || "—"}</td></tr>)}</tbody></table></div></div>
   </div>;
 }
 
@@ -506,7 +506,7 @@ function SmallMetric({ title, value }: { title: string; value: string }) {
   return <div className="rounded-lg border border-[#D7E6F5] bg-[#F4F9FE] p-3"><p className="text-xs text-neutral-600">{title}</p><p className="mt-1 text-xl font-black text-[#0C447C]">{value}</p></div>;
 }
 
-function RecommendationCard({ item }: { item: PeriodRecommendation }) {
+export function RecommendationCard({ item }: { item: PeriodRecommendation }) {
   const style = item.tone === "good" ? "border-emerald-500 bg-emerald-50" : item.tone === "attention" ? "border-rose-500 bg-rose-50" : item.tone === "adjust" ? "border-amber-500 bg-amber-50" : "border-sky-400 bg-sky-50";
   const label = item.tone === "good" ? "Đang tốt" : item.tone === "attention" ? "Cần chú ý" : item.tone === "adjust" ? "Nên điều chỉnh" : "Dữ liệu";
   return <article className={`rounded-lg border-l-4 p-3 ${style}`}><p className="text-[10px] font-black uppercase tracking-wide text-neutral-600">{label}</p><h4 className="mt-0.5 font-black text-neutral-950">{item.title}</h4><p className="mt-1 text-sm leading-5 text-neutral-800">{item.text}</p></article>;
@@ -527,7 +527,7 @@ function DayTotalRow({ day }: { day: DayPeriodAnalysis }) {
   return <tr className="border-t border-[#E1E9F5]"><td className="px-3 py-2"><span className="font-bold text-[#0C447C]">{day.label}</span>{day.date && <span className="ml-2 text-xs text-neutral-500">{day.date}</span>}</td><td className="px-3 py-2 text-right">{formatMetric(day.energy)}</td><td className="px-3 py-2 text-right">{formatNumber(day.targetKcal)}</td><td className="px-3 py-2 text-right">{formatSigned(day.gapKcal, "")}</td><td className="px-3 py-2 text-right">{formatNumber(pct, "%")}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.proteinG)}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.lipidG)}</td><td className="px-3 py-2 text-right">{formatMetric(day.nutrients.glucidG)}</td><td className="px-3 py-2 text-center"><StatusBadge status={day.status} /></td></tr>;
 }
 
-function MacroCard({ macro }: { macro: MacroPeriodSummary }) {
+export function MacroCard({ macro }: { macro: MacroPeriodSummary }) {
   const width = macro.energySharePct == null ? 0 : Math.min(100, macro.energySharePct);
   const color = macro.status === "dat" ? "#059669" : macro.status === "thieu" ? "#D97706" : macro.status === "vuot" ? "#E11D48" : "#94A3B8";
   const recommendedRange = macro.recommendedMinPct == null || macro.recommendedMaxPct == null

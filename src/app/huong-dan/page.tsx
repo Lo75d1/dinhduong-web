@@ -110,10 +110,11 @@ export default async function GuidePage() {
           <Note><b>Mẹo mới:</b> tại dòng tiêu đề món, sửa ô <b>∑ món</b> để tăng hoặc giảm tổng khối lượng; các nguyên liệu trong món sẽ được chia lại theo đúng tỷ lệ hiện có.</Note>
         </GuideCard>
 
-        <GuideCard label="BẢN ONLINE · THÊM DỮ LIỆU" title="Thực phẩm mới, món nhanh và AI nhập liệu">
+        <GuideCard label="BẢN ONLINE · THÊM DỮ LIỆU" title="Thêm thực phẩm và món ăn ngoài hệ thống">
+          <p>Bấm <b>＋ Thêm thực phẩm và món ăn ngoài hệ thống</b>, rồi chọn cách nhập phù hợp:</p>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-lg border border-[#b8cbc1] bg-[#f7faf8] p-4"><h3 className="font-semibold text-[#123c36]">Món / Đồ ăn nhanh</h3><p className="mt-1 text-sm leading-6">Tạo một nhóm món trống, sau đó chọn món này và thêm từng thực phẩm vào đúng bên trong.</p></div>
-            <div className="rounded-lg border border-[#b8cbc1] bg-[#f7faf8] p-4"><h3 className="font-semibold text-[#123c36]">Thực phẩm mới</h3><p className="mt-1 text-sm leading-6">Dùng ngay trong phiếu hiện tại. Nếu muốn bổ sung vào dữ liệu dùng chung, gửi đề xuất kèm nguồn để quản trị viên kiểm duyệt.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] bg-[#f7faf8] p-4"><h3 className="font-semibold text-[#123c36]">Tạo món từ nguyên liệu</h3><p className="mt-1 text-sm leading-6">Đặt tên món và chọn bữa, sau đó thêm từng nguyên liệu cùng khối lượng vào món vừa tạo để tính dinh dưỡng.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] bg-[#f7faf8] p-4"><h3 className="font-semibold text-[#123c36]">Nhập số liệu dinh dưỡng</h3><p className="mt-1 text-sm leading-6">Nhập thực phẩm hoặc món ăn có số liệu trên 100 g để dùng ngay trong phiếu hiện tại. Nếu muốn bổ sung vào dữ liệu dùng chung, gửi đề xuất kèm nguồn để quản trị viên kiểm duyệt.</p></div>
             <div className="rounded-lg border border-[#d9c27f] bg-[#fffdf6] p-4"><h3 className="font-semibold text-[#73540d]">AI hỗ trợ</h3><p className="mt-1 text-sm leading-6">Dán mô tả theo bữa. AI chỉ tạo bản xem trước; bạn phải xác nhận thực phẩm khớp với cơ sở dữ liệu trước khi thêm.</p></div>
           </div>
           <pre className="overflow-x-auto rounded-lg border border-[#7f948d] bg-[#f7faf8] p-4 text-sm whitespace-pre-wrap">Sáng: phở bò 350 g.{"\n"}Trưa: cơm 200 g, cá chép kho 80 g.{"\n"}Phụ chiều: chuối phần ăn được 100 g.</pre>

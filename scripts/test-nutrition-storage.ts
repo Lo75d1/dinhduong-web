@@ -67,7 +67,9 @@ async function main() {
     api.setFixtureFoodSource("VDD", "MA");
     const vddPreview = await prepare(vddInput);
     assert.equal(vddPreview.input.days[0].rows[0].recipeSource.label, "VDD: Cơm (fixture)"); checks++;
-    assert.equal(vddPreview.preview.totals.energyKcal.value, 130); checks++;
+    assert.equal(vddPreview.preview.totals.energyKcal.value, null); checks++;
+    assert.ok(vddPreview.preview.missingInputs.some(item => item.field === "nutrientBasis")); checks++;
+    await fails(() => api.confirmedNutritionMenu({ input: vddPreview.input, confirmationToken: vddPreview.confirmationToken }, userA), 422);
     api.setFixtureFoodSource("Nguồn giả lập kiểm thử", "CB");
     assert.equal(firstPreview.preview.totals.energyKcal.value, 130); checks++;
     assert.equal(firstPreview.preview.dayTotals[1].hasData, false); checks++;

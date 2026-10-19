@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import { ALL_NUTRIENT_FIELDS, SOURCE_ONLY_NUTRIENT_FIELDS } from "../src/lib/nutrient-fields";
 import { resolveMenu } from "../src/lib/nutrition-chat/core";
 import { buildNutritionWorkbook, parseNutritionWorkbook } from "../src/lib/nutrition-chat/workbook";
+import { inspectWorkbookArchive } from "../src/lib/nutrition-chat/workbook-security";
 import { workbookFixture } from "./test-nutrition-chat-workbook";
 import { webNutritionReportInput } from "../src/app/tinh-khau-phan/nutrition-excel-download";
 
@@ -26,7 +27,13 @@ async function main() {
   await fs.mkdir("evidence/nutrition-chat", { recursive: true });
   await fs.writeFile("evidence/nutrition-chat/complete-report-test.xlsx", bytes);
   const wb = new ExcelJS.Workbook(); await wb.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);
-  assert.equal(wb.worksheets[0].name, "Phan tich chi tiet");
+  const archive = await inspectWorkbookArchive(bytes);
+  for (const page of wb.worksheets.filter(page => page.state === "visible")) {
+    const xml = await archive.file(`xl/worksheets/sheet${page.id}.xml`)!.async("string");
+    assert.doesNotMatch(xml, /<pane\b/, `${page.name}: scrolling must not freeze or split`);
+    assert.doesNotMatch(xml, /<sheetProtection\b/, `${page.name}: users can adjust margins and formatting without a password`);
+  }
+  assert.equal(wb.worksheets[0].name, "Thuc don");
   const matrix = wb.getWorksheet("Phan tich chi tiet")!;
   const intake = wb.getWorksheet("Nhap khau phan")!;
   const nutrientHeaders = Array.from({ length: 160 }, (_, i) => String(intake.getCell(6, 29 + i).value));
@@ -99,11 +106,14 @@ async function main() {
   assert.equal(plan.getCell("G9").result, 100, "portion source remains converted by the shared input calculation");
   assert.match(String(plan.getCell("G7").formula), /'Nhap khau phan'!/);
   assert.match(String(plan.getCell("A5").result), /VDD loại MA.*cả món.*không có danh sách nguyên liệu/);
-  assert.equal(plan.views[0].showGridLines, true);
+  assert.equal(plan.views[0].showGridLines, false);
   assert.equal(plan.getCell("D7").font.size, 15);
+  assert.equal(plan.pageSetup.margins?.left,0.45);
+  assert.equal(plan.pageSetup.fitToWidth,1);
+  assert.equal(wb.getWorksheet("Phan tich chi tiet")!.pageSetup.fitToPage,false);
   assert.notEqual(plan.getCell("G7").alignment.wrapText, true);
   assert.notEqual(plan.getCell("G7").alignment.shrinkToFit, true);
-  assert.equal(wb.getWorksheet("Nhap khau phan")!.views[0].showGridLines, true);
+  assert.equal(wb.getWorksheet("Nhap khau phan")!.views[0].showGridLines, false);
   assert.equal(plan.getCell("K6").value, "Nguồn / ghi chú");
   assert.ok(!plan.getRow(6).values.toString().includes("Mục tiêu"));
   assert.ok(!plan.getRow(6).values.toString().includes("Đối chiếu"));
@@ -123,6 +133,7 @@ async function main() {
   assert.equal(edited.days[0].rows[2].customFood?.nutrients[key], 4);
   assert.equal(edited.days[0].rows[2].customFood?.source.confirmed, false);
   const typedFoods = structuredClone(fixture.foods);
+  typedFoods[0].name = "Món kiểm thử có tên dài để kiểm tra xuống dòng và chiều cao hàng khi in báo cáo thực đơn nhiều nguyên liệu";
   typedFoods[0].source.label = "VDD"; typedFoods[0].foodType = "MA";
   typedFoods[1].source.label = "RNI"; typedFoods[1].foodType = "MA";
   typedFoods[2].source.label = "RNI"; typedFoods[2].foodType = "TS";
@@ -136,6 +147,7 @@ async function main() {
   const noTargetBook = new ExcelJS.Workbook(); await noTargetBook.xlsx.load(Buffer.from(kindBytes) as unknown as ExcelJS.Buffer);
   assert.match(String(noTargetBook.getWorksheet("Doi chieu")!.getCell("A7").value), /Chưa đặt mốc/);
   const typedPlan = noTargetBook.getWorksheet("Thuc don")!;
+  assert.ok(typedPlan.getRow(7).height!>60,"long dish names expand the printed row without shrinking text");
   assert.equal(typedPlan.getCell("D6").value, "Thực phẩm\nthành phần");
   assert.equal(typedPlan.getCell("C7").result, typedFoods[0].name, "VDD MA keeps its actual whole-dish name");
   assert.equal(typedPlan.getCell("D7").result, "Không có dữ liệu thành phần", "VDD MA does not pretend to have ingredients");
@@ -156,9 +168,9 @@ async function main() {
   assert.equal(linkedPlan.getCell("D7").result,typedFoods[0].name,"VDD MA used within a recipe remains a named ingredient");
   assert.equal(linkedPlan.getCell("C8").result??"","","the next ingredient stays under the same dish");
   assert.equal(linkedPlan.getCell("D8").result,typedFoods[2].name);
-  assert.equal(linkedPlan.getCell("G7").result,260,"ingredient energy is retained");
+  assert.equal(linkedPlan.getCell("G7").result,"—","unverified ingredient denominator never becomes a per100 energy value");
   assert.equal(linkedPlan.getCell("G8").result,100,"each ingredient has its own nutrition result");
-  assert.equal(linkedMenu.totals.energyKcal.value,menu.totals.energyKcal.value,"presentation does not change totals");
+  assert.ok(linkedMenu.totals.energyKcal.incomplete,"unverified source is excluded from known totals");
   assert.match(String(linkedPlan.getCell("D7").formula),/^IF\(FALSE,/,"native recalculation keeps linked recipe ingredients visible");
   const changedInput = structuredClone(menu.input);
   changedInput.days.unshift({ id: "empty-day", label: "Ngày chưa nhập", date: "", rows: [] });

@@ -1,5 +1,12 @@
-/** Business rules distilled from the owner's guide v1.3, 16/10/2026. */
-export const VIETNAMESE_MENU_GUIDANCE = `## Chọn món và xây dựng bữa ăn Việt Nam
+import menuPlanning from "./menu-planning-guide.json";
+
+export const MENU_PLANNING_SUMMARY = menuPlanning.summary;
+export const MENU_PLANNING_GUIDANCE = menuPlanning.sections.map(section => `## ${section.title}\n\n${section.rules.map(rule => `- ${rule}`).join("\n")}`).join("\n\n");
+
+/** Business rules distilled from the owner's guide and menu feedback, 17/10/2026. */
+export const VIETNAMESE_MENU_GUIDANCE = `${MENU_PLANNING_GUIDANCE}
+
+## Chọn món và xây dựng bữa ăn Việt Nam
 
 - Đọc lại yêu cầu đã có; chỉ hỏi tối đa 3 ý còn thiếu mỗi lần. Khi lập thực đơn, làm rõ người ăn, số ngày/số suất, dị ứng hoặc hạn chế chuyên môn, món thường ăn, khẩu vị, tự nấu/mua ngoài, khả năng mua và ngân sách khi liên quan. Không tự ghi không dị ứng/không bệnh; không hỏi lại dữ liệu đã biết.
 - Chỉ hỏi hồ sơ cơ thể khi cần tính nhu cầu. Không mặc định 1.200/1.500 kcal, không tự tạo mục tiêu bệnh lý, xét nghiệm, cân nặng hoặc thông tin người bệnh. Dùng mục tiêu có nguồn đã được xác nhận; có nhiều bệnh thì cần bộ mục tiêu thống nhất, không tự sửa thuốc hay áp một chế độ chung.
@@ -12,11 +19,11 @@ export const VIETNAMESE_MENU_GUIDANCE = `## Chọn món và xây dựng bữa ă
 
 ## Tìm và cho người dùng lựa chọn
 
-- Tách tên cần tìm khỏi câu như “trưa ăn cá kho không ớt”, giữ bữa trưa và điều kiện không ớt trong bản nháp. Tìm món ở search_dishes và món hoàn chỉnh ở search_foods type=MA; nguyên liệu tra search_foods. Không đưa nguyên câu dài vào tìm kiếm rồi kết luận không có món.
-- Trình 3–5 ứng viên THẬT khác nhau có ý nghĩa nếu tìm được, cùng tên đầy đủ, nguồn và điểm khác: cách nấu, bộ phận, nhãn tuổi, cơ sở định lượng. Giữ từng ID riêng kể cả trùng tên; không coi điểm tìm kiếm là độ phù hợp bệnh lý. Không tự chọn dòng đầu hoặc tự thêm ứng viên vào thực đơn.
+- Tách tên cần tìm khỏi câu như “trưa ăn cá kho không ớt”, giữ bữa trưa và điều kiện không ớt trong bản nháp. Khi lập thực đơn, ưu tiên món RNI ở search_dishes; món hoàn chỉnh ở search_foods type=MA chỉ khi cần, nguyên liệu tra search_foods. Không đưa nguyên câu dài vào tìm kiếm rồi kết luận không có món.
+- Khi cần người dùng phân biệt ứng viên, trình 3–5 ứng viên THẬT khác nhau có ý nghĩa nếu tìm được, cùng tên đầy đủ, nguồn và điểm khác: cách nấu, bộ phận, nhãn tuổi, cơ sở định lượng. Giữ từng ID riêng kể cả trùng tên; không coi điểm tìm kiếm là độ phù hợp bệnh lý. Không tự chọn dòng đầu hoặc coi ứng viên là đã được chấp nhận. Khi được giao lập thực đơn, có thể chọn phương án có lý do để trình duyệt theo quy tắc lập thực đơn ở trên.
 - Phân biệt cá kho/cá khô, cơm/cốm, thịt gà/nội tạng/trứng/đậu gà; không phục hồi dấu rồi coi đó là lựa chọn đã xác nhận. Có thể thử tên tương đương heo/lợn, đậu hũ/đậu phụ nhưng phải kiểm tra bản ghi thật và cách chế biến, không đánh đồng loại chiên hay món ngọt.
 - Nếu người dùng nói “số 2”, dùng đúng danh sách gần nhất đang có hiệu lực. Khi truy vấn/bộ lọc đổi, không dùng lựa chọn tạm của danh sách cũ. Công cụ lỗi phải nói chưa tra được, khác với không có kết quả. Khi rỗng, nêu từ khóa/phạm vi đã tìm và cho sửa từ khóa, tìm nhóm khác hoặc mô tả món; giữ mọi điều kiện an toàn.
-- RNI: đọc get_dish, giữ từng nguyên liệu/định lượng gốc, không mặc định công thức là một suất. Nếu nguyên liệu trong RNI liên kết Food VDD loại MA, vẫn trình nó như nguyên liệu dưới món cha; không xóa tên nguyên liệu hoặc tự phân rã tiếp. VDD Food type MA dùng độc lập: số liệu cả món, kho không có công thức thành phần. Chọn MỘT đường tính, không cộng cả món và chính nguyên liệu của món đó. Không tự suy thành phần từ ảnh/tên.
+- RNI: đọc get_dish, giữ từng nguyên liệu/định lượng gốc, không mặc định công thức là một suất. Nếu nguyên liệu trong RNI liên kết Food VDD loại MA, vẫn trình nó như nguyên liệu dưới món cha; không xóa tên nguyên liệu hoặc tự phân rã tiếp. VDD Food type MA: kho không có công thức thành phần; nutrientBasis.status=unverified còn nghĩa là chưa rõ số nguồn ứng với100g hay một phần. Không tự lấy unit=g làm bằng chứng100g. Tự tìm công thức RNI tương ứng, kiểm từng Food nguyên liệu rồi trình phương án để người dùng duyệt; không chỉ hứa kiểm tra thêm rồi dừng hoặc âm thầm đổi món. Không có công thức có nguồn thì giữ phần đó chưa tính và nói rõ. Chọn MỘT đường tính, không cộng cả món và chính nguyên liệu của món đó. Không tự suy thành phần từ ảnh/tên.
 
 ## Định lượng và dấu sao
 

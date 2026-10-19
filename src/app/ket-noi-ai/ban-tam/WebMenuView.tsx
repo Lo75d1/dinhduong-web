@@ -3,18 +3,18 @@ import {useEffect,useState} from "react";
 import {createPortal} from "react-dom";
 import Link from "next/link";
 import type {MenuInput,ResolvedMenu} from "@/lib/nutrition-chat/contracts";
-import MultiDayAnalysis from "@/app/tinh-khau-phan/MultiDayAnalysis";
+import LinkedCalculatorResults from "@/app/tinh-khau-phan/LinkedCalculatorResults";
+export { default as LinkedCalculatorResults } from "@/app/tinh-khau-phan/LinkedCalculatorResults";
 import CalculatorNavigation,{useCalculatorHeader} from "@/app/tinh-khau-phan/CalculatorNavigation";
+import { CalculatorInputPanel } from "@/app/tinh-khau-phan/CalculatorLayout";
 import ReuseSavedMenu from "../ban-luu/[id]/ReuseSavedMenu";
 import {readNutritionResponse} from "../client-api";
 
 type Data={id:string;input:MenuInput;preview:ResolvedMenu;confirmationToken:string;webUrl:string;webExpiresAt:string;stage:"draft"|"calculated";sourceChanged:boolean};
-export function LinkedCalculatorResults({menu,draft}:{menu:ResolvedMenu;draft:boolean}){
-  return <section className="mode-panel-enter clinical-panel min-w-0"><div className="mb-3 border-b-2 border-[#123c36] pb-3"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">BƯỚC 2 · KẾT QUẢ{draft?" · BẢN TÍNH NHÁP":""}</p><h2 className="mt-1 text-2xl font-semibold">Kết quả &amp; phân tích</h2><p className="mt-1 font-semibold">{menu.title}</p></div><MultiDayAnalysis days={[]} profile={menu.input.profile??null} recommendations={[]} resolvedMenu={menu}/></section>;
-}
 export default function WebMenuView(){
   const [data,setData]=useState<Data|null>(null),[error,setError]=useState(""),[notice,setNotice]=useState(""),[view,setView]=useState<"entry"|"analysis">("analysis"),[preview,setPreview]=useState<ResolvedMenu|null>(null),[dirty,setDirty]=useState(false),[unconfirmed,setUnconfirmed]=useState(false);
   const headerSlot=useCalculatorHeader();
+  const [actionsContainer,setActionsContainer]=useState<HTMLDivElement|null>(null);
   useEffect(()=>{
     const controller=new AbortController();
     async function load(){
@@ -23,7 +23,7 @@ export default function WebMenuView(){
       const response=key?await fetch("/api/nutrition/v1/web-menu",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key}),signal:controller.signal}):await fetch(`/api/nutrition/v1/web-menu/${id}`,{cache:"no-store",signal:controller.signal});
       const value=await readNutritionResponse<Data>(response);
       if(!/^[a-f0-9]{64}$/.test(value.id)||!Array.isArray(value.preview?.days))throw new Error("Chưa đọc được khẩu phần hợp lệ.");
-      if(!controller.signal.aborted){setData(value);setPreview(value.preview);setView("analysis");setUnconfirmed(value.stage==="draft");window.history.replaceState(null,"",`/tinh-khau-phan?banTam=${value.id}`);}
+      if(!controller.signal.aborted){setData(value);setPreview(value.preview);setView(value.stage==="draft"?"entry":"analysis");setUnconfirmed(value.stage==="draft");window.history.replaceState(null,"",`/tinh-khau-phan?banTam=${value.id}`);}
     }
     void load().catch(cause=>{if(!controller.signal.aborted)setError(cause instanceof Error?cause.message:"Chưa mở được khẩu phần.");});
     return()=>controller.abort();
@@ -36,8 +36,8 @@ export default function WebMenuView(){
       {(()=>{const navigation=<CalculatorNavigation pageMode={(preview?.days.length??data.preview.days.length)>1?"multi":"single"} activeView={view} foodCount={preview?.days.reduce((sum,day)=>sum+day.rows.length,0)??0} onViewChange={setView}/>;return headerSlot?createPortal(navigation,headerSlot):navigation;})()}
       {data.sourceChanged?<p role="alert" className="text-amber-900">Nguồn dữ liệu đã đổi; số liệu được tính lại theo nguồn hiện tại. Kiểm tra và duyệt lại trước khi dùng.</p>:null}
       {dirty?<p role="status" className="rounded border border-amber-400 bg-amber-50 p-3 text-sm text-amber-950">Đã sửa đầu vào. Bấm Xem trước và tính lại để cập nhật kết quả.</p>:null}
-      <section className={view==="entry"?"mode-panel-enter clinical-panel flex min-w-0 flex-col lg:h-[calc(100vh-9.5rem)]":"clinical-panel min-w-0"}><ReuseSavedMenu menu={data.preview} initialPrepared={data} temporary={{id:data.id,expiresAt:data.webExpiresAt}} layout="calculator" view={view} onDraftChange={()=>setDirty(true)} onPrepared={value=>{setPreview(value);setDirty(false);setUnconfirmed(true);setView("analysis");}}/></section>
-      {view==="analysis"&&!dirty&&preview?<LinkedCalculatorResults menu={preview} draft={unconfirmed}/>:null}
+      <CalculatorInputPanel active={view==="entry"}><ReuseSavedMenu menu={data.preview} initialPrepared={data} temporary={{id:data.id,expiresAt:data.webExpiresAt}} layout="calculator" view={view} actionsContainer={actionsContainer} onDraftChange={()=>setDirty(true)} onPrepared={value=>{setPreview(value);setDirty(false);setUnconfirmed(true);setView("analysis");}}/></CalculatorInputPanel>
+      {view==="analysis"&&!dirty&&preview?<LinkedCalculatorResults menu={preview} draft={unconfirmed} actionsRef={setActionsContainer} onEdit={()=>setView("entry")}/>:null}
       <p className="text-sm text-neutral-700">Cần hướng dẫn lưu lâu dài: <Link href="/ket-noi-ai/bat-dau#luu-lau-dai" target="_blank" rel="noopener noreferrer" className="font-semibold underline">xem cách dùng tài khoản</Link>. Excel là lựa chọn tải thêm.</p>
     </>:null}
   </>;

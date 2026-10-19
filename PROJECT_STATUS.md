@@ -1,5 +1,12 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Giao diện Tính khẩu phần dùng chung đã lên VPS — 17/10/2026
+
+- Theo yêu cầu trực tiếp của chủ dự án, app **64a42a9** từ PR#5 (`codex/unify-calculator-interface`, dựa trên a572085) đã build Linux và healthy trên VPS. Bản một ngày nhập tay/từ chat/bản lưu dùng chung bố cục, hồ sơ và thẻ tổng; nhiều ngày giữ giao diện hiện có. Không merge main hoặc nhánh API.
+- Prisma/TypeScript/ESLint (0 lỗi,4 warning cũ ở MealInput), toàn bộ Nutrition Chat runner và ba test khẩu phần đạt; giao diện chung31, kết quả nguồn708, link27, tài khoản46. **HTTPS55** kiểm tra nguồn thật, một/hai ngày,160 trường,11 assets và quyền tài khoản. Browser VPS thật: sửa tuổi45→46/cân nặng60→61/lượng100→150g, duyệt/tính38→57kcal, link mới và tải lại giữ đầu vào.
+- QA mobile390×844 phát hiện nhãn sr-only của bảng nguyên liệu làm tràn trang; vá duy nhất wrapper `relative`, build lại và kiểm trang375/375px ở cả nhập/kết quả. Có ảnh thật desktop/mobile. Không sửa engine/API/model/migration hoặc Food/Dish; canonical5bảng/25migration/cấu hình khớp, timer active/enabled, không OOM/swap.
+- Đã dọn7 snapshot và2 phiên thử biết khóa; một phiên khách của lượt kiểm đầu còn theo TTL30phút/timer hiện có, không tạo tài khoản. PR#5 còn draft/chưa merge. Chưa nghiệm thu hội thoại ChatGPT/Claude thật; lỗi test nhiều ngày cũ600!==null vẫn được ghi riêng. Biên bản: `docs/nutrition-chat/shared-calculator-interface-2026-10-17.md`.
+
 ## Đủ trường dinh dưỡng trên trang Tính khẩu phần — 17/10/2026
 
 - App **e3177c7** healthy trên VPS (sau ff4741d): prepare nạp registry160, tổng/bảng nguồn giữ đủ160 dù chat yêu cầu ít trường; phân tích normalized có156 chất ngoài kcal/P/L/G. Bảng chi tiết manual/linked mặc định đủ160, nút toàn bộ/rút gọn5/chọn từng chất dùng chung; bỏ tầng gập vi chất phụ. Không bịa mốc hoặc số: thiếu—/≥,0 giữ0; vá reducer manual từng hiện≥0 khi hoàn toàn thiếu nguồn.

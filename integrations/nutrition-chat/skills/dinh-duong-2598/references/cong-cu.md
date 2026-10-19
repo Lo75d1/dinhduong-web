@@ -1,6 +1,6 @@
 # Công cụ, kết quả và cách xử lý
 
-Phiên bản hướng dẫn: 1.0.11. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
+Phiên bản hướng dẫn: 1.0.13. Một plugin Dinh dưỡng 2598 chứa 16 công cụ; không phải cài mỗi công cụ thành một plugin.
 
 Gọi get_workflow một lần khi bắt đầu yêu cầu dinh dưỡng. Chưa kết nối tài khoản và chỉ cần tra/tính/Excel: gọi start_guest_session công khai, dùng accessToken trong arguments.sessionToken của công cụ tiếp theo; phiên 30 phút không tạo tài khoản. Mặc định không lưu. Đọc guidance trong TỪNG phản hồi để biết thiếu gì, phải hỏi/chờ duyệt hay được gọi công cụ nào; không coi số liệu hay confirmationToken là người dùng đã đồng ý. Không gọi lại cùng truy vấn khi không có thay đổi. Người dùng có thể chưa quen kỹ thuật: tự mở phiên cần thiết qua công cụ khi đã được yêu cầu tra/tính/Excel, không bắt họ tự lấy token hoặc học tên API. Muốn lưu/dùng lâu dài thì đọc accountUse để hướng dẫn đăng ký/đăng nhập và kết nối tài khoản; giữ đầu vào, prepare lại bằng tài khoản rồi chờ duyệt trước save, không dùng ticket guest. Ưu tiên trả webUrl thật từ prepare/calculate để mở đầu vào và kết quả trên web, sửa/tính lại không cần tài khoản. Bản tạm lưu đầu vào30phút; không phải bản tài khoản. Không export hoặc save chỉ để có link xem. Món luộc/hấp cần làm rõ nước chấm và lượng thực ăn; tra nguồn thật, không tự thêm vào lịch sử24giờ.
 
@@ -20,35 +20,35 @@ Bản nháp đầu tiên và mọi bản sửa phải hiện ngay trong chat t�
 - Khi dùng: Bắt đầu hoặc cần hiểu quy trình/tham số/lỗi.
 - Đầu vào: {}
 - Kết quả: menuSchema là hợp đồng đầu vào; toolGuide giải thích từng công cụ; recipes là các luồng; recovery hướng dẫn xử lý lỗi.
-- Tiếp theo: Chọn luồng theo yêu cầu, không hỏi lại dữ kiện đã có.
+- Tiếp theo: Chọn luồng theo yêu cầu, không hỏi lại dữ kiện đã có. Khi lập thực đơn mới, đọc menuGuidance: ưu tiên RNI, lập khung toàn kỳ, rà món lặp và phối món hợp lý trước prepare.
 
 ## search_foods — Tìm thực phẩm hoặc món VDD
 
 - Khi dùng: Cần nguyên liệu; hoặc món hoàn chỉnh VDD với type=MA, source=VDD.
 - Đầu vào: q là tên cần tìm, không phải cả câu; type/source/fields/limit/offset tùy chọn.
-- Kết quả: items[] là Food có id/name/unit/source/nutrients; total và nextOffset để phân trang.
-- Tiếp theo: Đối chiếu tên/nguồn/trạng thái rồi dùng get_food. items rỗng là không tìm thấy, khác lỗi máy chủ.
+- Kết quả: items[] là Food có id/name/unit/source/nutrients/nutrientBasis; total và nextOffset để phân trang. nutrientBasis.status=per100 ghi amount=100 và unit g/ml; unverified là chưa biết mẫu số, không phải số theo một suất.
+- Tiếp theo: Đối chiếu tên/nguồn/trạng thái rồi dùng get_food. VDD MA chưa xác minh mẫu số: tự tìm công thức RNI tương ứng, trình nguyên liệu/lượng để người dùng duyệt; không chỉ nói sẽ kiểm tra thêm rồi dừng. Không tự đổi món hoặc cộng món nguyên khối cùng nguyên liệu. items rỗng là không tìm thấy, khác lỗi máy chủ.
 
 ## get_food — Đọc thực phẩm theo ID
 
 - Khi dùng: Đã chọn ứng viên thật hoặc cần đủ vi chất/đơn vị/nguồn.
 - Đầu vào: {id} lấy từ search_foods, không dùng tên món thay ID.
-- Kết quả: Một Food trực tiếp, không có items: id/name/unit/nutrients/source. Số trên cơ sở100g hoặc100ml, null là thiếu.
-- Tiếp theo: Dùng foodId trong dòng khẩu phần; không tự đưa cả Food vào customFood.
+- Kết quả: Một Food trực tiếp, không có items: id/name/unit/nutrients/source/nutrientBasis. Chỉ status=per100 mới cho biết số theo100g/100ml; VDD MA có status=unverified, amount=null: nutrients=null; số gốc chỉ nằm ở unverifiedSourceNutrients để đối soát, chưa được nhân theo gram hoặc coi là một suất. null là thiếu.
+- Tiếp theo: Dùng foodId trong dòng khẩu phần; không tự đưa cả Food vào customFood. nutrientBasis chưa xác minh: tìm công thức RNI hoặc công thức có nguồn để người dùng chọn/duyệt; không tự điền100g, khối lượng một bát hay một suất để vượt lỗi.
 
 ## search_dishes — Tìm công thức món RNI
 
-- Khi dùng: Người dùng muốn món ăn/thực đơn; tìm công thức thật trước khi tự đề xuất.
+- Khi dùng: Lập thực đơn mới: ưu tiên tìm công thức RNI có sẵn phù hợp trước khi tự xây dựng món.
 - Đầu vào: {q,limit?}, q là tên món.
 - Kết quả: items[] gồm ứng viên có id/name/source; không phải khẩu phần đã tính.
-- Tiếp theo: Gọi get_dish theo ID đã chọn, không coi dòng đầu là lựa chọn đã xác nhận.
+- Tiếp theo: Đọc get_dish theo ID thật, so nguồn và thành phần. Khi được giao lập thực đơn, chọn phương án có lý do để trình duyệt; không lấy dòng đầu, không coi là người dùng đã chọn. Tìm đủ loại món theo khung toàn kỳ, tránh lặp bữa sáng/đạm/cách nấu theo menuGuidance.
 
 ## get_dish — Đọc công thức và nguyên liệu
 
 - Khi dùng: Cần thành phần của một món RNI đã tìm thấy.
 - Đầu vào: {id} từ search_dishes.
 - Kết quả: Một món trực tiếp với ingredients[] và liên kết food. Đọc số lượng/cơ sở nguồn; mục chưa liên kết cần làm rõ.
-- Tiếp theo: Trình từng nguyên liệu cùng lượng công thức nguồn để người dùng điều chỉnh, không chỉ tên món. Tạo từng dòng với Food ID thật, lượng đã làm rõ và recipeSource.dishId; lượng chưa biết để thiếu. Không coi định lượng nguồn là một suất. Bản nháp sau prepare phải hiện đủ từng nguyên liệu với lượng của bản đang duyệt.
+- Tiếp theo: Trình đủ nguyên liệu với lượng của bản nháp, không mặc định công thức nguồn là một suất. Dùng Food ID thật và recipeSource.dishId. Co giãn cùng tỷ lệ giữ công thức gốc; thay nguyên liệu/cách nấu do AI đề xuất ghi kind=ai, giữ dishId gốc nếu có và nêu phần thay để duyệt. Khi lập thực đơn, rà độ lặp và tính hợp bữa toàn kỳ trước prepare; không ghép đồ ăn chỉ để đủ kcal.
 
 ## search_diet_codes — Tìm mã chế độ ăn
 
@@ -122,6 +122,7 @@ Bản nháp đầu tiên và mọi bản sửa phải hiện ngay trong chat t�
 
 ## Các luồng
 
+- **Lập thực đơn nhiều ngày ít lặp:** Tra nhiều món RNI phù hợp → đọc get_dish → lập khung ngày × bữa toàn kỳ → rà nền bữa sáng, đạm/rau/cách nấu lặp và tính hợp món theo menuGuidance → định lượng từng nguyên liệu/nguồn → prepare → trình đủ review.text → chờ duyệt rồi tính. Không áp quy tắc đổi món vào khẩu phần24giờ đã ăn; biến thể AI có lý do và chấp nhận riêng.
 - **Không cần tài khoản:** get_workflow → start_guest_session → giữ accessToken trong arguments.sessionToken cho mỗi tool tra/tính/xuất → tra kho → prepare → hỏi/chờ người dùng duyệt → calculate hoặc export_workbook saveToAccount=false. Không lưu hoặc đọc dữ liệu cá nhân. Đọc guidance sau từng phản hồi; không tạo phiên mới để vượt hạn mức.
 - **Chỉ tính, không lưu:** Tra kho → prepare_menu → đưa review.text và webUrl để duyệt/sửa trên web → người dùng đồng ý → calculate_menu → trả chatReport.summaryText cùng webUrl30phút. Không tạo bản tài khoản; Excel chỉ tải thêm khi cần.
 - **Chỉ tải Excel, không lưu:** Tra kho → prepare_menu → người dùng đồng ý → export_workbook với saveToAccount=false → trả downloadUrl. Không cần tạo bản tài khoản và không bắt tải file vào cuộc chat.
@@ -130,10 +131,11 @@ Bản nháp đầu tiên và mọi bản sửa phải hiện ngay trong chat t�
 
 ## Khi không hoàn thành
 
+- **Món VDD chưa rõ100g hay một phần:** Đọc nutrientBasis: unverified là kho chưa xác minh mẫu số, không phải lỗi định lượng của người dùng. Tự tra search_dishes/get_dish cho công thức RNI tương ứng và kiểm từng Food thành phần; trình phương án thay để người dùng duyệt. Không có thì làm rõ công thức có nguồn hoặc giữ món chưa tính, không âm thầm bỏ món. Không chỉ hứa kiểm tra rồi dừng; không lấy unit=g làm bằng chứng100g, không tạo customFood từ các số chưa rõ mẫu số để lách chặn.
 - **Hồ sơ chưa đủ tuổi/giới hoặc trường bắt buộc:** Hỏi đúng field còn thiếu, giữ cân nặng/chiều cao/vận động đã biết. Không đoán tuổi, giới hay tình trạng sinh lý. Tính nhu cầu cần hồ sơ đầy đủ theo menuSchema; nếu người dùng chỉ cần thành phần hoặc có mục tiêu xác nhận kèm nguồn, giải thích dùng none hoặc manual và bỏ profile chưa đủ. Không âm thầm đổi chế độ hoặc nhập hồ sơ rỗng.
 - **Token được gửi cả ở header và sessionToken:** Header xác thực hợp lệ quyết định tài khoản/quyền; sessionToken chỉ là tham số vận chuyển cho các công cụ hỗ trợ phiên tạm. Không gửi sessionToken khi đã dùng OAuth. Header sai vẫn bị từ chối, không chuyển lùi sang phiên tạm để bỏ qua xác thực.
 - **410 bản tạm:** Link hết hạn hoặc thiếu quyền mở: lấy đúng link đầy đủ từ chat hoặc yêu cầu tạo link mới từ đầu vào còn giữ. Không thử ID khác và không bắt đăng ký chỉ để sửa bản tạm. Giữ lâu dài thì lưu tài khoản theo yêu cầu.
-- **Không có công cụ trong phiên:** Chỉ giải thích kết nối/cập nhật plugin; vẫn làm rõ bữa ăn. Link/QR/token không tự thêm công cụ cho AI, không giả vờ đã gọi server.
+- **Không có công cụ trong phiên:** Nếu không có MCP, kiểm tra khả năng gửi HTTP thực thi được POST/header/JSON. Có thì dùng REST phiên tạm theo hướng dẫn TXT; không bắt đăng ký để tính. Không có cả hai thì hướng dẫn kết nối/cập nhật plugin và vẫn làm rõ bữa ăn. Link/QR không tự thêm công cụ; không giả vờ đã gọi server.
 - **401/403:** Phiên tạm hết hạn: start_guest_session rồi prepare và duyệt lại. Thao tác tài khoản cần OAuth đúng scope; không tự nâng quyền. Token cá nhân và mật khẩu không gửi vào chat. Token phiên tạm do công cụ giữ nội bộ, không hiện cho người dùng.
 - **400:** Đọc field/message, sửa đúng tham số theo schema một lần; ID phải lấy từ lookup, mode chỉ menu/recall24h, ngày chưa biết là chuỗi rỗng. Không gửi lại nguyên lỗi.
 - **404:** Mã/ID không tồn tại hoặc không thuộc chủ; tìm lại đúng loại ID. Không thử ID chủ khác và không tự tạo mã.

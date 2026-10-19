@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type SetStateAction } from "react";
+import { nutritionFoodBasis } from "@/lib/nutrition-chat/food-basis";
 import { CORE_CALC_FIELDS } from "@/lib/nutrient-fields";
 import AiRationInput, { type AiRationItem } from "./AiRationInput";
 import Modal from "./Modal";
+import CalculatorInputToolbar from "./CalculatorInputToolbar";
 import MealInputWorkspace, { EditableTitle, DishInputFrame } from "./MealInputWorkspace";
 import {
   loadMedicationRows,
@@ -28,11 +30,11 @@ import {
   saveRows,
 } from "./types";
 
-type FoodResult = { id: string; name: string; source: string; imageUrl?: string | null } & Record<string, number | null | string>;
+export type FoodResult = { id: string; name: string; source: string; imageUrl?: string | null } & Record<string, number | null | string>;
 type FoodType = "" | "TS" | "CB" | "MA" | "SP";
 type SearchKind = "food" | "dish" | "medication";
 type DishIngredientResult = { id: string; foodNameRaw: string; quantityG: number | null; food: FoodResult | null };
-type DishResult = { id: string; name: string; totalWeightG: number | null; servingUnit: string | null; categoryRaw: string | null; ageGroup: string | null; diseaseDiet: string | null; imageSourceId?: string | null; ingredients: DishIngredientResult[] };
+export type DishResult = { id: string; name: string; totalWeightG: number | null; servingUnit: string | null; categoryRaw: string | null; ageGroup: string | null; diseaseDiet: string | null; imageSourceId?: string | null; ingredients: DishIngredientResult[] };
 
 const FOOD_TYPE_FILTERS: { value: FoodType; label: string; chip: string }[] = [
   { value: "", label: "Tất cả", chip: "bg-neutral-100 text-neutral-800" },
@@ -44,6 +46,10 @@ const FOOD_TYPE_FILTERS: { value: FoodType; label: string; chip: string }[] = [
 
 function typeMeta(value: unknown) {
   return FOOD_TYPE_FILTERS.find((item) => item.value === value) ?? { label: "Chưa phân loại", chip: "bg-neutral-100 text-neutral-800" };
+}
+
+function unverifiedFoodBasis(food:FoodResult){
+  return nutritionFoodBasis({source:{kind:"catalog",label:food.source,confirmed:true},foodType:typeof food.foodType==="string"?food.foodType:null,unit:food.unit==="ml"?"ml":"g"}).status==="unverified";
 }
 
 const UNASSIGNED_MEAL = "(Chưa phân bữa)";
@@ -79,11 +85,31 @@ function fmtKcal(value: number): string {
   return `${Math.round(value)} kcal`;
 }
 
-export default function MealInput({ onRowsChange, onModeChange, onMedsChange, profileSlot, analysisSlot, savedMenuSlot }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; onMedsChange?: (meds: MedicationRow[]) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode; savedMenuSlot?: ReactNode }) {
-  const [rows, setRows] = useState<Row[]>([]);
-  const [mode, setMode] = useState<RationMode>("recall24h");
+export type ControlledMealInput = {
+  rows: Row[]; mode: RationMode; disabled?: boolean;
+  showActions?: boolean;
+  selection?: { meal: string; dish: string } | null;
+  onSelectionChange?: (value: { meal: string; dish: string } | null) => void;
+  onChange: (rows: Row[]) => void; onModeChange: (mode: RationMode) => void;
+  onPickFood: (food: FoodResult, target: {meal:string;dish:string}) => void;
+  onPickDish: (dish: DishResult, meal: string) => void;
+  renderDish: (meal: string, dish: DishNode, actions: {rename:(name:string)=>void;remove:()=>void;duplicate:()=>void}) => ReactNode;
+  tree?: import("./MealInputWorkspace").InputMeal[];
+};
+export default function MealInput({ onRowsChange, onModeChange, onMedsChange, profileSlot, analysisSlot, savedMenuSlot, controlled, actionsOnly = false }: { onRowsChange?: (rows: Row[]) => void; onModeChange?: (mode: RationMode) => void; onMedsChange?: (meds: MedicationRow[]) => void; profileSlot?: ReactNode; analysisSlot?: ReactNode; savedMenuSlot?: ReactNode; controlled?: ControlledMealInput; actionsOnly?: boolean }) {
+  const [storedRows, setStoredRows] = useState<Row[]>([]);
+  const [storedMode, setStoredMode] = useState<RationMode>("recall24h");
+  const isControlled = controlled !== undefined;
+  const rows = controlled?.rows ?? storedRows, mode = controlled?.mode ?? storedMode;
+  const setRows = (update: SetStateAction<Row[]>) => { if(controlled){if(!controlled.disabled)controlled.onChange(typeof update === "function" ? update(rows) : update);} else setStoredRows(update); };
+  const setMode = (value: RationMode) => { if(controlled)controlled.onModeChange(value); else setStoredMode(value); };
   const [hydrated, setHydrated] = useState(false);
-  const [work, setWork] = useState<{ meal: string; dish: string } | null>(null);
+  const [localWork, setLocalWork] = useState<{ meal: string; dish: string } | null>(null);
+  const work = controlled?.selection ?? localWork;
+  function setWork(update: SetStateAction<{ meal: string; dish: string } | null>) {
+    const next = typeof update === "function" ? update(work) : update;
+    setLocalWork(next); controlled?.onSelectionChange?.(next);
+  }
   const [q, setQ] = useState("");
   const [searchKind, setSearchKind] = useState<SearchKind>("food");
   const [foodType, setFoodType] = useState<FoodType>("");
@@ -98,8 +124,13 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   const [results, setResults] = useState<FoodResult[]>([]);
   const [dishResults, setDishResults] = useState<DishResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [searchNotice, setSearchNotice] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [manualEntryKind, setManualEntryKind] = useState<"food" | "dish">("food");
+  const [manualDishName, setManualDishName] = useState("");
+  const [manualDishMeal, setManualDishMeal] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualEnergy, setManualEnergy] = useState("");
   const [manualProtein, setManualProtein] = useState("");
@@ -125,11 +156,12 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   useEffect(() => {
     // localStorage chỉ đọc sau hydration để HTML server/client không lệch nhau.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setRows(loadRows());
-    setMode(loadRationMode());
+    if (isControlled) { setHydrated(true); return; }
+    setStoredRows(loadRows());
+    setStoredMode(loadRationMode());
     setMedRows(loadMedicationRows());
     setHydrated(true);
-  }, []);
+  }, [isControlled]);
 
   useEffect(() => {
     if (!shouldScrollToMealPlan) return;
@@ -141,55 +173,60 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   }, [shouldScrollToMealPlan, rows.length]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     fetch("/api/dishes/filter-options")
       .then((response) => response.json())
       .then((data) => setDishFilterOptions({ categories: data.categories ?? [], ageGroups: data.ageGroups ?? [], diseaseGroups: data.diseaseGroups ?? [] }))
       .catch(() => setDishFilterOptions({ categories: [], ageGroups: [], diseaseGroups: [] }));
-  }, []);
+  }, [actionsOnly]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     fetch("/api/foods/filter-options")
       .then((response) => response.json())
       .then((data) => setFilterOptions({ sources: data.sources ?? [], groups: data.groups ?? [] }))
       .catch(() => setFilterOptions({ sources: [], groups: [] }));
-  }, []);
+  }, [actionsOnly]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     fetch("/api/medications")
       .then((response) => response.json())
       .then((data) => setDbMedRefs(data.items ?? []))
       .catch(() => setDbMedRefs([]));
-  }, []);
+  }, [actionsOnly]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || isControlled) return;
     saveRows(rows);
     onRowsChange?.(rows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, hydrated]);
+  }, [rows, hydrated, isControlled]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || isControlled) return;
     saveRationMode(mode);
     onModeChange?.(mode);
-  }, [mode, hydrated, onModeChange]);
+  }, [mode, hydrated, onModeChange, isControlled]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || isControlled) return;
     saveMedicationRows(medRows);
     onMedsChange?.(medRows);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [medRows, hydrated]);
+  }, [medRows, hydrated, isControlled]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (q.trim().length < 1 || searchKind === "medication") {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       if (searchKind === "medication") setSearching(false);
       return;
     }
+    const controller=new AbortController();
     debounceRef.current = setTimeout(async () => {
-      setSearching(true);
+      setSearching(true);setSearchError("");
       try {
         const params = new URLSearchParams({ q });
         if (searchKind === "food" && foodType) params.set("type", foodType);
@@ -198,22 +235,28 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
         if (searchKind === "dish" && dishCategory) params.set("category", dishCategory);
         if (searchKind === "dish" && dishAge) params.set("age", dishAge);
         if (searchKind === "dish" && dishDisease) params.set("disease", dishDisease);
-        const res = await fetch(searchKind === "food" ? `/api/foods/search?${params}` : `/api/dishes/search?${params}`);
+        const res = await fetch(searchKind === "food" ? `/api/foods/search?${params}` : `/api/dishes/search?${params}`,{signal:controller.signal});
+        if(!res.ok)throw new Error("Chưa tra được kho thực phẩm/món ăn. Thử lại từ khóa hoặc bộ lọc.");
         const data = await res.json();
+        if(!Array.isArray(data.items))throw new Error("Phản hồi tìm kiếm chưa hợp lệ.");
+        if(controller.signal.aborted)return;
         if (searchKind === "food") setResults(data.items ?? []);
         else setDishResults(data.items ?? []);
-      } finally {
-        setSearching(false);
+      } catch(cause){if(!controller.signal.aborted){setResults([]);setDishResults([]);setSearchError(cause instanceof Error?cause.message:"Chưa tra được dữ liệu.");}} finally {
+        if(!controller.signal.aborted)setSearching(false);
       }
     }, 250);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      controller.abort();
     };
-  }, [q, searchKind, foodType, sourceFilter, groupFilter, dishCategory, dishAge, dishDisease]);
+  }, [q, searchKind, foodType, sourceFilter, groupFilter, dishCategory, dishAge, dishDisease, actionsOnly]);
 
   const tree = buildTree(rows);
+  const activeWork = work && tree.some(meal=>meal.meal===work.meal&&meal.dishes.some(dish=>dish.dish===work.dish)) ? work : tree[0]?.dishes[0] ? {meal:tree[0].meal,dish:tree[0].dishes[0].dish} : null;
 
   function changeMode(nextMode: RationMode) {
+    if(controlled){controlled.onModeChange(nextMode);return;}
     if (nextMode === mode) return;
     setRows((previous) =>
       previous.map((row) => {
@@ -253,13 +296,16 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
     setWork({ meal, dish: name });
   }
 
-  function addQuickDish() {
-    const meal = work?.meal ?? tree[0]?.meal ?? `Bữa ${tree.length + 1}`;
-    const suggestedName = "Món / đồ ăn nhanh";
-    const dish = window.prompt("Tên món cần thêm", suggestedName)?.trim();
+  function addQuickDish(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const meal = manualDishMeal || activeWork?.meal || tree[0]?.meal || `Bữa ${tree.length + 1}`;
+    const dish = manualDishName.trim();
     if (!dish) return;
     setRows((previous) => [...previous, makeRow(meal, dish, null, mode)]);
     setWork({ meal, dish });
+    setManualDishName("");
+    setShowManualForm(false);
+    setShouldScrollToMealPlan(true);
   }
 
   // Di chuyển bữa lên/xuống: sắp lại thứ tự các nhóm row theo bữa (buildTree giữ
@@ -360,7 +406,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
 
   function updateSearch(value: string) {
     setQ(value);
-    if (!value.trim()) { setResults([]); setDishResults([]); }
+    setResults([]); setDishResults([]); setSearchError("");
   }
 
   function changeSearchKind(next: SearchKind) {
@@ -389,13 +435,16 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   }
 
   function pickFood(food: FoodResult) {
-    let meal = work?.meal;
-    let dish = work?.dish;
-    if (work === null) {
+    if(unverifiedFoodBasis(food)){setSearchNotice("Món VDD này chưa rõ số liệu theo100g hay một phần. Chọn công thức có nguyên liệu ở mục Món ăn; khẩu phần đang nhập được giữ nguyên.");setSearchKind("dish");setDishTargetMeal(activeWork?.meal??tree[0]?.meal??"");setQ(food.name);setResults([]);return;}
+    setSearchNotice("");
+    let meal = activeWork?.meal;
+    let dish = activeWork?.dish;
+    if (activeWork === null) {
       meal = UNASSIGNED_MEAL;
       dish = UNASSIGNED_DISH;
       setWork({ meal, dish });
     }
+    if(controlled){controlled.onPickFood(food,{meal:meal!,dish:dish!});setQ("");setResults([]);return;}
     const nutrients: Record<string, number | null> = {};
     for (const field of CORE_CALC_FIELDS) {
       const value = food[field.key];
@@ -439,6 +488,10 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
     const meal = (dishTargetMeal && tree.some((item) => item.meal === dishTargetMeal))
       ? dishTargetMeal
       : (work?.meal ?? tree[0]?.meal ?? `Bữa ${tree.length + 1}`);
+    if(!dish.ingredients.length||dish.ingredients.some(item=>!item.food||item.quantityG===null)){setSearchError("Công thức còn nguyên liệu chưa liên kết hoặc thiếu lượng. Không bỏ qua nguyên liệu; chọn công thức có đủ dữ liệu.");return;}
+    if(dish.ingredients.some(item=>item.food&&unverifiedFoodBasis(item.food))){setSearchError("Công thức có nguyên liệu VDD nguyên món chưa xác minh cơ sở dinh dưỡng. Chọn công thức khác hoặc thay bằng nguyên liệu có nguồn rõ; chưa thêm công thức này.");return;}
+    setSearchNotice("");
+    if(controlled){controlled.onPickDish(dish,meal);setWork({meal,dish:dish.name});setQ("");setDishResults([]);return;}
     const eligible = dish.ingredients.filter((ingredient) => ingredient.food);
     if (!eligible.length) { window.alert("Món này chưa liên kết được nguyên liệu nào với dữ liệu thực phẩm để tính dinh dưỡng."); return; }
     const dishName = dish.name;
@@ -472,10 +525,10 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
       name,
       source: "Tự nhập — chỉ trong khẩu phần này",
       foodType: manualType,
-      energyKcal: toInputNumber(manualEnergy),
-      proteinG: toInputNumber(manualProtein),
-      lipidG: toInputNumber(manualLipid),
-      glucidG: toInputNumber(manualGlucid),
+      energyKcal: manualEnergy.trim() ? toInputNumber(manualEnergy) : null,
+      proteinG: manualProtein.trim() ? toInputNumber(manualProtein) : null,
+      lipidG: manualLipid.trim() ? toInputNumber(manualLipid) : null,
+      glucidG: manualGlucid.trim() ? toInputNumber(manualGlucid) : null,
     };
     // Luôn thêm bản tạm vào phiếu trước, không chờ quy trình kiểm duyệt.
     pickFood(proposal);
@@ -562,36 +615,50 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
   }
 
   const [aiOpen, setAiOpen] = useState(false);
-  const selMeal = work?.meal ?? tree[0]?.meal ?? "";
+  const selMeal = activeWork?.meal ?? tree[0]?.meal ?? "";
   const selMealIndex = tree.findIndex((meal) => meal.meal === selMeal);
   const selMealNode = selMealIndex >= 0 ? tree[selMealIndex] : undefined;
-  const selDish = work?.dish ?? selMealNode?.dishes[0]?.dish ?? "";
+  const selDish = activeWork?.dish ?? selMealNode?.dishes[0]?.dish ?? "";
   const selDishNode = selMealNode?.dishes.find((dish) => dish.dish === selDish);
 
   return (
-    <section className="flex flex-col gap-2 pb-2 lg:min-h-0 lg:flex-1" aria-label="Nhập khẩu phần" aria-busy={!hydrated}>
-      <div className="flex flex-wrap items-center gap-2">
-        <ModeSelector mode={mode} disabled={!hydrated} onChange={changeMode} />
+    <section className={actionsOnly ? "min-w-0" : "flex flex-col gap-2 pb-2 lg:min-h-0 lg:flex-1"} aria-label={actionsOnly ? "Thao tác nhập thực đơn" : "Nhập khẩu phần"} aria-busy={!hydrated}>
+      <fieldset disabled={controlled?.disabled} className="contents">
+      {(!controlled||controlled.showActions||actionsOnly)&&<CalculatorInputToolbar mode={mode} disabled={!hydrated||!!controlled?.disabled} onModeChange={changeMode} hideMode={actionsOnly||!!controlled}>
         {profileSlot}
         {savedMenuSlot}
-        <button type="button" onClick={addQuickDish} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-800 hover:bg-neutral-50">＋ Món / Đồ ăn nhanh</button>
-        <button type="button" onClick={() => setShowManualForm((current) => !current)} className="rounded-md border border-emerald-700 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-50">＋ Thực phẩm mới</button>
-      </div>
+        <button type="button" aria-haspopup="dialog" aria-expanded={showManualForm} onClick={() => { setManualDishMeal(activeWork?.meal ?? tree[0]?.meal ?? ""); setShowManualForm(true); }} className="w-full rounded-md border border-emerald-700 px-3 py-2 text-left text-sm font-medium whitespace-normal text-emerald-700 hover:bg-emerald-50 sm:w-auto">＋ Thêm thực phẩm và món ăn ngoài hệ thống</button>
+        {(actionsOnly||controlled?.showActions)&&<button type="button" onClick={() => setAiOpen(true)} className="rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-sm font-semibold text-[#694d00]">✨ AI hỗ trợ nhập liệu</button>}
+      </CalculatorInputToolbar>}
       <Modal open={aiOpen} onClose={() => setAiOpen(false)} title="AI hỗ trợ nhập liệu"><AiRationInput embedded onConfirm={(items) => { addAiItems(items); setAiOpen(false); }} /></Modal>
-      {showManualForm && <form onSubmit={addManualFood} className="rounded-md border-2 border-[#5c7d74] bg-[#edf8f1] p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold text-neutral-900">Thực phẩm mới: dùng ngay &amp; gửi kiểm duyệt</h3><p className="text-sm text-neutral-900">Bấm thêm là dòng tạm xuất hiện ngay trong khẩu phần. Gửi kiểm duyệt là một việc riêng, không làm chậm công việc hiện tại.</p></div><button type="button" onClick={() => setShowManualForm(false)} className="px-2 text-sm text-neutral-800">✕</button></div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
+      <Modal open={showManualForm} onClose={() => setShowManualForm(false)} title="Thêm thực phẩm và món ăn ngoài hệ thống">
+        <p className="text-sm text-neutral-800">Dùng khi thực phẩm hoặc món ăn chưa có trong dữ liệu hệ thống.</p>
+        <div role="group" aria-label="Cách thêm ngoài hệ thống" className="my-3 grid gap-2 sm:grid-cols-2">
+          {([{ value: "food", label: "Nhập số liệu dinh dưỡng" }, { value: "dish", label: "Tạo món từ nguyên liệu" }] as const).map((item) => <button key={item.value} type="button" aria-pressed={manualEntryKind === item.value} onClick={() => setManualEntryKind(item.value)} className={`min-h-11 rounded-md border px-3 py-2 text-sm font-semibold ${manualEntryKind === item.value ? "border-[#123c36] bg-[#123c36] text-white" : "border-neutral-400 bg-white text-neutral-900 hover:bg-neutral-50"}`}>{item.label}</button>)}
+        </div>
+        {manualEntryKind === "dish" ? <form onSubmit={addQuickDish} className="space-y-3">
+          <p className="text-sm text-neutral-800">Đặt tên món, sau đó thêm từng nguyên liệu và khối lượng vào món vừa tạo để tính dinh dưỡng.</p>
+          <label className="block text-sm font-semibold text-neutral-950">Tên món ăn<input required value={manualDishName} onChange={(event) => setManualDishName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label>
+          <label className="block text-sm font-semibold text-neutral-950">Thêm vào bữa<select aria-label="Thêm vào bữa" value={manualDishMeal} onChange={(event) => setManualDishMeal(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5">{tree.length === 0 ? <option value="">Tạo bữa mới</option> : tree.map((meal) => <option key={meal.meal} value={meal.meal}>{meal.meal}</option>)}</select></label>
+          <button className="rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Tạo món và thêm nguyên liệu</button>
+        </form> : <form onSubmit={addManualFood}>
+        <p className="text-sm text-neutral-800">Nhập thực phẩm hoặc món ăn có số liệu dinh dưỡng trên 100 g. Bấm thêm để dùng ngay trong khẩu phần; có thể gửi đề xuất kèm nguồn để kiểm duyệt.</p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950">Tên thực phẩm / món ăn<input required value={manualName} onChange={(event) => setManualName(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Loại thực phẩm<select value={manualType} onChange={(event) => setManualType(event.target.value as FoodType)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5"><option value="TS">Tươi sống</option><option value="CB">Chế biến</option><option value="MA">Món ăn</option></select></label><label className="text-sm font-semibold text-neutral-950">Năng lượng /100g (kcal)<input type="number" min={0} value={manualEnergy} onChange={(event) => setManualEnergy(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đạm /100g (g)<input type="number" min={0} step="any" value={manualProtein} onChange={(event) => setManualProtein(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Béo /100g (g)<input type="number" min={0} step="any" value={manualLipid} onChange={(event) => setManualLipid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950">Đường bột /100g (g)<input type="number" min={0} step="any" value={manualGlucid} onChange={(event) => setManualGlucid(event.target.value)} className="mt-1 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>
         <label className="mt-4 flex items-start gap-2 rounded border border-[#a77b10] bg-[#fff8df] p-3 text-sm font-semibold text-neutral-950"><input type="checkbox" checked={submitManualForReview} onChange={(event) => setSubmitManualForReview(event.target.checked)} className="mt-1" />Đồng thời gửi bản nháp để quản trị viên kiểm duyệt dùng chung</label>
         {submitManualForReview && <div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Mô tả / căn cứ đề xuất<textarea value={manualDescription} onChange={(event) => setManualDescription(event.target.value)} placeholder="Ví dụ: sản phẩm nào, phần ăn, thông tin nhãn..." className="mt-1 min-h-20 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label><label className="text-sm font-semibold text-neutral-950 sm:col-span-2">Nguồn tham khảo<textarea value={manualSourceNote} onChange={(event) => setManualSourceNote(event.target.value)} placeholder="Nhãn sản phẩm, tài liệu hoặc đường dẫn để đối chiếu..." className="mt-1 min-h-16 w-full rounded border border-neutral-500 bg-white px-2 py-1.5" /></label></div>}
         <button className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white hover:bg-[#0d2e29]">Thêm ngay vào khẩu phần</button>{manualMessage && <p className="mt-2 text-sm font-semibold text-neutral-950">{manualMessage}</p>}
       </form>}
+      </Modal>
 
-      <MealInputWorkspace meals={tree.map(meal => ({ meal: meal.meal, kcal: fmtKcal(mealKcal(meal)), dishes: meal.dishes.map(dish => ({ dish: dish.dish, kcal: fmtKcal(dishKcal(dish)) })) }))} selection={{meal:selMeal,dish:selDish}} disabled={!hydrated} onSelect={setWork} onRenameMeal={renameMeal} onMoveMeal={moveMeal} onAddDish={addDish} onDeleteMeal={deleteMeal} onAddMeal={addMeal} listRef={mealPlanRef} mealExtra={meal => <MealMedications meds={medRows.filter(med => med.meal === meal)} onUpdate={updateMedication} onDelete={deleteMedication}/>} mealActions={meal => <button type="button" onClick={() => activateMedicationSearch(meal)} title="Thuốc / TPBS" className="shrink-0 rounded px-1 text-sm hover:bg-white/70">💊</button>}>
+      {!actionsOnly&&<>
+      {searchNotice?<p role="status" className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-950">{searchNotice}</p>:null}
+      {searchError?<p role="alert" className="rounded border border-amber-300 bg-amber-50 p-2 text-sm text-amber-950">{searchError}</p>:null}
+      <MealInputWorkspace meals={controlled?.tree ?? tree.map(meal => ({ meal: meal.meal, kcal: fmtKcal(mealKcal(meal)), dishes: meal.dishes.map(dish => ({ dish: dish.dish, kcal: fmtKcal(dishKcal(dish)) })) }))} selection={{meal:selMeal,dish:selDish}} disabled={!hydrated} onSelect={setWork} onRenameMeal={renameMeal} onMoveMeal={moveMeal} onAddDish={addDish} onDeleteMeal={deleteMeal} onAddMeal={addMeal} listRef={mealPlanRef} mealExtra={controlled?undefined:meal => <MealMedications meds={medRows.filter(med => med.meal === meal)} onUpdate={updateMedication} onDelete={deleteMedication}/>} mealActions={controlled?undefined:meal => <button type="button" onClick={() => activateMedicationSearch(meal)} title="Thuốc / TPBS" className="shrink-0 rounded px-1 text-sm hover:bg-white/70">💊</button>}>
           {selMealNode && selDishNode ? (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-neutral-600">🍱 <b className="text-[#0c5f4d]">{selMealNode.meal}</b> › 🍽️ <b className="text-[#123c36]">{selDishNode.dish}</b></p>
               <>
-                <DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDuplicate={() => duplicateDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />
+                {controlled?controlled.renderDish(selMealNode.meal,selDishNode,{rename:name=>renameDish(selMealNode.meal,selDishNode.dish,name),remove:()=>deleteDish(selMealNode.meal,selDishNode.dish),duplicate:()=>duplicateDish(selMealNode.meal,selDishNode.dish)}):<DishBlock key={selDishNode.dish} node={selDishNode} mode={mode} isWork={true} onSelect={() => setWork({ meal: selMealNode.meal, dish: selDishNode.dish })} onRename={(name) => renameDish(selMealNode.meal, selDishNode.dish, name)} onDelete={() => deleteDish(selMealNode.meal, selDishNode.dish)} onDuplicate={() => duplicateDish(selMealNode.meal, selDishNode.dish)} onDeleteFoodRow={deleteFoodRow} onUpdateQuantity={updateQuantity} onUpdateNote={updateNote} />}
               </>
               {medRows.some((med) => med.meal === selMealNode.meal) && <p className="text-xs text-neutral-500">💊 Thuốc / TPBS của bữa <b>{selMealNode.meal}</b> hiển thị ở cây bên trái (mức bữa).</p>}
             </div>
@@ -610,7 +677,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
       <div className="mt-1 shrink-0">
         <div className="relative w-full rounded-xl border border-neutral-300 bg-white px-3 py-2 shadow-md">
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
-            <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : searchKind === "dish" ? (dishTargetMeal ? <>Đang thêm món vào bữa: <b className="text-emerald-700">{dishTargetMeal}</b></> : "Món ăn sẽ được thêm vào một bữa mới.") : (work ? <>Đang thêm vào: <b className="text-emerald-700">{work.meal} › {work.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa.")}</span>
+            <span>{searchKind === "medication" ? <>Đang đặt thuốc / TPBS tại: <b className="text-violet-800">{medTargetMeal || "chưa chọn bữa"}</b></> : searchKind === "dish" ? (dishTargetMeal ? <>Đang thêm món vào bữa: <b className="text-emerald-700">{dishTargetMeal}</b></> : "Món ăn sẽ được thêm vào một bữa mới.") : (activeWork ? <>Đang thêm vào: <b className="text-emerald-700">{activeWork.meal} › {activeWork.dish}</b></> : "Chưa chọn món — thực phẩm sẽ vào mục Chưa phân bữa.")}</span>
             <div className="flex items-center gap-2">
               <button type="button" onClick={addMeal} title="Thêm bữa ăn" className="rounded-md bg-emerald-700 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-800 lg:hidden">+ Bữa</button>
               {(foodType || sourceFilter || groupFilter || dishCategory || dishAge || dishDisease || q) && <button type="button" onClick={clearSearchFilters} className="font-semibold text-[#123c36] underline underline-offset-2">Xóa lọc</button>}
@@ -702,7 +769,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
                       {food.imageUrl ? <img src={food.imageUrl} alt="" className="h-8 w-8 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-8 w-8 shrink-0" />}
                       <span className="flex-1">{food.name}</span>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${meta.chip}`}>{meta.label}</span>
-                      <span className="shrink-0 text-xs text-neutral-400">{food.source} · {typeof food.energyKcal === "number" ? `${food.energyKcal} kcal/100g` : "—"}</span>
+                      <span className="shrink-0 text-xs text-neutral-400">{food.source} · {unverifiedFoodBasis(food)?"Chưa rõ cơ sở dinh dưỡng":typeof food.energyKcal === "number" ? `${food.energyKcal} kcal/100${food.unit==="ml"?"ml":"g"}` : "—"}</span>
                     </button>
                     );
                   })}
@@ -710,7 +777,7 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
               )}
               {searchKind === "dish" && q.trim().length >= 1 && <div className="absolute inset-x-0 bottom-full z-10 mb-1 max-h-80 overflow-auto rounded-md border border-neutral-300 bg-white shadow-lg">
                 {searching && <div className="px-3 py-2 text-sm text-neutral-700">Đang tìm...</div>}
-                {!searching && dishResults.length === 0 && <div className="px-3 py-2 text-sm text-neutral-700">Không có món phù hợp.</div>}
+                {!searching && dishResults.length === 0 && <div className="px-3 py-2 text-sm text-neutral-700">{searchError||"Không có món phù hợp."}</div>}
                 {dishResults.map((dish) => <button key={dish.id} type="button" onClick={() => pickDish(dish)} className="flex w-full items-start gap-2 border-b border-neutral-200 px-3 py-3 text-left last:border-0 hover:bg-emerald-50">{dish.imageSourceId ? <img src={`/api/dish-images/rni/${dish.imageSourceId}`} alt="" className="h-10 w-10 shrink-0 rounded object-cover" loading="lazy" /> : <span className="h-10 w-10 shrink-0" />}<div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold text-neutral-950">{dish.name}</span><span className="text-xs text-neutral-800">{dish.ingredients.length} nguyên liệu {dish.totalWeightG ? `· ${dish.totalWeightG}g` : ""}</span></div><div className="mt-1 flex flex-wrap gap-1 text-xs text-neutral-800">{dish.categoryRaw && <span className="rounded bg-neutral-100 px-1.5 py-0.5">{dish.categoryRaw}</span>}{dish.ageGroup && <span className="rounded bg-sky-50 px-1.5 py-0.5">{dish.ageGroup}</span>}{dish.diseaseDiet && <span className="rounded bg-rose-50 px-1.5 py-0.5">{dish.diseaseDiet}</span>}</div><p className="mt-1 text-xs text-neutral-800">Bấm để thêm các nguyên liệu đã liên kết dữ liệu vào một món mới trong bữa đang chọn.</p></div></button>)}
               </div>}
               {searchKind === "medication" && q.trim().length >= 1 && <div className="absolute inset-x-0 bottom-full z-10 mb-1 max-h-80 overflow-auto rounded-md border border-violet-300 bg-white shadow-lg">
@@ -723,31 +790,19 @@ export default function MealInput({ onRowsChange, onModeChange, onMedsChange, pr
                 {filteredDbMedRefs.length === 20 && <p className="border-t border-violet-100 px-3 py-2 text-xs text-violet-900">20 kết quả đầu — gõ thêm để thu hẹp.</p>}
               </div>}
             </div>
-            <button type="button" onClick={() => activateMedicationSearch()} title="Thêm thuốc / TPBS theo bữa (mở bảng riêng)" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border-2 border-violet-500 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-100">💊 Thuốc</button>
-            <button type="button" onClick={() => setAiOpen(true)} title="AI: dán mô tả khẩu phần để tự tách bữa / món / thực phẩm" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-xs font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI</button>
+            {!controlled&&<button type="button" onClick={() => activateMedicationSearch()} title="Thêm thuốc / TPBS theo bữa (mở bảng riêng)" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border-2 border-violet-500 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-100">💊 Thuốc</button>}
+            {!controlled&&<button type="button" onClick={() => setAiOpen(true)} title="AI: dán mô tả khẩu phần để tự tách bữa / món / thực phẩm" className="inline-flex shrink-0 items-center gap-1.5 rounded-md border-2 border-[#73540d] bg-[#fffdf6] px-3 py-2 text-xs font-semibold text-[#694d00] hover:bg-[#fff6db]">✨ AI</button>}
             {analysisSlot}
           </div>
         </div>
       </div>
+      </>}
+      </fieldset>
       <MedicationModal open={medModalOpen} onClose={() => setMedModalOpen(false)} meals={tree.map((m) => m.meal)} initialMeal={medTargetMeal} medRefs={dbMedRefs} placed={medRows} onPlace={placeMedication} onDelete={deleteMedication} />
     </section>
   );
 }
 
-function ModeSelector({ mode, disabled, onChange }: { mode: RationMode; disabled: boolean; onChange: (mode: RationMode) => void }) {
-  const isRecall = mode === "recall24h";
-  // Gọn thành segmented control 1 hàng để chừa tối đa chiều dọc cho 2 khung cây/chi tiết.
-  return (
-    <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-neutral-300 bg-white p-0.5" role="group" aria-label="Chế độ nhập khẩu phần">
-      <button disabled={disabled} onClick={() => onChange("recall24h")} aria-pressed={isRecall} title="Khẩu phần 24 giờ: nhập lượng đã ăn + hệ số đổi về sống sạch" className={`rounded px-2.5 py-1.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-60 ${isRecall ? "bg-emerald-700 text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>
-        Khẩu phần 24h
-      </button>
-      <button disabled={disabled} onClick={() => onChange("menu")} aria-pressed={!isRecall} title="Lập thực đơn: nhập trực tiếp lượng sống sạch" className={`rounded px-2.5 py-1.5 text-xs font-semibold disabled:cursor-wait disabled:opacity-60 ${!isRecall ? "bg-emerald-700 text-white" : "text-neutral-700 hover:bg-neutral-100"}`}>
-        Lập thực đơn
-      </button>
-    </div>
-  );
-}
 
 function MealBlock({ node, canMoveUp, canMoveDown, onMoveUp, onMoveDown, mode, work, medications, onSelectDish, onRenameMeal, onDeleteMeal, onAddDish, onAddMedication, onRenameDish, onDeleteDish, onDuplicateDish, onDeleteFoodRow, onUpdateQuantity, onUpdateNote, onUpdateMedication, onDeleteMedication }: {
   node: MealNode; canMoveUp: boolean; canMoveDown: boolean; onMoveUp: () => void; onMoveDown: () => void; mode: RationMode; work: { meal: string; dish: string } | null; medications: MedicationRow[]; onSelectDish: (dish: string) => void; onRenameMeal: (name: string) => void; onDeleteMeal: () => void; onAddDish: () => void; onAddMedication: () => void; onRenameDish: (oldDish: string, name: string) => void; onDeleteDish: (dish: string) => void; onDuplicateDish: (dish: string) => void; onDeleteFoodRow: (uid: string) => void; onUpdateQuantity: (uid: string, field: "inputGrams" | "conversionFactor", value: number) => void; onUpdateNote: (uid: string, note: string) => void; onUpdateMedication: (uid: string, patch: Partial<Pick<MedicationRow, "dose" | "doseUnit" | "note">>) => void; onDeleteMedication: (uid: string) => void;

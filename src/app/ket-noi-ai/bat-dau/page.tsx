@@ -21,7 +21,7 @@ export default function StartNutritionChatPage() {
     <header className="border-b border-[#b1c8bd] pb-6">
       <p className="text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · BẮT ĐẦU HỘI THOẠI</p>
       <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">Quét QR hoặc dán link vào chat.</h1>
-      <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-700">Bạn nói mục đích và bữa ăn; chat hỏi phần còn thiếu, đưa bản để bạn duyệt rồi trả báo cáo cùng link để mở, sửa và tính lại trên web. Khi đã bật kết nối Dinh dưỡng 2598, chat tự mở phiên tạm, bạn không cần lấy mã truy cập.</p>
+      <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-700">Bạn nói mục đích, muốn làm một ngày hoặc nhiều ngày và các bữa ăn; chat hỏi phần còn thiếu, đưa bản để bạn duyệt rồi trả báo cáo cùng link mở trang Tính khẩu phần đã nạp sẵn dữ liệu để xem, sửa và tính lại. Khi chat có kết nối Dinh dưỡng 2598 hoặc công cụ gửi HTTP, chat tự mở phiên tạm, bạn không cần lấy mã truy cập.</p>
       <p className="mt-3 font-semibold">Chỉ tra, tính hoặc lấy Excel: không cần tài khoản Dinh dưỡng 2598. <a href="#luu-lau-dai" className="underline underline-offset-4">Muốn lưu và dùng lại lâu dài?</a></p>
     </header>
     <div className="grid items-start gap-6 md:grid-cols-[1fr_220px]">
@@ -41,7 +41,7 @@ export default function StartNutritionChatPage() {
     </section>
     <section id="lan-dau" aria-labelledby="first-use-title" className="scroll-mt-6 rounded-xl border border-[#9bb6ab] bg-white p-5 sm:p-7">
       <h2 id="first-use-title" className="text-2xl font-semibold">Lần đầu dùng: bật kết nối một lần</h2>
-      <p className="mt-3 text-neutral-700">QR và link giúp chat đọc hướng dẫn. Chat cần có kết nối Dinh dưỡng 2598 để gọi dữ liệu và tính trên hệ thống. Khi đã cài, những lần sau bạn chỉ mở chat có bật kết nối và gửi lời nhắn.</p>
+      <p className="mt-3 text-neutral-700">QR và link giúp chat đọc hướng dẫn. Chat cần công cụ gọi hệ thống: kết nối Dinh dưỡng 2598 hoặc khả năng gửi HTTP trực tiếp theo hướng dẫn TXT. Chỉ đọc được link thì chưa tính được. Khi đã cài, những lần sau bạn chỉ mở chat có bật kết nối và gửi lời nhắn.</p>
       <ol className="mt-4 list-decimal space-y-3 pl-5 text-neutral-800">
         <li>Trong ChatGPT, mở <b>Plugins</b>, bấm <b>+</b> → <b>Add custom MCP server</b>, đặt tên <b>Dinh dưỡng 2598</b> và dán địa chỉ bên dưới.</li>
         <li>Ở Authentication, chọn <b>OAuth or no authentication</b> nếu có để dùng được cả phiên tạm lẫn tài khoản. Chỉ tra/tính/Excel có thể chọn <b>No authentication</b>. Tạo plugin, kiểm có <b>{NUTRITION_TOOLS.length} công cụ</b> rồi bấm cài đặt.</li>
@@ -50,7 +50,7 @@ export default function StartNutritionChatPage() {
       <p className="mt-4 break-all rounded border border-[#b1c8bd] bg-[#f7faf8] p-3 text-base"><span className="block font-semibold">Địa chỉ dán vào Server URL</span>{links.mcp}</p>
       <p className="mt-3 text-neutral-700">Dùng Claude: mở phần Connectors, thêm Dinh dưỡng 2598 bằng cùng địa chỉ và bật trong chat; lựa chọn kết nối phụ thuộc tài khoản hoặc tổ chức.</p>
       <div className="mt-4 flex flex-wrap gap-4 text-sm"><Link href="/ket-noi-ai#cai-ket-noi" className="underline underline-offset-4">Xem hướng dẫn kết nối chi tiết</Link><a href="https://developers.openai.com/plugins/quickstart" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">Hướng dẫn chính thức của OpenAI</a></div>
-      <p className="mt-3 text-sm text-neutral-700">Đã cài nhưng chat chưa thấy công cụ mới: mở plugin → Refresh, rồi thử trong cuộc chat mới. Nếu giao diện không có mục cài kết nối, chat chỉ có thể giúp làm rõ đầu vào; chưa thể tính qua hệ thống.</p>
+      <p className="mt-3 text-sm text-neutral-700">Đã cài nhưng chat chưa thấy công cụ mới: mở plugin → Refresh, rồi thử trong cuộc chat mới. Nếu không cài được kết nối, AI có công cụ gửi HTTP có thể dùng REST phiên tạm theo TXT. Nếu không có cả hai khả năng, chat vẫn giúp làm rõ đầu vào nhưng chưa thể tính qua hệ thống.</p>
     </section>
     <LongTermUse />
     <div className="flex flex-wrap gap-4 border-t border-[#b1c8bd] pt-5">

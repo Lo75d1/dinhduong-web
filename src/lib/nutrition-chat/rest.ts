@@ -11,7 +11,7 @@ export async function nutritionRestIdentity(request:Request,scope:string):Promis
   // Browser mutations require exact same-origin plus existing SameSite session.
   if(request.method!=="GET" && request.headers.get("origin")!==getNutritionPublicUrl())throw new NutritionSecurityError("invalid_origin",403,"Gửi thao tác từ trang web đã đăng nhập.");
   const user=await getSessionUser();
-  if(!user)throw new NutritionSecurityError("invalid_token",401,"Bạn cần đăng nhập để thực hiện thao tác này.",scope);
+  if(!user)throw new NutritionSecurityError("invalid_token",401,"Chưa có phiên xác thực. Chỉ tra/tính/Excel: mở phiên tạm bằng POST /api/nutrition/v1/guest-session rồi gửi Bearer trong header; không cần đăng ký. Lưu/mở dữ liệu riêng mới cần đăng nhập.",scope);
   return {userId:user.id,clientId:"web-session",scopes:["nutrition:read","nutrition:calculate","nutrition:write","nutrition:export"]};
 }
 export function nutritionRestError(error:unknown):Response {

@@ -6,7 +6,7 @@
 - Tải link do `export_workbook` trả. File chứa đầu vào, dữ liệu cần tra, công thức tổng hợp và phần phân tích; link tải chỉ có thời hạn.
 - Hướng dẫn sửa trong vùng nhập được đánh dấu: lượng, số suất, ngày/bữa và thực phẩm đã có trong dữ liệu nhúng. Mã được chọn phải đi cùng nguồn; không sửa riêng tên để biến một thực phẩm thành thực phẩm khác.
 - Kết quả công thức/biểu đồ cập nhật khi Excel tính lại. Ứng dụng mở file khác Excel cần được kiểm tra riêng; không hứa mọi trình xem hỗ trợ đầy đủ.
-- Dữ liệu nguồn thiếu vẫn thiếu; dữ liệu tự nhập phải có nguồn và đơn vị. Các ô có công thức được bảo vệ chống sửa nhầm; bảo vệ sheet không phải mã hóa file.
+- Dữ liệu nguồn thiếu vẫn thiếu; dữ liệu tự nhập phải có nguồn và đơn vị. File giữ công thức, không khóa sheet hoặc đóng băng/tách khung; người dùng chỉnh lề in, căn ô và kích thước cột/dòng trực tiếp. Khi đổi khẩu phần, sửa vùng nhập để công thức tiếp tục tính; không ghi đè ô công thức bằng số tổng.
 - Nhận xét AI ghi lúc xuất chỉ là nhận xét tại thời điểm đó. Sau khi sửa đầu vào, tính lại trên hệ thống nếu cần nhận xét mới.
 - File trên máy không tự đồng bộ. Người dùng chỉ cần gửi bản cuối khi muốn lưu hoặc tính lại bằng dữ liệu server.
 - Mã và dữ kiện `clinicalContext` giữ theo bản đã xuất; chỉnh mã/tình trạng trên web/chat rồi duyệt lại. Sheet Bao cao có phần đối chiếu khoảng MCDA, liên kết sáu chỉ tiêu dinh dưỡng từ bộ tính; số bữa tham khảo và ghi chú nguồn trình riêng. Nhập lại đọc lại mã từ kho, không tin khoảng hoặc kết luận có sẵn trong file. Không tự đổi đơn vị nước chưa xác minh hoặc coi mức theo kg là mục tiêu cá nhân.
