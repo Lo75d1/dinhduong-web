@@ -5,7 +5,6 @@ import {
   CLASSIFICATION_VERSION,
   MAX_BATCH_ENTRIES,
   type CatalogBatch,
-  type CatalogBatchSummary,
   type CatalogEntry,
   type CatalogFood,
   type CatalogKey,
@@ -98,18 +97,7 @@ export async function listCatalogFoods(
     return { items, nextCursor: rows.length > 25 ? selected.at(-1)!.id : null };
   });
 }
-export async function listCatalogBatches(actor: CatalogActor) {
-  return catalogTransaction(actor, async (tx, current) => {
-    const all = !current.keyId,
-      keyId = current.keyId;
-    return json(
-      await tx.$queryRaw<
-        CatalogBatchSummary[]
-      >`SELECT id,"ownerId","keyId",principal,title,state,revision,"reviewNote","publishedBy","publishedAt","createdAt","updatedAt",jsonb_array_length("entriesJson") AS "entryCount"
-      FROM catalog_draft_batches WHERE (${all} OR ${keyId}::text IS NOT NULL AND "keyId" = ${keyId} OR ${keyId}::text IS NULL AND "ownerId" = ${actor.id}) ORDER BY CASE WHEN state IN ('DRAFT','SUBMITTED','RETURNED') THEN 0 ELSE 1 END, "updatedAt" DESC, id DESC LIMIT 100`,
-    );
-  });
-}
+export { listCatalogBatches } from "./queue";
 export async function readCatalogBatch(actor: CatalogActor, batchId: string) {
   return catalogTransaction(actor, async (tx, current) => {
     const batch = await getBatch(tx, current, id(batchId));

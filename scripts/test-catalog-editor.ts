@@ -854,6 +854,83 @@ async function main() {
       ),
       immutableBefore,
     );
+    for (let index = 0; index < 28; index++)
+      await api.fixtureQuery(
+        `INSERT INTO catalog_draft_batches(id,"ownerId",principal,"requestKey",title,state,"updatedAt") VALUES ($1,'user-a','user:user-a',$1,'Paging fixture '||$1,$2,'2000-01-01')`,
+        [
+          `page-${String(index).padStart(2, "0")}`,
+          index % 2 ? "SUBMITTED" : "DRAFT",
+        ],
+      );
+    const page1 = await expect(
+      200,
+      "GET",
+      "batches?state=OPEN&q=Paging",
+      undefined,
+      { user: "user-a" },
+    );
+    eq(page1.items.length, 25);
+    eq(page1.counts.OPEN, 28);
+    eq(page1.counts.SUBMITTED, 14);
+    eq(page1.counts.DRAFT, 14);
+    ok(!!page1.nextCursor);
+    ok(
+      page1.items
+        .slice(0, 14)
+        .every((item: { state: string }) => item.state === "SUBMITTED"),
+      "pending reviews are prioritized",
+    );
+    const page2 = await expect(
+      200,
+      "GET",
+      `batches?state=OPEN&q=Paging&after=${page1.nextCursor}`,
+      undefined,
+      { user: "user-a" },
+    );
+    eq(page2.items.length, 3);
+    eq(page2.nextCursor, null);
+    eq(
+      new Set(
+        [...page1.items, ...page2.items].map((item: { id: string }) => item.id),
+      ).size,
+      28,
+      "same-timestamp pages have no duplicates or missing IDs",
+    );
+    const pending = await expect(
+      200,
+      "GET",
+      "batches?state=SUBMITTED&q=Paging",
+      undefined,
+      { user: "user-a" },
+    );
+    eq(pending.items.length, 14);
+    eq(pending.nextCursor, null);
+    await expect(
+      400,
+      "GET",
+      `batches?state=ALL&q=Paging&after=${page1.nextCursor}`,
+      undefined,
+      { user: "user-a" },
+    );
+    await expect(400, "GET", "batches?state=constructor", undefined, {
+      user: "user-a",
+    });
+    await expect(400, "GET", "batches?after=invalid", undefined, {
+      user: "user-a",
+    });
+    const scoped = await expect(
+      200,
+      "GET",
+      "batches?q=Paging",
+      undefined,
+      key2,
+    );
+    eq(scoped.items.length, 0);
+    eq(
+      scoped.counts.ALL,
+      0,
+      "queue counts never reveal another principal's drafts",
+    );
     const ui = await readFile(
       resolve("src/app/quan-tri/bien-tap/CatalogWorkspace.tsx"),
       "utf8",

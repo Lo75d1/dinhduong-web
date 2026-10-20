@@ -39,7 +39,9 @@ async function handle(request: Request, context: Context) {
           await listCatalogFoods(actor, new URL(request.url).searchParams),
         );
       if (path.length === 1 && area === "batches")
-        return reply({ items: await listCatalogBatches(actor) });
+        return reply(
+          await listCatalogBatches(actor, new URL(request.url).searchParams),
+        );
       if (path.length === 2 && area === "batches")
         return reply(await readCatalogBatch(actor, id(target)));
       if (path.length === 1 && area === "keys")

@@ -23,7 +23,8 @@
     "test:accounts": "tsx scripts/test-account-management.ts",
     "package:nutrition-chat": "node scripts/package-nutrition-chat-plugin.mjs",
     "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts",
-    "test:catalog-editor": "node --import tsx scripts/test-catalog-editor.ts"
+    "test:catalog-editor": "node --import tsx scripts/test-catalog-editor.ts",
+    "test:catalog-review": "node --import tsx scripts/test-catalog-review.tsx"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

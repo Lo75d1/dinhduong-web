@@ -89,3 +89,19 @@ export type CatalogKey = {
   revokedAt: string | null;
   createdAt: string;
 };
+
+export const QUEUE_LABELS = {
+  SUBMITTED: "Chờ duyệt",
+  OPEN: "Đang xử lý",
+  RETURNED: "Cần sửa lại",
+  DRAFT: "Đang soạn",
+  PUBLISHED: "Đã áp dụng",
+  ARCHIVED: "Đã đóng",
+  ALL: "Tất cả",
+} as const;
+export type CatalogQueueState = keyof typeof QUEUE_LABELS;
+export type CatalogQueuePage = {
+  items: CatalogBatchSummary[];
+  nextCursor: string | null;
+  counts: Record<CatalogQueueState, number>;
+};
