@@ -1,0 +1,7 @@
+# Kiểm tra cổng biên tập
+
+- `npm run test:catalog-editor`: **247 kiểm tra / 96 yêu cầu handler đạt**; handler HTTP và service thật trên PostgreSQL WASM dùng riêng, áp migration thật. Kiểm quyền cookie/khóa, CSRF/Origin, đọc theo khóa, hàng đợi chung của nhân viên, idempotency, revision, trường bị khóa, ngày/giá/ảnh/URL không hợp lệ, giới hạn JSON/lô, giữ nguyên null/0/dinh dưỡng/nguồn, chỉ ADMIN web publish, rollback nguyên đợt khi xung đột, trả lại/rebase, đóng nháp, sửa giá giữ provenance, hạn/thu hồi khóa, vô hiệu tài khoản, kiểm role lại trong transaction, khóa các đường ghi cũ, ACL/RLS riêng và không lộ khóa trong audit.
+- Kiểm tương tác React/JSDOM với API giả lập: tạo/chọn đợt, tìm/chọn thực phẩm, nhập phân loại và giá có nguồn/ngày, đối chiếu, gửi duyệt, nút áp dụng bị chặn đến khi có ghi chú và xác nhận, khóa chỉ hiện một lần/thu hồi, nhân viên không có phần khóa hoặc nút duyệt, không ghi key vào localStorage. Kiểm URL trỏ đúng đợt đang mở.
+- Prisma validate/generate, TypeScript, ESLint các file thay đổi (0 lỗi, 0 cảnh báo), Next production build và full runner Nutrition Chat đạt trong môi trường cục bộ.
+- PGlite kiểm transaction và SQL thực nhưng không chứng minh tranh chấp khóa nhiều worker PostgreSQL. JSDOM không phải nghiệm thu trình duyệt thật hoặc bố cục mobile. Chưa kiểm dữ liệu/khóa thực tế, áp migration hoặc triển khai trên VPS.
+- Cache Turbopack cũ của môi trường báo `Loading persistence directory failed / invalid digit found in string`; giữ riêng cache sinh tự động rồi build sạch. Không sửa mã/config ứng dụng để né lỗi.

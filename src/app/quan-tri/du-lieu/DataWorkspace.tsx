@@ -2,9 +2,6 @@
 
 import Link from "next/link";
 import NutritionDataSources from "@/components/NutritionDataSources";
-import BulkClassifyEditor from "./BulkClassifyEditor";
-import DataManager from "./DataManager";
-import ImageSourceSync from "./ImageSourceSync";
 import MedicationImport from "./MedicationImport";
 
 export default function DataWorkspace() {
@@ -43,9 +40,7 @@ export default function DataWorkspace() {
         </div>
       </section>
 
-      <DataManager />
-      <BulkClassifyEditor />
-      <ImageSourceSync />
+      <section className="rounded-xl border-2 border-[#123c36] bg-white p-5"><h2 className="text-xl font-semibold">Biên tập giá, phân loại và ảnh theo bản nháp</h2><p className="mt-2 text-sm">Mọi đề xuất được giữ riêng để quản trị viên duyệt. Số dinh dưỡng và quyền xóa được khóa.</p><Link href="/quan-tri/bien-tap" className="mt-4 inline-block rounded bg-[#123c36] px-4 py-3 font-semibold text-white">Mở cổng biên tập dữ liệu →</Link></section>
       <MedicationImport />
     </div>
   );

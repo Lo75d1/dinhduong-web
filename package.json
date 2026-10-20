@@ -22,7 +22,8 @@
     "test:nutrition-daily": "node --import tsx scripts/test-nutrition-daily-export.tsx",
     "test:accounts": "tsx scripts/test-account-management.ts",
     "package:nutrition-chat": "node scripts/package-nutrition-chat-plugin.mjs",
-    "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts"
+    "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts",
+    "test:catalog-editor": "node --import tsx scripts/test-catalog-editor.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
