@@ -25,6 +25,7 @@ export default async function ThucPhamDetailPage({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={food.imageUrl} alt={food.name} className="mt-2 max-h-[70vh] w-full max-w-2xl rounded-lg border border-neutral-200 bg-neutral-50 object-contain" />
         )}
+        {food.imageUrl && food.imageCredit ? <p className="mt-1 text-xs text-neutral-600">Ảnh: {food.imageCredit} · {food.imageLicense}{food.imageSourceUrl ? <> · <a href={food.imageSourceUrl} target="_blank" rel="noopener noreferrer" className="underline">Nguồn ảnh</a></> : null}</p> : null}
         <h1 className="mt-2 text-2xl font-semibold">{food.name}</h1>
         <div className="mt-2 flex flex-wrap gap-2 text-xs">
           <span className="rounded-full bg-neutral-100 px-2 py-1 text-neutral-600">

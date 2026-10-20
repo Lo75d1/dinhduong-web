@@ -24,6 +24,8 @@ model Food {
   sourceNote     String? // Ghi chú nguồn tham khảo (VD: "Bộ Y tế Việt Nam (2015)...")
   imageUrl       String? @db.Text
   imageSourceUrl String? @db.Text
+  imageCredit    String? @db.Text
+  imageLicense   String?
   unit           String  @default("g")
   wastePercent   Float? // Tỷ lệ thải bỏ (%)
 
@@ -506,6 +508,8 @@ model User {
   createdKitchenTasks      KitchenTask[]          @relation("KitchenTaskCreator")
   nutritionOAuthCodes      NutritionOAuthCode[]
   nutritionOAuthTokens     NutritionOAuthToken[]
+  catalogEditorKeys        CatalogEditorKey[]
+  catalogDraftBatches      CatalogDraftBatch[]
 
   @@map("app_users")
 }
@@ -1182,4 +1186,42 @@ model PublicMealReport {
   @@index([mealDate, status])
   @@index([departmentId, mealDate])
   @@map("public_meal_reports")
+}
+
+// Enrichment only: no nutrient editing or deletion through the editor API.
+model CatalogEditorKey {
+  id        String @id @default(cuid())
+  ownerId   String
+  label     String
+  tokenHash String @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  owner     User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  batches   CatalogDraftBatch[]
+  @@index([ownerId, createdAt])
+  @@map("catalog_editor_keys")
+}
+
+model CatalogDraftBatch {
+  id          String @id @default(cuid())
+  ownerId     String
+  keyId       String?
+  principal   String
+  requestKey  String
+  title       String
+  state       String @default("DRAFT")
+  revision    Int @default(1)
+  entriesJson Json @default("[]")
+  reviewNote  String?
+  publishedBy String?
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  owner       User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  key         CatalogEditorKey? @relation(fields: [keyId], references: [id], onDelete: Restrict)
+  @@unique([principal, requestKey])
+  @@index([ownerId, updatedAt])
+  @@index([state, updatedAt])
+  @@map("catalog_draft_batches")
 }
