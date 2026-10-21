@@ -16,7 +16,7 @@ import { CalculatorInputPanel } from "@/app/tinh-khau-phan/CalculatorLayout";
 
 type Saved = Prepared & { ration: SavedTarget; sourceChanged?: boolean };
 type Initial = { input: MenuInput; names: Record<string, string> };
-const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]";
+const focus = "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--brand)]";
 
 export function AccountMenuWorkspace({ result, initial, onSaved, onDelete, onRefresh }: { result?: Saved; initial?: Initial; onSaved?: (ration: SavedTarget, prepared: Prepared) => void; onDelete?: () => void; onRefresh?: () => void }) {
   const headerSlot = useCalculatorHeader();
@@ -27,7 +27,7 @@ export function AccountMenuWorkspace({ result, initial, onSaved, onDelete, onRef
   const days = preview?.days ?? initial?.input.days ?? [];
   const navigation = <CalculatorNavigation pageMode={days.length > 1 ? "multi" : "single"} activeView={view} foodCount={days.reduce((sum, day) => sum + day.rows.length, 0)} onViewChange={setView}/>;
   return <>
-    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#9bb6ab] bg-[#f4f8f5] px-4 py-3 text-sm">
+    <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--control-line)] bg-[#f4f8f5] px-4 py-3 text-sm">
       <div className="min-w-0 flex-1"><p className="font-semibold">{result ? result.ration.title : "Thực đơn mới của bạn"}</p><p className="mt-1 text-neutral-600">{result ? `Đã lưu trong tài khoản · phiên bản ${result.ration.revision}` : "Chọn món và thực phẩm, kiểm tra rồi lưu vào tài khoản."}</p></div>
       <Link href="/tai-khoan/thuc-don" className={`font-semibold underline underline-offset-4 ${focus}`}>Thực đơn của tôi</Link>
       {onRefresh ? <button type="button" onClick={() => { if (!dirty || window.confirm("Đọc lại bản đã lưu sẽ bỏ các chỉnh sửa chưa lưu. Tiếp tục?")) onRefresh(); }} className={`underline underline-offset-4 ${focus}`}>Đọc lại bản lưu</button> : null}
@@ -36,7 +36,7 @@ export function AccountMenuWorkspace({ result, initial, onSaved, onDelete, onRef
     {headerSlot ? createPortal(navigation, headerSlot) : navigation}
     {result?.sourceChanged ? <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Nguồn đã đổi từ lần lưu trước. Báo cáo được tính lại theo dữ liệu hiện tại; kiểm tra và xác nhận trước khi lưu thay đổi.</p> : null}
     {dirty ? <p role="status" className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">Đã sửa đầu vào. Bấm Xem trước và tính lại để cập nhật kết quả trước khi lưu.</p> : null}
-    {!dirty && preview?.warnings.length ? <details className="rounded border border-[#d4dfd8] bg-white p-3 text-sm"><summary className="cursor-pointer font-semibold">Lưu ý về nguồn và số liệu ({preview.warnings.length})</summary><ul className="mt-3 list-disc space-y-1 pl-5 text-neutral-700">{[...new Set(preview.warnings)].map(warning=><li key={warning}>{warning}</li>)}</ul></details> : null}
+    {!dirty && preview?.warnings.length ? <details className="rounded border border-[var(--line)] bg-white p-3 text-sm"><summary className="cursor-pointer font-semibold">Lưu ý về nguồn và số liệu ({preview.warnings.length})</summary><ul className="mt-3 list-disc space-y-1 pl-5 text-neutral-700">{[...new Set(preview.warnings)].map(warning=><li key={warning}>{warning}</li>)}</ul></details> : null}
     <CalculatorInputPanel active={view === "entry"}>
       <ReuseSavedMenu menu={result?.preview} initialInput={initial?.input} initialNames={initial?.names} initialPrepared={result} savedTarget={result?.ration} layout="calculator" view={view} actionsContainer={actionsContainer} onDraftChange={() => setDirty(true)} onPrepared={value => { setPreview(value); setDirty(false); setDraftResult(true); setView("analysis"); }} onSaved={(ration, prepared) => { setDraftResult(false); onSaved?.(ration, prepared); }}/>
     </CalculatorInputPanel>
@@ -86,6 +86,6 @@ export default function SavedMenuView({ rationId, library, createNew }: { ration
     {loading ? <p role="status" className="clinical-panel text-neutral-700">Đang mở thực đơn của tài khoản…</p> : null}
     {error ? <div role="alert" className="rounded border border-red-300 bg-red-50 p-4 text-red-800"><p>{error}</p><Link href={`/dang-nhap?next=${encodeURIComponent(next)}`} className={`mt-2 inline-block underline ${focus}`}>Đăng nhập tài khoản</Link><button type="button" onClick={readAgain} className={`ml-4 underline ${focus}`}>Thử mở lại</button></div> : null}
     {result || initial ? <AccountMenuWorkspace key={`${rationId ?? `${kind ?? "new"}:${itemId ?? ""}`}:${refresh}`} result={result} initial={initial} onRefresh={result ? readAgain : undefined} onDelete={result ? () => deleteDialog.current?.showModal() : undefined} onSaved={(ration, prepared) => { setResult({ ...prepared, ration }); if (ration.id !== rationId) router.replace(savedCalculatorUrl(ration.id)); }}/> : null}
-    <dialog ref={deleteDialog} aria-labelledby="delete-menu-title" className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-lg border border-[#9bb6ab] bg-white p-6 text-[#123c36] backdrop:bg-black/30" onCancel={event => { if (deleting) event.preventDefault(); }}><h2 id="delete-menu-title" className="text-xl font-semibold">Xóa thực đơn này?</h2><p className="mt-3">Bản “{result?.ration.title}” sẽ bị xóa khỏi tài khoản và không thể mở lại.</p><div className="mt-5 flex flex-wrap gap-3"><button type="button" disabled={deleting} onClick={() => deleteDialog.current?.close()} className="rounded border border-[#123c36] px-4 py-2">Giữ bản này</button><button type="button" disabled={deleting} onClick={() => void deleteMenu()} className="rounded bg-red-800 px-4 py-2 font-semibold text-white disabled:opacity-50">{deleting ? "Đang xóa…" : "Xác nhận xóa"}</button></div></dialog>
+    <dialog ref={deleteDialog} aria-labelledby="delete-menu-title" className="m-auto w-[calc(100%_-_2rem)] max-w-md rounded-lg border border-[var(--control-line)] bg-white p-6 text-[var(--brand)] backdrop:bg-black/30" onCancel={event => { if (deleting) event.preventDefault(); }}><h2 id="delete-menu-title" className="text-xl font-semibold">Xóa thực đơn này?</h2><p className="mt-3">Bản “{result?.ration.title}” sẽ bị xóa khỏi tài khoản và không thể mở lại.</p><div className="mt-5 flex flex-wrap gap-3"><button type="button" disabled={deleting} onClick={() => deleteDialog.current?.close()} className="rounded border border-[var(--brand)] px-4 py-2">Giữ bản này</button><button type="button" disabled={deleting} onClick={() => void deleteMenu()} className="rounded bg-red-800 px-4 py-2 font-semibold text-white disabled:opacity-50">{deleting ? "Đang xóa…" : "Xác nhận xóa"}</button></div></dialog>
   </>;
 }

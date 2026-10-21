@@ -125,17 +125,17 @@ function ManualCalculator() {
     {pageMode === "multi" && <section key={`multi-${activeView}`} className="mode-panel-enter clinical-panel min-w-0"><MultiDayBoard view={activeView} /></section>}
 
     <CalculatorInputPanel active={pageMode === "single" && activeView === "entry"}>
-      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} onMedsChange={setMeds} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#123c36] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
+      <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1"><MealInput onRowsChange={setRows} onModeChange={setRationMode} onMedsChange={setMeds} profileSlot={<PersonalProfile onChange={setProfile} />} savedMenuSlot={<ServerRationActions rows={rows} profile={profile} variant="load" />} analysisSlot={<button onClick={() => setActiveView("analysis")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-hover)]">Sang phân tích →</button>} /><div className="lg:hidden"><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></div></div>
     </CalculatorInputPanel>
 
     <section className={pageMode === "single" && activeView === "analysis" ? "mode-panel-enter clinical-panel min-w-0" : "hidden"}>
-      <section data-print-header><p className="text-center text-sm font-semibold tracking-[0.16em] text-[#123c36]">BÁO CÁO PHÂN TÍCH KHẨU PHẦN</p><h1 className="mt-2 text-center text-2xl font-semibold">Phiếu đánh giá dinh dưỡng</h1><div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 border-y-2 border-[#123c36] py-3 text-sm"><p><b>Người được đánh giá:</b> {reportMeta.subjectName || "Chưa ghi"}</p><p><b>Ngày lập:</b> {reportMeta.reportDate || "Chưa ghi"}</p><p><b>Nhóm / mục tiêu:</b> {reportMeta.subjectGroup || "Chưa ghi"}</p><p><b>Người lập:</b> {reportMeta.authorName || "Chưa ghi"} ({reportMeta.authorRole})</p><p className="col-span-2"><b>Đơn vị / cơ sở:</b> {reportMeta.authorOrganization || "Chưa ghi"}</p><p className="col-span-2"><b>Hồ sơ:</b> {profile ? `${profile.gender}, ${profile.age || "—"} ${profile.ageUnit}, ${profile.weight || "—"} kg, ${profile.height || "—"} cm${profile.physiology.startsWith("pregnant_") ? ` · Thai kỳ: ${profile.pregnancyWeek ? `tuần ${profile.pregnancyWeek}` : "chưa ghi tuần"}${profile.prePregnancyWeight ? ` · trước thai ${profile.prePregnancyWeight} kg` : ""}` : ""}` : "Chưa nhập"}</p>{profile?.pregnancyNote && <p className="col-span-2"><b>Ghi chú thai kỳ:</b> {profile.pregnancyNote}</p>}{reportMeta.menuNote && <p className="col-span-2"><b>Ghi chú thực đơn / khẩu phần:</b> {reportMeta.menuNote}</p>}{reportMeta.clinicalCourse && <p className="col-span-2"><b>Diễn biến bệnh lý / theo dõi:</b> {reportMeta.clinicalCourse}</p>}</div></section>
+      <section data-print-header><p className="text-center text-sm font-semibold tracking-[0.16em] text-[var(--brand)]">BÁO CÁO PHÂN TÍCH KHẨU PHẦN</p><h1 className="mt-2 text-center text-2xl font-semibold">Phiếu đánh giá dinh dưỡng</h1><div className="mt-4 grid grid-cols-2 gap-x-8 gap-y-1 border-y-2 border-[var(--brand)] py-3 text-sm"><p><b>Người được đánh giá:</b> {reportMeta.subjectName || "Chưa ghi"}</p><p><b>Ngày lập:</b> {reportMeta.reportDate || "Chưa ghi"}</p><p><b>Nhóm / mục tiêu:</b> {reportMeta.subjectGroup || "Chưa ghi"}</p><p><b>Người lập:</b> {reportMeta.authorName || "Chưa ghi"} ({reportMeta.authorRole})</p><p className="col-span-2"><b>Đơn vị / cơ sở:</b> {reportMeta.authorOrganization || "Chưa ghi"}</p><p className="col-span-2"><b>Hồ sơ:</b> {profile ? `${profile.gender}, ${profile.age || "—"} ${profile.ageUnit}, ${profile.weight || "—"} kg, ${profile.height || "—"} cm${profile.physiology.startsWith("pregnant_") ? ` · Thai kỳ: ${profile.pregnancyWeek ? `tuần ${profile.pregnancyWeek}` : "chưa ghi tuần"}${profile.prePregnancyWeight ? ` · trước thai ${profile.prePregnancyWeight} kg` : ""}` : ""}` : "Chưa nhập"}</p>{profile?.pregnancyNote && <p className="col-span-2"><b>Ghi chú thai kỳ:</b> {profile.pregnancyNote}</p>}{reportMeta.menuNote && <p className="col-span-2"><b>Ghi chú thực đơn / khẩu phần:</b> {reportMeta.menuNote}</p>}{reportMeta.clinicalCourse && <p className="col-span-2"><b>Diễn biến bệnh lý / theo dõi:</b> {reportMeta.clinicalCourse}</p>}</div></section>
       <CalculatorResultsHeading/>
-      {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <CalculatorResultsLayout
+      {foodRows.length === 0 ? <div className="mt-5 rounded-lg border-2 border-dashed border-neutral-400 bg-white px-5 py-10 text-center text-neutral-900"><p>Thêm thực phẩm ở bước Nhập khẩu phần để bắt đầu phân tích.</p><button onClick={() => setActiveView("entry")} className="mt-4 rounded-md bg-[var(--brand)] px-4 py-2 font-semibold text-white">Quay lại nhập dữ liệu</button></div> : <CalculatorResultsLayout
         actions={<><ServerRationActions rows={rows} profile={profile} />
           <ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} /></>}
-        profile={<><div className="rounded-lg border border-[#123c36]/30 bg-white p-3">
-                <h3 className="mb-2 text-sm font-bold text-[#123c36]">Nhóm để nhận khuyến nghị</h3>
+        profile={<><div className="rounded-lg border border-[var(--brand)]/30 bg-white p-3">
+                <h3 className="mb-2 text-sm font-bold text-[var(--brand)]">Nhóm để nhận khuyến nghị</h3>
                 <div className="grid grid-cols-3 gap-1.5">
                   {([["adult", "🧑 Người lớn"], ["child", "🧒 Trẻ em"], ["special", "🤰 Mang thai / cho bú"]] as const).map(([key, label]) => (
                     <button key={key} type="button" onClick={() => applyProfileMode(key)} aria-pressed={profileGroup(profile) === key} className={`rounded-md border px-2 py-1.5 text-center text-xs font-semibold ${profileGroup(profile) === key ? "border-[#0c5f4d] bg-[#0c5f4d] text-white" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"}`}>{label}</button>
@@ -143,8 +143,8 @@ function ManualCalculator() {
                 </div>
                 <p className="mt-1.5 text-[11px] text-neutral-500">Bấm để nhập/sửa thông tin — hệ thống tự đối chiếu khuyến nghị theo nhóm.</p>
               </div>
-              <div className="rounded-lg border border-[#123c36]/30 bg-white p-3">
-                <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-[#123c36]">Hồ sơ người dùng</h3><PersonalProfile onChange={setProfile} open={profileOpen} onOpenChange={setProfileOpen} /></div>
+              <div className="rounded-lg border border-[var(--brand)]/30 bg-white p-3">
+                <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-[var(--brand)]">Hồ sơ người dùng</h3><PersonalProfile onChange={setProfile} open={profileOpen} onOpenChange={setProfileOpen} /></div>
                 <ProfileSummary profile={profile} />
               </div>
               <DietCodeComparison totals={totals} /></>}
@@ -156,14 +156,14 @@ function ManualCalculator() {
         overview={<><MealDishOverview rows={rows} meds={meds} /><NoteBox value={reportMeta.menuNote} onChange={setMenuNote} /></>}
         analysis={<><div><h3 className="mb-2 text-base font-semibold text-neutral-950">Tổng dinh dưỡng theo từng bữa</h3><MealNutritionCards rows={rows} totalKcal={totals.energyKcal} /></div>
               <EnergyDistribution rows={rows} totals={totals} profile={profile} />
-              <div className="rounded-lg border border-[#7f948d] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">Quy đổi thực đơn <span className="text-sm font-normal text-neutral-600">(sống sạch → mua / xuất kho)</span></h3><ExchangeUnits rows={rows} /></div>
-              <div className="rounded-lg border border-[#7f948d] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">🛒 Danh sách đi chợ / xuất kho <span className="text-sm font-normal text-neutral-600">(gộp toàn bộ thực phẩm)</span></h3><ShoppingList rows={foodRows} /></div>
+              <div className="rounded-lg border border-[var(--control-line)] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">Quy đổi thực đơn <span className="text-sm font-normal text-neutral-600">(sống sạch → mua / xuất kho)</span></h3><ExchangeUnits rows={rows} /></div>
+              <div className="rounded-lg border border-[var(--control-line)] bg-white p-4"><h3 className="mb-3 text-base font-semibold text-neutral-950">🛒 Danh sách đi chợ / xuất kho <span className="text-sm font-normal text-neutral-600">(gộp toàn bộ thực phẩm)</span></h3><ShoppingList rows={foodRows} /></div>
               <div className="flex flex-col gap-3">
                 {ADVANCED_GROUPS.map(([key, label]) => {
                   const isOpen = !!openAdvanced[key];
                   return (
-                    <div key={key} className="overflow-hidden rounded-lg border border-[#7f948d] bg-white">
-                      <button type="button" data-no-print onClick={() => setOpenAdvanced((s) => ({ ...s, [key]: !s[key] }))} className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-semibold text-[#123c36] hover:bg-emerald-50"><span>{label} <span className="ml-1 text-xs font-normal text-neutral-500">— chuyên sâu</span></span><span className="shrink-0 text-base">{isOpen ? "▾" : "▸"}</span></button>
+                    <div key={key} className="overflow-hidden rounded-lg border border-[var(--control-line)] bg-white">
+                      <button type="button" data-no-print onClick={() => setOpenAdvanced((s) => ({ ...s, [key]: !s[key] }))} className="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left text-sm font-semibold text-[var(--brand)] hover:bg-emerald-50"><span>{label} <span className="ml-1 text-xs font-normal text-neutral-500">— chuyên sâu</span></span><span className="shrink-0 text-base">{isOpen ? "▾" : "▸"}</span></button>
                       {isOpen && <div className="border-t border-[#cdd9d3] p-4"><LegacyChartReport rows={rows} /></div>}
                     </div>
                   );
@@ -219,7 +219,7 @@ function MealDishOverview({ rows, meds = [] }: { rows: Row[]; meds?: MedicationR
   if (orderedMeals.length === 0) return <div className="rounded-lg border border-[#cdd9d3] bg-white p-3 text-sm text-neutral-600">Chưa có bữa ăn.</div>;
   return (
     <div className="rounded-lg border border-[#cdd9d3] bg-[#f9fdfb] p-3">
-      <h3 className="mb-2 text-sm font-bold text-[#123c36]">🍱 Bữa ăn · món ăn · thuốc</h3>
+      <h3 className="mb-2 text-sm font-bold text-[var(--brand)]">🍱 Bữa ăn · món ăn · thuốc</h3>
       <div className="flex flex-col gap-2">
         {orderedMeals.map((mealName) => {
           const meal = tree.find((m) => m.meal === mealName);
@@ -227,9 +227,9 @@ function MealDishOverview({ rows, meds = [] }: { rows: Row[]; meds?: MedicationR
           const mealMeds = meds.filter((m) => m.meal === mealName);
           return (
             <div key={mealName} className="overflow-hidden rounded-md border border-neutral-200 bg-white">
-              <div className="flex items-center justify-between gap-2 bg-[#eef4f1] px-2 py-1 text-sm font-semibold text-[#0c5f4d]"><span className="min-w-0 truncate">{mealName}</span><span className="shrink-0 rounded bg-[#123c36] px-1.5 text-xs font-bold text-white">{Math.round(mealKcal)} kcal</span></div>
+              <div className="flex items-center justify-between gap-2 bg-[var(--surface-soft)] px-2 py-1 text-sm font-semibold text-[#0c5f4d]"><span className="min-w-0 truncate">{mealName}</span><span className="shrink-0 rounded bg-[var(--brand)] px-1.5 text-xs font-bold text-white">{Math.round(mealKcal)} kcal</span></div>
               {meal && meal.dishes.length > 0 && <ul className="divide-y divide-neutral-100">{meal.dishes.map((dish) => <li key={dish.dish} className="flex items-center justify-between gap-2 px-2 py-1 pl-4 text-sm"><span className="min-w-0 truncate text-neutral-800">🍽️ {dish.dish}</span><span className="shrink-0 rounded bg-amber-100 px-1.5 text-xs font-semibold text-amber-900">{Math.round(dishKcalOf(dish))}</span></li>)}</ul>}
-              {mealMeds.length > 0 && <div className="border-t border-dashed border-violet-200 bg-[#f7faf8]">
+              {mealMeds.length > 0 && <div className="border-t border-dashed border-violet-200 bg-[var(--surface-soft)]">
                 {MED_TIMING_ORDER.map(({ timing, label }) => {
                   const list = mealMeds.filter((m) => m.timing === timing);
                   if (list.length === 0) return null;
@@ -271,7 +271,7 @@ function NoteBox({ value, onChange }: { value: string; onChange: (next: string) 
     el.style.height = `${el.scrollHeight}px`;
     onChange(el.value);
   }
-  return <div data-no-print className="rounded-lg border-2 border-[#7f948d] bg-white p-4">
+  return <div data-no-print className="rounded-lg border-2 border-[var(--control-line)] bg-white p-4">
     <label className="text-sm font-semibold text-neutral-950">Ghi chú thực đơn / khẩu phần
       <textarea value={value} onChange={autoGrow} rows={2} placeholder="Ghi chú chung — hiện khi in/xuất báo cáo." className="mt-1 w-full resize-none overflow-hidden rounded-md border border-neutral-400 px-3 py-2 text-sm font-normal" />
     </label>

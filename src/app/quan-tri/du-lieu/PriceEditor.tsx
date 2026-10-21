@@ -165,7 +165,7 @@ export default function PriceEditor({ foodId }: { foodId: string }) {
   const field = "mt-1.5 w-full rounded-lg border border-[#9fb7ae] bg-white px-3 py-2 text-sm font-normal text-[#1e342f] outline-none focus:border-[#0b6957] focus:ring-2 focus:ring-[#b9ddd0]";
 
   return (
-    <section className="rounded-2xl border-2 border-[#123c36] bg-white p-5 shadow-[0_8px_20px_rgba(18,60,54,.04)] sm:p-6">
+    <section className="rounded-2xl border-2 border-[var(--brand)] bg-white p-5 shadow-[0_8px_20px_rgba(18,60,54,.04)] sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#c8d7d1] pb-4">
         <div>
           <p className="text-xs font-bold tracking-[.16em] text-[#0f5a4e]">GIÁ THAM KHẢO</p>
@@ -250,7 +250,7 @@ export default function PriceEditor({ foodId }: { foodId: string }) {
           <input required value={reason} onChange={(e) => setReason(e.target.value)} placeholder="VD: Ghi theo giá niêm yết trên web nguồn ngày …" className="mt-1.5 w-full rounded-lg border border-[#cdb56d] bg-white px-3 py-2 text-sm font-normal text-[#2e2a1a] outline-none focus:border-[#9a7615] focus:ring-2 focus:ring-[#eadcaa]" />
         </label>
         <div className="mt-3 flex gap-2">
-          <button disabled={busy || !reason.trim()} className="rounded-lg bg-[#123c36] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b5549] disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Đang lưu…" : editingId ? "Lưu thay đổi" : "Thêm giá"}</button>
+          <button disabled={busy || !reason.trim()} className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#0b5549] disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Đang lưu…" : editingId ? "Lưu thay đổi" : "Thêm giá"}</button>
           {editingId && <button type="button" onClick={resetForm} className="rounded-lg border border-[#9fb7ae] px-4 py-2 text-sm font-semibold text-[#0b5549] hover:bg-[#eef6f1]">Huỷ</button>}
         </div>
       </form>

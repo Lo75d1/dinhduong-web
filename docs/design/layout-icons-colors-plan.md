@@ -1,9 +1,10 @@
 # Kế hoạch bố cục, biểu tượng và màu sắc — Dinh dưỡng 2598
 
-Ngày: 21/10/2026. Trạng thái: nghiên cứu và đề xuất; chưa đổi hình ảnh, màu hoặc
-bố cục theo tài liệu này. Các màu bên dưới là phương án để người dùng chọn.
+Ngày: 21/10/2026. Người dùng đã chốt triển khai phương án A: xanh ngọc–trắng,
+logo bát/lá, icon Lucide và minh họa Storyset Pana. Đã triển khai trong mã nguồn
+PR#9; chưa đưa lên VPS. Chi tiết tài sản/giấy phép: `asset-sources.md`.
 
-## 1. Mục tiêu và quyết định cần chốt
+## 1. Mục tiêu và quyết định đã chốt
 
 Giúp người dùng tìm đúng thao tác nhanh hơn, đọc được số liệu và hiểu bước tiếp
 theo. Thứ tự thiết kế: công việc → bố cục → icon/nhãn → màu → ảnh minh họa.
@@ -12,11 +13,11 @@ Không dùng số lượng icon, ảnh hoặc hiệu ứng làm thước đo c�
 Đối tượng gồm người tra cứu/lập khẩu phần cá nhân, chuyên gia dinh dưỡng và
 Admin quản lý kho mẫu. Bố cục phải giữ ranh giới quyền và khả năng đang có.
 
-Bản UI ở PR#9 đã có tra cứu đầu trang, menu điện thoại và trợ giúp thu gọn. Đây
-là kế hoạch cho đợt tiếp theo, cần đối chiếu lại bản mới khi bắt đầu triển khai.
+Bản UI ở PR#9 có tra cứu đầu trang, menu điện thoại và trợ giúp thu gọn. Đợt
+triển khai này bổ sung nhận diện, token màu dùng chung, tranh có nguồn và bố cục
+nhập khẩu phần rộng hơn. Các màn tra cứu, Admin và AI dùng cùng quy tắc.
 
-Cần chốt: tông màu chủ đạo; lựa chọn logo giữ ý tưởng bát/lá hiện có hay chuyển
-sang đĩa ăn. Tạm đề xuất xanh ngọc–trắng, icon Lucide và minh họa Storyset Pana.
+Đã chọn xanh ngọc–trắng, giữ ý tưởng bát/lá, icon Lucide và Storyset Pana.
 Đây là lựa chọn thiết kế cho sản phẩm, không phải kết luận từ nghiên cứu rằng
 một màu hoặc một bộ icon sẽ làm mọi người thao tác nhanh hơn.
 
@@ -60,10 +61,9 @@ năng hoặc dùng tranh lớn thay nút thao tác.
 
 ### Icon thao tác
 
-Đề xuất dùng một bộ Lucide, nét và kích thước thống nhất, SVG theo màu giao diện.
-Phosphor là phương án thay thế nếu muốn phong cách có mảng màu; không trộn hai
-bộ trên cùng một màn hình. Các tên dưới đây là mẫu tham khảo cần đối chiếu gói
-được chọn khi triển khai, chưa nhập dependency.
+Đã chọn 28 SVG Lucide từ commit cố định, nét và kích thước thống nhất, màu theo
+giao diện. Lưu SVG chọn lọc và giấy phép trong repo; không thêm dependency mới.
+Bảng dưới là ánh xạ tác vụ; các nút nghiệp vụ vẫn theo khả năng thực tế hiện có.
 
 | Công việc | Biểu tượng đề xuất | Nhãn hiển thị |
 | --- | --- | --- |
@@ -87,8 +87,8 @@ là chữ2598. Avatar và ảnh bìa có chữ “Dola AI”. Cần bộ nhận 
 
 Hướng đề xuất: giữ liên hệ với bữa ăn bằng hình bát hoặc đĩa đơn giản, tối đa
 hai yếu tố hình, tách chữ “Dinh dưỡng 2598” khỏi biểu tượng khi dùng ở cỡ nhỏ.
-Sẽ làm bản màu, một màu, nền sáng/tối và kiểm ở16/24/32px. Chưa vẽ logo mới;
-không lấy nguyên một tranh stock làm logo.
+Đã làm bản màu, một màu, nền sáng/tối, app icon và maskable; raster hóa favicon
+16/32px từ SVG. Logo là vector biên soạn riêng cho dự án.
 
 Danh mục thay khi triển khai: avatar đầu trang, `src/app/icon.png`,
 `public/icon-192.png`, `public/icon-512.png`, icon maskable riêng nếu cần,
@@ -112,9 +112,10 @@ Storyset cho chỉnh màu/lớp và dùng miễn phí có ghi công theo điều
 đúng điều kiện của tài sản đã chọn. unDraw có điều khoản riêng, cho dùng thương
 mại không yêu cầu ghi công trong phạm vi giấy phép; không gọi toàn bộ kho là
 public domain. Khi triển khai lưu nguồn, tác giả/nhà cung cấp, ngày lấy và giấy
-phép/ghi công tương ứng. Hiện mới tham khảo, chưa tải để đưa lên website.
+phép/ghi công tương ứng. Đã đưa Healthy food — Pana vào trang chủ, đổi màu và bỏ nền phụ; nguồn, thay
+đổi và ghi công được lưu trong `asset-sources.md`. Các mẫu khác chỉ tham khảo.
 
-## 5. Ba phương án màu để chọn
+## 5. Bảng màu đã chọn và các phương án tham khảo
 
 | Phương án | Màu chính | Nền | Chữ chính | Điểm nhấn | Nhận xét thiết kế |
 | --- | --- | --- | --- | --- | --- |
@@ -141,9 +142,10 @@ vi WCAG. Các mã màu trong bảng chưa phải chứng nhận mọi trạng th
 | 4 | Thử tác vụ, sửa điểm khó tìm rồi áp dụng tiếp | Tra cứu, kho mẫu, Admin và AI theo cùng quy tắc |
 | 5 | Kiểm kỹ thuật, đối chiếu quyền và nghiệm thu | Build/browser/ảnh thực tế, danh sách thay đổi và hướng dẫn triển khai |
 
-Chỉ tìm hiểu và lập kế hoạch trong lượt hiện tại. Trước khi tạo ảnh mới cần hỏi
-người dùng tông màu chủ đạo. Chưa thay tài sản, chưa cài thư viện, chưa đổi CSS
-và chưa triển khai VPS theo kế hoạch này.
+Đã thực hiện đợt 1–4 và kiểm kỹ thuật ở đợt 5: nhận diện, màu chung, trang chủ,
+nhập khẩu phần, tra cứu và Admin/AI. Biên bản: `ui-implementation-2026-10-21.md`.
+Chưa nghiệm thu trên VPS hoặc đo thời gian thao tác với người dùng thật. Các
+trang sâu nhận token chung nhưng chưa được kiểm từng tương tác trên mọi trang.
 
 ## 7. Cách đánh giá “tìm đúng thao tác nhanh hơn”
 

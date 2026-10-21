@@ -43,7 +43,7 @@ export default function AiSummaryButton({
   if (summary) {
     return (
       <div className="mt-4 rounded-lg border border-[#8da99d] bg-[#f2f8f5] p-4 text-sm">
-        <p className="font-semibold text-[#123c36]">Tóm tắt AI có đối chiếu abstract</p>
+        <p className="font-semibold text-[var(--brand)]">Tóm tắt AI có đối chiếu abstract</p>
         <dl className="mt-2 space-y-2">
           <div>
             <dt className="font-semibold">Câu hỏi:</dt>
@@ -71,7 +71,7 @@ export default function AiSummaryButton({
         type="button"
         onClick={summarize}
         disabled={loading}
-        className="rounded-md border border-[#52786d] bg-white px-3 py-2 text-sm font-semibold text-[#123c36] disabled:cursor-wait disabled:opacity-60"
+        className="rounded-md border border-[var(--muted)] bg-white px-3 py-2 text-sm font-semibold text-[var(--brand)] disabled:cursor-wait disabled:opacity-60"
       >
         {loading ? "Đang đọc abstract…" : "Tóm tắt tiếng Việt bằng AI"}
       </button>

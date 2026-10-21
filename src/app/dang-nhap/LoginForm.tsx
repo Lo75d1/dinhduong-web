@@ -47,9 +47,9 @@ export default function LoginForm({
     }
   }
   const input =
-    "mt-1 w-full rounded-md border border-[#8fa99e] px-3 py-2 focus:outline-2 focus:outline-[#123c36]";
+    "mt-1 w-full rounded-md border border-[var(--control-line)] px-3 py-2 focus:outline-2 focus:outline-[var(--brand)]";
   return (
-    <section className="mx-auto max-w-md rounded-lg border border-[#8fa99e] bg-white p-6 text-[#123c36]">
+    <section className="mx-auto max-w-md rounded-lg border border-[var(--control-line)] bg-white p-6 text-[var(--brand)]">
       <p className="text-xs font-semibold tracking-wide">
         TÀI KHOẢN DINH DƯỠNG 2598
       </p>
@@ -75,8 +75,8 @@ export default function LoginForm({
             aria-pressed={mode === value}
             className={
               mode === value
-                ? "rounded-md bg-[#123c36] p-2 font-semibold text-white"
-                : "rounded-md border border-[#8fa99e] p-2 font-semibold"
+                ? "rounded-md bg-[var(--brand)] p-2 font-semibold text-white"
+                : "rounded-md border border-[var(--control-line)] p-2 font-semibold"
             }
           >
             {value === "login" ? "Đăng nhập" : "Đăng ký mới"}
@@ -129,7 +129,7 @@ export default function LoginForm({
         </label>
         <button
           disabled={busy}
-          className="w-full rounded-md bg-[#123c36] px-4 py-3 font-semibold text-white hover:bg-[#0f5c51] disabled:opacity-50"
+          className="w-full rounded-md bg-[var(--brand)] px-4 py-3 font-semibold text-white hover:bg-[var(--brand-hover)] disabled:opacity-50"
         >
           {busy ? "Đang xử lý…" : registering ? "Tạo tài khoản" : "Đăng nhập"}
         </button>

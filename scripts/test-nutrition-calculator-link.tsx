@@ -15,7 +15,7 @@ async function main(){let checks=0;const check=(value:unknown,message:string)=>{
   const render=(element:ReactNode)=>renderToStaticMarkup(createElement(AppRouterContext.Provider,{value:{back:navigation,forward:navigation,push:navigation,replace:navigation,refresh:navigation,prefetch:navigation,bfcacheId:"ssr-fixture"}},element));
   const normalProps={searchParams:Promise.resolve({})},linkedProps={searchParams:Promise.resolve({banTam:"1"})};
   const normal=render(await Page(normalProps)),linked=render(await Page(linkedProps)),compat=render(createElement(LegacyLinkPage));
-  check(normal.includes("Phân tích khẩu phần")&&normal.includes("PHIẾU PHÂN TÍCH DINH DƯỠNG"),"ordinary calculator retains the existing entry workflow");
+  check(normal.includes("Phân tích khẩu phần")&&normal.includes("data-calculator-entry")&&normal.includes("Thêm thực phẩm và món ăn ngoài hệ thống"),"ordinary calculator retains the existing entry workflow");
   check(!normal.includes("Đang nạp khẩu phần từ hội thoại"),"ordinary URL does not invoke private link loading");
   check(linked.includes("Phân tích khẩu phần")&&linked.includes("Đang nạp khẩu phần từ hội thoại"),"conversation opens inside Calculator");
   check(!linked.includes("MẪU KIỂM THỬ"),"unauthorized initial HTML contains no private input");

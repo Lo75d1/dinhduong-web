@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import type { ClinicalContext } from "@/lib/nutrition-chat/clinical";
 type Code = { id: string; code: string; name: string; targetGroup: string; diseaseGroup: string };
-const control = "mt-1 w-full min-w-0 rounded border border-[#8fa99e] bg-white px-3 py-2 text-neutral-900";
+const control = "mt-1 w-full min-w-0 rounded border border-[var(--control-line)] bg-white px-3 py-2 text-neutral-900";
 export default function ClinicalContextControls({ value, disabled, onChange }: { value?: ClinicalContext; disabled: boolean; onChange: (value: ClinicalContext | undefined) => void }) {
   const [codes, setCodes] = useState<Code[]>([]), [error, setError] = useState("");
   useEffect(() => { const controller = new AbortController(); void fetch("/api/diet-codes", { cache: "no-store", signal: controller.signal }).then(async response => { if (!response.ok) throw new Error("Chưa đọc được danh mục mã chế độ ăn."); return response.json(); }).then(data => { if (!Array.isArray(data.items)) throw new Error("Danh mục mã không hợp lệ."); setCodes(data.items); }).catch(cause => { if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Chưa đọc được danh mục mã."); }); return () => controller.abort(); }, []);
   const update = (next: ClinicalContext) => onChange(next.conditions?.some(Boolean) || next.notes || next.targetGroup || next.dietCodeId ? next : undefined);
   const clearCode = (targetGroup: ClinicalContext["targetGroup"]) => { const next = { ...value, targetGroup }; delete next.dietCodeId; delete next.selection; update(next); };
-  return <details className="space-y-3 border border-[#b1c8bd] p-3" open={Boolean(value?.dietCodeId || value?.conditions?.length || value?.notes)}>
+  return <details className="space-y-3 border border-[var(--line)] p-3" open={Boolean(value?.dietCodeId || value?.conditions?.length || value?.notes)}>
     <summary className="cursor-pointer font-semibold">Bệnh lý và mã chế độ ăn (nếu có)</summary>
     <p className="text-sm text-neutral-700">Nhập tình trạng/chỉ định đã được cung cấp. Chọn mã không đồng nghĩa với đã được duyệt chuyên môn.</p>
     <label className="block text-sm">Tình trạng đã cung cấp · mỗi dòng một ý<textarea rows={2} maxLength={2000} disabled={disabled} value={value?.conditions?.join("\n") || ""} onChange={event => update({ ...value, conditions: event.target.value.split("\n") })} onBlur={() => update({ ...value, conditions: value?.conditions?.map(item => item.trim()).filter(Boolean) })} className={control} /></label>

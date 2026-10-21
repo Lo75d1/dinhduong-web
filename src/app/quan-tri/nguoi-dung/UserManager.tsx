@@ -39,11 +39,11 @@ export type UserList = {
   }[];
 };
 const input =
-  "mt-1 block w-full min-w-0 rounded-md border border-[#8fa99e] bg-white px-3 py-2 text-neutral-900 focus:outline-2 focus:outline-[#123c36]";
+  "mt-1 block w-full min-w-0 rounded-md border border-[var(--control-line)] bg-white px-3 py-2 text-neutral-900 focus:outline-2 focus:outline-[var(--brand)]";
 const button =
-  "rounded-md bg-[#123c36] px-4 py-2.5 font-semibold text-white hover:bg-[#0f5c51] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#123c36]";
+  "rounded-md bg-[var(--brand)] px-4 py-2.5 font-semibold text-white hover:bg-[var(--brand-hover)] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand)]";
 const secondary =
-  "rounded-md border border-[#8fa99e] bg-white px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4ef] disabled:opacity-50";
+  "rounded-md border border-[var(--control-line)] bg-white px-3 py-2 text-sm font-semibold text-[var(--brand)] hover:bg-[#edf4ef] disabled:opacity-50";
 function date(value: string) {
   return new Date(value).toLocaleString("vi-VN", {
     timeZone: "Asia/Ho_Chi_Minh",
@@ -159,8 +159,8 @@ export default function UserManager({ initial }: { initial: UserList }) {
     }
   }
   return (
-    <div className="mx-auto max-w-6xl text-[#123c36]">
-      <header className="border-b border-[#b7ccc0] pb-6">
+    <div className="mx-auto max-w-6xl text-[var(--brand)]">
+      <header className="border-b border-[var(--line)] pb-6">
         <Link href="/tai-khoan" className="text-sm underline">
           ← Tài khoản của tôi
         </Link>
@@ -180,12 +180,12 @@ export default function UserManager({ initial }: { initial: UserList }) {
       {message && (
         <p
           role="status"
-          className="my-5 rounded-md border border-[#8fa99e] bg-[#f1f6f3] p-4 text-neutral-900"
+          className="my-5 rounded-md border border-[var(--control-line)] bg-[#f1f6f3] p-4 text-neutral-900"
         >
           {message}
         </p>
       )}
-      <details className="mt-6 rounded-lg border border-[#b7ccc0] bg-white p-5">
+      <details className="mt-6 rounded-lg border border-[var(--line)] bg-white p-5">
         <summary className="cursor-pointer text-lg font-semibold">
           Tạo tài khoản mới
         </summary>
@@ -339,7 +339,7 @@ export default function UserManager({ initial }: { initial: UserList }) {
               Không tìm thấy người dùng phù hợp.
             </p>
           )}
-          <ul className="divide-y divide-[#dce7df] rounded-lg border border-[#b7ccc0] bg-white px-4">
+          <ul className="divide-y divide-[#dce7df] rounded-lg border border-[var(--line)] bg-white px-4">
             {data.items.map((user) => (
               <li key={user.id} className="py-4">
                 <div className="flex items-start justify-between gap-3">
@@ -397,7 +397,7 @@ export default function UserManager({ initial }: { initial: UserList }) {
         <section
           id="quan-ly-nguoi-dung"
           aria-label="Chi tiết người dùng"
-          className="min-w-0 rounded-lg border border-[#b7ccc0] bg-white p-5"
+          className="min-w-0 rounded-lg border border-[var(--line)] bg-white p-5"
         >
           {!selected ? (
             <>
@@ -506,7 +506,7 @@ export default function UserManager({ initial }: { initial: UserList }) {
                     />
                   </label>
                 )}
-                <p className="border-l-4 border-[#9bb6ab] bg-[#f1f6f3] p-3 text-sm text-neutral-700">
+                <p className="border-l-4 border-[var(--control-line)] bg-[#f1f6f3] p-3 text-sm text-neutral-700">
                   {edit.action === "enable"
                     ? "Mở lại tài khoản. Các phiên và cấu hình đã thu hồi không tự được khôi phục."
                     : edit.action === "update"
@@ -546,7 +546,7 @@ export default function UserManager({ initial }: { initial: UserList }) {
                     required
                     checked={confirmed}
                     onChange={(e) => setConfirmed(e.target.checked)}
-                    className="mt-1 accent-[#123c36]"
+                    className="mt-1 accent-[var(--brand)]"
                   />
                   Tôi đã kiểm tra đúng người dùng và thao tác ở trên.
                 </label>

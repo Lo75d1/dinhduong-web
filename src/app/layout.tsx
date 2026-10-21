@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import "./globals.css";
@@ -22,7 +22,11 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
   keywords: ["Dinh dưỡng 2598", "tra cứu dinh dưỡng", "tính khẩu phần", "thành phần thực phẩm"],
   icons: {
-    icon: [{ url: "/icon.png", type: "image/png", sizes: "512x512" }],
+    icon: [
+      { url: "/brand/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/brand/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
     apple: [{ url: "/icon-192.png", type: "image/png", sizes: "192x192" }],
   },
   openGraph: {
@@ -30,7 +34,7 @@ export const metadata: Metadata = {
     description: siteDescription,
     url: siteUrl,
     siteName: "Dinh dưỡng 2598",
-    images: [{ url: coverImage, width: 1730, height: 909, alt: "Dinh dưỡng 2598 — Tra cứu và phân tích khẩu phần" }],
+    images: [{ url: coverImage, width: 1200, height: 630, alt: "Dinh dưỡng 2598 — Tra cứu và phân tích khẩu phần" }],
     locale: "vi_VN",
     type: "website",
   },
@@ -42,12 +46,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = { themeColor: "#0f766e" };
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi" className="h-full">
-      <body className="min-h-full flex flex-col bg-[#f1f6f4] text-neutral-900">
+      <body className="min-h-full flex flex-col bg-[var(--background)] text-neutral-900">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -64,25 +70,26 @@ export default function RootLayout({
         />
         <a href="#main-content" className="skip-link">Đến nội dung chính</a>
         <VisitTracker />
-        <header className="site-header border-b border-[#b7ccc0] bg-white">
+        <header className="site-header border-b border-[var(--line)] bg-white">
           <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
             <Link
               href="/"
               className="order-1 flex min-w-0 items-center gap-2 leading-tight sm:min-w-52 sm:gap-3"
             >
               <Image
-                src="/dinh-duong-2597-avatar.jpg"
+                src="/brand/mark.svg"
                 alt="Biểu trưng Dinh dưỡng 2598"
                 width={40}
                 height={40}
-                className="h-8 w-8 shrink-0 rounded-full sm:h-10 sm:w-10 border border-[#8fa99e] bg-white object-cover"
+                unoptimized
+                className="h-8 w-8 shrink-0 rounded-full sm:h-10 sm:w-10 border border-[var(--control-line)] bg-white object-cover"
                 priority
               />
-              <span className="border-l-4 border-[#123c36] pl-3">
-                <span className="block text-[14px] font-semibold tracking-wide sm:text-base text-[#123c36]">
+              <span className="border-l-4 border-[var(--brand)] pl-3">
+                <span className="block text-[14px] font-semibold tracking-wide sm:text-base text-[var(--brand)]">
                   DINH DƯỠNG 2598
                 </span>
-                <span className="hidden text-[11px] tracking-wide text-neutral-700 sm:block">
+                <span className="hidden text-[11px] tracking-wide text-neutral-700 2xl:block">
                   CỔNG TRA CỨU &amp; PHÂN TÍCH KHẨU PHẦN
                 </span>
               </span>

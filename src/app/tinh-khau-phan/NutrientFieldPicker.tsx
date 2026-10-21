@@ -7,7 +7,7 @@ const BASIC_KEYS = ["proteinG", "lipidG", "glucidG", "fiberG"];
 
 export default function NutrientFieldPicker({ selectedKeys, onChange }: { selectedKeys: string[]; onChange: (keys: string[]) => void }) {
   return <div className="flex flex-wrap items-start gap-2" data-nutrient-field-picker>
-    <button type="button" onClick={() => onChange([...DETAIL_NUTRIENT_KEYS])} className="rounded-md border border-[#123c36] px-3 py-1.5 text-sm font-semibold text-[#123c36]">Hiện toàn bộ {ALL_NUTRIENT_FIELDS.length} chỉ tiêu</button>
+    <button type="button" onClick={() => onChange([...DETAIL_NUTRIENT_KEYS])} className="rounded-md border border-[var(--brand)] px-3 py-1.5 text-sm font-semibold text-[var(--brand)]">Hiện toàn bộ {ALL_NUTRIENT_FIELDS.length} chỉ tiêu</button>
     <button type="button" onClick={() => onChange([...BASIC_KEYS])} className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm text-neutral-700">Rút gọn 5 chỉ tiêu</button>
     <details className="rounded-md border border-neutral-300 bg-white text-sm">
       <summary className="cursor-pointer px-3 py-1.5 font-medium text-neutral-700">Chọn chất ({selectedKeys.length + 1}/{ALL_NUTRIENT_FIELDS.length})</summary>

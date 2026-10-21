@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Modal from "./Modal";
 import WhoGrowthAssessment from "./WhoGrowthAssessment";
 import type { WhoGrowthEntry } from "@/lib/who-growth";
+import Icon from "@/components/ui/Icon";
 
 export type Profile = {
   age: string;
@@ -256,8 +257,8 @@ export default function PersonalProfile({ onChange, inline = false, open: openPr
             </Field>
           </div>
 
-          <div className="rounded-md border border-[#123c36]/30 bg-[#f4f8f5] p-3">
-            <p className="text-sm font-semibold text-[#123c36]">🩺 Mã chế độ ăn bệnh lý (nếu có)</p>
+          <div className="rounded-md border border-[var(--brand)]/30 bg-[#f4f8f5] p-3">
+            <p className="text-sm font-semibold text-[var(--brand)]">🩺 Mã chế độ ăn bệnh lý (nếu có)</p>
             <p className="mb-2 mt-0.5 text-xs text-neutral-600">Chọn để phần Kết quả đối chiếu khẩu phần với ngưỡng của chế độ ăn bệnh lý tương ứng.</p>
             {controlled ? clinicalSlot : <DietCodePicker />}
           </div>
@@ -311,8 +312,8 @@ export default function PersonalProfile({ onChange, inline = false, open: openPr
 
   if (inline) {
     return (
-      <div className="rounded-lg border-2 border-[#123c36] bg-white p-4 shadow-sm">
-        <p className="text-base font-semibold text-[#123c36]">📋 Thông tin để khuyến nghị{hasBasics ? " ✓" : ""}</p>
+      <div className="rounded-lg border-2 border-[var(--brand)] bg-white p-4 shadow-sm">
+        <p className="flex items-center gap-1.5 text-base font-semibold text-[var(--brand)]"><Icon name="notebook-tabs" />Thông tin để khuyến nghị{hasBasics ? " ✓" : ""}</p>
         <p className="mb-3 mt-0.5 text-xs text-neutral-600">{summary}</p>
         <fieldset disabled={disabled}>{body}</fieldset>
       </div>
@@ -326,11 +327,11 @@ export default function PersonalProfile({ onChange, inline = false, open: openPr
         disabled={disabled}
         onClick={() => setOpen(true)}
         title={summary}
-        className="inline-flex items-center gap-1.5 rounded-md border-2 border-[#123c36] bg-white px-3 py-1.5 text-sm font-semibold text-[#123c36] hover:bg-[#edf4f0]"
+        className="inline-flex items-center gap-1.5 rounded-md border-2 border-[var(--brand)] bg-white px-3 py-1.5 text-sm font-semibold text-[var(--brand)] hover:bg-[var(--surface-soft)]"
       >
-        📋 Thông tin để khuyến nghị{hasBasics ? " ✓" : ""}
+        <Icon name="notebook-tabs" />Thông tin để khuyến nghị{hasBasics ? " ✓" : ""}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="Nhập thông tin để khuyến nghị"><fieldset disabled={disabled}>{body}</fieldset><div className="mt-4 flex items-center justify-between gap-2 border-t border-neutral-200 pt-3"><span className="text-xs text-neutral-500">{controlled ? "Thay đổi áp dụng cho khẩu phần đang mở; xem trước và tính lại để cập nhật kết quả." : "Thông tin được lưu tự động khi nhập."}</span><button type="button" onClick={() => setOpen(false)} className="rounded-md bg-[#123c36] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0d2e29]">✓ {controlled ? "Áp dụng & đóng" : "Lưu & đóng"}</button></div></Modal>
+      <Modal open={open} onClose={() => setOpen(false)} title="Nhập thông tin để khuyến nghị"><fieldset disabled={disabled}>{body}</fieldset><div className="mt-4 flex items-center justify-between gap-2 border-t border-neutral-200 pt-3"><span className="text-xs text-neutral-500">{controlled ? "Thay đổi áp dụng cho khẩu phần đang mở; xem trước và tính lại để cập nhật kết quả." : "Thông tin được lưu tự động khi nhập."}</span><button type="button" onClick={() => setOpen(false)} className="rounded-md bg-[var(--brand)] px-5 py-2 text-sm font-semibold text-white hover:bg-[var(--brand-hover)]">✓ {controlled ? "Áp dụng & đóng" : "Lưu & đóng"}</button></div></Modal>
     </>
   );
 }
@@ -387,7 +388,7 @@ function DietCodePicker() {
         <option value="">— Không chọn mã chế độ ăn —</option>
         {filtered.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
       </select>
-      {selected && <p className="text-xs text-neutral-700">Đã chọn: <b className="text-[#123c36]">{selected.code}</b> — {selected.name} ({targetLabel[selected.targetGroup] ?? selected.targetGroup} · {selected.diseaseGroup})</p>}
+      {selected && <p className="text-xs text-neutral-700">Đã chọn: <b className="text-[var(--brand)]">{selected.code}</b> — {selected.name} ({targetLabel[selected.targetGroup] ?? selected.targetGroup} · {selected.diseaseGroup})</p>}
     </div>
   );
 }

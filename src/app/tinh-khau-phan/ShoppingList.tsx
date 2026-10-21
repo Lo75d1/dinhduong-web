@@ -22,9 +22,9 @@ export default function ShoppingList({ rows }: { rows: Row[] }) {
   if (!items.length) return <p className="text-sm text-neutral-600">Chưa có thực phẩm để lên danh sách đi chợ.</p>;
   const totalEdible = items.reduce((s, i) => s + i.edibleGrams, 0);
   return (
-    <div className="overflow-x-auto rounded-lg border border-[#7f948d]">
+    <div className="overflow-x-auto rounded-lg border border-[var(--control-line)]">
       <table className="w-full min-w-[560px] text-sm">
-        <thead className="bg-[#eef4f1] text-[#123c36]">
+        <thead className="bg-[var(--surface-soft)] text-[var(--brand)]">
           <tr>
             <th className="px-3 py-2 text-left">Thực phẩm</th>
             <th className="px-3 py-2 text-right">Sống sạch (ăn được)</th>
@@ -43,7 +43,7 @@ export default function ShoppingList({ rows }: { rows: Row[] }) {
           ))}
         </tbody>
         <tfoot>
-          <tr className="border-t-2 border-[#123c36] bg-[#f7faf8] font-bold">
+          <tr className="border-t-2 border-[var(--brand)] bg-[var(--surface-soft)] font-bold">
             <td className="px-3 py-2">TỔNG ({items.length} loại)</td>
             <td className="px-3 py-2 text-right tabular-nums">{fmt(totalEdible)}</td>
             <td className="px-3 py-2 text-right">—</td>

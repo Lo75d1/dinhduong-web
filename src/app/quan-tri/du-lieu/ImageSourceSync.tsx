@@ -61,24 +61,24 @@ export default function ImageSourceSync() {
   return <section className="rounded-xl border-2 border-[#73540d] bg-[#fffdf6] p-5">
     <h2 className="text-xl font-semibold">Đồng bộ ảnh từ nguồn tham khảo</h2>
     <p className="mt-1 text-sm">Quét đồng thời Viện Dinh dưỡng (VDD) và RNI, đối chiếu bằng mã nguồn. Không cần Excel, không thay đổi dữ liệu cho đến khi xác nhận.</p>
-    {progress && <div className="mt-3 rounded-lg border-2 border-[#123c36] bg-white p-3">
+    {progress && <div className="mt-3 rounded-lg border-2 border-[var(--brand)] bg-white p-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm font-semibold">
         <span>Đang ghi từng dòng một: {progress.done}/{progress.total}</span>
         <span className="font-normal text-neutral-700">đã lưu {progress.updated} · bỏ qua {progress.skipped} · lỗi {progress.failed}</span>
       </div>
-      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-[#edf4f0]"><div className="h-full bg-[#123c36] transition-[width]" style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} /></div>
+      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-[var(--surface-soft)]"><div className="h-full bg-[var(--brand)] transition-[width]" style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }} /></div>
       {progress.done < progress.total && <p className="mt-2 text-xs text-neutral-600">Đừng đóng hoặc rời tab này cho tới khi chạy xong — mỗi dòng ghi riêng nên có thể mất vài phút với danh sách lớn.</p>}
     </div>}
     <button type="button" onClick={() => void scan()} disabled={busy} className="mt-4 rounded bg-[#73540d] px-4 py-2 font-semibold text-white disabled:opacity-60">{busy ? "Đang quét VDD và RNI…" : "Quét ảnh VDD + RNI"}</button>
     {message && <p className="mt-3 rounded border bg-white p-3 text-sm">{message}</p>}
     {(vddSummary || rniSummary) && <div className="mt-4 grid gap-3 md:grid-cols-2">
-      <Summary title="Viện Dinh dưỡng" data={vddSummary} tint="bg-[#edf4f0]" />
+      <Summary title="Viện Dinh dưỡng" data={vddSummary} tint="bg-[var(--surface-soft)]" />
       <Summary title="RNI" data={rniSummary} tint="bg-[#e8f3f8]" />
     </div>}
     {(vddItems.length > 0 || rniItems.length > 0) && <>
       <div className="mt-4 grid gap-3 lg:grid-cols-2"><Preview title="Viện Dinh dưỡng" items={vddItems} image={(x) => x.imageUrl} name={(x) => x.food?.name} /><Preview title="RNI" items={rniItems} image={(x) => x.imagePreviewUrl} name={(x) => x.dish?.name} /></div>
       <label className="mt-4 block font-semibold">Lý do cập nhật hàng loạt<textarea required value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 min-h-20 w-full rounded border px-3 py-2" /></label>
-      <button type="button" onClick={() => void commit()} disabled={busy} className="mt-4 rounded bg-[#123c36] px-5 py-2.5 font-semibold text-white disabled:opacity-60">{busy && progress ? `Đang ghi… ${progress.done}/${progress.total}` : `Xác nhận cập nhật ảnh khớp (${totalMatched})`}</button>
+      <button type="button" onClick={() => void commit()} disabled={busy} className="mt-4 rounded bg-[var(--brand)] px-5 py-2.5 font-semibold text-white disabled:opacity-60">{busy && progress ? `Đang ghi… ${progress.done}/${progress.total}` : `Xác nhận cập nhật ảnh khớp (${totalMatched})`}</button>
     </>}
   </section>;
 }
