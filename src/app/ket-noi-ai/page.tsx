@@ -101,8 +101,9 @@ export default async function ConnectAiPage() {
 
       <GuestSessionPanel />
       <section className="py-8" aria-labelledby="tools-guide-title">
-        <h2 id="tools-guide-title" className="text-2xl font-semibold">Một plugin, {NUTRITION_TOOLS.length} công cụ</h2>
+        <h2 id="tools-guide-title" className="text-2xl font-semibold">{NUTRITION_TOOLS.length} công cụ khẩu phần</h2>
         <p className="mt-3 text-neutral-700">Mặc định nhận báo cáo cùng link tạm để sửa và tính lại trên web trong 30 phút, không cần đăng nhập. Cần file thì tải thêm Excel; chỉ lưu vào tài khoản khi bạn yêu cầu. Trong chat, gọi get_workflow để đọc hướng dẫn hiện tại.</p>
+        <p className="mt-3 text-neutral-700">Kết nối còn có bốn công cụ kho mẫu dành cho Admin. Thấy tên công cụ chưa có nghĩa được truy cập; cần Admin ủy quyền riêng cho đúng phiên tại <Link href="/quan-tri/ket-noi-ai" className="font-semibold underline">trang ủy quyền kho mẫu</Link>.</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">{NUTRITION_WORKFLOW.recipes.map(recipe => <article key={recipe.goal} className="border border-[var(--line)] bg-white p-4"><h3 className="font-semibold">{recipe.goal}</h3><p className="mt-2 text-sm text-neutral-700">{recipe.steps}</p></article>)}</div>
         <details className="mt-5"><summary className={`cursor-pointer font-semibold ${focus}`}>Xem từng công cụ và kết quả</summary><dl className="mt-3 space-y-4">{Object.entries(NUTRITION_WORKFLOW.toolGuide).map(([name, tool]) => <div key={name} className="border-t border-[var(--selected)] pt-3"><dt className="font-semibold">{tool.title} · <code className="text-sm">{name}</code></dt><dd className="mt-1 text-sm text-neutral-700">{tool.when}<br />Kết quả: {tool.returns}</dd></div>)}</dl></details>
       </section>

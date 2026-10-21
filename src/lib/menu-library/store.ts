@@ -10,6 +10,7 @@ import { validateOperationObject, operationId } from "@/lib/nutrition-chat/servi
 import { validateMenuLibraryDraft, draftWarnings, menuInputError } from "./validation";
 import type { MenuLibraryDraft } from "./contracts";
 import { menuListMetadata } from "./list-metadata";
+import { menuConnectionCode } from "./connection";
 
 type Tx = Prisma.TransactionClient;
 export type MenuActor = { userId: string; clientId: string | null; familyId: string | null; via: "session" | "oauth" };
@@ -24,7 +25,8 @@ export async function assertMenuActor(actor: MenuActor, write = false, tx: Tx = 
   if (actor.via === "oauth") {
     const now = new Date();
     const grant = await tx.menuLibraryGrant.findFirst({ where: { ownerId: actor.userId, clientId: actor.clientId!, familyId: actor.familyId!, revokedAt: null, expiresAt: { gt: now } }, orderBy: { createdAt: "desc" } });
-    if (!grant || write && grant.permission !== "write") deny();
+    if (!grant) deny(`Admin chưa ủy quyền kho mẫu cho phiên ${menuConnectionCode(actor.familyId!)}. Mở /quan-tri/ket-noi-ai, chọn đúng mã phiên và cấp quyền; giữ nguyên kết nối AI rồi thử lại.`);
+    if (write && grant.permission !== "write") deny(`Phiên ${menuConnectionCode(actor.familyId!)} chỉ có quyền đọc kho mẫu. Admin chọn đúng mã phiên tại /quan-tri/ket-noi-ai và cấp quyền đọc/lưu/sửa nháp; giữ nguyên kết nối AI rồi thử lại.`);
     const token = await tx.nutritionOAuthToken.findFirst({ where: { userId: actor.userId, clientId: actor.clientId!, familyId: actor.familyId!, revokedAt: null, accessExpiresAt: { gt: now }, client: { disabledAt: null, expiresAt: { gt: now }, authMethod: { not: "api_token" } } } });
     if (!token) deny("Phiên kết nối đã hết hiệu lực.");
   } else {
@@ -142,7 +144,7 @@ export async function menuDelegations(actor: MenuActor) {
   const now = new Date();
   const tokens = await prisma.nutritionOAuthToken.findMany({ where: { userId: actor.userId, rotatedAt: null, revokedAt: null, refreshExpiresAt: { gt: now }, client: { authMethod: { not: "api_token" }, disabledAt: null, expiresAt: { gt: now } } }, select: { familyId: true, clientId: true, createdAt: true, client: { select: { name: true, redirectUris: true } } }, orderBy: { createdAt: "desc" }, take: 50 });
   const grants = await prisma.menuLibraryGrant.findMany({ where: { ownerId: actor.userId, revokedAt: null, expiresAt: { gt: now } }, orderBy: { createdAt: "desc" }, take: 50, select: { id: true, familyId: true, clientId: true, permission: true, expiresAt: true, createdAt: true } });
-  return { csrf: connectionCsrf(actor.userId), connections: tokens.map(token => ({ familyId: token.familyId, clientId: token.clientId, name: token.client.name, hosts: token.client.redirectUris.map(uri => new URL(uri).hostname), createdAt: token.createdAt, grant: grants.find(grant => grant.familyId === token.familyId && grant.clientId === token.clientId) ?? null })) };
+  return { csrf: connectionCsrf(actor.userId), connections: tokens.map(token => ({ connectionCode: menuConnectionCode(token.familyId), familyId: token.familyId, clientId: token.clientId, name: token.client.name, hosts: token.client.redirectUris.map(uri => new URL(uri).hostname), createdAt: token.createdAt, grant: grants.find(grant => grant.familyId === token.familyId && grant.clientId === token.clientId) ?? null })) };
 }
 export async function changeMenuDelegation(actor: MenuActor, value: unknown, revoke = false) {
   if (actor.via !== "session") deny();
