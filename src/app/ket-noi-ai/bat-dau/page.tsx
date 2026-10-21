@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export default function StartNutritionChatPage() {
   const origin = getNutritionPublicUrl();
   const links = nutritionStartLinks(origin);
-  return <div className="mx-auto max-w-5xl space-y-8 text-[var(--brand)]">
+  return <div className="mx-auto max-w-5xl space-y-8 text-[var(--ink)]">
     <header className="border-b border-[var(--line)] pb-6">
       <p className="text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · BẮT ĐẦU HỘI THOẠI</p>
       <h1 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl"><Icon name="messages-square" className="mr-2 inline-block h-7 w-7 align-middle" />Quét QR hoặc dán link vào chat.</h1>

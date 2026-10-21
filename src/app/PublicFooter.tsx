@@ -29,9 +29,9 @@ export default function PublicFooter() {
     <footer className="border-t-2 border-[#b7c1bd] bg-white py-6 text-sm text-neutral-800">
       <div className="mx-auto grid max-w-5xl gap-5 px-5 md:grid-cols-2">
         <div>
-          <p className="font-semibold text-[var(--brand)]">Tài liệu và chính sách</p>
+          <p className="font-semibold text-[var(--ink)]">Tài liệu và chính sách</p>
           <div className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-2">
-            <Link href="/huong-dan" className="font-semibold text-[var(--brand)] hover:underline">Hướng dẫn toàn bộ hệ thống</Link>
+            <Link href="/huong-dan" className="font-semibold text-[var(--ink)] hover:underline">Hướng dẫn toàn bộ hệ thống</Link>
             <Link href="/tai-lieu-tham-khao" className="hover:underline">Tài liệu tham khảo</Link>
             <Link href="/tai-lieu-tham-khao#nhu-cau-dinh-duong" className="hover:underline">RNI &amp; Viện Dinh dưỡng</Link>
             <Link href="/chinh-sach-bao-mat" className="hover:underline">Chính sách riêng tư</Link>
@@ -40,13 +40,13 @@ export default function PublicFooter() {
           </div>
         </div>
         <div>
-          <p className="font-semibold text-[var(--brand)]">Liên hệ &amp; hỗ trợ</p>
+          <p className="font-semibold text-[var(--ink)]">Liên hệ &amp; hỗ trợ</p>
           <p className="mt-2 font-semibold">{settings.contactName}</p>
           {settings.organization && <p className="text-xs">{settings.organization}</p>}
           {settings.phone && <a className="mt-1 block hover:underline" href={"tel:" + settings.phone.replace(/\s/g, "")}>Điện thoại/Zalo: {settings.phone}</a>}
-          {settings.zaloUrl && <a className="mt-1 block font-semibold text-[var(--brand)] hover:underline" href={settings.zaloUrl} target="_blank" rel="noreferrer">Tham gia nhóm hỗ trợ Zalo</a>}
-          <Link href="/lien-he" className="mt-2 block font-semibold text-[var(--brand)] hover:underline">Gửi liên hệ qua website</Link>
-          <Link href="/khao-sat" className="mt-1 block font-semibold text-[var(--brand)] hover:underline">Khảo sát mức độ dễ dùng (SUS)</Link>
+          {settings.zaloUrl && <a className="mt-1 block font-semibold text-[var(--ink)] hover:underline" href={settings.zaloUrl} target="_blank" rel="noreferrer">Tham gia nhóm hỗ trợ Zalo</a>}
+          <Link href="/lien-he" className="mt-2 block font-semibold text-[var(--ink)] hover:underline">Gửi liên hệ qua website</Link>
+          <Link href="/khao-sat" className="mt-1 block font-semibold text-[var(--ink)] hover:underline">Khảo sát mức độ dễ dùng (SUS)</Link>
         </div>
       </div>
       <div className="mt-5 border-t border-[#e1e7e3] px-5 pt-3 text-center text-xs text-neutral-500">

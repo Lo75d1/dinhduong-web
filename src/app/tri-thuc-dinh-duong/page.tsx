@@ -185,7 +185,7 @@ export default async function KnowledgeHubPage({
 
         <aside className="space-y-4 lg:sticky lg:top-5">
           <div className="rounded-xl border-2 border-[var(--brand)] bg-white p-5">
-            <h2 className="text-xl font-semibold text-[var(--brand)]">Nguồn đang theo dõi</h2>
+            <h2 className="text-xl font-semibold text-[var(--ink)]">Nguồn đang theo dõi</h2>
             <div className="mt-3 divide-y divide-[#c8d7d0]">
               {KNOWLEDGE_SOURCES.map((source) => (
                 <a

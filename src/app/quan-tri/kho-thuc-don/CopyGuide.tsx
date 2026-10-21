@@ -17,7 +17,7 @@ export default function CopyGuide({ title, description, text, href }: { title: s
     }
   }
   return <article className="min-w-0 rounded-lg border border-[var(--line)] bg-white p-4">
-    <h3 className="text-lg font-semibold text-[var(--brand)]">{title}</h3>
+    <h3 className="text-lg font-semibold text-[var(--ink)]">{title}</h3>
     <p className="mt-2 text-sm leading-6 text-neutral-700">{description}</p>
     <div className="mt-3 flex flex-wrap items-center gap-3">
       <button type="button" onClick={() => void copy()} className="min-h-11 rounded-md bg-[var(--brand)] px-4 py-2 font-semibold text-white">Sao chép {title}</button>

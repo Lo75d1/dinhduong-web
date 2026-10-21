@@ -1,11 +1,17 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Giảm phủ xanh và làm gọn kho mẫu — 21/10/2026
+
+- Sau phản hồi ảnh VPS, đã sửa nền trắng ấm/chữ xám than/viền xám, giữ xanh cho nhận diện và hành động, thêm cam đất ở icon/nhãn. Kho mẫu bỏ nhãn đầu và hai nút lớn; trợ giúp chứa ủy quyền/tài liệu, bộ lọc mobile hai hàng. Menu/avatar và tiêu đề các màn liên quan trung tính, giữ Times.
+- Build/TypeScript/lint tệp sửa đạt;153 kho mẫu,31 giao diện chung,27 link,46 tài khoản. Chromium89 trang chủ +32 bộ tính +73 Admin +53 RootLayout/kho mẫu đạt, không lỗi JS/tràn ngang; danh sách ở khoảng463px trên390/320px. Next production HTTP cục bộ21 đạt. Fixture/API/phiên minh họa; biên bản và ảnh: `docs/design/neutral-ui-2026-10-21.md`.
+- **Bản màu trung tính chưa lên VPS.** Không đổi engine/API/quyền/migration. Bản trước `84dec6c` đã được người dùng triển khai thành công và áp migration kho mẫu; kiểm HTTPS công khai/khách tám đường đạt. Nút Thông tin mới bỏ, Caddy/tệp xác minh Google cục bộ giữ nguyên.
+
 ## Bố cục, icon và nhận diện xanh ngọc–trắng — 21/10/2026
 
 - Đã triển khai phương án người dùng chốt trên `codex/ui-navigation-refresh`/PR#9: logo bát/lá, favicon/app/maskable/ảnh chia sẻ, SVG Lucide có nhãn và minh họa Storyset có ghi công. Bảng màu dùng token chung, giữ Times; nguồn/giấy phép ở `docs/design/asset-sources.md`.
 - Trang chủ ưu tiên tìm và ba công cụ; tra cứu đưa tìm/lọc trước dữ liệu; trợ giúp một khung trắng thu gọn. Màn nhập khẩu phần dành thêm chiều rộng cho nguyên liệu, cây bữa–món gọn, mobile chuyển pane; Admin/AI đồng bộ màu/icon. Không đổi engine/API/quyền/Prisma.
 - Build/TypeScript và19 script Nutrition Chat đạt; kho mẫu153+100. Chromium:89 trang chủ,32 bộ tính (1440/768/390/320px),73 Admin (1440/390px); fixture, không lỗi JS/tràn trang. Next production HTTP cục bộ68 đạt. Lint rộng phát hiện một lỗi effect có sẵn ở Nhật ký lỗi và bảy warning cũ, đã đối chiếu HEAD; không đổi logic để né lỗi. Biên bản: `docs/design/ui-implementation-2026-10-21.md`.
-- **Chưa triển khai hoặc nghiệm thu VPS, chưa kiểm mọi trang sâu hay đo thời gian thao tác với người dùng thật.** UI không thêm migration; vẫn cần lưu ý migration Admin API của PR#8 khi triển khai nhánh này.
+- **Đã lên VPS ở commit84dec6c** theo log người dùng: build/migration kho mẫu thành công, app Healthy, health ok; kiểm trực tiếp tám đường HTTPS công khai/khách đạt. Chưa kiểm phiên Admin thật, mọi trang sâu hoặc đo thời gian thao tác. Đợt chỉnh màu tiếp theo được ghi ở mục phía trên.
 
 ## Trang chủ và điều hướng chung theo rà UI — 21/10/2026
 

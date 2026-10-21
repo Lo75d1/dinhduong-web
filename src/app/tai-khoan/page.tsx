@@ -28,7 +28,7 @@ export default async function AccountPage({
   if (!data) {
     return (
       <section className="mx-auto max-w-3xl p-6">
-        <h1 className="text-3xl font-semibold text-[var(--brand)]">
+        <h1 className="text-3xl font-semibold text-[var(--ink)]">
           Tài khoản của tôi
         </h1>
         <p role="alert" className="mt-4">

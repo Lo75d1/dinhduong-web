@@ -64,7 +64,7 @@ export default function OperationsApp({
     return (
       <main className="mx-auto max-w-xl">
         <div className={panel}>
-          <h1 className="text-2xl font-black text-[var(--brand)]">
+          <h1 className="text-2xl font-black text-[var(--ink)]">
             Vận hành suất ăn
           </h1>
           <p className="mt-3 text-rose-700">{notice || "Đang tải…"}</p>
@@ -131,7 +131,7 @@ export default function OperationsApp({
         ) : (
           <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
             <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-              <h2 className="text-lg font-semibold text-[var(--brand)]">Chỉ định chế độ ăn chưa bật</h2>
+              <h2 className="text-lg font-semibold text-[var(--ink)]">Chỉ định chế độ ăn chưa bật</h2>
             </div>
             <p className="px-5 py-4 text-sm text-neutral-600">Bệnh viện đang dùng quy trình báo suất tổng theo khoa. Quản trị viên có thể bật tính năng chỉ định theo từng người bệnh khi cần.</p>
           </section>
@@ -242,7 +242,7 @@ function ReportPanel({
   return (
     <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/20 bg-white shadow-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--brand)]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[var(--brand)]">Phiếu báo suất</h2>
+        <h2 className="text-lg font-semibold text-[var(--ink)]">Phiếu báo suất</h2>
         {currentDeptName && (
           <span className="text-sm text-neutral-500">
             {currentDeptName}
@@ -410,7 +410,7 @@ function ReportPanel({
         </form>
       )}
       <div className="border-t border-[var(--brand)]/10 px-5 py-4">
-        <h3 className="text-sm font-semibold text-[var(--brand)]">
+        <h3 className="text-sm font-semibold text-[var(--ink)]">
           Phiếu đã báo trong ngày
         </h3>
         <div className="mt-2">
@@ -551,7 +551,7 @@ function Summary({
     <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-[var(--brand)]">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
             Tổng hợp ngày {date}
           </h2>
           <p className="text-sm text-neutral-600">
@@ -655,7 +655,7 @@ function ChangeApprovals({
   return (
     <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
       <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[var(--brand)]">
+        <h2 className="text-lg font-semibold text-[var(--ink)]">
           Thay đổi chờ bếp trưởng duyệt
         </h2>
       </div>
@@ -726,7 +726,7 @@ function ConfigPanel({
   return (
     <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
       <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[var(--brand)]">Cấu hình ban đầu</h2>
+        <h2 className="text-lg font-semibold text-[var(--ink)]">Cấu hình ban đầu</h2>
       </div>
       <form
         onSubmit={async (e) => {
@@ -861,7 +861,7 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
       <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
         <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[var(--brand)]">Thực đơn đã duyệt</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Thực đơn đã duyệt</h2>
           <p className="mt-1 text-sm text-neutral-600">Chỉ đọc bản chụp từ Tính khẩu phần; không nhập món hoặc gram tại đây.</p>
         </div>
         <div className="grid gap-3 px-5 py-4">
@@ -896,7 +896,7 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
       </section>
       <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
         <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[var(--brand)]">Bảng đi chợ toàn viện</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Bảng đi chợ toàn viện</h2>
           <p className="mt-1 text-sm text-neutral-600">Sống sạch = gram/người × tổng suất các khoa. Số mua có tính tỷ lệ thải bỏ.</p>
         </div>
         <div className="grid gap-3 px-5 py-4">
@@ -922,7 +922,7 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
       <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white xl:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--brand)]">Tem dán suất ăn</h2>
+            <h2 className="text-lg font-semibold text-[var(--ink)]">Tem dán suất ăn</h2>
             <p className="mt-1 text-sm text-neutral-600">Mỗi suất đã chốt tạo một tem, chỉ gồm ngày, bữa, khoa và chế độ ăn.</p>
           </div>
           <button type="button" onClick={printLabels} disabled={!labels.length} className="rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50">
@@ -981,7 +981,7 @@ function ShiftPanel({
   return (
     <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
       <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[var(--brand)]">
+        <h2 className="text-lg font-semibold text-[var(--ink)]">
           Lịch trực và nhiệm vụ
         </h2>
       </div>
@@ -1129,7 +1129,7 @@ function KitchenPanel({
           key={s.id}
           className="rounded-xl border border-[var(--brand)]/10 bg-[#f6faf8] px-4 py-3"
         >
-          <h3 className="font-semibold text-[var(--brand)]">
+          <h3 className="font-semibold text-[var(--ink)]">
             {s.name} ·{" "}
             {new Date(s.startsAt).toLocaleTimeString("vi-VN", {
               hour: "2-digit",
@@ -1279,7 +1279,7 @@ function PublicNoteReview({
     return (
       <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
         <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[var(--brand)]">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
             Ghi chú người bệnh chờ duyệt
           </h2>
         </div>
@@ -1292,7 +1292,7 @@ function PublicNoteReview({
     <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
       <div className="flex items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-[var(--brand)]">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
             Ghi chú người bệnh chờ duyệt
           </h2>
           <p className="mt-1 text-sm text-neutral-600">
@@ -1374,7 +1374,7 @@ function ApprovedPublicNotes({ data }: { data: Row }) {
     <section className={panel}>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-black text-[var(--brand)]">
+          <h2 className="text-xl font-black text-[var(--ink)]">
             Ghi chú đã được điều dưỡng duyệt
           </h2>
           <p className="mt-1 text-sm text-neutral-600">
@@ -1469,7 +1469,7 @@ function DoctorPanel({
     <div className="grid gap-4 lg:grid-cols-[minmax(0,440px)_1fr]">
       <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
         <div className="border-b border-[var(--brand)]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[var(--brand)]">Tạo chỉ định</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Tạo chỉ định</h2>
           <p className="mt-1 text-sm text-neutral-600">
             Chỉ nhập mã người bệnh nội bộ. Không nhập họ tên, chẩn đoán, CCCD hoặc
             bệnh án.
@@ -1599,7 +1599,7 @@ function DoctorPanel({
       <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--brand)]">
+            <h2 className="text-lg font-semibold text-[var(--ink)]">
               Chỉ định đang hoạt động
             </h2>
             <p className="mt-1 text-sm text-neutral-600">

@@ -67,7 +67,7 @@ export default async function GuidePage() {
     <div className="mx-auto max-w-6xl">
       <section className="overflow-hidden rounded-2xl border-2 border-[var(--brand)] bg-gradient-to-br from-[var(--surface-soft)] via-white to-[#fff9e8] p-6 sm:p-9">
         <p className="text-xs font-semibold tracking-[.16em] text-[var(--brand)]">HƯỚNG DẪN TOÀN BỘ HỆ THỐNG</p>
-        <h1 className="mt-2 max-w-4xl text-3xl font-semibold leading-tight text-[var(--brand)] sm:text-4xl">Từ tra cứu đến lập thực đơn, phân tích và xuất báo cáo</h1>
+        <h1 className="mt-2 max-w-4xl text-3xl font-semibold leading-tight text-[var(--ink)] sm:text-4xl">Từ tra cứu đến lập thực đơn, phân tích và xuất báo cáo</h1>
         <p className="mt-4 max-w-4xl text-base leading-7 text-neutral-900">Chọn bản phù hợp với thiết bị của bạn. Bản online thuận tiện trên điện thoại và đồng bộ tài khoản; bản Excel chạy offline trên máy tính, giữ dữ liệu ngay trong file và có công cụ xuất Word, Excel, phiếu đi chợ.</p>
         <nav aria-label="Mục lục hướng dẫn" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <a href="#online" className={actionLink}>📱 Dùng bản online</a>
@@ -113,8 +113,8 @@ export default async function GuidePage() {
         <GuideCard label="BẢN ONLINE · THÊM DỮ LIỆU" title="Thêm thực phẩm và món ăn ngoài hệ thống">
           <p>Bấm <b>＋ Thêm thực phẩm và món ăn ngoài hệ thống</b>, rồi chọn cách nhập phù hợp:</p>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-lg border border-[#b8cbc1] bg-[var(--surface-soft)] p-4"><h3 className="font-semibold text-[var(--brand)]">Tạo món từ nguyên liệu</h3><p className="mt-1 text-sm leading-6">Đặt tên món và chọn bữa, sau đó thêm từng nguyên liệu cùng khối lượng vào món vừa tạo để tính dinh dưỡng.</p></div>
-            <div className="rounded-lg border border-[#b8cbc1] bg-[var(--surface-soft)] p-4"><h3 className="font-semibold text-[var(--brand)]">Nhập số liệu dinh dưỡng</h3><p className="mt-1 text-sm leading-6">Nhập thực phẩm hoặc món ăn có số liệu trên 100 g để dùng ngay trong phiếu hiện tại. Nếu muốn bổ sung vào dữ liệu dùng chung, gửi đề xuất kèm nguồn để quản trị viên kiểm duyệt.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] bg-[var(--surface-soft)] p-4"><h3 className="font-semibold text-[var(--ink)]">Tạo món từ nguyên liệu</h3><p className="mt-1 text-sm leading-6">Đặt tên món và chọn bữa, sau đó thêm từng nguyên liệu cùng khối lượng vào món vừa tạo để tính dinh dưỡng.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] bg-[var(--surface-soft)] p-4"><h3 className="font-semibold text-[var(--ink)]">Nhập số liệu dinh dưỡng</h3><p className="mt-1 text-sm leading-6">Nhập thực phẩm hoặc món ăn có số liệu trên 100 g để dùng ngay trong phiếu hiện tại. Nếu muốn bổ sung vào dữ liệu dùng chung, gửi đề xuất kèm nguồn để quản trị viên kiểm duyệt.</p></div>
             <div className="rounded-lg border border-[#d9c27f] bg-[#fffdf6] p-4"><h3 className="font-semibold text-[#73540d]">AI hỗ trợ</h3><p className="mt-1 text-sm leading-6">Dán mô tả theo bữa. AI chỉ tạo bản xem trước; bạn phải xác nhận thực phẩm khớp với cơ sở dữ liệu trước khi thêm.</p></div>
           </div>
           <pre className="overflow-x-auto rounded-lg border border-[var(--control-line)] bg-[var(--surface-soft)] p-4 text-sm whitespace-pre-wrap">Sáng: phở bò 350 g.{"\n"}Trưa: cơm 200 g, cá chép kho 80 g.{"\n"}Phụ chiều: chuối phần ăn được 100 g.</pre>
@@ -170,10 +170,10 @@ export default async function GuidePage() {
 
         <GuideCard label="EXCEL OFFLINE · CÔNG CỤ BỔ SUNG" title="Tạo dữ liệu riêng, thêm bữa và quản lý cây thực đơn">
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--brand)]">＋ Thực phẩm mới</h3><p className="mt-1 text-sm leading-6">Nhập tên và các thành phần biết chắc trên 100 g. Ô không có nguồn thì để trống; không điền số 0 thay cho thiếu dữ liệu.</p></div>
-            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--brand)]">＋ Món mới</h3><p className="mt-1 text-sm leading-6">Đặt tên món, tìm nguyên liệu, nhập gram, kiểm tra tổng kcal/P/L/G rồi lưu. Sau đó tìm lại tên món trong hộp nhập để thêm vào thực đơn.</p></div>
-            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--brand)]">＋ Thêm bữa ăn mới</h3><p className="mt-1 text-sm leading-6">Tạo các mốc riêng như “Bữa phụ 22h”. Bữa mới được thêm cuối danh sách.</p></div>
-            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--brand)]">Xóa và ẩn nguyên liệu</h3><p className="mt-1 text-sm leading-6">Chọn đúng dòng trước khi xóa. Nút Ẩn/hiện nguyên liệu chỉ đổi cách xem, không xóa nguyên liệu khỏi phép tính.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--ink)]">＋ Thực phẩm mới</h3><p className="mt-1 text-sm leading-6">Nhập tên và các thành phần biết chắc trên 100 g. Ô không có nguồn thì để trống; không điền số 0 thay cho thiếu dữ liệu.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--ink)]">＋ Món mới</h3><p className="mt-1 text-sm leading-6">Đặt tên món, tìm nguyên liệu, nhập gram, kiểm tra tổng kcal/P/L/G rồi lưu. Sau đó tìm lại tên món trong hộp nhập để thêm vào thực đơn.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--ink)]">＋ Thêm bữa ăn mới</h3><p className="mt-1 text-sm leading-6">Tạo các mốc riêng như “Bữa phụ 22h”. Bữa mới được thêm cuối danh sách.</p></div>
+            <div className="rounded-lg border border-[#b8cbc1] p-4"><h3 className="font-semibold text-[var(--ink)]">Xóa và ẩn nguyên liệu</h3><p className="mt-1 text-sm leading-6">Chọn đúng dòng trước khi xóa. Nút Ẩn/hiện nguyên liệu chỉ đổi cách xem, không xóa nguyên liệu khỏi phép tính.</p></div>
           </div>
           <Note tone="amber">Thực phẩm và món tự tạo được lưu ngay trong file Excel đang dùng. Hãy sao lưu file trước khi nhập số lượng lớn hoặc chia sẻ cho người khác.</Note>
         </GuideCard>
@@ -236,8 +236,8 @@ export default async function GuidePage() {
 
         <GuideCard label="XỬ LÝ LỖI THƯỜNG GẶP" title="Kiểm tra nhanh trước khi báo lỗi">
           <div className="grid gap-4 md:grid-cols-2">
-            <div><h3 className="font-semibold text-[var(--brand)]">Online</h3><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6"><li>Không thấy kết quả: bỏ bớt bộ lọc và thử từ khóa không dấu.</li><li>Không thêm được thực phẩm: chọn một món trong cây trước.</li><li>Kết quả trống: quay lại bước 1 và thêm ít nhất một thực phẩm có dữ liệu.</li><li>Xuất Excel lỗi: kiểm tra mạng rồi thử lại.</li></ul></div>
-            <div><h3 className="font-semibold text-[var(--brand)]">Excel offline</h3><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6"><li>Nút không chạy: đóng file, mở lại và bật macro.</li><li>Hộp công cụ không hiện: bấm nút 🧰 CÔNG CỤ trên ThucDon.</li><li>Sửa gram nhưng tổng chưa đổi: bấm Cân bằng khối lượng.</li><li>Word không xuất: kiểm tra máy đã cài Microsoft Word.</li></ul></div>
+            <div><h3 className="font-semibold text-[var(--ink)]">Online</h3><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6"><li>Không thấy kết quả: bỏ bớt bộ lọc và thử từ khóa không dấu.</li><li>Không thêm được thực phẩm: chọn một món trong cây trước.</li><li>Kết quả trống: quay lại bước 1 và thêm ít nhất một thực phẩm có dữ liệu.</li><li>Xuất Excel lỗi: kiểm tra mạng rồi thử lại.</li></ul></div>
+            <div><h3 className="font-semibold text-[var(--ink)]">Excel offline</h3><ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6"><li>Nút không chạy: đóng file, mở lại và bật macro.</li><li>Hộp công cụ không hiện: bấm nút 🧰 CÔNG CỤ trên ThucDon.</li><li>Sửa gram nhưng tổng chưa đổi: bấm Cân bằng khối lượng.</li><li>Word không xuất: kiểm tra máy đã cài Microsoft Word.</li></ul></div>
           </div>
           <div className="flex flex-wrap gap-3 pt-2">
             <Link href="/lien-he" className="rounded-md bg-[var(--brand)] px-5 py-2.5 font-semibold text-white">Gửi báo lỗi / góp ý</Link>

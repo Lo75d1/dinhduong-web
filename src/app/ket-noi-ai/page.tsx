@@ -25,7 +25,7 @@ export default async function ConnectAiPage() {
   const startLinks = nutritionStartLinks(publicUrl);
 
   return (
-    <div className="mx-auto max-w-5xl text-[var(--brand)]">
+    <div className="mx-auto max-w-5xl text-[var(--ink)]">
       <section aria-labelledby="connect-title" className="grid gap-8 border-b border-[var(--line)] pb-10 md:grid-cols-[1fr_240px] md:items-center">
         <div>
           <p className="mb-3 text-sm font-semibold tracking-wide">DINH DƯỠNG 2598 · KẾT NỐI HỘI THOẠI</p>
@@ -65,10 +65,10 @@ export default async function ConnectAiPage() {
       <section id="cai-ket-noi" aria-labelledby="setup-title" className="scroll-mt-6 rounded-xl border border-[var(--line)] bg-white p-5 sm:p-8">
         <h2 id="setup-title" className="text-2xl font-semibold">Bật kết nối lần đầu trong ứng dụng chat</h2>
         <p className="mt-3 text-neutral-700">Muốn được chỉ từng bước từ đầu: <Link href="/ket-noi-ai/bat-dau#lan-dau" className="font-semibold underline">mở hướng dẫn lần đầu</Link>. Đã bật kết nối: chat tự mở phiên tạm khi cần, không bắt bạn tạo token. Lưu và mở bản riêng mới cần đăng nhập tài khoản Dinh dưỡng 2598.</p>
-        <p className="mt-3 text-sm text-neutral-700">Nếu đăng ký tự động không hoạt động: <Link href="/tai-khoan?section=connections#ket-noi-thu-cong" className="font-semibold text-[var(--brand)] underline">tạo cấu hình OAuth thủ công trong Tài khoản</Link>. Xem và thu hồi quyền tại <Link href="/tai-khoan?section=connections" className="underline">Kết nối ứng dụng</Link>.</p>
+        <p className="mt-3 text-sm text-neutral-700">Nếu đăng ký tự động không hoạt động: <Link href="/tai-khoan?section=connections#ket-noi-thu-cong" className="font-semibold text-[var(--ink)] underline">tạo cấu hình OAuth thủ công trong Tài khoản</Link>. Xem và thu hồi quyền tại <Link href="/tai-khoan?section=connections" className="underline">Kết nối ứng dụng</Link>.</p>
         <p className="mt-3 text-sm text-neutral-700">Dùng phần mềm riêng có hỗ trợ Bearer token: <a href="#phien-tam" className="font-semibold underline">mở tùy chọn tạo token thủ công</a>. Token API cá nhân vẫn có trong Tài khoản.</p>
         <p className="mt-2 text-neutral-700">Đường dẫn công cụ dùng chung cho cả hai nền tảng:</p>
-        <code className="mt-3 block break-all rounded-lg bg-[var(--surface-soft)] p-3 text-sm text-[var(--brand)]">{resourceUrl}</code>
+        <code className="mt-3 block break-all rounded-lg bg-[var(--surface-soft)] p-3 text-sm text-[var(--ink)]">{resourceUrl}</code>
         <div className="mt-7 grid gap-8 md:grid-cols-2">
           <div>
             <h3 className="text-xl font-semibold">ChatGPT</h3>

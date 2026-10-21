@@ -88,7 +88,7 @@ export default function PersonalLibrary({ kind, items, nextPage, q, page, initia
     {busy && !editing ? <p role="status" className="text-neutral-700">Đang mở dữ liệu đã lưu…</p> : null}
     {editing ? <form ref={editor} onSubmit={event => void showPreview(event)} aria-busy={busy} className="scroll-mt-24 overflow-hidden rounded border border-[var(--control-line)] bg-white">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--line)] bg-[var(--surface-soft)] px-4 py-4 sm:px-6">
-        <div className="min-w-0"><h2 className="break-words text-xl font-semibold text-[var(--brand)]">{editing === "new" ? `Thêm ${noun} vào thư viện` : `Chỉnh sửa ${noun}`}</h2><p className="mt-1 text-sm text-neutral-700">{editing === "new" ? "Nhập thông tin → xem trước → xác nhận lưu." : `${editing.name} · Phiên bản ${editing.revision}`}</p></div>
+        <div className="min-w-0"><h2 className="break-words text-xl font-semibold text-[var(--ink)]">{editing === "new" ? `Thêm ${noun} vào thư viện` : `Chỉnh sửa ${noun}`}</h2><p className="mt-1 text-sm text-neutral-700">{editing === "new" ? "Nhập thông tin → xem trước → xác nhận lưu." : `${editing.name} · Phiên bản ${editing.revision}`}</p></div>
         <button type="button" disabled={busy} onClick={() => setEditing(null)} className={secondary}>Đóng biểu mẫu</button>
       </div>
       <div className="space-y-5 p-4 sm:p-6">

@@ -135,7 +135,7 @@ function ManualCalculator() {
         actions={<><ServerRationActions rows={rows} profile={profile} />
           <ReportActions rows={rows} profile={profile} meta={reportMeta} mode={rationMode} onMetaChange={setReportMeta} /></>}
         profile={<><div className="rounded-lg border border-[var(--brand)]/30 bg-white p-3">
-                <h3 className="mb-2 text-sm font-bold text-[var(--brand)]">Nhóm để nhận khuyến nghị</h3>
+                <h3 className="mb-2 text-sm font-bold text-[var(--ink)]">Nhóm để nhận khuyến nghị</h3>
                 <div className="grid grid-cols-3 gap-1.5">
                   {([["adult", "🧑 Người lớn"], ["child", "🧒 Trẻ em"], ["special", "🤰 Mang thai / cho bú"]] as const).map(([key, label]) => (
                     <button key={key} type="button" onClick={() => applyProfileMode(key)} aria-pressed={profileGroup(profile) === key} className={`rounded-md border px-2 py-1.5 text-center text-xs font-semibold ${profileGroup(profile) === key ? "border-[#0c5f4d] bg-[#0c5f4d] text-white" : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50"}`}>{label}</button>
@@ -144,7 +144,7 @@ function ManualCalculator() {
                 <p className="mt-1.5 text-[11px] text-neutral-500">Bấm để nhập/sửa thông tin — hệ thống tự đối chiếu khuyến nghị theo nhóm.</p>
               </div>
               <div className="rounded-lg border border-[var(--brand)]/30 bg-white p-3">
-                <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-[var(--brand)]">Hồ sơ người dùng</h3><PersonalProfile onChange={setProfile} open={profileOpen} onOpenChange={setProfileOpen} /></div>
+                <div className="mb-2 flex items-center justify-between gap-2"><h3 className="text-sm font-bold text-[var(--ink)]">Hồ sơ người dùng</h3><PersonalProfile onChange={setProfile} open={profileOpen} onOpenChange={setProfileOpen} /></div>
                 <ProfileSummary profile={profile} />
               </div>
               <DietCodeComparison totals={totals} /></>}
@@ -219,7 +219,7 @@ function MealDishOverview({ rows, meds = [] }: { rows: Row[]; meds?: MedicationR
   if (orderedMeals.length === 0) return <div className="rounded-lg border border-[#cdd9d3] bg-white p-3 text-sm text-neutral-600">Chưa có bữa ăn.</div>;
   return (
     <div className="rounded-lg border border-[#cdd9d3] bg-[#f9fdfb] p-3">
-      <h3 className="mb-2 text-sm font-bold text-[var(--brand)]">🍱 Bữa ăn · món ăn · thuốc</h3>
+      <h3 className="mb-2 text-sm font-bold text-[var(--ink)]">🍱 Bữa ăn · món ăn · thuốc</h3>
       <div className="flex flex-col gap-2">
         {orderedMeals.map((mealName) => {
           const meal = tree.find((m) => m.meal === mealName);

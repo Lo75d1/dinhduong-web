@@ -2,7 +2,9 @@
 
 Ngày: 21/10/2026. Người dùng đã chốt triển khai phương án A: xanh ngọc–trắng,
 logo bát/lá, icon Lucide và minh họa Storyset Pana. Đã triển khai trong mã nguồn
-PR#9; chưa đưa lên VPS. Chi tiết tài sản/giấy phép: `asset-sources.md`.
+PR#9; bản84dec6c đã lên VPS. Sau phản hồi quá nhiều xanh, người dùng chốt đợt
+điều chỉnh trung tính trong `neutral-ui-2026-10-21.md` (chưa lên VPS).
+Chi tiết tài sản/giấy phép: `asset-sources.md`.
 
 ## 1. Mục tiêu và quyết định đã chốt
 

@@ -28,14 +28,14 @@ export default async function Page({ params }: { params: Promise<{ token: string
     </header>
     <section aria-labelledby="menu-title" className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--brand)]/10 px-5 py-4">
-        <h2 id="menu-title" className="text-lg font-semibold text-[var(--brand)]">Các bữa trong ngày</h2>
+        <h2 id="menu-title" className="text-lg font-semibold text-[var(--ink)]">Các bữa trong ngày</h2>
         <span className="rounded-full bg-[#e1f5ee] px-3 py-1 text-xs font-medium text-[#085041]">Chỉ hiển thị thực đơn đã duyệt</span>
       </div>
       <div className="divide-y divide-[var(--brand)]/8">{mealTypes.map((meal) => {
         const menu = menuByMeal.get(meal.id);
         return <article key={meal.id} className="px-5 py-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-lg font-semibold text-[var(--brand)]">{meal.name}</h3>
+            <h3 className="text-lg font-semibold text-[var(--ink)]">{meal.name}</h3>
             <span className="text-sm text-neutral-500">Phục vụ {meal.serviceLocalTime}</span>
           </div>
           {menu ? <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{menu.items.map((item) =>

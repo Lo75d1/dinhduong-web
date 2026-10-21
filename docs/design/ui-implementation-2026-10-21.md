@@ -2,7 +2,9 @@
 
 Người dùng đã chốt phương án xanh ngọc–trắng trong kế hoạch
 `layout-icons-colors-plan.md`. Mã nguồn nằm ở PR#9, nhánh
-`codex/ui-navigation-refresh`, tiếp nối `8def63c`. Chưa triển khai VPS.
+`codex/ui-navigation-refresh`, tiếp nối `8def63c`. Cập nhật: bản84dec6c đã lên
+VPS theo log người dùng; tám kiểm tra HTTPS công khai/khách đạt. Đợt chỉnh màu
+trung tính tiếp theo ở `neutral-ui-2026-10-21.md`, chưa đưa lên VPS.
 
 ## Kết quả
 

@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f3faf8;
-  --foreground: #153a3d;
-  --ink: #153a3d;
+  --background: #f7f6f2;
+  --foreground: #272c33;
+  --ink: #272c33;
   --brand: #0f766e;
   --brand-hover: #115e59;
-  --surface-soft: #eff8f5;
-  --selected: #d9f0e9;
-  --line: #c4ddd7;
-  --control-line: #668e86;
-  --muted: #476b65;
-  --accent: #f4b183;
+  --surface-soft: #f3f3ef;
+  --selected: #e7f1ed;
+  --line: #dededa;
+  --control-line: #858a87;
+  --muted: #626a6a;
+  --accent: #b85b37;
+  --accent-soft: #faefe7;
+  --accent-ink: #92462d;
   --institution: var(--brand);
   --clinical-teal: var(--brand);
   --clinical-mint: var(--selected);
@@ -65,7 +67,7 @@ a:active {
   border-radius: 0.35rem;
   padding: 0.65rem 1rem;
   background: white;
-  color: var(--brand);
+  color: var(--ink);
   font-weight: 700;
 }
 .skip-link:focus { transform: translateY(0); }
@@ -78,14 +80,16 @@ a:active {
   gap: 0.3rem;
   border-radius: 0.35rem;
   padding: 0.5rem 0.7rem;
-  color: var(--brand);
+  color: var(--ink);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 500;
 }
-.site-nav-item:hover, .site-nav-item[aria-current="page"] { background: var(--surface-soft); }
+.site-nav-item:hover { background: var(--surface-soft); }
+.site-nav-item[aria-current="page"] { background: var(--selected); }
 .site-nav-item[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.35rem; }
-.site-nav-primary, .site-nav-primary:hover, .site-nav-primary[aria-current="page"] { background: var(--brand); color: white; }
-.site-nav-hospital { border: 1px solid #d7aa43; }
+.site-nav-primary { border: 1px solid var(--line); }
+.site-nav-primary[aria-current="page"] { border-color: var(--brand); color: var(--brand-hover); }
+.site-nav-hospital { border: 1px solid var(--line); }
 .site-menu-toggle::-webkit-details-marker { display: none; }
 .site-mobile-menu { overscroll-behavior: contain; }
 
@@ -109,7 +113,7 @@ a:active {
 .clinical-page-heading {
   position: relative;
   border: 1px solid var(--line);
-  border-left: 6px solid var(--clinical-teal);
+  border-left: 3px solid var(--accent);
   border-radius: 0.85rem;
   background: white;
   box-shadow: none;
@@ -240,21 +244,15 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid #1f6b5d;
+  outline: 2px solid var(--brand);
   outline-offset: 1px;
 }
 
-/* Toàn bộ chữ trung tính dùng màu đen để dễ đọc với font serif. */
-.text-neutral-400 {
-  color: #171717 !important;
-}
-
-.text-neutral-500 {
-  color: #171717 !important;
-}
-
+/* Secondary text remains legible while titles and values carry more weight. */
+.text-neutral-400,
+.text-neutral-500,
 .text-neutral-600 {
-  color: #171717 !important;
+  color: var(--muted) !important;
 }
 
 /* Bảng báo cáo cần đọc rõ khi đối chiếu và khi in. */
@@ -269,18 +267,18 @@ textarea:focus {
 
 table th,
 table td {
-  border: 1px solid #aeb8b4;
+  border: 1px solid #c7c9c5;
 }
 
 table th {
-  background-color: #e1ece6;
-  color: #102d28;
+  background-color: var(--surface-soft);
+  color: var(--ink);
 }
 
 .border-neutral-100,
 .border-neutral-200,
 .border-neutral-300 {
-  border-color: #aeb8b4 !important;
+  border-color: var(--line) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -468,7 +466,7 @@ body.app-fullscreen .hospital-main::before { display: none; }
 
 /* Shared task surfaces: room for data, a restrained illustration on entry pages. */
 .task-title { display: flex; align-items: center; gap: 0.6rem; color: var(--ink); }
-.task-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 0.7rem; background: var(--selected); color: var(--brand-hover); }
+.task-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 0.7rem; background: var(--accent-soft); color: var(--accent-ink); }
 .catalog-workspace > form { order: -1; }
 .catalog-workspace > header { order: -2; }
 .catalog-workspace input, .catalog-workspace select, .catalog-workspace button { min-height: 44px; }

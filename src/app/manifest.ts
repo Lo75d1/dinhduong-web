@@ -9,7 +9,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/quan-tri/phan-loai",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#f3faf8",
+    background_color: "#f7f6f2",
     theme_color: "#0f766e",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

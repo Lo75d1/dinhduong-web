@@ -80,7 +80,7 @@ export default function AccountMenuClient({
     return (
       <Link
         href="/dang-nhap"
-        className="inline-flex min-h-11 items-center rounded-md border border-[var(--brand)] bg-white px-3 py-2 text-sm font-semibold text-[var(--brand)] hover:bg-[var(--surface-soft)]"
+        className="inline-flex min-h-11 items-center rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-soft)]"
       >
         Đăng nhập
       </Link>
@@ -96,7 +96,7 @@ export default function AccountMenuClient({
         aria-label={`Tài khoản: ${user.displayName}`}
         aria-expanded={open}
         title={user.displayName}
-        className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--brand)] text-sm font-bold text-white ring-2 ring-white ring-offset-1 ring-offset-[var(--brand)]/10 hover:brightness-110"
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--ink)] text-sm font-bold text-white ring-2 ring-white ring-offset-1 ring-offset-[var(--ink)]/10 hover:brightness-110"
       >
         {initials(user.displayName)}
       </button>
@@ -105,18 +105,18 @@ export default function AccountMenuClient({
           id="account-navigation"
           className="absolute right-0 z-50 mt-2 max-h-[calc(100dvh-6rem)] w-64 max-w-[calc(100vw-2.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-[var(--line)] bg-white text-left shadow-[0_12px_32px_rgba(18,60,54,0.18)]"
         >
-          <div className="flex items-center gap-3 border-b border-[#e0e9e4] bg-[#f4f8f5] px-4 py-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-base font-bold text-white">
+          <div className="flex items-center gap-3 border-b border-[#e0e9e4] bg-[var(--surface-soft)] px-4 py-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--ink)] text-base font-bold text-white">
               {initials(user.displayName)}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold text-[var(--brand)]">
+              <span className="block truncate text-sm font-semibold text-[var(--ink)]">
                 {user.displayName}
               </span>
               <span className="block truncate text-xs text-neutral-600">
                 {user.email}
               </span>
-              <span className="mt-0.5 block text-[11px] font-semibold text-[#0c5f4d]">
+              <span className="mt-0.5 block text-[11px] font-semibold text-[var(--muted)]">
                 {roleLabel(user.role)}
               </span>
             </span>

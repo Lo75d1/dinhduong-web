@@ -18,7 +18,7 @@ export default async function NutritionAuthorizePage() {
   try { data = await nutritionConsentPageData(); }
   catch (error) {
     return <section className="mx-auto max-w-xl rounded-xl border border-[var(--control-line)] bg-white p-6">
-      <h1 className="text-2xl font-semibold text-[var(--brand)]">Chưa thể xác nhận kết nối</h1>
+      <h1 className="text-2xl font-semibold text-[var(--ink)]">Chưa thể xác nhận kết nối</h1>
       <p role="alert" className="mt-4 text-neutral-800">{error instanceof NutritionSecurityError ? error.description : "Hệ thống tạm thời chưa sẵn sàng. Vui lòng thử lại sau."}</p>
       <a href="/ket-noi-ai" className="mt-5 inline-block font-semibold text-[var(--brand)] underline">Xem hướng dẫn kết nối</a>
     </section>;
@@ -26,7 +26,7 @@ export default async function NutritionAuthorizePage() {
   const { client, interaction, user, csrf } = data;
   return <section className="mx-auto max-w-xl rounded-xl border-2 border-[var(--brand)] bg-white p-6 sm:p-8">
     <p className="text-xs font-semibold tracking-widest text-[var(--brand)]">DINH DƯỠNG 2598</p>
-    <h1 className="mt-2 text-2xl font-semibold text-[var(--brand)]">{user ? "Xác nhận quyền kết nối AI" : "Đăng nhập để kết nối AI"}</h1>
+    <h1 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{user ? "Xác nhận quyền kết nối AI" : "Đăng nhập để kết nối AI"}</h1>
     <p className="mt-3 text-neutral-800">Ứng dụng <strong>{client.name}</strong> đang yêu cầu kết nối.</p>
     <p className="mt-2 break-all text-sm text-neutral-700">Địa chỉ nhận kết nối: <strong>{new URL(interaction.redirectUri).hostname}</strong></p>
     <p className="mt-2 text-sm text-neutral-600">Tên ứng dụng là thông tin ứng dụng tự đăng ký. Hãy kiểm tra đúng ứng dụng bạn vừa mở.</p>

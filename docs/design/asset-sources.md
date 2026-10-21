@@ -1,8 +1,9 @@
 # Tài sản giao diện — 21/10/2026
 
-Bảng màu đã triển khai theo đề xuất được người dùng chốt: xanh ngọc–trắng,
-`--brand=#0F766E`, `--brand-hover=#115E59`, `--ink=#153A3D`,
-`--background=#F3FAF8`. Token chung trong `src/app/globals.css`; các lớp cũ
+Bảng màu được điều chỉnh sau phản hồi giao diện quá nhiều xanh: nền trắng ấm,
+chữ xám than, xanh ngọc cho nhận diện/thao tác và cam đất nhấn nhẹ.
+`--brand=#0F766E`, `--brand-hover=#115E59`, `--ink=#272C33`,
+`--background=#F7F6F2`, `--accent=#B85B37`. Token chung trong `src/app/globals.css`; các lớp cũ
 được chuyển sang biến trong các tệp liệt kê ở `theme-migrated-files.json`.
 Chỉ đổi các chuỗi giá trị màu trong lớp trình bày, không đổi số liệu/engine/API.
 
@@ -11,7 +12,7 @@ Chỉ đổi các chuỗi giá trị màu trong lớp trình bày, không đổi
 - Nhà cung cấp: Lucide Icons và các tác giả, gồm các phần kế thừa Feather.
 - Commit nguồn: `c29c276f16590cf017126671535ad8c792be64d8`, đối chiếu bằng Git.
 - Nguồn: https://github.com/lucide-icons/lucide/tree/c29c276f16590cf017126671535ad8c792be64d8/icons
-- Tệp sử dụng: `src/components/ui/Icon.tsx`;28 hình SVG chọn riêng, giữ hình học
+- Tệp sử dụng: `src/components/ui/Icon.tsx`;29 hình SVG chọn riêng, giữ hình học
   gốc, màu kế thừa từ CSS. Không nạp toàn bộ bộ icon hoặc icon font bên ngoài.
 - Tên nội bộ `circle-help` dùng hình `circle-question-mark.svg`; `trash-2` dùng
   `trash.svg` theo tên của commit đã chọn.
