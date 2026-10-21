@@ -2,18 +2,22 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import type { MenuLibraryDraft } from "@/lib/menu-library/contracts";
 import Icon from "@/components/ui/Icon";
+import styles from "./library.module.css";
 
-type Item = { id: string; title: string; direction: string; revision: number; updatedAt: string; url: string };
+type Item = { id: string; title: string; direction: string; revision: number; updatedAt: string; url: string; unitLabel?: string | null; dayCount?: number | null; groupCount?: number | null; mealLabels?: string[] };
 type Opened = { template: Item; content: MenuLibraryDraft; warnings: string[]; foods: { id: string; name: string; unit: string }[]; history: { revision: number; reason: string; createdAt: string }[] };
 const date = (value: string) => new Date(value).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+const shortDate = (value: string) => new Date(value).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
 const input = "min-h-11 w-full rounded-md border border-[var(--control-line)] bg-white px-3 py-2 font-normal";
 
 export function TemplatePreview({ data }: { data: Opened }) {
   const [dayId, setDayId] = useState(data.content.days[0]?.id ?? ""), [groupId, setGroupId] = useState(""), [mealId, setMealId] = useState("");
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => { heading.current?.focus(); }, []);
   const day = data.content.days.find(item => item.id === dayId);
   const meals = day?.meals.filter(meal => !mealId || meal.id === mealId) ?? [];
   return <section className="min-w-0 rounded-lg border border-[var(--line)] bg-white" aria-label="Chi tiết mẫu">
-    <header className="border-b border-[var(--line)] px-4 py-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-semibold text-[var(--ink)]">{data.content.title}</h2><span className="rounded bg-[var(--surface-soft)] px-2 py-1 text-xs font-semibold text-[var(--muted)]">BẢN NHÁP · v{data.template.revision}</span></div><p className="mt-1 text-sm">{data.content.unit?.label ?? "Cá nhân"} · {data.content.coverage === "served_meals" ? "Các bữa phục vụ" : "Cả ngày"} · {data.content.days.length} ngày · {data.content.groups.length} nhóm</p></header>
+    <header className="border-b border-[var(--line)] px-4 py-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 ref={heading} tabIndex={-1} className="text-xl font-semibold text-[var(--ink)]">{data.content.title}</h2><span className="rounded bg-[var(--surface-soft)] px-2 py-1 text-xs font-semibold text-[var(--muted)]">BẢN NHÁP · v{data.template.revision}</span></div><p className="mt-1 text-sm">{data.content.unit?.label ?? "Cá nhân"} · {data.content.coverage === "served_meals" ? "Các bữa phục vụ" : "Cả ngày"} · {data.content.days.length} ngày · {data.content.groups.length} nhóm</p></header>
     <div className="grid gap-3 border-b border-[var(--line)] bg-[var(--surface-soft)] p-3 sm:grid-cols-3">
       <label className="min-w-0 text-sm font-semibold">Ngày<select value={dayId} onChange={event => { setDayId(event.target.value); setMealId(""); }} className={input}>{data.content.days.map(item => <option key={item.id} value={item.id}>Ngày {item.dayIndex}{item.date ? ` · ${item.date}` : ""}</option>)}</select></label>
       <label className="min-w-0 text-sm font-semibold">Bữa<select value={mealId} onChange={event => setMealId(event.target.value)} className={input}><option value="">Tất cả bữa</option>{day?.meals.map(meal => <option key={meal.id} value={meal.id}>{meal.label}</option>)}</select></label>
@@ -32,35 +36,112 @@ export function TemplatePreview({ data }: { data: Opened }) {
 }
 
 export default function TemplateCatalog() {
-  const [items, setItems] = useState<Item[]>([]), [opened, setOpened] = useState<Opened | null>(null), [q, setQ] = useState(""), [direction, setDirection] = useState(""), [notice, setNotice] = useState(""), [loading, setLoading] = useState(true), [opening, setOpening] = useState(false), [next, setNext] = useState<number | null>(null);
-  const listSequence = useRef(0), openSequence = useRef(0), appliedFilter = useRef({ q: "", direction: "" });
+  const [items, setItems] = useState<Item[]>([]), [opened, setOpened] = useState<Opened | null>(null);
+  const [q, setQ] = useState(""), [direction, setDirection] = useState(""), [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(true), [opening, setOpening] = useState(false), [next, setNext] = useState<number | null>(null);
+  const [listError, setListError] = useState(""), [openError, setOpenError] = useState(""), [filtered, setFiltered] = useState(false);
+  const listSequence = useRef(0), openSequence = useRef(0);
+  const appliedFilter = useRef({ q: "", direction: "" }), requestedFilter = useRef({ q: "", direction: "" });
+  const failedLoad = useRef({ query: "", offset: 0, kind: "" }), lastOpenedId = useRef("");
+  const listScroll = useRef(0), rowButtons = useRef(new Map<string, HTMLButtonElement>()), listHeading = useRef<HTMLHeadingElement>(null);
+
   const open = useCallback(async (id: string) => {
-    const sequence = ++openSequence.current; setNotice(""); setOpened(null); setOpening(true);
-    try { const response = await fetch(`/api/admin/menu-library/templates/${encodeURIComponent(id)}`, { cache: "no-store" }); const data = await response.json(); if (sequence !== openSequence.current) return; if (!response.ok) throw new Error(data.message ?? "Chưa mở được mẫu."); setOpened(data); window.history.replaceState(null, "", `?template=${encodeURIComponent(id)}`); }
-    catch (error) { if (sequence === openSequence.current) setNotice(error instanceof Error ? error.message : "Chưa mở được mẫu."); }
-    finally { if (sequence === openSequence.current) setOpening(false); }
+    const sequence = ++openSequence.current;
+    lastOpenedId.current = id; setNotice(""); setOpenError(""); setOpened(null); setOpening(true);
+    try {
+      const response = await fetch(`/api/admin/menu-library/templates/${encodeURIComponent(id)}`, { cache: "no-store" });
+      const data = await response.json();
+      if (sequence !== openSequence.current) return;
+      if (!response.ok) throw new Error(data.message ?? "Chưa mở được mẫu.");
+      setOpened(data);
+      const url = new URL(window.location.href); url.searchParams.set("template", id);
+      window.history.replaceState(null, "", url);
+    } catch (error) {
+      if (sequence === openSequence.current) setOpenError(error instanceof Error ? error.message : "Chưa mở được mẫu.");
+    } finally { if (sequence === openSequence.current) setOpening(false); }
   }, []);
+
   const load = useCallback(async (query = "", offset = 0, kind = "") => {
-    const sequence = ++listSequence.current; setLoading(true); setNotice("");
-    try { const response = await fetch(`/api/admin/menu-library/templates?q=${encodeURIComponent(query)}&offset=${offset}&direction=${encodeURIComponent(kind)}`, { cache: "no-store" }); const data = await response.json(); if (sequence !== listSequence.current) return; if (!response.ok) throw new Error(data.message ?? "Chưa tải được kho mẫu."); appliedFilter.current = { q: query, direction: kind }; setItems(previous => offset ? [...previous, ...data.items] : data.items); setNext(data.nextOffset); }
-    catch (error) { if (sequence === listSequence.current) setNotice(error instanceof Error ? error.message : "Chưa tải được kho mẫu."); }
-    finally { if (sequence === listSequence.current) setLoading(false); }
+    const sequence = ++listSequence.current;
+    requestedFilter.current = { q: query, direction: kind };
+    failedLoad.current = { query, offset, kind };
+    setLoading(true); setListError(""); setOpenError(""); setNotice("");
+    try {
+      const response = await fetch(`/api/admin/menu-library/templates?q=${encodeURIComponent(query)}&offset=${offset}&direction=${encodeURIComponent(kind)}`, { cache: "no-store" });
+      const data = await response.json();
+      if (sequence !== listSequence.current) return;
+      if (!response.ok) throw new Error(data.message ?? "Chưa tải được kho mẫu.");
+      if (!Array.isArray(data.items)) throw new Error("Chưa đọc được danh sách mẫu.");
+      appliedFilter.current = { q: query, direction: kind }; setFiltered(!!query || !!kind);
+      setItems(previous => offset ? [...previous, ...data.items] : data.items); setNext(data.nextOffset);
+    } catch (error) {
+      if (sequence === listSequence.current) setListError(error instanceof Error ? error.message : "Chưa tải được kho mẫu.");
+    } finally { if (sequence === listSequence.current) setLoading(false); }
   }, []);
-  useEffect(() => { void Promise.resolve().then(() => { void load(); const selected = new URLSearchParams(window.location.search).get("template"); if (selected) void open(selected); }); }, [load, open]);
-  function close() { openSequence.current++; setOpened(null); setOpening(false); window.history.replaceState(null, "", window.location.pathname); }
-  function search(event: FormEvent) { event.preventDefault(); close(); void load(q, 0, direction); }
-  async function copyLink(item: Item) { try { await navigator.clipboard.writeText(item.url); setNotice("Đã sao chép liên kết mẫu."); } catch { setNotice("Chưa sao chép được. Mở mẫu rồi sao chép địa chỉ trên trình duyệt."); } }
-  return <div className="space-y-3">
-    <form onSubmit={search} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 border-b border-[var(--line)] pb-3 md:grid-cols-[minmax(0,1fr)_10rem_auto]"><label className="col-span-2 min-w-0 text-sm md:col-span-1">Tìm mẫu<input value={q} onChange={event => setQ(event.target.value)} maxLength={100} placeholder="Nhập tên thực đơn" className={input} /></label><label className="min-w-0 text-sm">Nhánh<select value={direction} onChange={event => { const kind = event.target.value; setDirection(kind); close(); void load(q, 0, kind); }} className={input}><option value="">Tất cả</option><option value="collective">Tập thể</option><option value="individual">Cá nhân</option></select></label><div className="flex items-center gap-2"><button disabled={loading} className="min-h-11 rounded-md bg-[var(--brand)] px-3 py-2 font-semibold text-white disabled:opacity-60">Tìm kiếm</button><button type="button" disabled={loading} title="Làm mới" aria-label="Làm mới" onClick={() => { void load(q, 0, direction); if (opened) void open(opened.template.id); }} className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-[var(--muted)] disabled:opacity-60"><Icon name="refresh-cw" className="h-4 w-4" /><span className="hidden md:inline">Làm mới</span></button></div></form>
-    {notice && <p role="status" className="rounded-lg border border-[#d8c992] bg-[#fff9e7] px-4 py-2">{notice}</p>}
-    {(loading || opening) && <p role="status">{opening ? "Đang mở mẫu…" : "Đang tải kho mẫu…"}</p>}
-    {opened && <><button type="button" onClick={close} className="min-h-11 py-2 font-semibold text-[var(--ink)] underline">← Danh sách mẫu</button><TemplatePreview key={`${opened.template.id}-${opened.template.revision}`} data={opened} /></>}
-    {!opened && !opening && <>
-      <section aria-label="Danh sách mẫu" className="overflow-hidden rounded-lg border border-[var(--line)] bg-white"><div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--line)] px-3 py-2 text-sm"><h2 className="flex items-center gap-2 font-semibold text-[var(--ink)]">Danh sách mẫu <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-normal text-[var(--accent-ink)]">{items.length}{next !== null ? "+" : ""}</span></h2><span className="text-xs text-[var(--muted)]">Mới nhất</span></div>
-        {!loading && !items.length && <div className="flex items-start gap-3 p-4"><span className="rounded-md bg-[var(--accent-soft)] p-2 text-[var(--accent-ink)]"><Icon name="notebook-tabs" /></span><div><h3 className="font-semibold text-[var(--ink)]">Chưa có mẫu phù hợp</h3><p className="mt-1 text-sm text-[var(--muted)]">Thêm bản nháp qua AI hoặc đổi bộ lọc.</p><a href="/quan-tri/ket-noi-ai" className="mt-2 inline-flex min-h-11 items-center text-sm underline underline-offset-4">Mở ủy quyền AI →</a></div></div>}
-        <ul className="divide-y divide-[var(--line)]">{items.map(item => <li key={item.id} className="grid min-w-0 grid-cols-2 items-center gap-x-4 gap-y-1 px-4 py-2 hover:bg-[var(--surface-soft)] sm:grid-cols-[minmax(0,1fr)_6rem_11rem_auto]"><button type="button" onClick={() => void open(item.id)} className="col-span-2 min-h-11 min-w-0 break-words sm:col-span-1 py-2 text-left font-semibold text-[var(--ink)] underline-offset-4 hover:underline">{item.title}</button><span className="text-sm">{item.direction === "collective" ? "Tập thể" : "Cá nhân"}<span className="block text-xs text-[var(--muted)]">Nháp v{item.revision}</span></span><time className="text-sm text-neutral-600" dateTime={item.updatedAt}>{date(item.updatedAt)}</time><div className="col-span-2 flex gap-2 sm:col-span-1"><button type="button" onClick={() => void open(item.id)} aria-label={`Xem mẫu ${item.title}`} className="min-h-11 rounded-md border border-[var(--control-line)] px-3 py-2 text-sm font-semibold">Xem</button><button type="button" onClick={() => void copyLink(item)} aria-label={`Sao chép liên kết ${item.title}`} className="min-h-11 px-2 py-2 text-sm underline">Chép link</button></div></li>)}</ul>
-      </section>
-      {next !== null && <button type="button" disabled={loading} onClick={() => void load(appliedFilter.current.q, next, appliedFilter.current.direction)} className="min-h-11 rounded-lg border border-[var(--control-line)] px-5 py-2">Xem thêm mẫu</button>}
+
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      void load();
+      const selected = new URLSearchParams(window.location.search).get("template");
+      if (selected) void open(selected);
+    });
+  }, [load, open]);
+
+  useEffect(() => {
+    const query = q.trim();
+    if (query === requestedFilter.current.q && direction === requestedFilter.current.direction) return;
+    const timer = window.setTimeout(() => { void load(query, 0, direction); }, 250);
+    return () => window.clearTimeout(timer);
+  }, [q, direction, load]);
+
+  function close() {
+    openSequence.current++; setOpened(null); setOpening(false); setOpenError("");
+    const url = new URL(window.location.href); url.searchParams.delete("template"); window.history.replaceState(null, "", url);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, listScroll.current);
+      (rowButtons.current.get(lastOpenedId.current) ?? listHeading.current)?.focus({ preventScroll: true });
+    });
+  }
+  function choose(id: string) { listScroll.current = window.scrollY; void open(id); }
+  function search(event: FormEvent) { event.preventDefault(); void load(q.trim(), 0, direction); }
+  function resetFilters() { setQ(""); setDirection(""); void load(); }
+  async function copyLink(item: Item) {
+    try { await navigator.clipboard.writeText(item.url); setNotice("Đã sao chép liên kết mẫu."); }
+    catch { setNotice("Chưa sao chép được. Sao chép địa chỉ trên trình duyệt để chia sẻ mẫu."); }
+  }
+  const showingDetail = !!opened || opening;
+  return <div>
+    <form onSubmit={search} className={styles.toolbar} hidden={showingDetail} role="search" aria-label="Tìm trong kho mẫu">
+      <div className={styles.search}><label htmlFor="menu-library-search" className="sr-only">Tìm mẫu</label><input id="menu-library-search" type="search" value={q} onChange={event => setQ(event.target.value)} maxLength={100} placeholder="Tìm mẫu, đơn vị…" /><button disabled={loading} aria-label="Tìm kiếm" title="Tìm kiếm"><Icon name="search" className="h-[18px] w-[18px]" /></button></div>
+      <label className={styles.branch}><span className="sr-only">Nhánh</span><select value={direction} onChange={event => { const kind = event.target.value; setDirection(kind); void load(q.trim(), 0, kind); }}><option value="">Tất cả</option><option value="collective">Tập thể</option><option value="individual">Cá nhân</option></select></label>
+      <button type="button" disabled={loading} title="Làm mới" aria-label="Làm mới" onClick={() => void load(q.trim(), 0, direction)} className={styles.refresh}><Icon name="refresh-cw" className="h-4 w-4" /><span>Làm mới</span></button>
+    </form>
+    {notice && <p role="status" className={styles.notice}>{notice}</p>}
+    {openError && <div role="alert" className={styles.error}><p>{openError}</p><button type="button" onClick={() => void open(lastOpenedId.current)}>Thử mở lại mẫu</button></div>}
+    {opening && <div><button type="button" onClick={close} className={styles.back}>← Danh sách mẫu</button><p role="status" className={styles.notice}>Đang mở mẫu…</p></div>}
+    {opened && <>
+      <div className={styles.detailActions}><button type="button" onClick={close} className={styles.back}>← Danh sách mẫu</button><button type="button" className={styles.copy} aria-label={`Sao chép liên kết ${opened.template.title}`} onClick={() => void copyLink(opened.template)}><Icon name="copy" className="h-4 w-4" />Chép liên kết</button></div>
+      <TemplatePreview key={`${opened.template.id}-${opened.template.revision}`} data={opened} />
     </>}
+    <section aria-label="Danh sách mẫu" className={styles.catalog} hidden={showingDetail} aria-busy={loading}>
+      <div className={styles.listHeader}><h2 ref={listHeading} tabIndex={-1}>Danh sách mẫu <span>{loading && !items.length ? "—" : `${items.length}${next !== null ? "+" : ""}`}</span></h2><span>Mới nhất</span></div>
+      {listError && <div role="alert" className={styles.error}><p>{listError}</p>{!!items.length && <p>Danh sách dưới đây là lần tải thành công gần nhất.</p>}<button type="button" onClick={() => { const args = failedLoad.current; void load(args.query, args.offset, args.kind); }}>Thử tải lại</button></div>}
+      {loading && <p role="status" className={styles.notice}>{items.length ? "Đang cập nhật danh sách…" : "Đang tải kho mẫu…"}</p>}
+      <div className={styles.columns} aria-hidden="true"><span>Mẫu thực đơn / Đơn vị</span><span>Ngày · Nhóm</span><span>Bữa phục vụ</span><span>Cập nhật</span><span /></div>
+      {loading && !items.length && <div aria-hidden="true">{[0, 1, 2].map(index => <div key={index} className={styles.skeleton}><span /><span /></div>)}</div>}
+      {!loading && !listError && !items.length && <div className={styles.empty}>
+        <h3>{filtered ? "Chưa có mẫu phù hợp" : "Kho mẫu đang trống"}</h3>
+        <p>{filtered ? "Thử tên khác hoặc bỏ bộ lọc hiện tại." : "Bắt đầu bằng bản nháp cho đơn vị hoặc người ăn của bạn."}</p>
+        {filtered ? <button type="button" onClick={resetFilters}>Xóa bộ lọc</button> : <a href="/quan-tri/ket-noi-ai">Ủy quyền AI thêm mẫu →</a>}
+      </div>}
+      <ul>{items.map(item => <li key={item.id} className={styles.row}>
+        <div className={styles.identity}><button ref={node => { if (node) rowButtons.current.set(item.id, node); else rowButtons.current.delete(item.id); }} type="button" onClick={() => choose(item.id)}>{item.title}</button><span>{item.direction === "individual" ? "Cá nhân" : `${item.unitLabel ?? "Chưa có tên đơn vị"} · Tập thể`}</span></div>
+        <span className={styles.size}>{item.dayCount ?? "—"} ngày · {item.groupCount ?? "—"} nhóm</span>
+        <span className={styles.mealLabels}>{item.mealLabels?.length ? item.mealLabels.join(" · ") : item.dayCount == null ? "—" : "Chưa có bữa"}</span>
+        <span className={styles.revision}><span className={styles.draft}>Nháp v{item.revision}</span><time dateTime={item.updatedAt} title={date(item.updatedAt)}>{shortDate(item.updatedAt)}</time></span>
+        <button type="button" onClick={() => choose(item.id)} aria-label={`Xem mẫu ${item.title}`} className={styles.open}>Xem <Icon name="arrow-right" className="h-4 w-4" /></button>
+      </li>)}</ul>
+      {next !== null && <button type="button" disabled={loading} onClick={() => void load(appliedFilter.current.q, next, appliedFilter.current.direction)} className={styles.more}>Xem thêm mẫu</button>}
+    </section>
   </div>;
 }

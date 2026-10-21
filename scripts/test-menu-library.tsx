@@ -8,7 +8,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { LIBRARY_VERSION, MEAL_REFERENCE_RULES, REFERENCE_SOURCES, menuLibraryCatalog } from "../src/lib/menu-library/catalog";
 import { PRIMARY_SCHOOL_DRAFT } from "../src/lib/menu-library/contracts";
 import { menuAiGuide, implementationAiGuide } from "../src/lib/menu-library/guide";
-import LibraryWorkspace from "../src/app/quan-tri/kho-thuc-don/LibraryWorkspace";
 import GuidanceArticle from "../src/app/quan-tri/kho-thuc-don/GuidanceArticle";
 import type { GET as CatalogGet } from "../src/app/api/admin/menu-library/route";
 import type { GET as GuideGet } from "../src/app/api/admin/menu-library/guide/route";
@@ -42,7 +41,6 @@ async function main() {
   for (const phrase of ["không tự thừa hưởng", "save_admin_menu_template", "20,6 kg", "1,25 kg", "prepare_menu", "calculate_menu", "sourceVersion", "khác MenuInput", "null", "tối đa ba câu"]) check(guide.includes(phrase), `AI guidance: ${phrase}`);
   check(implementationAiGuide().includes("docs/menu-library/implementation.md"), "Copyable developer handoff points to maintained implementation instructions");
   const html = renderToStaticMarkup(<GuidanceArticle />);
-  check(!renderToStaticMarkup(<LibraryWorkspace />).includes("id=\"nguon-"), "The catalog landing page does not dump the guidance article");
   for (const source of REFERENCE_SOURCES) check(html.includes(`id="nguon-${source.id}"`) && html.includes(`href="#nguon-${source.id}"`), "Reference citations resolve inside page");
   check(html.includes("Chờ xác minh bản gốc") && html.includes("chưa được mở") && html.includes("Sao chép hướng dẫn AI lập thực đơn"), "Admin sees source status and honest capability boundary");
 
@@ -56,6 +54,8 @@ async function main() {
       plugins: [{ name: "session-fixture", setup(builder) {
         builder.onResolve({ filter: /^(?:@\/lib\/auth|fixture-session)$/ }, () => ({ path: "fixture-session", namespace: "fixture" }));
         builder.onLoad({ filter: /.*/, namespace: "fixture" }, () => ({ contents: `let role=null; export function setRole(value){role=value;} export async function getSessionUser(){if(role==="ERROR")throw new Error("private database detail");return role ? {role} : null;}` }));
+        builder.onResolve({ filter: /\.module\.css$/ }, () => ({ path: "module-css", namespace: "css-fixture" }));
+        builder.onLoad({ filter: /.*/, namespace: "css-fixture" }, () => ({ contents: "export default {}" }));
         builder.onResolve({ filter: /^server-only$/ }, () => ({ path: "empty", namespace: "empty" }));
         builder.onLoad({ filter: /.*/, namespace: "empty" }, () => ({ contents: "export {}" }));
         builder.onResolve({ filter: /^next\/navigation$/ }, () => ({ path: "navigation", namespace: "navigation" }));
@@ -78,6 +78,7 @@ async function main() {
       } else {
         const pageHtml = renderToStaticMarkup(await api.page());
         check(pageHtml.includes("data-menu-library") === (role === "ADMIN"), "Only Admin page renders workspace or AI instructions");
+        if (role === "ADMIN") check(!pageHtml.includes('id="nguon-'), "The catalog landing page does not dump the guidance article");
         if (role !== "ADMIN") check(!pageHtml.includes("3958") && !pageHtml.includes("day-1-lunch"), "Denied page does not serialize private content");
       }
     }

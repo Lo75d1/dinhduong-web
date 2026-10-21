@@ -24,7 +24,8 @@
     "test:menu-library": "node --import tsx scripts/test-menu-library.tsx",
     "test:menu-library-write": "node --import tsx scripts/test-menu-library-write.ts",
     "package:nutrition-chat": "node scripts/package-nutrition-chat-plugin.mjs",
-    "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts"
+    "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts",
+    "preview:menu-library": "node scripts/build-menu-library-comparison.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

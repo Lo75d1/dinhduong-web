@@ -59,6 +59,12 @@ function whereSql(where: Where | undefined, parameters: unknown[]): string {
     if (key === "tokens") return `EXISTS (SELECT 1 FROM nutrition_oauth_tokens WHERE "clientId" = nutrition_oauth_clients.id AND ${whereSql((value as {some:Where}).some, parameters)})`;
     if (value === null) return `${column} IS NULL`;
     if (typeof value === "object" && !(value instanceof Date) && !Array.isArray(value)) {
+      const filter = value as Row;
+      if (Array.isArray(filter.path) && typeof filter.string_contains === "string") {
+        const jsonText = `(${column} #>> ${bind(filter.path)}::text[])`;
+        const pattern = '%' + filter.string_contains.replace(/[\\%_]/g, '\\$&') + '%';
+        return `${jsonText} ${filter.mode === "insensitive" ? "ILIKE" : "LIKE"} ${bind(pattern)}`;
+      }
       return Object.entries(value as Row).map(([operator, operand]) => {
         if (operator === "mode") return "TRUE";
         if (operator === "contains") return `${column} ILIKE ${bind('%' + String(operand).replace(/[\\%_]/g, '\\$&') + '%')}`;

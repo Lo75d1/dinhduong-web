@@ -480,3 +480,18 @@ body.app-fullscreen .hospital-main::before { display: none; }
   .site-nav-item { padding-inline: 0.45rem; font-size: 0.875rem; gap: 0.25rem; }
   .site-nav-item svg { display: none; }
 }
+
+/* The library uses a compact task header; all public destinations stay in Menu. */
+@media (max-width:1023px) {
+  .site-header:has(.site-nav-compact) > div { gap: 8px; padding: 10px 16px; }
+  .hospital-main:has([data-menu-library]) { padding-inline: 16px; }
+}
+
+.hospital-main:has([data-menu-library]) { background: white; }
+
+@media (max-width:359px) {
+  .site-header:has(.site-nav-compact) > div { column-gap: 4px; flex-wrap: nowrap; }
+  .site-header:has(.site-nav-compact) > div > a { gap: 4px; }
+  .site-header:has(.site-nav-compact) > div > a > span { min-width: 0; padding-left: 6px; }
+  .site-header:has(.site-nav-compact) > div > a > span > span:first-child { font-size: 13px; letter-spacing: 0; }
+}

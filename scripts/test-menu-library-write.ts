@@ -95,6 +95,13 @@ async function main() {
     check(opened.history.length === 2 && opened.content.days[0].meals[0].groupPortions[0].headcount === null, "Immutable revisions and null counts survive database roundtrip");
     check(opened.foods[0].name === "Gạo kiểm thử", "Canonical food names accompany previews");
     check((await app.listMenuTemplates(actor, "' OR 1=1 --")).items.length === 0, "Parameterized literal search");
+    const metadata = (await app.listMenuTemplates(actor, "Tiểu học" )).items[0];
+    check(metadata.unitLabel === original.unit!.label && metadata.dayCount === 1 && metadata.groupCount === 3, "Catalog projects the real unit, days and groups");
+    check(metadata.mealLabels.join("|") === "Trưa|Xế", "Meal labels reflect the stored draft");
+    check(!("document" in metadata) && !("content" in metadata), "Catalog does not serialize the full document");
+    check((await app.listMenuTemplates(actor, "TRƯỜNG MINH HỌA")).items.some(item => item.id === original.id), "Unit name search is case-insensitive at the database");
+    check((await app.listMenuTemplates(actor, "  Trường minh họa  ")).items.length === 1, "Search trims outside spaces");
+
     // Filter before pagination so later pages cannot mix directions or miss matches.
     for (let i = 0; i < 24; i++) await app.fixtureQuery('INSERT INTO menu_library_templates(id,title,direction,document,"createdBy","requestKey","contentHash","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)', [`filter-${i}`, "Bộ lọc kiểm thử", i < 22 ? "collective" : "individual", JSON.stringify(original), actor.userId, `filter-${i}`, "fixture"]);
     const filtered = await app.listMenuTemplates(actor, "Bộ lọc", 0, "collective");
@@ -103,6 +110,10 @@ async function main() {
     check(secondPage.items.length === 2 && secondPage.nextOffset === null && secondPage.items.every(item => !filtered.items.some(first => first.id === item.id)), "Filtered next page has no overlap");
     check((await app.listMenuTemplates(actor, "Bộ lọc", 0, "individual")).items.length === 2, "Individual filter excludes collective drafts");
     await status(await app.templates.GET(req("templates?direction=unknown")), 400);
+    const unitsFirst = await app.listMenuTemplates(actor, "TRƯỜNG MINH HỌA", 0, "collective");
+    check(unitsFirst.items.length === 20 && unitsFirst.nextOffset === 20, "Unit search also paginates on the server");
+    const unitsSecond = await app.listMenuTemplates(actor, "TRƯỜNG MINH HỌA", unitsFirst.nextOffset!, "collective");
+    check(unitsSecond.items.length === 3 && unitsSecond.items.every(item => item.direction === "collective" && !unitsFirst.items.some(first => first.id === item.id)), "Unit search keeps direction and distinct rows on the next page");
     await app.fixtureQuery("DELETE FROM menu_library_templates WHERE id LIKE 'filter-%'");
 
     check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM menu_library_versions'))[0].n === 2, "No duplicate version on retries");

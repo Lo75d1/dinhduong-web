@@ -9,6 +9,7 @@ import { getNutritionIdentity, enforceNutritionRateLimit } from "@/lib/nutrition
 import { validateOperationObject, operationId } from "@/lib/nutrition-chat/service";
 import { validateMenuLibraryDraft, draftWarnings, menuInputError } from "./validation";
 import type { MenuLibraryDraft } from "./contracts";
+import { menuListMetadata } from "./list-metadata";
 
 type Tx = Prisma.TransactionClient;
 export type MenuActor = { userId: string; clientId: string | null; familyId: string | null; via: "session" | "oauth" };
@@ -67,8 +68,17 @@ const summarySelect = { id: true, title: true, direction: true, revision: true, 
 export async function listMenuTemplates(actor: MenuActor, q = "", offset = 0, direction = "") {
   await assertMenuActor(actor);
   if (!["", "individual", "collective"].includes(direction) || q.length > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) menuInputError("Bộ lọc không hợp lệ.", "query");
-  const rows = await prisma.menuLibraryTemplate.findMany({ where: { ...(q ? { title: { contains: q, mode: "insensitive" as const } } : {}), ...(direction ? { direction } : {}) }, orderBy: [{ updatedAt: "desc" }, { id: "asc" }], skip: offset, take: 21, select: summarySelect });
-  return { items: rows.slice(0, 20).map(summary), nextOffset: rows.length > 20 ? offset + 20 : null, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}) };
+  q = q.trim();
+  // Search and direction both run before pagination. At most one page plus lookahead
+  // is read; only the small metadata projection leaves this server function.
+  const rows = await prisma.menuLibraryTemplate.findMany({ where: {
+    ...(q ? { OR: [
+      { title: { contains: q, mode: "insensitive" as const } },
+      { document: { path: ["unit", "label"], string_contains: q, mode: "insensitive" as const } },
+    ] } : {}),
+    ...(direction ? { direction } : {}),
+  }, orderBy: [{ updatedAt: "desc" }, { id: "asc" }], skip: offset, take: 21, select: { ...summarySelect, document: true } });
+  return { items: rows.slice(0, 20).map(row => ({ ...summary(row), ...menuListMetadata(row.document) })), nextOffset: rows.length > 20 ? offset + 20 : null, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}) };
 }
 export async function getMenuTemplate(actor: MenuActor, id: string) {
   await assertMenuActor(actor); operationId(id, "id");
