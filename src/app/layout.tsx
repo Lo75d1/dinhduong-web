@@ -5,6 +5,7 @@ import "./globals.css";
 import PublicFooter from "./PublicFooter";
 import VisitTracker from "./VisitTracker";
 import AccountMenu from "./AccountMenu";
+import SiteNavigation from "./SiteNavigation";
 
 const siteTitle = "Dinh dưỡng 2598 | Tra cứu & phân tích khẩu phần";
 const siteDescription =
@@ -61,9 +62,10 @@ export default function RootLayout({
             }).replace(/</g, "\\u003c"),
           }}
         />
+        <a href="#main-content" className="skip-link">Đến nội dung chính</a>
         <VisitTracker />
-        <header className="site-header border-b-4 border-[#123c36] bg-white shadow-[0_5px_20px_rgba(18,60,54,0.08)]">
-          <nav className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 px-5 py-2 sm:gap-x-5">
+        <header className="site-header border-b border-[#b7ccc0] bg-white">
+          <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
             <Link
               href="/"
               className="order-1 flex min-w-0 items-center gap-2 leading-tight sm:min-w-52 sm:gap-3"
@@ -73,11 +75,11 @@ export default function RootLayout({
                 alt="Biểu trưng Dinh dưỡng 2598"
                 width={40}
                 height={40}
-                className="h-10 w-10 rounded-full border border-[#8fa99e] bg-white object-cover"
+                className="h-8 w-8 shrink-0 rounded-full sm:h-10 sm:w-10 border border-[#8fa99e] bg-white object-cover"
                 priority
               />
               <span className="border-l-4 border-[#123c36] pl-3">
-                <span className="block text-base font-semibold tracking-wide text-[#123c36]">
+                <span className="block text-[14px] font-semibold tracking-wide sm:text-base text-[#123c36]">
                   DINH DƯỠNG 2598
                 </span>
                 <span className="hidden text-[11px] tracking-wide text-neutral-700 sm:block">
@@ -85,55 +87,15 @@ export default function RootLayout({
                 </span>
               </span>
             </Link>
-            <div className="site-nav-links order-3 flex w-full flex-wrap items-center gap-2 text-sm font-semibold sm:order-2 sm:w-auto">
-              <Link
-                href="/thuc-pham"
-                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
-              >
-                Tra cứu
-              </Link>
-              <Link
-                href="/mon-an"
-                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
-              >
-                Món ăn
-              </Link>
-              <Link
-                href="/huong-dan"
-                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
-              >
-                Hướng dẫn
-              </Link>
-              <Link
-                href="/tinh-khau-phan"
-                className="rounded-md bg-[#123c36] px-4 py-1.5 text-white"
-              >
-                Tính khẩu phần
-              </Link>
-              <a
-                href="https://suatanbv.io.vn/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Mở Suất ăn bệnh viện tại suatanbv.io.vn (tab mới)"
-                className="rounded-md border-2 border-[#d7aa43] bg-[#f4cd70] px-4 py-1.5 font-bold text-[#123c36] transition-colors hover:bg-[#ffe3a1] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#123c36]"
-              >
-                Suất ăn bệnh viện <span aria-hidden="true">↗</span>
-              </a>
-              <Link
-                href="/ket-noi-ai/bat-dau"
-                className="rounded-md border border-[#8fa99e] px-3 py-1.5 text-[#123c36]"
-              >
-                ChatGPT &amp; Claude
-              </Link>
-            </div>
+            <SiteNavigation />
             {/* Chỗ để trang tự chèn thanh riêng (vd bước 1/2 của Tính khẩu phần) — ẩn khi rỗng. */}
             <div id="header-page-slot" className="header-page-slot order-3 flex w-full min-w-0 justify-center sm:order-2 sm:w-auto sm:flex-1"></div>
-            <div className="order-2 ml-auto sm:order-3">
+            <div className="order-2 ml-auto lg:order-4">
               <AccountMenu />
             </div>
-          </nav>
+          </div>
         </header>
-        <main className="hospital-main mx-auto w-full max-w-7xl flex-1 px-5 py-8">
+        <main id="main-content" tabIndex={-1} className="hospital-main mx-auto w-full max-w-7xl flex-1 px-5 py-8">
           {children}
         </main>
         <PublicFooter />

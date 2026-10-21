@@ -41,6 +41,48 @@ a:active {
   transform: translateY(1px);
 }
 
+/* Shared navigation and keyboard access. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid #146752;
+  outline-offset: 3px;
+}
+:where(button, a, summary) { touch-action: manipulation; }
+:where(h1, h2, h3) { text-wrap: balance; }
+:where(td, dd, time) { font-variant-numeric: tabular-nums; }
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 1rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  border: 2px solid #123c36;
+  border-radius: 0.35rem;
+  padding: 0.65rem 1rem;
+  background: white;
+  color: #123c36;
+  font-weight: 700;
+}
+.skip-link:focus { transform: translateY(0); }
+.site-nav-item {
+  display: inline-flex;
+  min-height: 44px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.7rem;
+  color: #123c36;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.site-nav-item:hover, .site-nav-item[aria-current="page"] { background: #edf4f0; }
+.site-nav-item[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.35rem; }
+.site-nav-primary, .site-nav-primary:hover, .site-nav-primary[aria-current="page"] { background: #123c36; color: white; }
+.site-nav-hospital { border: 1px solid #d7aa43; }
+.site-menu-toggle::-webkit-details-marker { display: none; }
+.site-mobile-menu { overscroll-behavior: contain; }
+
 .hospital-main {
   position: relative;
 }

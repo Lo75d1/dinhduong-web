@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Trang chủ và điều hướng chung theo rà UI — 21/10/2026
+
+- Nhánh `codex/ui-navigation-refresh` dựa trên Admin `f365a88`. Đã đọc Frontend Design (Anthropic), Web Design Guidelines (Vercel), W3C Reflow/Labels; hướng thiết kế và kết quả trong `docs/design/ui-review-2026-10-21.md`.
+- Trang chủ đưa tra thực phẩm lên đầu, các lối vào bộ tính/món ăn/AI rõ; gom nguồn/hỗ trợ/cảm ơn trong khung trắng thu gọn. Dữ liệu số lượng/cấu hình vẫn từ máy chủ, dùng ảnh hiện có. Menu di động thu gọn, chỉ báo trang hiện tại, skip link/main, focus và vùng chạm; menu tài khoản hỗ trợ focus/Escape/Tab ra ngoài. Giữ slot điều hướng bộ tính.
+- TypeScript/lint/build đạt; Chromium58 kiểm tra1440/390/320px với component thật và fixture dữ liệu/pathname/phiên/QR, không lỗi JS. Đã xem ảnh và sửa lỗi hero che ô nhập/avatar xuống dòng ở320px. Hồi quy31 bộ tính chung,46 tài khoản,125 hướng dẫn,153 kho mẫu đạt; Admin browser73 sau CSS chung đạt. Next production cục bộ15 kiểm tra khách/SSR đạt. **Chưa triển khai hoặc nghiệm thu VPS; chưa rà mọi màn hình sâu.**
+
 ## Admin gọn và rộng hơn — 21/10/2026
 
 - Tổng quan có ba nhóm hàng thao tác mở trực tiếp, thanh lọc nhóm và một thanh trắng “Trợ giúp & hướng dẫn” thu gọn; vùng làm việc tối đa1600px. Cấp quyền AI đưa form lên đầu, bỏ ba thẻ hướng dẫn lớn.
