@@ -1,5 +1,12 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Bản nền kho mẫu thực đơn nội bộ — 21/10/2026
+
+- Nhánh `codex/menu-library-foundation`, dựa trên `436682b` của `codex/unify-calculator-interface`: thêm `/quan-tri/kho-thuc-don`, mục lục, phân loại cá nhân/tập thể, căn cứ có phiên bản và tỷ lệ bữa tham khảo. Lối vào chỉ hiện trong AdminPortal sau khi xác nhận role ADMIN.
+- Có hai nút sao chép đầy đủ hướng dẫn: AI lập thực đơn và AI triển khai tiếp. JSON `/api/admin/menu-library`, TXT `/api/admin/menu-library/guide` và `?mode=implementation` đều kiểm tra phiên Admin riêng, private/no-store/noindex. Nguồn RNI 2026 và mầm non thí điểm chờ đối chiếu bản gốc, không cấp trị số.
+- Mới có danh mục tĩnh và hợp đồng nháp; chưa lưu mẫu, tính nhiều nhóm hoặc xuất đi chợ tập thể. Không sửa bộ tính cá nhân, Food/Dish, Prisma schema hay migration. Bàn giao: `docs/menu-library/implementation.md`.
+- Kiểm tra cục bộ: 151 kiểm tra nguồn/cấu trúc/quyền bằng session fixture; TypeScript, ESLint các tệp mới và build đạt; hồi quy hướng dẫn AI125 và giao diện bộ tính31 đạt. Chromium thật:17 kiểm tra desktop1440/mobile390, mục lục/trích dẫn, sao chép, TXT và fallback; giao diện dùng fixture nội dung, không phải phiên Admin trên VPS. Next production cục bộ:3 API trả401, trang307 về đăng nhập, no-store và không lộ danh mục. **Chưa triển khai hoặc nghiệm thu VPS.**
+
 ## Giao diện Tính khẩu phần dùng chung đã lên VPS — 17/10/2026
 
 - Theo yêu cầu trực tiếp của chủ dự án, app **64a42a9** từ PR#5 (`codex/unify-calculator-interface`, dựa trên a572085) đã build Linux và healthy trên VPS. Bản một ngày nhập tay/từ chat/bản lưu dùng chung bố cục, hồ sơ và thẻ tổng; nhiều ngày giữ giao diện hiện có. Không merge main hoặc nhánh API.

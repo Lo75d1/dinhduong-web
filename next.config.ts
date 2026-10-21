@@ -9,7 +9,14 @@ const nextConfig: NextConfig = {
       { key: "X-Frame-Options", value: "DENY" },
       { key: "Cache-Control", value: "no-store" },
       { key: "Referrer-Policy", value: "no-referrer" },
-    ] }];
+    ] }, {
+      source: "/quan-tri/kho-thuc-don/:path*",
+      headers: [
+        { key: "Cache-Control", value: "private, no-store, max-age=0" },
+        { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        { key: "Referrer-Policy", value: "no-referrer" },
+      ],
+    }];
   },
 };
 
