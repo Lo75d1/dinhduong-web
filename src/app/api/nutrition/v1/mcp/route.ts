@@ -8,6 +8,7 @@ import {nutritionMcpOutput} from "@/lib/nutrition-chat/mcp-output";
 import {nutritionSkillCatalog} from "@/lib/nutrition-chat/skill-catalog";
 import {startGuestSession} from "@/lib/nutrition-chat/guest-session";
 import {GUEST_TOOL_NAMES,nutritionErrorGuidance,nutritionResponseGuidance} from "@/lib/nutrition-chat/response-guidance";
+import {discoverAdminMenuTools,isAdminMenuTool,executeAdminMenuTool} from "@/lib/menu-library/ai-tools";
 const skillMethods=["skills/list","skills/get","resources/list","resources/read"];
 const capabilities={tools:{listChanged:false},resources:{listChanged:false},extensions:{"io.modelcontextprotocol/skills":{}}};
 export const runtime="nodejs";
@@ -52,17 +53,17 @@ export async function POST(request:Request) {
     if(rpc.method==="server/discover" && rpc.modern){validateOperationObject(rpc.params,["_meta"]);return nutritionJson(nutritionRpcResult(rpc,{supportedVersions:NUTRITION_MCP_VERSIONS,capabilities,instructions:NUTRITION_WORKFLOW.start+" "+NUTRITION_WORKFLOW.steps.join(" ")},true));}
     if(skillMethods.includes(rpc.method)){validateOperationObject(rpc.params,rpc.method==="skills/list"?["cursor","_meta"]:rpc.method==="resources/list"?["_meta"]:["uri","_meta"],rpc.method.endsWith("/get")||rpc.method==="resources/read"?["uri"]:[]);return nutritionJson(nutritionRpcResult(rpc,await nutritionSkillCatalog(rpc.method,rpc.params),true));}
     if(rpc.method==="ping"){validateOperationObject(rpc.params,["_meta"]);return nutritionJson(nutritionRpcResult(rpc,{}));}
-    if(rpc.method==="tools/list"){validateOperationObject(rpc.params,["cursor","_meta"]);if(rpc.params.cursor!==undefined)throw new NutritionProtocolError(-32602,"Unknown cursor");return nutritionJson(nutritionRpcResult(rpc,{tools:NUTRITION_TOOLS},true));}
+    if(rpc.method==="tools/list"){validateOperationObject(rpc.params,["cursor","_meta"]);if(rpc.params.cursor!==undefined)throw new NutritionProtocolError(-32602,"Unknown cursor");return nutritionJson(nutritionRpcResult(rpc,{tools:[...NUTRITION_TOOLS,...await discoverAdminMenuTools(identity)]},true));}
     if(rpc.method!=="tools/call")throw new NutritionProtocolError(-32601,"Method not found",404);
     validateOperationObject(rpc.params,["name","arguments","_meta"],["name"]);
-    if(!nutritionToolScope(name))throw new NutritionProtocolError(-32602,"Unknown tool");
+    if(!nutritionToolScope(name)&&!isAdminMenuTool(name))throw new NutritionProtocolError(-32602,"Unknown tool");
     try {
       let result:unknown;
       if(name==="start_guest_session"){validateOperationObject(toolArgs,[]);result=await startGuestSession(request);}
       else if(name==="get_workflow" && !identity){validateOperationObject(toolArgs,[]);result={...NUTRITION_WORKFLOW,guidance:nutritionResponseGuidance(name,NUTRITION_WORKFLOW)};}
       else {
         if(!identity)throw new NutritionSecurityError("invalid_token",401,"Kết nối tài khoản để dùng công cụ này.",nutritionToolScope(name));
-        result=await executeNutritionTool(name,toolArgs,identity);
+        result=isAdminMenuTool(name)?await executeAdminMenuTool(name,toolArgs,identity):await executeNutritionTool(name,toolArgs,identity);
       }
       const output=nutritionMcpOutput(name,result);
       return nutritionJson(nutritionRpcResult(rpc,{content:[{type:"text",text:output.text}],...(rpc.version!=="2025-03-26" && output.includeStructured?{structuredContent:output.data}:{})}));

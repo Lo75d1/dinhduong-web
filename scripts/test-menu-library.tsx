@@ -9,6 +9,7 @@ import { LIBRARY_VERSION, MEAL_REFERENCE_RULES, REFERENCE_SOURCES, menuLibraryCa
 import { PRIMARY_SCHOOL_DRAFT } from "../src/lib/menu-library/contracts";
 import { menuAiGuide, implementationAiGuide } from "../src/lib/menu-library/guide";
 import LibraryWorkspace from "../src/app/quan-tri/kho-thuc-don/LibraryWorkspace";
+import GuidanceArticle from "../src/app/quan-tri/kho-thuc-don/GuidanceArticle";
 import type { GET as CatalogGet } from "../src/app/api/admin/menu-library/route";
 import type { GET as GuideGet } from "../src/app/api/admin/menu-library/guide/route";
 import type Page from "../src/app/quan-tri/kho-thuc-don/page";
@@ -18,7 +19,7 @@ function check(value: unknown, message: string) { assert.ok(value, message); che
 
 async function main() {
   const catalog = menuLibraryCatalog();
-  check(catalog.capabilities.collectiveCalculation === false && catalog.capabilities.persistTemplates === false, "Foundation cannot claim collective calculation or template persistence");
+  check(catalog.capabilities.collectiveCalculation === false && catalog.capabilities.persistTemplates === true, "Draft persistence is separate from collective calculation");
   check(new Set(REFERENCE_SOURCES.map(source => source.id)).size === REFERENCE_SOURCES.length, "Unique source IDs");
   for (const rule of MEAL_REFERENCE_RULES) {
     const source = REFERENCE_SOURCES.find(source => source.id === rule.sourceId);
@@ -38,9 +39,10 @@ async function main() {
 
   const guide = menuAiGuide();
   for (const source of REFERENCE_SOURCES) check(guide.includes(source.url) && guide.includes(`[${source.number}]`), "Guide carries original reference links");
-  for (const phrase of ["không tự thừa hưởng", "Chưa có API lưu mẫu", "20,6 kg", "1,25 kg", "prepare_menu", "calculate_menu", "sourceVersion", "khác MenuInput", "null", "tối đa ba câu"]) check(guide.includes(phrase), `AI guidance: ${phrase}`);
+  for (const phrase of ["không tự thừa hưởng", "save_admin_menu_template", "20,6 kg", "1,25 kg", "prepare_menu", "calculate_menu", "sourceVersion", "khác MenuInput", "null", "tối đa ba câu"]) check(guide.includes(phrase), `AI guidance: ${phrase}`);
   check(implementationAiGuide().includes("docs/menu-library/implementation.md"), "Copyable developer handoff points to maintained implementation instructions");
-  const html = renderToStaticMarkup(<LibraryWorkspace />);
+  const html = renderToStaticMarkup(<GuidanceArticle />);
+  check(!renderToStaticMarkup(<LibraryWorkspace />).includes("id=\"nguon-"), "The catalog landing page does not dump the guidance article");
   for (const source of REFERENCE_SOURCES) check(html.includes(`id="nguon-${source.id}"`) && html.includes(`href="#nguon-${source.id}"`), "Reference citations resolve inside page");
   check(html.includes("Chờ xác minh bản gốc") && html.includes("chưa được mở") && html.includes("Sao chép hướng dẫn AI lập thực đơn"), "Admin sees source status and honest capability boundary");
 

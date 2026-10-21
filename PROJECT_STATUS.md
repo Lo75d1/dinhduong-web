@@ -1,5 +1,13 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Admin ba nhóm và AI lưu nháp kho mẫu — 21/10/2026
+
+- Nhánh `codex/admin-menu-api` tiếp nối bản nền `d63cf7b`: trang `/quan-tri` chỉ có ba nhóm Dữ liệu & thực đơn / Người dùng & AI / Website & vận hành. Form, thống kê và lối vào cũ nằm đúng nhóm. Kho mẫu hiển thị danh sách/xem nháp; bài hướng dẫn chuyển sang `/quan-tri/kho-thuc-don/huong-dan`.
+- Thêm API lưu/sửa nháp, kiểm tra schema và Food/Dish/DietCode thật, null khác0, revision, requestKey chống lưu trùng và lịch sử. Mẫu dùng chung cho Admin, chỉ nhận draft; chưa duyệt chuyên môn/tính tập thể/đi chợ. Không đổi nguồn hoặc engine cá nhân.
+- `/quan-tri/ket-noi-ai`: Admin chủ động cấp quyền đọc hoặc đọc/lưu/sửa cho đúng user/client/OAuth token-family, thời hạn1/8/24 giờ hoặc7 ngày, thu hồi được. AI không tự cấp quyền; guest/API token cá nhân không được cấp. Kiểm tra vai trò và hiệu lực grant mỗi lần dùng. MCP chỉ thêm công cụ Admin cho phiên được ủy quyền; khách giữ16 công cụ cũ.
+- **Cần migration bổ sung** `20261021090000_admin_menu_library`: ba bảng riêng có RLS và chặn Data API công khai; build image migrate mới và áp migration trước khi thay app. Hướng dẫn cập nhật: `docs/menu-library/implementation.md`.
+- Kiểm tra cục bộ:153 kiểm tra nguồn/UI/quyền;94 kiểm tra ghi/ủy quyền bằng PGlite với migration thật; toàn bộ19 script Nutrition Chat đạt (HTTP425). TypeScript/Prisma/ESLint tệp sửa/build đạt. Chromium thật với API fixture:48 kiểm tra desktop1440/mobile390, ba nhóm, form cũ, cấp/thu hồi, xem mẫu, null/0, clipboard; không lỗi JS/tràn trang. Next production HTTP:30 kiểm tra khách trên10 đường dẫn đọc/ghi/trang. **Chưa áp migration hoặc triển khai/nghiệm thu VPS, chưa kiểm hội thoại AI nền tảng thật.**
+
 ## Bản nền kho mẫu thực đơn nội bộ — 21/10/2026
 
 - Nhánh `codex/menu-library-foundation`, dựa trên `436682b` của `codex/unify-calculator-interface`: thêm `/quan-tri/kho-thuc-don`, mục lục, phân loại cá nhân/tập thể, căn cứ có phiên bản và tỷ lệ bữa tham khảo. Lối vào chỉ hiện trong AdminPortal sau khi xác nhận role ADMIN.

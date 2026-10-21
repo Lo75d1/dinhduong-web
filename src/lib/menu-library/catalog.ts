@@ -1,7 +1,7 @@
 import { PRIMARY_SCHOOL_DRAFT } from "./contracts";
 import type { MealCode } from "./contracts";
 
-export const LIBRARY_VERSION = "1.0.0";
+export const LIBRARY_VERSION = "1.1.0";
 export const LIBRARY_UPDATED_AT = "2026-10-21";
 export const LIBRARY_PATH = "/quan-tri/kho-thuc-don";
 export const LIBRARY_API_PATH = "/api/admin/menu-library";
@@ -128,10 +128,10 @@ export const CLASSIFICATION = [
 export function menuLibraryCatalog() {
   return {
     schemaVersion: LIBRARY_VERSION, updatedAt: LIBRARY_UPDATED_AT, access: "ADMIN_SESSION_ONLY",
-    capabilities: { readGuidance: true, readSources: true, copyAiInstructions: true, persistTemplates: false, collectiveCalculation: false, collectiveShoppingExport: false, automaticClinicalPrescription: false },
+    capabilities: { readGuidance: true, readSources: true, copyAiInstructions: true, persistTemplates: true, delegateAiDrafts: true, collectiveCalculation: false, collectiveShoppingExport: false, automaticClinicalPrescription: false },
     classification: CLASSIFICATION, sources: REFERENCE_SOURCES, mealRules: MEAL_REFERENCE_RULES,
-    contract: { name: "MenuLibraryDraft", file: "src/lib/menu-library/contracts.ts", compatibleWithNutritionChatMenuInput: false, purpose: "Khung dữ liệu cho bước triển khai tiếp; API này chỉ đọc, chưa nhận/lưu mẫu." },
+    contract: { name: "MenuLibraryDraft", schemaVersion: "1.0.0", file: "src/lib/menu-library/contracts.ts", compatibleWithNutritionChatMenuInput: false, purpose: "Lưu nháp bằng /api/admin/menu-library/templates hoặc công cụ save_admin_menu_template. Chỉ nhận status=draft; không thay cho tính dinh dưỡng." },
     example: PRIMARY_SCHOOL_DRAFT,
-    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Khởi tạo danh mục căn cứ, hướng dẫn AI và hợp đồng dữ liệu nháp; chỉ Admin truy cập." }],
+    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Lưu nháp có phiên bản, ủy quyền AI theo phiên OAuth, tách trang Admin thành ba nhóm và tách hướng dẫn khỏi danh sách mẫu." }, { version: "1.0.0", date: LIBRARY_UPDATED_AT, change: "Khởi tạo danh mục căn cứ và hướng dẫn nội bộ." }],
   };
 }

@@ -66,4 +66,4 @@ export type ResolvedMenu = {
   savedRecord?: {id:string;revision:number};
   clinicalAssessment?: ClinicalAssessment;
 };
-export type NutritionIdentity = { userId: string; clientId: string; scopes: string[]; kind?: "guest"; expiresAt?: string };
+export type NutritionIdentity = { userId: string; clientId: string; scopes: string[]; kind?: "guest"; expiresAt?: string; familyId?: string };

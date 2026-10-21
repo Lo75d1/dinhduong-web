@@ -1,122 +1,148 @@
-# Kho mẫu thực đơn — bàn giao bản nền v1.0.0
+# Kho mẫu thực đơn và ủy quyền AI — v1.1.0
 
 Ngày: 21/10/2026. Repository: https://github.com/Lo75d1/dinhduong-web
+Nhánh: `codex/admin-menu-api`, tiếp nối `codex/menu-library-foundation` tại `d63cf7b`.
 
-Nhánh: `codex/menu-library-foundation`, xây từ `codex/unify-calculator-interface`
-tại `436682b44d54924b29be52a2e57277cd71de1808`. Nhánh nền đang có các thay đổi
-bộ tính mới hơn `main`; không thay thế bằng `main` cũ khi triển khai.
+## Hành vi đã có
 
-## Kết quả và đường dẫn
+Admin mở `/quan-tri` và chọn một trong ba nhóm:
 
-- `/quan-tri/kho-thuc-don`: mục lục, phân loại, nguồn, tỷ lệ bữa tham khảo,
-  lịch sử và nút sao chép hai hướng dẫn AI.
-- `/api/admin/menu-library`: danh mục JSON chỉ đọc có phiên bản, khả năng,
-  nguồn và ví dụ cấu trúc nháp.
-- `/api/admin/menu-library/guide`: TXT cho AI lập thực đơn.
-- `/api/admin/menu-library/guide?mode=implementation`: TXT giao việc cho AI lập trình.
-- Lối vào chỉ hiện sau khi Admin đăng nhập tại `/quan-tri`.
+| Nhóm | Nội dung |
+| --- | --- |
+| Dữ liệu & thực đơn | Biên tập thực phẩm/món ăn, kho mẫu, xuất dữ liệu |
+| Người dùng & AI | Phân quyền người dùng, ủy quyền AI kho mẫu, cấu hình Gemini |
+| Website & vận hành | Thông tin website, tin nhắn, thống kê và nhật ký lỗi |
 
-Mọi đường dẫn mới kiểm tra phiên hiện tại trên máy chủ. API trả 401/403/503,
-không trả nguồn hay nội dung AI nếu không xác thực được Admin. Nội dung chỉ đọc,
-private/no-store, noindex. Cookie đăng nhập website không được chia sẻ cho AI;
-Admin sao chép nội dung khi AI không truy cập được đường dẫn bảo vệ.
+Trang chủ không còn dồn mọi form và hướng dẫn vào một màn hình. Kho mẫu hiển thị
+mẫu đã lưu, tìm kiếm và xem chi tiết ngày/bữa/nhóm/món/định lượng. Hướng dẫn có
+mục lục và nguồn tham khảo chuyển sang `/quan-tri/kho-thuc-don/huong-dan`.
 
-## Phạm vi đã làm
+Admin kết nối ChatGPT/Claude qua OAuth hiện có, mở `/quan-tri/ket-noi-ai`, chọn đúng
+phiên của chính tài khoản, quyền đọc hoặc đọc/lưu/sửa nháp, hạn1/8/24 giờ hoặc7 ngày.
+Sau đó tải lại danh sách công cụ trong ứng dụng AI. Không cần sao chép token hay
+nhập thực đơn bằng JSON vào giao diện web.
 
-Danh mục nguồn tĩnh quản lý bằng Git; có loại nguồn, phạm vi, phiên bản, vị trí
-trích dẫn và trạng thái đối chiếu. Không phải trang CRUD nguồn hay kho mẫu đã lưu.
-Mọi tỷ lệ bữa mới là tham khảo, chưa được bộ tính tự động sử dụng. RNI 2026 và tiêu
-chí mầm non thí điểm chưa có bản gốc đầy đủ nên không cấp trị số cho quy tắc.
+AI đã được ủy quyền có thể tạo và sửa mẫu thật trong PostgreSQL, nhận URL thật để
+Admin mở xem. Mẫu chỉ có trạng thái `draft`; lưu nháp không đồng nghĩa duyệt chuyên
+môn hoặc đã tính dinh dưỡng. Chưa có tính nhiều nhóm, phiếu chia suất, xuất đi chợ,
+phát hành mẫu hoặc xóa mẫu qua API. Không thay Food/Dish/RNI hay luồng Ration cá nhân.
 
-Không thêm migration, không đổi dữ liệu Food/Dish/RNI hoặc logic tính cá nhân.
-Không sửa nội dung công khai `/ket-noi-ai/bat-dau/huong-dan.txt`.
-Chưa có lưu mẫu, tính nhiều nhóm, xuất đi chợ tập thể hoặc kê đơn bệnh lý tự động.
+## Quyền và lưu trữ
 
-## Tệp cần đọc và ràng buộc cho AI tiếp theo
+- Ba bảng mới: `menu_library_templates`, `menu_library_versions`,
+  `menu_library_grants`; RLS bật, thu hồi quyền PUBLIC/anon/authenticated.
+- Đây là kho dùng chung cho Admin. Một Admin có thể sửa mẫu của Admin khác, nhưng
+  phải đọc đúng revision; mọi phiên bản ghi người thao tác, client và lý do.
+- Ủy quyền chỉ dành cho cặp user/client/token-family cụ thể, không cấp toàn bộ
+  website hoặc quyền truy vấn SQL. OAuth refresh giữ family nên vẫn dùng được;
+  phiên khác của cùng client không tự có quyền.
+- Mọi thao tác kiểm tra vai trò ADMIN hiện tại, tài khoản hoạt động, phiên OAuth,
+  grant và thời hạn. Thu hồi grant, thu hồi OAuth, hết hạn, khóa tài khoản hoặc bỏ
+  vai trò Admin đều chặn truy cập. Guest và API token cá nhân không nhận quyền này.
+- Cấp/thu hồi grant chỉ qua phiên Admin trên website, Origin chính xác và
+  `x-menu-library-csrf`; Bearer không tự cấp/gia hạn/thu hồi quyền. Có nhật ký grant.
+- Ghi từ trình duyệt vào mẫu cũng cần Origin và CSRF. Bearer hợp lệ có grant được
+  phép dùng API từ máy chủ. Header Bearer sai không được hạ xuống phiên cookie.
+- Ghi có giới hạn tốc độ, JSON tối đa512KiB, transaction và khóa tương ứng với
+  quản lý tài khoản/OAuth hiện có. Sửa dùng optimistic revision và lịch sử chỉ thêm
+  qua API. Tạo dùng requestKey chống lặp; thử lại tạo sau khi mẫu đã được sửa không
+  ghi đè bản mới.
 
-Đọc `AGENTS.md`, tài liệu Next đúng phiên bản trong `node_modules/next/dist/docs/`,
-`PROJECT_STATUS.md`, rồi:
+## API và công cụ AI
 
-- `src/lib/menu-library/contracts.ts`: kiểu dữ liệu nháp; **khác** MenuInput của
-  Nutrition Chat. Chưa có validator runtime hoặc API ghi nhận kiểu này.
-- `src/lib/menu-library/catalog.ts`: nguồn, tỷ lệ, phân loại và capabilities.
-- `src/lib/menu-library/guide.ts`: nội dung dùng chung giữa trang, TXT và bản sao chép.
-- `src/lib/menu-library/access.ts`: quyền phiên Admin; không dùng mật khẩu preview.
-- `src/app/quan-tri/kho-thuc-don/`: giao diện nội bộ và nút sao chép.
-- `src/app/api/admin/menu-library/`: API chỉ đọc, từng handler tự kiểm tra quyền.
-- `scripts/test-menu-library.tsx`: hồi quy nguồn, cấu trúc và các tầng quyền bằng fixture.
+| Đường dẫn | Chức năng / quyền |
+| --- | --- |
+| `GET /api/admin/menu-library` | Danh mục nguồn/quy tắc tham khảo; phiên Admin |
+| `GET /api/admin/menu-library/guide` | TXT đầy đủ; phiên Admin |
+| `GET /api/admin/menu-library/templates?q=&offset=0` | Danh sách; Admin hoặc OAuth được ủy quyền đọc |
+| `POST /api/admin/menu-library/templates` | Tạo nháp; Admin hoặc OAuth có quyền ghi |
+| `GET /api/admin/menu-library/templates/{id}` | Đọc nháp, lịch sử, tên thực phẩm hiện tại |
+| `PUT /api/admin/menu-library/templates/{id}` | Sửa với expectedRevision |
+| `GET/POST/DELETE /api/admin/menu-library/delegations` | Liệt kê/cấp/thu hồi; chỉ phiên Admin website |
+| `POST /api/admin/menu-library/tools` | REST `{name,arguments}`; Bearer được ủy quyền |
 
-Giữ kho thực phẩm/công thức chung. Mẫu theo đối tượng; bản áp dụng cho đơn vị
-phải lưu templateId/version và không ghi ngược về mẫu. Nhóm tuổi không suy cứng
-từ lớp. Lưu bữa độc lập với dòng nguyên liệu. Số suất theo ngày × bữa × nhóm,
-null khác 0. Mã bữa ổn định, nhãn bữa sửa được. Tách sống sạch, mua vào, nấu chín,
-dự phòng và làm tròn. Mốc nhu cầu ngày khác tỷ lệ bữa. Mốc có nguồn/version,
-đơn vị, mẫu số và loại target/range/minimum/maximum; thiếu số không biến thành 0.
+MCP hiện có `/api/nutrition/v1/mcp` cung cấp thêm bốn công cụ chỉ sau khi đúng phiên
+được ủy quyền: `get_admin_menu_workflow`, `list_admin_menu_templates`,
+`get_admin_menu_template`, `save_admin_menu_template`. Grant chỉ đọc không thấy
+công cụ lưu. Khách/người dùng thường giữ16 công cụ cũ; hướng dẫn và ZIP công khai
+không chứa dữ liệu kho Admin. Bộ scope OAuth hiện có giữ nguyên; grant kho mẫu là
+một bước đồng ý riêng, không tự phát sinh khi đăng nhập.
 
-Khi triển khai persistence, bổ sung nguồn được duyệt, người duyệt, thời điểm và
-lịch sử thay đổi; tránh gắn nhãn “được phê duyệt” cho dữ liệu mới đối chiếu.
+Tạo: `{content,requestKey,reason}` với `content.version=1`. Sửa thêm
+`expectedRevision`, giữ ID và dùng `content.version=expectedRevision+1`. Với công
+cụ lưu, thêm `templateId` khi sửa; REST PUT lấy ID từ URL. Chỉ báo đã lưu sau phản
+hồi thành công có id/revision/url;409 phải đọc lại mẫu trước khi sửa tiếp.
 
-## Thứ tự làm tiếp
+## Dữ liệu và ràng buộc
 
-1. Chốt migration và validator: đơn vị, nhóm, mẫu, bản áp dụng, nguồn có phiên bản.
-2. Lưu nháp và biên tập Admin; xác nhận đầu vào, phạm vi bữa, số suất từng nhóm.
-3. Tính dinh dưỡng riêng từng nhóm và đối chiếu nguồn được chọn.
-4. Phiếu chia suất và tổng nguyên liệu đi chợ. Không nhân đồng loạt nguyên liệu.
-5. Biên soạn mẫu thật, duyệt chuyên môn, xuất báo cáo và mở phạm vi sử dụng.
+Đọc `AGENTS.md`, tài liệu Next trong `node_modules/next/dist/docs/`,
+`PROJECT_STATUS.md`, rồi các tệp:
 
-Mỗi API/Server Action phải kiểm tra quyền riêng. Chỉ đổi capability từ false sang
-true khi tính năng đã nối dữ liệu, kiểm thử và nghiệm thu. Giữ quy trình hiện có:
-tra dữ liệu → chuẩn bị toàn bộ nguyên liệu → người dùng duyệt → tính → link thật;
-chỉ lưu khi được yêu cầu. Tập thể chưa có bộ tính nên không dùng kết quả cá nhân
-để tuyên bố đã giải quyết suất ăn nhiều nhóm.
+- `src/lib/menu-library/contracts.ts`: hợp đồng tài liệu v1.0.0; khác MenuInput cá nhân.
+- `validation.ts`: JSON schema và validator dùng chung. Chỉ nhận draft; chặn trường
+  lạ, ID trùng, ngày không tồn tại, nhóm không tồn tại, quy tắc sai bữa/đối tượng,
+  mục tiêu sai loại/đơn vị và nguồn chờ xác minh. Tối đa31 ngày/20 nhóm/1.200 dòng.
+- `store.ts`: xác thực, ủy quyền, transaction, Food/Dish/DietCode thật, unit và lịch sử.
+- `ai-tools.ts`: schema/dispatch/discovery của bốn công cụ Admin.
+- `catalog.ts`, `guide.ts`: căn cứ, hướng dẫn và khả năng thực tế có phiên bản.
+- `src/app/quan-tri/kho-thuc-don/`: danh sách/xem nháp và bài hướng dẫn riêng.
+- `src/app/quan-tri/ket-noi-ai/`: chọn phiên, cấp và thu hồi grant.
 
-## Kiểm tra và triển khai
+Giữ các nhóm tuổi riêng, bữa tồn tại khi rỗng, số suất theo ngày × bữa × nhóm.
+Chưa biết là null, xác nhận không phục vụ mới là0. ID/mã bữa độc lập nhãn bữa.
+Định lượng một suất dùng g/ml sống sạch; tỷ lệ ăn được khác hiệu suất nấu. Không
+nhập số dinh dưỡng tự đoán. Tỷ lệ bữa tham khảo vẫn chưa thành bộ tính tự động.
+RNI2026 và tiêu chí mầm non thí điểm chờ nguồn gốc không được cấp trị số.
+
+## Kiểm tra
 
 ```bash
 npm ci
 npx prisma generate
+npx prisma validate
 npm run test:menu-library
+npm run test:menu-library-write
+npm run test:nutrition-chat
 npx tsc --noEmit
 npm run build
 ```
 
-Kiểm tra trình duyệt desktop/mobile: mục lục, trích dẫn, sao chép đầy đủ, TXT/JSON;
-khách chưa đăng nhập, tài khoản thường/EDITOR/CLINICIAN và Admin. Nếu dùng fixture,
-ghi rõ fixture; không gọi đó là nghiệm thu phiên đăng nhập trên VPS.
+Các kiểm tra backend dùng PGlite, migration thật và phiên giả lập; không thay cho
+nghiệm thu PostgreSQL nhiều process hay hội thoại ChatGPT/Claude thật. Kiểm tra UI
+bằng Chromium ở desktop/mobile với phản hồi API fixture; chưa phải phiên Admin VPS.
 
-Bản nền không cần migration. Trên VPS được phép truy cập, ghi lại commit/image
-đang chạy, kiểm tra working tree, fetch và chọn commit đã được xem xét của nhánh
-bản nền; đọc diff so với phiên bản đang chạy. Không force/reset bỏ sửa đổi hiện có.
-Sau đó, theo cấu hình Docker hiện tại trong `DEPLOY_VPS.md`:
+## Triển khai VPS hiện có
+
+Bản1.1 **cần migration mới** `20261021090000_admin_menu_library`. Đây là migration
+bổ sung ba bảng riêng; không seed/reset và không thay dữ liệu nguồn. Ghi lại commit,
+image, cấu hình đang chạy và sao lưu database trước khi áp dụng. Giữ layout/Caddy/
+Google verification và `.env.production` cục bộ; không force/reset/clean nếu Git báo
+xung đột. Nhánh triển khai vẫn tiếp nối bộ tính đang dùng, không checkout main cũ.
+
+Sau khi fetch và chọn đúng commit của nhánh, chạy tại `/opt/dinhduong`:
 
 ```bash
-docker compose build app
-docker compose up -d app
+docker compose build app migrate
+docker compose --profile maintenance run --rm migrate
+docker compose up -d --wait --wait-timeout 180 app
 docker compose ps
-docker compose logs --tail=100 app
+curl -fsS https://dinhduong2598.food/api/health
 ```
 
-Không seed/reset database hoặc chạy migrate chỉ vì bản nền này. Nếu có thay đổi
-khác trên nhánh cần migration thì xem riêng và sao lưu trước. Kiểm tra `/api/health`,
-đăng nhập Admin, mở các đường dẫn ở trên; xác nhận khách không đọc được nội dung.
-Rollback bằng commit/image đã ghi và cấu hình triển khai hiện có nếu nghiệm thu lỗi.
-Không ghi “đã lên website” khi chưa kiểm tra website thật.
+Nếu migration hoặc build lỗi, không thay app đang chạy. Nghiệm thu: Admin thấy ba
+nhóm, cấp quyền cho một phiên AI, tải lại tools, tạo nháp, mở URL, sửa lênv2,
+thu hồi grant rồi thử lại phải bị chặn. Khách/người dùng thường không đọc được kho.
+Rollback bằng image/commit đã ghi; các bảng mới bổ sung có thể giữ nguyên, không
+xóa bảng để rollback giao diện. Chưa ghi nhận triển khai hoặc nghiệm thu VPS bản1.1.
 
-Các ca cho giai đoạn tính tập thể: 120 × 60 g + 100 × 70 g + 80 × 80 g = 20,6 kg;
-1 kg sống sạch / 0,8 = 1,25 kg mua; bữa xế có số suất khác trưa; nguyên liệu ml
-không tự đổi thành g; thiếu hệ số quy đổi phải báo chưa đủ dữ liệu.
+## Kết quả kiểm tra trước bàn giao
 
-## Bằng chứng kiểm tra bản nền
-
-- `test:menu-library`: 152 kiểm tra nguồn/version, cấu trúc nháp, tham chiếu,
-  quyền khách/USER/EDITOR/CLINICIAN/ADMIN và lỗi phiên bằng session fixture độc lập.
-- TypeScript, ESLint các tệp mới, `git diff --check` và production build đạt.
-- Hồi quy hướng dẫn AI125 và giao diện bộ tính dùng chung31 đạt.
-- Chromium thật, component thực với fixture nội dung:17 kiểm tra ở1440×1000 và
-  390×844, không tràn ngang toàn trang, mục lục, trích dẫn, sao chép cả hai bản,
-  mở TXT và fallback chọn nội dung khi clipboard bị từ chối. Không lỗi JavaScript.
-- Next production chạy cục bộ, không cookie: cả3 API trả401, trang trả307 về đăng
-  nhập, tất cả no-store/noindex, không lộ nguồn hoặc hướng dẫn.
-
-Chưa nghiệm thu phiên Admin với database thật hoặc triển khai VPS. Không phát
-sinh thao tác ghi vào database sản xuất trong các kiểm tra trên.
+- 153 kiểm tra hướng dẫn/cấu trúc/trang/quyền; 94 kiểm tra lưu nháp và ủy quyền bằng
+  migration thật trên PGlite, phiên giả lập, không chạm dữ liệu sản xuất.
+- Toàn bộ 19 script Nutrition Chat đạt, gồm HTTP425, OAuth261, storage100,
+  personal library60, workbook/import và các màn bộ tính hiện có.
+- TypeScript, Prisma validate/generate, ESLint tệp sửa và production build đạt.
+- Chromium thật với API fixture: 48 kiểm tra desktop1440/mobile390, ba nhóm Admin,
+  form cũ, cấp/thu hồi grant, bản nháp/null/0 và clipboard; không lỗi JavaScript.
+- Next production HTTP cục bộ: 30 kiểm tra quyền khách/cache/không lộ nội dung trên
+  10 yêu cầu đọc/ghi/trang. Chưa nghiệm thu Admin với PostgreSQL/VPS hoặc nền tảng AI thật.
