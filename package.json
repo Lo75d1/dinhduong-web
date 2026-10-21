@@ -22,6 +22,7 @@
     "test:nutrition-daily": "node --import tsx scripts/test-nutrition-daily-export.tsx",
     "test:accounts": "tsx scripts/test-account-management.ts",
     "test:menu-library": "node --import tsx scripts/test-menu-library.tsx",
+    "test:menu-library-write": "node --import tsx scripts/test-menu-library-write.ts",
     "package:nutrition-chat": "node scripts/package-nutrition-chat-plugin.mjs",
     "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts"
   },

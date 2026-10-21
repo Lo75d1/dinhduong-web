@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
         { key: "X-Robots-Tag", value: "noindex, nofollow" },
         { key: "Referrer-Policy", value: "no-referrer" },
       ],
+    }, {
+      source: "/quan-tri/ket-noi-ai/:path*",
+      headers: [
+        { key: "Cache-Control", value: "private, no-store, max-age=0" },
+        { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        { key: "Referrer-Policy", value: "no-referrer" },
+      ],
     }];
   },
 };

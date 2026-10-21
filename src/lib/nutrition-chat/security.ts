@@ -79,7 +79,7 @@ export async function getNutritionIdentity(request: Request, requiredScope: stri
   if (scopes.some(scope => !token.scopes.includes(scope))) throw new NutritionSecurityError("insufficient_scope", 403, "Cần cấp thêm quyền cho thao tác này.", scopes.join(" "));
   await enforceNutritionRateLimit(`nutrition-rpc:user:${token.userId}`, { limit: 120, windowSeconds: 60 });
   await enforceNutritionRateLimit(`nutrition-rpc:client:${token.clientId}`, { limit: 600, windowSeconds: 60 });
-  return { userId: token.userId, clientId: token.clientId, scopes: token.scopes };
+  return { userId: token.userId, clientId: token.clientId, scopes: token.scopes, familyId: token.familyId };
 }
 
 export async function consumeNutritionRateLimit(key: string, policy: NutritionRatePolicy): Promise<{ allowed: boolean; retryAfter: number }> {

@@ -16,10 +16,10 @@ export default function CopyGuide({ title, description, text, href }: { title: s
       requestAnimationFrame(() => { textarea.current?.focus(); textarea.current?.select(); });
     }
   }
-  return <article className="min-w-0 rounded-xl border border-[#8fa99e] bg-white p-5">
+  return <article className="min-w-0 rounded-lg border border-[#c3d3cb] bg-white p-4">
     <h3 className="text-lg font-semibold text-[#123c36]">{title}</h3>
     <p className="mt-2 text-sm leading-6 text-neutral-700">{description}</p>
-    <div className="mt-4 flex flex-wrap items-center gap-3">
+    <div className="mt-3 flex flex-wrap items-center gap-3">
       <button type="button" onClick={() => void copy()} className="min-h-11 rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white">Sao chép {title}</button>
       <a href={href} className="py-2 text-sm font-semibold underline underline-offset-4">Mở bản TXT</a>
     </div>

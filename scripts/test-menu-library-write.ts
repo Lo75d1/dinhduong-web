@@ -1,0 +1,171 @@
+import assert from "node:assert/strict";
+import { build } from "esbuild";
+import { createRequire } from "node:module";
+import { mkdtemp, rm } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
+import { PRIMARY_SCHOOL_DRAFT } from "../src/lib/menu-library/contracts";
+import { validateMenuLibraryDraft } from "../src/lib/menu-library/validation";
+import { connectionCsrf, hashNutritionToken, randomNutritionToken, getNutritionPublicUrl, getNutritionResourceUrl } from "../src/lib/nutrition-chat/oauth-validation";
+import type * as Store from "../src/lib/menu-library/store";
+import type * as Db from "./fixtures/nutrition-oauth/database";
+import type * as State from "./fixtures/nutrition-oauth/state";
+import type * as Tools from "../src/lib/menu-library/ai-tools";
+import type * as Security from "../src/lib/nutrition-chat/security";
+import type * as Templates from "../src/app/api/admin/menu-library/templates/route";
+import type * as Item from "../src/app/api/admin/menu-library/templates/[id]/route";
+import type * as Grants from "../src/app/api/admin/menu-library/delegations/route";
+import type * as Rest from "../src/app/api/admin/menu-library/tools/route";
+import type * as Mcp from "../src/app/api/nutrition/v1/mcp/route";
+
+type Api = typeof Store & typeof Db & typeof State & typeof Tools & typeof Security & { templates: typeof Templates; item: typeof Item; grants: typeof Grants; rest: typeof Rest; mcp: typeof Mcp };
+let checks = 0;
+function check(value: unknown, label: string) { assert.ok(value, label); checks++; }
+async function main() {
+  const saved = { ...process.env }, directory = await mkdtemp(join(tmpdir(), "menu-library-write-fixture-"));
+  const require = createRequire(import.meta.url);
+  let api: Api | undefined;
+  try {
+    process.env.APP_SECRET = "disposable-menu-library-grant-fixture-only";
+    process.env.NUTRITION_PUBLIC_URL = "https://dinhduong2598.food";
+    delete process.env.NUTRITION_ALLOWED_ORIGINS;
+    delete process.env.NUTRITION_TRUST_PROXY;
+    const paths = ["src/lib/menu-library/store.ts", "src/lib/menu-library/ai-tools.ts", "src/lib/nutrition-chat/security.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts"];
+    const routes = { templates: "src/app/api/admin/menu-library/templates/route.ts", item: "src/app/api/admin/menu-library/templates/[id]/route.ts", grants: "src/app/api/admin/menu-library/delegations/route.ts", rest: "src/app/api/admin/menu-library/tools/route.ts", mcp: "src/app/api/nutrition/v1/mcp/route.ts" };
+    const outfile = join(directory, "fixture.cjs");
+    await build({ stdin: { contents: paths.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n") + "\n" + Object.entries(routes).map(([name, path]) => `import * as ${name} from ${JSON.stringify(resolve(path))};export {${name}};`).join("\n"), resolveDir: process.cwd(), loader: "ts" }, outfile, bundle: true, platform: "node", format: "cjs", logLevel: "silent", plugins: [{ name: "menu-write-fixture", setup(builder) {
+      builder.onResolve({ filter: /^server-only$/ }, () => ({ path: "empty", namespace: "empty" }));
+      builder.onLoad({ filter: /.*/, namespace: "empty" }, () => ({ contents: "export {}" }));
+      builder.onResolve({ filter: /^@\/lib\/prisma$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/database.ts") }));
+      builder.onResolve({ filter: /^(next\/headers|@\/lib\/auth)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/state.ts") }));
+      builder.onResolve({ filter: /^(\.\/repository|@\/lib\/nutrition-chat\/repository)$/ }, args => /nutrition-chat[\\/]/.test(args.importer) || args.path.startsWith("@/") ? { path: resolve("scripts/fixtures/nutrition-oauth/repository.ts") } : null);
+      builder.onResolve({ filter: /^(\.\/downloads|@\/lib\/nutrition-chat\/downloads)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/downloads.ts") }));
+      builder.onResolve({ filter: /^(@electric-sql\/pglite|exceljs)$/ }, args => ({ path: require.resolve(args.path), external: true }));
+    } }] });
+    api = require(outfile) as Api; const app = api;
+    await app.initializeOAuthFixture(resolve("prisma/migrations/20261014090000_nutrition_chat_oauth/migration.sql"));
+    await app.applyFixtureMigration(resolve("prisma/migrations/20261021090000_admin_menu_library/migration.sql"));
+    await app.fixtureQuery('UPDATE app_users SET role=$1 WHERE id=$2', ["ADMIN", "user-a"]);
+    await app.fixtureQuery('CREATE TABLE foods(id TEXT PRIMARY KEY, name TEXT NOT NULL, unit TEXT NOT NULL)');
+    await app.fixtureQuery('CREATE TABLE dishes(id TEXT PRIMARY KEY)');
+    await app.fixtureQuery('CREATE TABLE diet_codes(id TEXT PRIMARY KEY)');
+    await app.fixtureQuery("INSERT INTO foods VALUES ('rice','Gạo kiểm thử','g'),('milk','Sữa kiểm thử','ml')");
+    const base = getNutritionPublicUrl();
+    const actor: Store.MenuActor = { userId: "user-a", clientId: null, familyId: null, via: "session" };
+    const admin = { id: "user-a", email: "admin@example.invalid", displayName: "Admin fixture", role: "ADMIN" };
+    const session = () => app.setFixtureUser(admin);
+    const req = (path: string, method = "GET", body?: unknown, headers: Record<string, string> = {}) => new Request(`${base}/api/admin/menu-library/${path}`, { method, headers: { ...(body !== undefined ? { "Content-Type": "application/json" } : {}), ...headers }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) });
+    const web = { Origin: base, "x-menu-library-csrf": connectionCsrf(admin.id) };
+    async function status(response: Response, expected: number) { check(response.status === expected, `${response.status}, expected ${expected}: ${response.status === expected ? "" : await response.text()}`); check(response.headers.get("cache-control")?.includes("no-store"), "No-store response"); }
+    const original = structuredClone(PRIMARY_SCHOOL_DRAFT); original.id = "school-1"; original.title = "Tiểu học thử API";
+    const args = { content: original, requestKey: "create-school-1", reason: "Admin yêu cầu AI tạo nháp" };
+    await status(await app.templates.GET(req("templates")), 401);
+    await status(await app.grants.GET(req("delegations")), 401);
+    app.setFixtureUser({ ...admin, id: "user-b", role: "CLINICIAN" });
+    await status(await app.templates.GET(req("templates")), 403);
+    session();
+    await status(await app.templates.POST(req("templates", "POST", args, { ...web, Origin: "https://evil.invalid" })), 403);
+    await status(await app.templates.POST(req("templates", "POST", args, { Origin: base })), 403);
+    await status(await app.templates.POST(req("templates", "POST", args, { ...web, Authorization: "Bearer invalid" })), 401);
+    await status(await app.templates.POST(req("templates", "POST", args, { ...web, "Content-Length": "9999999" })), 413);
+    const created = await app.templates.POST(req("templates", "POST", args, web)); await status(created, 201); const first = await created.json();
+    check(first.id === original.id && first.revision === 1 && first.url.endsWith("?template=school-1"), "Persisted draft with real catalog URL");
+    check(!("document" in first) && !("contentHash" in first), "Summary is bounded and excludes storage internals");
+    check((await app.saveMenuTemplate(actor, args)).replayed, "Create is idempotent");
+    async function fail(fn: () => unknown, expected = 400) { await assert.rejects(async () => fn(), error => !!error && typeof error === "object" && "status" in error && error.status === expected); checks++; }
+    const invalids = [
+      { ...original, status: "published" }, { ...original, extraSql: "DROP TABLE foods" },
+      { ...original, groups: [...original.groups, original.groups[0]] },
+      { ...original, days: [{ ...original.days[0], date: "2026-02-30" }] },
+    ];
+    for (const invalid of invalids) await fail(() => validateMenuLibraryDraft(invalid));
+    const wrongGroup = structuredClone(original); wrongGroup.days[0].meals[0].groupPortions[0].groupId = "missing"; await fail(() => validateMenuLibraryDraft(wrongGroup));
+    const wrongRule = structuredClone(original); wrongRule.days[0].meals[0].groupPortions[0].mealRuleIds = ["nursery-lunch"]; await fail(() => validateMenuLibraryDraft(wrongRule));
+    const pending = structuredClone(original); pending.groups[0].dailyReferences = [{ nutrient: "energyKcal", unit: "kcal", kind: "target", target: 1000, min: null, max: null, denominator: "person_day", sourceId: "vdd-rni-2026", sourceVersion: "2026-02-12", locator: "unread" }]; await fail(() => validateMenuLibraryDraft(pending));
+    const invalidFraction = structuredClone(original); invalidFraction.days[0].meals[0].groupPortions[0].dishes = [{ id: "rice-dish", label: "Cơm", sourceKind: "ai", recipeId: null, ingredients: [{ foodId: "rice", quantityPerPortion: 60, unit: "g", basis: "edible_raw", edibleFraction: 0, cookingYield: null }] }]; await fail(() => validateMenuLibraryDraft(invalidFraction));
+    const populated = structuredClone(invalidFraction); populated.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].edibleFraction = null; populated.version = 2;
+    const update = { ...args, content: populated, expectedRevision: 1 };
+    const unknown = structuredClone(populated); unknown.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].foodId = "invented"; await fail(() => app.saveMenuTemplate(actor, { ...update, content: unknown }, original.id), 422);
+    const wrongUnit = structuredClone(populated); wrongUnit.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].unit = "ml"; await fail(() => app.saveMenuTemplate(actor, { ...update, content: wrongUnit }, original.id), 422);
+    await status(await app.item.PUT(req(`templates/${original.id}`, "PUT", update, web), { params: Promise.resolve({ id: original.id }) }), 200);
+    check((await app.saveMenuTemplate(actor, update, original.id)).replayed, "Retry update creates no extra version");
+    await fail(() => app.saveMenuTemplate(actor, { ...update, content: { ...populated, title: "Concurrent stale edit" } }, original.id), 409);
+    check((await app.saveMenuTemplate(actor, args)).replayed, "Original create retry stays idempotent after edits");
+    const opened = await app.getMenuTemplate(actor, original.id);
+    check(opened.history.length === 2 && opened.content.days[0].meals[0].groupPortions[0].headcount === null, "Immutable revisions and null counts survive database roundtrip");
+    check(opened.foods[0].name === "Gạo kiểm thử", "Canonical food names accompany previews");
+    check((await app.listMenuTemplates(actor, "' OR 1=1 --")).items.length === 0, "Parameterized literal search");
+    // Filter before pagination so later pages cannot mix directions or miss matches.
+    for (let i = 0; i < 24; i++) await app.fixtureQuery('INSERT INTO menu_library_templates(id,title,direction,document,"createdBy","requestKey","contentHash","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)', [`filter-${i}`, "Bộ lọc kiểm thử", i < 22 ? "collective" : "individual", JSON.stringify(original), actor.userId, `filter-${i}`, "fixture"]);
+    const filtered = await app.listMenuTemplates(actor, "Bộ lọc", 0, "collective");
+    check(filtered.items.length === 20 && filtered.nextOffset === 20 && filtered.items.every(item => item.direction === "collective"), "Direction and search applied before first page");
+    const secondPage = await app.listMenuTemplates(actor, "Bộ lọc", filtered.nextOffset!, "collective");
+    check(secondPage.items.length === 2 && secondPage.nextOffset === null && secondPage.items.every(item => !filtered.items.some(first => first.id === item.id)), "Filtered next page has no overlap");
+    check((await app.listMenuTemplates(actor, "Bộ lọc", 0, "individual")).items.length === 2, "Individual filter excludes collective drafts");
+    await status(await app.templates.GET(req("templates?direction=unknown")), 400);
+    await app.fixtureQuery("DELETE FROM menu_library_templates WHERE id LIKE 'filter-%'");
+
+    check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM menu_library_versions'))[0].n === 2, "No duplicate version on retries");
+
+    async function oauth(userId = "user-a", familyId = randomNutritionToken(), clientId = "") {
+      const access = randomNutritionToken();
+      if (!clientId) { clientId = "nc_" + randomNutritionToken(); await app.fixtureQuery('INSERT INTO nutrition_oauth_clients(id,name,"redirectUris",scopes,"expiresAt") VALUES ($1,$2,$3,$4,$5)', [clientId, "AI fixture", ["https://claude.ai/api/mcp/auth_callback"], ["nutrition:read"], new Date(Date.now() + 86400000)]); }
+      await app.fixtureQuery('INSERT INTO nutrition_oauth_tokens(id,"familyId","userId","clientId","accessHash",scopes,issuer,audience,"accessExpiresAt","refreshExpiresAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [randomNutritionToken(), familyId, userId, clientId, hashNutritionToken(access), ["nutrition:read"], base, getNutritionResourceUrl(), new Date(Date.now() + 900000), new Date(Date.now() + 86400000)]);
+      return { access, familyId, clientId, headers: { Authorization: `Bearer ${access}` } };
+    }
+    const ai = await oauth(), otherSession = await oauth("user-a", undefined, ai.clientId), otherUser = await oauth("user-b");
+    const identity = await app.getNutritionIdentity(req("tools", "GET", undefined, ai.headers), "nutrition:read");
+    check(identity.familyId === ai.familyId, "Server supplies authenticated token family");
+    await fail(() => app.executeAdminMenuTool("list_admin_menu_templates", {}, identity), 403);
+    check((await app.discoverAdminMenuTools(identity)).length === 0, "No admin tools before explicit grant");
+    const listConnections = await app.grants.GET(req("delegations")); await status(listConnections, 200); check((await listConnections.json()).connections.length === 2, "Only current Admin OAuth connections listed");
+    await status(await app.grants.POST(req("delegations", "POST", { familyId: otherUser.familyId, permission: "write", hours: 8 }, web)), 403);
+    await status(await app.grants.POST(req("delegations", "POST", { familyId: ai.familyId, permission: "write", hours: 8 }, ai.headers)), 403);
+    await status(await app.grants.POST(req("delegations", "POST", { familyId: ai.familyId, permission: "write", hours: 0 }, web)), 400);
+    await status(await app.grants.POST(req("delegations", "POST", { familyId: ai.familyId, permission: "read", hours: 8 }, web)), 201);
+    check(!(await app.discoverAdminMenuTools(identity)).some(tool => tool.name === "save_admin_menu_template"), "Read-only grant does not advertise write tool");
+    const listResult = await app.executeAdminMenuTool("list_admin_menu_templates", {}, identity);
+    check("items" in listResult && listResult.items.length === 1, "Granted AI can read catalog");
+    const personalOnly = await app.executeAdminMenuTool("list_admin_menu_templates", { direction: "individual" }, identity);
+    check("items" in personalOnly && personalOnly.items.length === 0, "Delegated tool uses the same direction filter");
+
+    await fail(() => app.executeAdminMenuTool("save_admin_menu_template", args, identity), 403);
+    await status(await app.grants.POST(req("delegations", "POST", { familyId: ai.familyId, permission: "write", hours: 8 }, web)), 201);
+    const aiDraft = structuredClone(original); aiDraft.id = "ai-created"; aiDraft.days[0].meals[0].groupPortions[0].headcount = 0;
+    const aiArgs = { ...args, content: aiDraft, requestKey: "ai-create-one" };
+    const result = await app.rest.POST(req("tools", "POST", { name: "save_admin_menu_template", arguments: aiArgs }, ai.headers)); await status(result, 200); check((await result.json()).id === "ai-created", "AI saves a real draft via delegated REST");
+    check((await app.getMenuTemplate(actor, "ai-created")).content.days[0].meals[0].groupPortions[0].headcount === 0, "Explicit zero stays zero");
+    await status(await app.templates.GET(req("templates", "GET", undefined, otherSession.headers)), 403);
+    await status(await app.templates.GET(req("templates", "GET", undefined, otherUser.headers)), 403);
+    const mcp = (method: string, params: unknown, headers: Record<string, string> = {}) => app.mcp.POST(new Request(`${base}/api/nutrition/v1/mcp`, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", "mcp-protocol-version": "2025-11-25", ...headers }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }));
+    check((await (await mcp("tools/list", {}, ai.headers)).json()).result.tools.some((tool: { name: string }) => tool.name === "save_admin_menu_template"), "MCP discovers admin tools after grant");
+    check(!(await (await mcp("tools/list", {})).json()).result.tools.some((tool: { name: string }) => tool.name.startsWith("save_admin")), "Anonymous MCP exposes no admin tool catalog");
+    const readMcp = await mcp("tools/call", { name: "get_admin_menu_template", arguments: { id: "ai-created" } }, ai.headers); await status(readMcp, 200); check(JSON.parse((await readMcp.json()).result.content[0].text).content.id === "ai-created", "Real MCP call reaches saved template");
+    // Token refresh preserves the family grant; a separate family of the same client does not.
+    const rotated = await oauth("user-a", ai.familyId, ai.clientId);
+    await status(await app.templates.GET(req("templates", "GET", undefined, rotated.headers)), 200);
+    await app.fixtureQuery('UPDATE app_users SET role=$1 WHERE id=$2', ["CLINICIAN", "user-a"]);
+    await status(await app.templates.GET(req("templates", "GET", undefined, ai.headers)), 403);
+    await app.fixtureQuery('UPDATE app_users SET role=$1 WHERE id=$2', ["ADMIN", "user-a"]);
+    await app.fixtureQuery('UPDATE menu_library_grants SET "expiresAt"=$1 WHERE "familyId"=$2 AND "revokedAt" IS NULL', [new Date(Date.now() - 1000), ai.familyId]);
+    await status(await app.templates.GET(req("templates", "GET", undefined, ai.headers)), 403);
+    const active = await app.changeMenuDelegation(actor, { familyId: ai.familyId, permission: "write", hours: 1 });
+    check("id" in active, "Fresh grant issued");
+    await status(await app.grants.DELETE(req("delegations", "DELETE", { id: "id" in active ? active.id : "" }, web)), 200);
+    await status(await app.templates.GET(req("templates", "GET", undefined, ai.headers)), 403);
+    await app.changeMenuDelegation(actor, { familyId: ai.familyId, permission: "write", hours: 1 });
+    await app.fixtureQuery('UPDATE nutrition_oauth_tokens SET "revokedAt"=$1 WHERE "familyId"=$2', [new Date(), ai.familyId]);
+    await status(await app.templates.GET(req("templates", "GET", undefined, ai.headers)), 401);
+    for (const table of ["menu_library_templates", "menu_library_versions", "menu_library_grants"]) for (const role of ["anon", "authenticated", "nutrition_fixture_public_probe"]) {
+      const row = (await app.fixtureQuery<{ allowed: boolean; rls: boolean }>("SELECT has_table_privilege($1,$2,'SELECT,INSERT,UPDATE,DELETE') allowed, relrowsecurity rls FROM pg_class WHERE relname=$2", [role, table]))[0];
+      check(!row.allowed && row.rls, `${table}: RLS and no public table access`);
+    }
+    check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM foods'))[0].n === 2, "Canonical foods unchanged");
+    check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM data_change_logs WHERE "entityType"=$1', ["MENU_LIBRARY_GRANT"]))[0].n >= 5, "Grant and revoke audit persists");
+    console.log(`Menu library writes: ${checks} migration, validation, persistence, idempotency, CSRF, OAuth family, MCP and revocation checks passed (PGlite/session fixture; no production data).`);
+  } finally {
+    if (api) await api.closeOAuthFixture();
+    process.env = saved; await rm(directory, { recursive: true, force: true });
+  }
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });

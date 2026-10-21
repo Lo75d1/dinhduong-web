@@ -506,6 +506,7 @@ model User {
   createdKitchenTasks      KitchenTask[]          @relation("KitchenTaskCreator")
   nutritionOAuthCodes      NutritionOAuthCode[]
   nutritionOAuthTokens     NutritionOAuthToken[]
+  menuLibraryGrants        MenuLibraryGrant[]
 
   @@map("app_users")
 }
@@ -616,6 +617,7 @@ model NutritionOAuthClient {
 
   codes  NutritionOAuthCode[]
   tokens NutritionOAuthToken[]
+  menuLibraryGrants MenuLibraryGrant[]
 
   @@index([expiresAt])
   @@index([ownerId, disabledAt])
@@ -679,6 +681,53 @@ model NutritionApiWindow {
 
   @@index([expiresAt])
   @@map("nutrition_api_windows")
+}
+
+// Admin-owned catalog drafts. Canonical nutrition data remains read-only.
+model MenuLibraryTemplate {
+  id String @id
+  title String
+  direction String
+  revision Int @default(1)
+  document Json
+  createdBy String
+  requestKey String
+  contentHash String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  versions MenuLibraryVersion[]
+  @@unique([createdBy, requestKey])
+  @@index([updatedAt])
+  @@map("menu_library_templates")
+}
+
+model MenuLibraryVersion {
+  id String @id @default(cuid())
+  templateId String
+  revision Int
+  document Json
+  actorId String
+  clientId String?
+  reason String
+  createdAt DateTime @default(now())
+  template MenuLibraryTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  @@unique([templateId, revision])
+  @@map("menu_library_versions")
+}
+
+model MenuLibraryGrant {
+  id String @id @default(cuid())
+  ownerId String
+  clientId String
+  familyId String
+  permission String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  client NutritionOAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  @@index([ownerId, familyId, revokedAt])
+  @@map("menu_library_grants")
 }
 
 model RationItem {
