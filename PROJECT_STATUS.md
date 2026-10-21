@@ -1,5 +1,11 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Admin gọn và rộng hơn — 21/10/2026
+
+- Tổng quan có ba nhóm hàng thao tác mở trực tiếp, thanh lọc nhóm và một thanh trắng “Trợ giúp & hướng dẫn” thu gọn; vùng làm việc tối đa1600px. Cấp quyền AI đưa form lên đầu, bỏ ba thẻ hướng dẫn lớn.
+- Kho mẫu dùng danh sách hàng, tìm tên, lọc cá nhân/tập thể ở máy chủ trước phân trang, xem/chép liên kết. Chi tiết chọn ngày/bữa/nhóm, bảng định lượng sống sạch và giữ null/0; lưu ý/lịch sử thu gọn. Hướng dẫn gom trong một khung trắng bốn tab, lọc tỷ lệ theo đối tượng; trích dẫn mở đúng tab/nguồn kể cả khi tải lại URL.
+- Kiểm tra:153 nguồn/UI/quyền;100 migration/ghi/ủy quyền/lọc phân trang bằng PGlite; TypeScript, lint tệp sửa, build đạt. Chromium thật với API fixture:73 kiểm tra desktop1440/mobile390, ba nhóm/form cũ, cấp/thu hồi, lọc danh sách, ngày/bữa/nhóm, định lượng, clipboard, tab/trích dẫn và role; không lỗi JS/tràn trang. Đã xem ảnh desktop/mobile. Không có migration mới so với PR#8; **chưa triển khai VPS**.
+
 ## Admin ba nhóm và AI lưu nháp kho mẫu — 21/10/2026
 
 - Nhánh `codex/admin-menu-api` tiếp nối bản nền `d63cf7b`: trang `/quan-tri` chỉ có ba nhóm Dữ liệu & thực đơn / Người dùng & AI / Website & vận hành. Form, thống kê và lối vào cũ nằm đúng nhóm. Kho mẫu hiển thị danh sách/xem nháp; bài hướng dẫn chuyển sang `/quan-tri/kho-thuc-don/huong-dan`.

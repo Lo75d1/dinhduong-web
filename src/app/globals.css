@@ -45,6 +45,17 @@ a:active {
   position: relative;
 }
 
+.hospital-main:has([data-admin-workspace]) {
+  max-width: 1600px;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.admin-help summary { list-style: none; }
+.admin-help summary::-webkit-details-marker { display: none; }
+.admin-help-toggle::after { content: "Mở +"; }
+.admin-help[open] .admin-help-toggle::after { content: "Thu gọn −"; }
+
 .hospital-main::before {
   content: "";
   position: absolute;

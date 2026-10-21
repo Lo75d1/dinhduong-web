@@ -64,10 +64,10 @@ function summary(item: { id: string; title: string; direction: string; revision:
 }
 const summarySelect = { id: true, title: true, direction: true, revision: true, createdBy: true, createdAt: true, updatedAt: true } as const;
 
-export async function listMenuTemplates(actor: MenuActor, q = "", offset = 0) {
+export async function listMenuTemplates(actor: MenuActor, q = "", offset = 0, direction = "") {
   await assertMenuActor(actor);
-  if (q.length > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) menuInputError("Bộ lọc không hợp lệ.", "query");
-  const rows = await prisma.menuLibraryTemplate.findMany({ where: q ? { title: { contains: q, mode: "insensitive" } } : {}, orderBy: [{ updatedAt: "desc" }, { id: "asc" }], skip: offset, take: 21, select: summarySelect });
+  if (!["", "individual", "collective"].includes(direction) || q.length > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) menuInputError("Bộ lọc không hợp lệ.", "query");
+  const rows = await prisma.menuLibraryTemplate.findMany({ where: { ...(q ? { title: { contains: q, mode: "insensitive" as const } } : {}), ...(direction ? { direction } : {}) }, orderBy: [{ updatedAt: "desc" }, { id: "asc" }], skip: offset, take: 21, select: summarySelect });
   return { items: rows.slice(0, 20).map(summary), nextOffset: rows.length > 20 ? offset + 20 : null, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}) };
 }
 export async function getMenuTemplate(actor: MenuActor, id: string) {

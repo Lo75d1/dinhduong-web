@@ -95,6 +95,16 @@ async function main() {
     check(opened.history.length === 2 && opened.content.days[0].meals[0].groupPortions[0].headcount === null, "Immutable revisions and null counts survive database roundtrip");
     check(opened.foods[0].name === "Gạo kiểm thử", "Canonical food names accompany previews");
     check((await app.listMenuTemplates(actor, "' OR 1=1 --")).items.length === 0, "Parameterized literal search");
+    // Filter before pagination so later pages cannot mix directions or miss matches.
+    for (let i = 0; i < 24; i++) await app.fixtureQuery('INSERT INTO menu_library_templates(id,title,direction,document,"createdBy","requestKey","contentHash","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)', [`filter-${i}`, "Bộ lọc kiểm thử", i < 22 ? "collective" : "individual", JSON.stringify(original), actor.userId, `filter-${i}`, "fixture"]);
+    const filtered = await app.listMenuTemplates(actor, "Bộ lọc", 0, "collective");
+    check(filtered.items.length === 20 && filtered.nextOffset === 20 && filtered.items.every(item => item.direction === "collective"), "Direction and search applied before first page");
+    const secondPage = await app.listMenuTemplates(actor, "Bộ lọc", filtered.nextOffset!, "collective");
+    check(secondPage.items.length === 2 && secondPage.nextOffset === null && secondPage.items.every(item => !filtered.items.some(first => first.id === item.id)), "Filtered next page has no overlap");
+    check((await app.listMenuTemplates(actor, "Bộ lọc", 0, "individual")).items.length === 2, "Individual filter excludes collective drafts");
+    await status(await app.templates.GET(req("templates?direction=unknown")), 400);
+    await app.fixtureQuery("DELETE FROM menu_library_templates WHERE id LIKE 'filter-%'");
+
     check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM menu_library_versions'))[0].n === 2, "No duplicate version on retries");
 
     async function oauth(userId = "user-a", familyId = randomNutritionToken(), clientId = "") {
@@ -116,6 +126,9 @@ async function main() {
     check(!(await app.discoverAdminMenuTools(identity)).some(tool => tool.name === "save_admin_menu_template"), "Read-only grant does not advertise write tool");
     const listResult = await app.executeAdminMenuTool("list_admin_menu_templates", {}, identity);
     check("items" in listResult && listResult.items.length === 1, "Granted AI can read catalog");
+    const personalOnly = await app.executeAdminMenuTool("list_admin_menu_templates", { direction: "individual" }, identity);
+    check("items" in personalOnly && personalOnly.items.length === 0, "Delegated tool uses the same direction filter");
+
     await fail(() => app.executeAdminMenuTool("save_admin_menu_template", args, identity), 403);
     await status(await app.grants.POST(req("delegations", "POST", { familyId: ai.familyId, permission: "write", hours: 8 }, web)), 201);
     const aiDraft = structuredClone(original); aiDraft.id = "ai-created"; aiDraft.days[0].meals[0].groupPortions[0].headcount = 0;

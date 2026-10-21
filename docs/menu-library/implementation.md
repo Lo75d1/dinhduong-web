@@ -13,9 +13,16 @@ Admin mở `/quan-tri` và chọn một trong ba nhóm:
 | Người dùng & AI | Phân quyền người dùng, ủy quyền AI kho mẫu, cấu hình Gemini |
 | Website & vận hành | Thông tin website, tin nhắn, thống kê và nhật ký lỗi |
 
-Trang chủ không còn dồn mọi form và hướng dẫn vào một màn hình. Kho mẫu hiển thị
-mẫu đã lưu, tìm kiếm và xem chi tiết ngày/bữa/nhóm/món/định lượng. Hướng dẫn có
-mục lục và nguồn tham khảo chuyển sang `/quan-tri/kho-thuc-don/huong-dan`.
+Tổng quan hiển thị ba nhóm dưới dạng hàng thao tác ngắn, mở trực tiếp công việc;
+thanh nhóm cho phép tập trung vào từng phần. Vùng Admin rộng tối đa1600px. Mỗi
+trang có một thanh trắng “Trợ giúp & hướng dẫn” thu gọn mặc định.
+
+Kho mẫu có danh sách hàng, tìm tên và lọc cá nhân/tập thể ở máy chủ trước phân
+trang; mỗi mẫu có nút xem/chép liên kết. Chi tiết chọn ngày, bữa và nhóm, giữ nguyên
+null/0, nguồn món và định lượng sống sạch. Lưu ý/lịch sử mở khi cần.
+Hướng dẫn riêng `/quan-tri/kho-thuc-don/huong-dan` gom trong một khung trắng với
+bốn tab, mục nội dung thu gọn và bộ lọc tỷ lệ theo đối tượng; trích dẫn mở đúng
+nguồn, bản sao chép/TXT vẫn đầy đủ. Cấp/thu hồi AI đặt ngay dưới thanh trợ giúp.
 
 Admin kết nối ChatGPT/Claude qua OAuth hiện có, mở `/quan-tri/ket-noi-ai`, chọn đúng
 phiên của chính tài khoản, quyền đọc hoặc đọc/lưu/sửa nháp, hạn1/8/24 giờ hoặc7 ngày.
@@ -54,7 +61,7 @@ phát hành mẫu hoặc xóa mẫu qua API. Không thay Food/Dish/RNI hay luồ
 | --- | --- |
 | `GET /api/admin/menu-library` | Danh mục nguồn/quy tắc tham khảo; phiên Admin |
 | `GET /api/admin/menu-library/guide` | TXT đầy đủ; phiên Admin |
-| `GET /api/admin/menu-library/templates?q=&offset=0` | Danh sách; Admin hoặc OAuth được ủy quyền đọc |
+| `GET /api/admin/menu-library/templates?q=&offset=0&direction=collective` | Danh sách; Admin hoặc OAuth được ủy quyền đọc |
 | `POST /api/admin/menu-library/templates` | Tạo nháp; Admin hoặc OAuth có quyền ghi |
 | `GET /api/admin/menu-library/templates/{id}` | Đọc nháp, lịch sử, tên thực phẩm hiện tại |
 | `PUT /api/admin/menu-library/templates/{id}` | Sửa với expectedRevision |
