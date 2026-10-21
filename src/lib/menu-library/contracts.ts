@@ -1,6 +1,6 @@
 /** Draft contract for the collective library. Not a Nutrition Chat MenuInput. */
 export type SchoolLevel = "nursery" | "kindergarten" | "primary" | "lower_secondary" | "upper_secondary";
-export type MealCode = "breakfast" | "lunch" | "afternoon_main" | "afternoon_snack" | "dinner" | "other";
+export type MealCode = "breakfast" | "lunch" | "afternoon_main" | "afternoon_snack" | "dinner" | "shift_main" | "other";
 
 export type TargetReference = {
   nutrient: string;

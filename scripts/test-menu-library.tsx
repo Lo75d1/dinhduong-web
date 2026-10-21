@@ -29,6 +29,7 @@ async function main() {
   check(!MEAL_REFERENCE_RULES.some(rule => rule.sourceId === "vdd-rni-2026" || rule.sourceId === "bgddt-pilot-2026"), "Unread sources never supply numeric rules");
   const rules = Object.fromEntries(MEAL_REFERENCE_RULES.map(rule => [rule.id, rule]));
   check(rules["nursery-main"].mealCode !== rules["nursery-snack"].mealCode, "Main afternoon and snack have different stable codes");
+  check(rules["worker-main"].mealCode === "shift_main", "A main shift meal is independent of lunch clock time");
   check(rules["kindergarten-total"].min === 50 && rules["kindergarten-total"].max === 55, "Kindergarten served total is separate from individual meal ranges");
   check(PRIMARY_SCHOOL_DRAFT.coverage === "served_meals" && PRIMARY_SCHOOL_DRAFT.days[0].date === null, "Reusable served-meal example is not full-day coverage");
   check(PRIMARY_SCHOOL_DRAFT.groups.map(group => group.ageYears?.min).join(",") === "6,8,10", "Primary example keeps age groups separate");

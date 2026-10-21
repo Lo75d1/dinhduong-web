@@ -115,7 +115,7 @@ export const MEAL_REFERENCE_RULES: readonly MealReferenceRule[] = [
   rule("kindergarten-lunch", "kindergarten_2021", "lunch", "Trưa", 30, 35, "bgddt-vbhn-01-2021"),
   rule("kindergarten-snack", "kindergarten_2021", "afternoon_snack", "Phụ", 15, 25, "bgddt-vbhn-01-2021"),
   rule("kindergarten-total", "kindergarten_2021", "served_total", "Tổng tại trường", 50, 55, "bgddt-vbhn-01-2021"),
-  rule("worker-main", "worker_reference", "lunch", "Bữa chính trong ca (nhãn giờ có thể đổi)", 35, 40, "vnniosh-shift-2025"),
+  rule("worker-main", "worker_reference", "shift_main", "Bữa chính trong ca (nhãn giờ có thể đổi)", 35, 40, "vnniosh-shift-2025"),
 ];
 
 export const CLASSIFICATION = [

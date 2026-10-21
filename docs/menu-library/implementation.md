@@ -108,7 +108,7 @@ không tự đổi thành g; thiếu hệ số quy đổi phải báo chưa đ�
 
 ## Bằng chứng kiểm tra bản nền
 
-- `test:menu-library`: 151 kiểm tra nguồn/version, cấu trúc nháp, tham chiếu,
+- `test:menu-library`: 152 kiểm tra nguồn/version, cấu trúc nháp, tham chiếu,
   quyền khách/USER/EDITOR/CLINICIAN/ADMIN và lỗi phiên bằng session fixture độc lập.
 - TypeScript, ESLint các tệp mới, `git diff --check` và production build đạt.
 - Hồi quy hướng dẫn AI125 và giao diện bộ tính dùng chung31 đạt.
