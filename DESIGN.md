@@ -26,6 +26,8 @@ Người dùng đã chọn bố cục A cho kho mẫu. Nút Thêm qua AI xám th
 ## Bố cục và chữ
 
 - Một tiêu đề H1 rõ; màn thao tác không dùng hero, khẩu hiệu, hàng KPI hoặc minh họa chào mừng.
+  Trong chi tiết thực đơn, khối kcal/P–L–G là số liệu làm việc theo yêu cầu 22/10/2026,
+  đặt ngay trước bảng bữa/món; đây không phải chỉ số tổng quan của trang quản trị.
 - Tìm/lọc và dữ liệu trước, trợ giúp thu gọn sau; giữ lối thêm mẫu dễ thấy và gọi đúng thao tác ủy quyền AI.
 - Desktop tận dụng chiều rộng để nhìn tên mẫu, đơn vị, số ngày/nhóm và trạng thái. Mobile đổi cấu trúc hàng/pane; không chỉ thu nhỏ chữ.
 - Chữ dữ liệu khoảng 16–17px với Times; H1 24–28px. Phụ chú nhỏ hơn nhưng tương phản đủ. Không ép mọi nhãn thành chữ đậm/xanh.
@@ -51,3 +53,10 @@ Người dùng đã chọn bố cục A cho kho mẫu. Nút Thêm qua AI xám th
 
 Các tài liệu Emil/Impeccable/Taste được đọc và vận dụng chọn lọc theo brief, không được cài
 thành bộ lệnh tự động trong dự án. Không đổi phông/màu đã chốt chỉ vì quy tắc thị hiếu của nguồn.
+
+## Chi tiết thực đơn cho bác sĩ — bổ sung 22/10/2026
+
+Ưu tiên bữa ăn, món ăn, thực phẩm, lượng và tỷ lệ P–L–G. Tự tính khi mở/sửa lượng;
+phân tích vi chất, nguồn và lịch sử thu gọn phía dưới. Không đưa JSON/ID/lý do kỹ thuật
+lên vùng đọc món. Giữ số liệu thiếu rõ ràng. Quyết định lưu và duyệt vẫn do người dùng.
+Brief, nguồn tham khảo và giới hạn kiểm tra: `docs/design/clinical-menu-2026-10-22.md`.

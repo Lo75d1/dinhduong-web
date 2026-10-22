@@ -19,8 +19,8 @@ async function main() {
   const root = createRoot(document.getElementById("root")!);
   try {
     const outfile = join(directory, "ui.cjs");
-    await build({ stdin: { contents: `export {default as Editor} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/TemplateEditor.tsx"))};export {default as Review} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/TemplateReview.tsx"))};`, resolveDir: process.cwd(), loader: "tsx" }, outfile, bundle: true, platform: "node", format: "cjs", packages: "external", jsx: "automatic" });
-    const { Editor, Review } = createRequire(import.meta.url)(outfile);
+    await build({ stdin: { contents: `export {default as Editor} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/TemplateEditor.tsx"))};export {default as Review} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/TemplateReview.tsx"))};export {default as Workspace} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/TemplateWorkspace.tsx"))};`, resolveDir: process.cwd(), loader: "tsx" }, outfile, bundle: true, platform: "node", format: "cjs", packages: "external", jsx: "automatic" });
+    const { Editor, Review, Workspace } = createRequire(import.meta.url)(outfile);
     const draft = structuredClone(PRIMARY_SCHOOL_DRAFT);
     draft.groups = [draft.groups[0]]; draft.days[0].meals = [draft.days[0].meals[0]];
     draft.days[0].meals[0].groupPortions = [{ groupId: draft.groups[0].id, headcount: null, mealRuleIds: [], dishes: [{ id: "rice-dish", label: "Cơm", recipeId: "rice-recipe", sourceKind: "catalog", ingredients: [{ foodId: "rice", quantityPerPortion: 60, unit: "g", basis: "edible_raw", edibleFraction: null, cookingYield: null }] }] }];
@@ -35,7 +35,7 @@ async function main() {
     let saved = 0, dirty = false, lastBody: Record<string, unknown> = {}, lastHeaders: Record<string, string> = {};
     globalThis.fetch = async (_url, options) => { lastBody = JSON.parse(String(options?.body)); lastHeaders = options?.headers as Record<string, string>; return Response.json({ id: draft.id, revision: 2 }); };
     await act(async () => root.render(<Editor content={draft} csrf="fixture-csrf" foods={[rice]} onSaved={() => saved++} onCancel={() => {}} onDirty={(value: boolean) => { dirty = value; }} />));
-    check(button("Lưu phiên bản mới").disabled, "Unchanged editor cannot save");
+    check(button("Lưu thay đổi").disabled, "Unchanged editor cannot save");
     const quantity = inputs().find(item => item.max === "100000")!;
     await change(quantity, "75");
     check(dirty && quantity.value === "75", "Manual quantity editing sets dirty state");
@@ -56,16 +56,53 @@ async function main() {
     };
     await act(async () => root.render(<Review id={draft.id} revision={1} csrf="fixture-csrf" reviews={[]} onReviewed={() => reviewed++} />));
     check(!document.querySelector('input[type="checkbox"]') && document.body.textContent!.includes("Chưa duyệt"), "Review starts without implicit approval or confirmation");
-    await click(button("Phân tích phiên bản đang xem"));
+    await click(button("Tính dinh dưỡng"));
     check(document.body.textContent!.includes("216") && document.body.textContent!.includes("Chất đạm"), "Analysis shows calculated nutrients");
-    check(button("Duyệt phiên bản v1").disabled && analysis.sections[0].macroPercent.proteinG === null, "No approval before explicit acknowledgment; incomplete protein percentage remains unknown");
+    await click(button("Duyệt mẫu này"));
+    check(button("Xác nhận duyệt").disabled && analysis.sections[0].macroPercent.proteinG === null, "No approval before explicit acknowledgment; incomplete protein percentage remains unknown");
     await click(document.querySelector('input[type="checkbox"]')!);
-    check(!button("Duyệt phiên bản v1").disabled, "Acknowledging review enables deliberate approval");
-    await click(button("Duyệt phiên bản v1"));
+    check(!button("Xác nhận duyệt").disabled, "Acknowledging review enables deliberate approval");
+    await click(button("Xác nhận duyệt"));
     check(reviewed === 1 && lastBody.acknowledged === true && lastBody.analysisDigest === analysis.digest && lastBody.expectedRevision === 1, "Approval submits exact viewed analysis and revision");
     globalThis.fetch = async (url) => String(url).endsWith("/analysis") ? Response.json(analysis) : Response.json({ message: "Nguồn đã đổi" }, { status: 409 });
-    await click(button("Duyệt phiên bản v1"));
+    await click(button("Xác nhận duyệt"));
     check(document.body.textContent!.includes("Nguồn đã đổi") && !document.querySelector('input[type="checkbox"]'), "Stale review discards preview and acknowledgment until reanalysis");
+    // The clinical workspace computes on opening and recalculates unsaved quantities.
+    let calculations = 0, writes = 0;
+    globalThis.fetch = async (url, options) => {
+      if (!String(url).endsWith("/analysis")) { writes++; return Response.json({}); }
+      calculations++;
+      const body = JSON.parse(String(options?.body));
+      const working = body.content ?? draft;
+      const quantity = working.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion;
+      if (quantity === 90) await new Promise(resolve => setTimeout(resolve, 800));
+      return Response.json(analyzeLibraryDraft(working, [rice]));
+    };
+    const opened = { content: draft, template: { id: draft.id, title: draft.title, direction: draft.direction, revision: 1, updatedAt: "2026-10-22T06:00:00Z", url: "https://example.test" }, foods: [rice], warnings: [], history: [], csrf: "fixture-csrf" };
+    await act(async () => root.render(<Workspace data={opened} onReload={() => {}} onDirty={() => {}} />));
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 60)); });
+    check(calculations === 1 && document.querySelector('[aria-label="Năng lượng và tỷ lệ P L G"]')!.textContent!.includes("216"), "Opening a menu calculates immediately without an analysis button");
+    check(document.querySelector('[aria-label="Bữa ăn, món ăn và thực phẩm"]')!.textContent!.includes("Gạo kiểm thử"), "Meal, dish, ingredient and quantity remain the main workspace");
+    check(!document.querySelector('details[open]'), "Detailed analysis and history start collapsed");
+    await click(button("Chỉnh khẩu phần"));
+    await change(inputs().find(item => item.max === "100000")!, "75");
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 520)); });
+    check(document.querySelector('[aria-label="Năng lượng và tỷ lệ P L G"]')!.textContent!.includes("270"), "Changing unsaved grams updates calculated energy");
+    check(writes === 0, "Automatic calculation never saves or approves the working menu");
+    const beforeBurst = calculations;
+    await change(inputs().find(item => item.max === "100000")!, "80");
+    await change(inputs().find(item => item.max === "100000")!, "85");
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 520)); });
+    check(calculations === beforeBurst + 1, "Rapid typing is debounced into one calculation");
+    await change(inputs().find(item => item.max === "100000")!, "90");
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 500)); });
+    await change(inputs().find(item => item.max === "100000")!, "95");
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 900)); });
+    check(document.querySelector('[aria-label="Năng lượng và tỷ lệ P L G"]')!.textContent!.includes("342"), "A slower stale response cannot replace the latest quantity calculation");
+    const beforeInvalid = calculations;
+    await change(inputs().find(item => item.max === "100000")!, "");
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 520)); });
+    check(calculations === beforeInvalid && document.querySelector('[role="alert"]')?.textContent?.includes("định lượng hợp lệ"), "Blank quantity stays unknown and does not submit a zero or stale result");
     console.log(`Menu library UI: ${checks} DOM interaction checks passed (manual edit, safe save, conflict retention, nutrient display and deliberate review; not a visual browser test).`);
   } finally { await act(async () => root.unmount()); dom.window.close(); await rm(directory, { recursive: true, force: true }); }
 }

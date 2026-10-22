@@ -14,7 +14,7 @@ tham khảo, không cấp quyền Admin và không thay đổi quy tắc dinh d�
 ## Khả năng thực tế và giới hạn
 
 - Admin đọc, lưu và sửa bản nháp qua API kho mẫu, có revision/lịch sử. OAuth cần Admin chủ động ủy quyền, có hạn và thu hồi được.
-- Chưa có máy tính dinh dưỡng nhiều nhóm, xuất đi chợ tập thể hoặc quy trình phê duyệt chuyên môn tự động. Không thêm nút thể hiện các chức năng này đã có.
+- Website phân tích một suất của từng nhóm/ngày; kcal và P–L–G tự tính khi mở hoặc sửa lượng. Admin lưu và duyệt phiên bản bằng thao tác riêng. Chưa có xuất đi chợ tập thể hay phê duyệt chuyên môn tự động.
 - `null` là chưa biết, `0` là giá trị đã biết; không đổi hai trạng thái cho nhau. Không tự tạo Food ID, Recipe ID, RNI, mục tiêu hoặc số liệu dinh dưỡng.
 - API danh sách bổ sung unitLabel/dayCount/groupCount/mealLabels cho bố cục A; tìm tên mẫu hoặc đơn vị và lọc nhánh tại máy chủ trước phân trang. Chỉ trả dữ liệu tóm tắt, không gửi toàn bộ document ra danh sách.
 

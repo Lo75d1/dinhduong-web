@@ -173,6 +173,18 @@ async function main() {
     check(analysis.sections[0].totals.calciumMg.value === null && analysis.sections[0].totals.calciumMg.incomplete, "Missing calcium remains unknown, never zero");
     check(analysis.canApprove && analysis.sections[0].macroPercent.proteinG > 0, "Complete structure with partial micronutrients can be reviewed explicitly");
     const reviewArgs = { expectedRevision: 1, decision: "approved", note: "Đã kiểm tra; còn thiếu canxi trong nguồn.", analysisDigest: analysis.digest, acknowledged: true };
+    const workingDraft = structuredClone(reviewDraft);
+    workingDraft.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion = 75;
+    const liveResponse = await app.analysisRoute.POST(req(`templates/${reviewDraft.id}/analysis`, "POST", { expectedRevision: 1, content: workingDraft }, web), reviewContext);
+    await status(liveResponse, 200); const liveAnalysis = await liveResponse.json();
+    check(liveAnalysis.sections[0].totals.energyKcal.value === 270 && liveAnalysis.digest !== analysis.digest, "Unsaved quantity gets a fresh analysis and distinct digest");
+    check((await app.getMenuTemplate(actor, reviewDraft.id)).content.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion === 60, "Automatic preview does not persist unsaved grams");
+    check((await app.getMenuTemplate(actor, reviewDraft.id)).history.length === 1 && !(await app.getMenuTemplate(actor, reviewDraft.id)).reviews.length, "Preview creates neither versions nor review decisions");
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", { ...reviewArgs, analysisDigest: liveAnalysis.digest }, web), reviewContext), 409);
+    await fail(() => app.analyzeMenuTemplate(actor, reviewDraft.id, { expectedRevision: 1, content: { ...workingDraft, id: "different-template" } }), 409);
+    await fail(() => app.analyzeMenuTemplate(actor, reviewDraft.id, { expectedRevision: 1, content: { ...workingDraft, version: 2 } }), 409);
+    const badQuantity = structuredClone(workingDraft); badQuantity.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion = -1;
+    await fail(() => app.analyzeMenuTemplate(actor, reviewDraft.id, { expectedRevision: 1, content: badQuantity }), 400);
     await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", reviewArgs), reviewContext), 403);
     await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", { ...reviewArgs, acknowledged: false }, web), reviewContext), 400);
     await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", { ...reviewArgs, analysisDigest: "forged" }, web), reviewContext), 409);

@@ -1,0 +1,1181 @@
+{
+  "notice": "Synthetic UI example, not a saved Admin menu or approved diet. Public Food IDs and per-100g source data support calculation checks. No private templates, patient data, API writes or approvals. 1500 kcal is a demonstration design target.",
+  "content": {
+    "schemaVersion": "1.1.0",
+    "id": "demo-clinical-menu",
+    "version": 1,
+    "status": "draft",
+    "title": "Ăn tại nhà | Cơm thường người lớn | 1500 kcal | 4 bữa",
+    "direction": "individual",
+    "unit": null,
+    "coverage": "full_day",
+    "derivedFrom": null,
+    "eatingContext": "home",
+    "groups": [
+      {
+        "id": "demo-adult",
+        "label": "Người trưởng thành ăn cơm thường",
+        "schoolLevel": null,
+        "ageYears": null,
+        "gender": "unspecified",
+        "activity": null,
+        "goal": null,
+        "dietCode": null,
+        "dailyReferences": [],
+        "designEnergyKcal": 1500
+      }
+    ],
+    "days": [
+      {
+        "id": "demo-day",
+        "dayIndex": 1,
+        "date": null,
+        "meals": [
+          {
+            "id": "demo-breakfast",
+            "code": "breakfast",
+            "label": "Sáng",
+            "eatingContext": "home",
+            "groupPortions": [
+              {
+                "groupId": "demo-adult",
+                "headcount": null,
+                "mealRuleIds": [],
+                "dishes": [
+                  {
+                    "id": "demo-breakfast-dish-0",
+                    "label": "Cháo bò đậu xanh",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrwa700nr0sm1s98kg9by",
+                        "quantityPerPortion": 40,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrymo01fs0sm15wu9tc25",
+                        "quantityPerPortion": 5,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00vi0sm1upyz1jqd",
+                        "quantityPerPortion": 50,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzruia008l0sm1t22zcshs",
+                        "quantityPerPortion": 8,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00v40sm1x4xamlh5",
+                        "quantityPerPortion": 3,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzruib00b20sm136vgsd2q",
+                        "quantityPerPortion": 2,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgt011s0sm1etu8eq0s",
+                        "quantityPerPortion": 0.4,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "demo-lunch",
+            "code": "lunch",
+            "label": "Trưa",
+            "eatingContext": "home",
+            "groupPortions": [
+              {
+                "groupId": "demo-adult",
+                "headcount": null,
+                "mealRuleIds": [],
+                "dishes": [
+                  {
+                    "id": "demo-lunch-dish-0",
+                    "label": "Cơm trắng",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrwa700nr0sm1s98kg9by",
+                        "quantityPerPortion": 60,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-lunch-dish-1",
+                    "label": "Cá thu sốt cà chua",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrxgs00yo0sm1i4qb3lpl",
+                        "quantityPerPortion": 90,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrwa700q20sm191tu6w38",
+                        "quantityPerPortion": 70,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00v40sm1x4xamlh5",
+                        "quantityPerPortion": 4,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrui9003o0sm1740fuvvw",
+                        "quantityPerPortion": 2,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgr00ss0sm1yr9rsl71",
+                        "quantityPerPortion": 2,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-lunch-dish-2",
+                    "label": "Canh bí đao đậu hũ",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrwa700pz0sm1n9vyv945",
+                        "quantityPerPortion": 130,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrwa700pp0sm1nckr6j0y",
+                        "quantityPerPortion": 35,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgt011s0sm1etu8eq0s",
+                        "quantityPerPortion": 0.4,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-lunch-dish-3",
+                    "label": "Bắp cải xào cà rốt",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrwa700q70sm1on5hp76h",
+                        "quantityPerPortion": 90,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrwa700q40sm111q3p2et",
+                        "quantityPerPortion": 25,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00v40sm1x4xamlh5",
+                        "quantityPerPortion": 3,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgt011s0sm1etu8eq0s",
+                        "quantityPerPortion": 0.3,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "demo-afternoon_snack",
+            "code": "afternoon_snack",
+            "label": "Phụ chiều",
+            "eatingContext": "home",
+            "groupPortions": [
+              {
+                "groupId": "demo-adult",
+                "headcount": null,
+                "mealRuleIds": [],
+                "dishes": [
+                  {
+                    "id": "demo-afternoon_snack-dish-0",
+                    "label": "Sữa chua không đường",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrui8000f0sm163dzarbs",
+                        "quantityPerPortion": 120,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-afternoon_snack-dish-1",
+                    "label": "Đu đủ chín",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrxgr00u00sm1c0gj4x8s",
+                        "quantityPerPortion": 160,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "demo-dinner",
+            "code": "dinner",
+            "label": "Tối",
+            "eatingContext": "home",
+            "groupPortions": [
+              {
+                "groupId": "demo-adult",
+                "headcount": null,
+                "mealRuleIds": [],
+                "dishes": [
+                  {
+                    "id": "demo-dinner-dish-0",
+                    "label": "Cơm trắng",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrwa700nr0sm1s98kg9by",
+                        "quantityPerPortion": 65,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-dinner-dish-1",
+                    "label": "Thịt nạc kho củ cải",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrwa500gv0sm1vpvxtljf",
+                        "quantityPerPortion": 80,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrwa800qi0sm19zt9hbnc",
+                        "quantityPerPortion": 90,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00v40sm1x4xamlh5",
+                        "quantityPerPortion": 4,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrui9003o0sm1740fuvvw",
+                        "quantityPerPortion": 2,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrui8002d0sm14sf5rufn",
+                        "quantityPerPortion": 1,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-dinner-dish-2",
+                    "label": "Canh cải bó xôi nấu tôm",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrymm01670sm1mfz1ttdz",
+                        "quantityPerPortion": 90,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00ze0sm1sqkw7bmy",
+                        "quantityPerPortion": 20,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00v40sm1x4xamlh5",
+                        "quantityPerPortion": 2,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgt011s0sm1etu8eq0s",
+                        "quantityPerPortion": 0.3,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "demo-dinner-dish-3",
+                    "label": "Su su xào cà rốt",
+                    "recipeId": null,
+                    "sourceKind": "manual",
+                    "ingredients": [
+                      {
+                        "foodId": "cmrfzrxgr00sn0sm1aqj8o149",
+                        "quantityPerPortion": 110,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrwa700q40sm111q3p2et",
+                        "quantityPerPortion": 25,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      },
+                      {
+                        "foodId": "cmrfzrxgs00v40sm1x4xamlh5",
+                        "quantityPerPortion": 3,
+                        "unit": "g",
+                        "basis": "edible_raw",
+                        "edibleFraction": null,
+                        "cookingYield": null
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "foods": [
+    {
+      "id": "cmrfzrui8000f0sm163dzarbs",
+      "name": "Sữa chua, đặc, không đường (Yogurt, thick, without sugar, whole, white)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "VDD",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": null,
+      "foodGroup": "Nhóm sữa và các chế phẩm từ sữa",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 61,
+        "proteinG": 3.3,
+        "lipidG": 3.7,
+        "glucidG": 3.6,
+        "fiberG": null,
+        "calciumMg": 120,
+        "ironMg": 0.1,
+        "sodiumMg": 46
+      }
+    },
+    {
+      "id": "cmrfzrui8002d0sm14sf5rufn",
+      "name": "Đường kính (Granulated sugar)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "VDD",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "CB",
+      "wastePercent": null,
+      "foodGroup": "Nhóm bánh kẹo, đồ ngọt",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 397,
+        "proteinG": null,
+        "lipidG": null,
+        "glucidG": 99.3,
+        "fiberG": null,
+        "calciumMg": 0.4,
+        "ironMg": 0.06,
+        "sodiumMg": null
+      }
+    },
+    {
+      "id": "cmrfzrui9003o0sm1740fuvvw",
+      "name": "Nước mắm cá (Fish sauce, ready-to-serve)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "VDD",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "CB",
+      "wastePercent": null,
+      "foodGroup": "Gia vị",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 35,
+        "proteinG": 5.06,
+        "lipidG": 0.01,
+        "glucidG": 3.64,
+        "fiberG": 0,
+        "calciumMg": 43,
+        "ironMg": 0.78,
+        "sodiumMg": 7720
+      }
+    },
+    {
+      "id": "cmrfzruia008l0sm1t22zcshs",
+      "name": "Đậu xanh (đậu tắt), hạt, khô (Mungo bean)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "VDD",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": null,
+      "foodGroup": "Nhóm hạt các loại",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 346,
+        "proteinG": 23.4,
+        "lipidG": 2.4,
+        "glucidG": 57.8,
+        "fiberG": 4.7,
+        "calciumMg": 64,
+        "ironMg": 4.8,
+        "sodiumMg": 6
+      }
+    },
+    {
+      "id": "cmrfzruib00b20sm136vgsd2q",
+      "name": "Hành lá (hành hoa), tươi (Onion, leave, raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "VDD",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": null,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 26,
+        "proteinG": 1.3,
+        "lipidG": null,
+        "glucidG": 5.2,
+        "fiberG": 0.9,
+        "calciumMg": 80,
+        "ironMg": 1,
+        "sodiumMg": 16
+      }
+    },
+    {
+      "id": "cmrfzrwa500gv0sm1vpvxtljf",
+      "name": "Thịt lợn, nạc, tươi (Pork, lean meat, raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "VDD",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": null,
+      "foodGroup": "Nhóm thịt các loại, cá và hải sản",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 139,
+        "proteinG": 19,
+        "lipidG": 7,
+        "glucidG": null,
+        "fiberG": null,
+        "calciumMg": 6.7,
+        "ironMg": 0.96,
+        "sodiumMg": 76
+      }
+    },
+    {
+      "id": "cmrfzrwa700nr0sm1s98kg9by",
+      "name": "Gạo tẻ máy (Ordinary polished rice, raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 0,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 346,
+        "proteinG": 7.9,
+        "lipidG": 1,
+        "glucidG": 76.3,
+        "fiberG": 0.4,
+        "calciumMg": 30,
+        "ironMg": 1.3,
+        "sodiumMg": 5
+      }
+    },
+    {
+      "id": "cmrfzrwa700pp0sm1nckr6j0y",
+      "name": "Đậu phụ (đậu hũ) (Tofu, raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 0,
+      "foodGroup": "Nhóm hạt các loại",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 97,
+        "proteinG": 10.9,
+        "lipidG": 5.4,
+        "glucidG": 1.1,
+        "fiberG": 0.4,
+        "calciumMg": 24,
+        "ironMg": 2.2,
+        "sodiumMg": 7
+      }
+    },
+    {
+      "id": "cmrfzrwa700pz0sm1n9vyv945",
+      "name": "Bí đao (bí xanh) (Courgette)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 27,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 16,
+        "proteinG": 0.6,
+        "lipidG": null,
+        "glucidG": 3.4,
+        "fiberG": 1,
+        "calciumMg": 26,
+        "ironMg": 0.3,
+        "sodiumMg": 13
+      }
+    },
+    {
+      "id": "cmrfzrwa700q20sm191tu6w38",
+      "name": "Cà chua (Tomato)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 5,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 24,
+        "proteinG": 0.6,
+        "lipidG": 0.23,
+        "glucidG": 4.77,
+        "fiberG": 0.8,
+        "calciumMg": 12,
+        "ironMg": 1.4,
+        "sodiumMg": 12
+      }
+    },
+    {
+      "id": "cmrfzrwa700q40sm111q3p2et",
+      "name": "Cà rốt  (Carrot)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 15,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 44,
+        "proteinG": 1.5,
+        "lipidG": 0.17,
+        "glucidG": 9.03,
+        "fiberG": 1.2,
+        "calciumMg": 43,
+        "ironMg": 0.8,
+        "sodiumMg": 52
+      }
+    },
+    {
+      "id": "cmrfzrwa700q70sm1on5hp76h",
+      "name": "Cải bắp/bắp cải (Cabbage)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 10,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 36,
+        "proteinG": 1.8,
+        "lipidG": 0.09,
+        "glucidG": 6.91,
+        "fiberG": 1.6,
+        "calciumMg": 48,
+        "ironMg": 1.1,
+        "sodiumMg": 28
+      }
+    },
+    {
+      "id": "cmrfzrwa800qi0sm19zt9hbnc",
+      "name": "Củ cải trắng (Turnip)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 15,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 27,
+        "proteinG": 1.5,
+        "lipidG": 0.09,
+        "glucidG": 5.11,
+        "fiberG": 1.5,
+        "calciumMg": 40,
+        "ironMg": 1.1,
+        "sodiumMg": 10
+      }
+    },
+    {
+      "id": "cmrfzrxgr00sn0sm1aqj8o149",
+      "name": "Su su (Chayote, fruit raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 20,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 23,
+        "proteinG": 0.8,
+        "lipidG": 0.1,
+        "glucidG": 4.6,
+        "fiberG": 1,
+        "calciumMg": 17,
+        "ironMg": 0.4,
+        "sodiumMg": 2
+      }
+    },
+    {
+      "id": "cmrfzrxgr00ss0sm1yr9rsl71",
+      "name": "Tỏi ta (Garlic bulbs, raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 20,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 126,
+        "proteinG": 6,
+        "lipidG": 0.35,
+        "glucidG": 24.65,
+        "fiberG": 1.5,
+        "calciumMg": 24,
+        "ironMg": 1.5,
+        "sodiumMg": 18
+      }
+    },
+    {
+      "id": "cmrfzrxgr00u00sm1c0gj4x8s",
+      "name": "Đu đủ chín (Papaya, ripe)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 12,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 38,
+        "proteinG": 1,
+        "lipidG": 0.1,
+        "glucidG": 8.19,
+        "fiberG": 0.6,
+        "calciumMg": 40,
+        "ironMg": 2.6,
+        "sodiumMg": 4
+      }
+    },
+    {
+      "id": "cmrfzrxgs00v40sm1x4xamlh5",
+      "name": "Dầu thực vật (Vegetable oil)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 0,
+      "foodGroup": "Nhóm dầu ăn, mỡ các loại",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 857,
+        "proteinG": 0,
+        "lipidG": 100,
+        "glucidG": 0,
+        "fiberG": 0,
+        "calciumMg": null,
+        "ironMg": null,
+        "sodiumMg": null
+      }
+    },
+    {
+      "id": "cmrfzrxgs00vi0sm1upyz1jqd",
+      "name": "Thịt bò loại 1 (Beef, grade I)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 2,
+      "foodGroup": "Nhóm thịt các loại, cá và hải sản",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 118,
+        "proteinG": 21,
+        "lipidG": 3.8,
+        "glucidG": 0,
+        "fiberG": 0,
+        "calciumMg": 12,
+        "ironMg": 3.1,
+        "sodiumMg": 83
+      }
+    },
+    {
+      "id": "cmrfzrxgs00yo0sm1i4qb3lpl",
+      "name": "Cá thu (Mackerel, kingfish)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 35,
+      "foodGroup": "Nhóm thịt các loại, cá và hải sản",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 166,
+        "proteinG": 18.2,
+        "lipidG": 10.3,
+        "glucidG": 0,
+        "fiberG": 0,
+        "calciumMg": 50,
+        "ironMg": 1.3,
+        "sodiumMg": 110
+      }
+    },
+    {
+      "id": "cmrfzrxgs00ze0sm1sqkw7bmy",
+      "name": "Tôm đồng (Shrimp, fresh-water)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 10,
+      "foodGroup": "Nhóm thịt các loại, cá và hải sản",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 90,
+        "proteinG": 18.4,
+        "lipidG": 1.8,
+        "glucidG": 0,
+        "fiberG": 0,
+        "calciumMg": 1120,
+        "ironMg": 2.2,
+        "sodiumMg": 418
+      }
+    },
+    {
+      "id": "cmrfzrxgt011s0sm1etu8eq0s",
+      "name": "Muối (Table salt)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 0,
+      "foodGroup": "Gia vị",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 0,
+        "proteinG": 0,
+        "lipidG": 0,
+        "glucidG": 0,
+        "fiberG": 0,
+        "calciumMg": 150,
+        "ironMg": 0.81,
+        "sodiumMg": 38758
+      }
+    },
+    {
+      "id": "cmrfzrymm01670sm1mfz1ttdz",
+      "name": "Cải bó xôi (Spinach, raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 20,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 27,
+        "proteinG": 2.85,
+        "lipidG": 0.62,
+        "glucidG": 2.41,
+        "fiberG": 1.6,
+        "calciumMg": 68,
+        "ironMg": 1.26,
+        "sodiumMg": 111
+      }
+    },
+    {
+      "id": "cmrfzrymo01fs0sm15wu9tc25",
+      "name": "Gạo nếp cái (Glutinous rice, milled, raw)",
+      "unit": "g",
+      "source": {
+        "kind": "catalog",
+        "label": "RNI",
+        "confirmed": true
+      },
+      "sourceCode": null,
+      "foodType": "TS",
+      "wastePercent": 0,
+      "foodGroup": "Nhóm rau củ quả khác",
+      "nutrientBasis": {
+        "status": "per100",
+        "amount": 100,
+        "unit": "g",
+        "note": "Các giá trị nutrients theo 100 g của nguồn đang dùng, không phải một suất ăn. Lượng thực ăn và số suất phải được xác nhận riêng; trạng thái sống/chín không suy từ mẫu số này."
+      },
+      "qualityWarnings": [],
+      "nutrients": {
+        "energyKcal": 348,
+        "proteinG": 8.6,
+        "lipidG": 1.5,
+        "glucidG": 75.1,
+        "fiberG": 0.6,
+        "calciumMg": 32,
+        "ironMg": 1.2,
+        "sodiumMg": 3
+      }
+    }
+  ]
+}

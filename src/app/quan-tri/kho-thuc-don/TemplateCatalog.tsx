@@ -1,48 +1,20 @@
 "use client";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import type { MenuLibraryDraft } from "@/lib/menu-library/contracts";
-import { EATING_CONTEXT_OPTIONS, eatingContextLabel, mealEatingContext, type EatingContext } from "@/lib/menu-library/contracts";
+import { EATING_CONTEXT_OPTIONS, eatingContextLabel, type EatingContext } from "@/lib/menu-library/contracts";
 import Icon from "@/components/ui/Icon";
 import styles from "./library.module.css";
-import TemplateEditor from "./TemplateEditor";
-import TemplateReview, { type ReviewRecord } from "./TemplateReview";
+import TemplateWorkspace, { type OpenedTemplate } from "./TemplateWorkspace";
+export { TemplatePreview } from "./TemplateWorkspace";
 
 type Item = { id: string; title: string; direction: string; revision: number; updatedAt: string; url: string; unitLabel?: string | null; dayCount?: number | null; groupCount?: number | null; mealLabels?: string[]; eatingContext?: EatingContext | null; reviewState?: string };
-type Opened = { template: Item; content: MenuLibraryDraft; warnings: string[]; foods: { id: string; name: string; unit: string }[]; history: { revision: number; reason: string; createdAt: string }[]; csrf?: string; reviews?: ReviewRecord[]; currentReview?: ReviewRecord | null };
+type Opened = OpenedTemplate;
 const date = (value: string) => new Date(value).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 const shortDate = (value: string) => new Date(value).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
-const input = "min-h-11 w-full rounded-md border border-[var(--control-line)] bg-white px-3 py-2 font-normal";
-
-export function TemplatePreview({ data }: { data: Opened }) {
-  const [dayId, setDayId] = useState(data.content.days[0]?.id ?? ""), [groupId, setGroupId] = useState(""), [mealId, setMealId] = useState("");
-  const heading = useRef<HTMLHeadingElement>(null);
-  useEffect(() => { heading.current?.focus(); }, []);
-  const day = data.content.days.find(item => item.id === dayId);
-  const meals = day?.meals.filter(meal => !mealId || meal.id === mealId) ?? [];
-  return <section className="min-w-0 rounded-lg border border-[var(--line)] bg-white" aria-label="Chi tiết mẫu">
-    <header className="border-b border-[var(--line)] px-4 py-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 ref={heading} tabIndex={-1} className="text-xl font-semibold text-[var(--ink)]">{data.content.title}</h2><span className="rounded bg-[var(--surface-soft)] px-2 py-1 text-xs font-semibold text-[var(--muted)]">{data.currentReview?.decision === "approved" ? "ĐÃ DUYỆT" : data.currentReview?.decision === "changes_requested" ? "CẦN CHỈNH SỬA" : "BẢN NHÁP"} · v{data.template.revision}</span></div><p className="mt-1 text-sm">{data.content.unit?.label ?? "Cá nhân"} · {data.content.coverage === "served_meals" ? "Các bữa phục vụ" : "Cả ngày"} · {data.content.days.length} ngày · {data.content.groups.length} nhóm · {eatingContextLabel(data.content.eatingContext)}</p></header>
-    <div className="grid gap-3 border-b border-[var(--line)] bg-[var(--surface-soft)] p-3 sm:grid-cols-3">
-      <label className="min-w-0 text-sm font-semibold">Ngày<select value={dayId} onChange={event => { setDayId(event.target.value); setMealId(""); }} className={input}>{data.content.days.map(item => <option key={item.id} value={item.id}>Ngày {item.dayIndex}{item.date ? ` · ${item.date}` : ""}</option>)}</select></label>
-      <label className="min-w-0 text-sm font-semibold">Bữa<select value={mealId} onChange={event => setMealId(event.target.value)} className={input}><option value="">Tất cả bữa</option>{day?.meals.map(meal => <option key={meal.id} value={meal.id}>{meal.label}</option>)}</select></label>
-      <label className="min-w-0 text-sm font-semibold">Nhóm khẩu phần<select value={groupId} onChange={event => setGroupId(event.target.value)} className={input}><option value="">Tất cả nhóm</option>{data.content.groups.map(group => <option key={group.id} value={group.id}>{group.label}</option>)}</select></label>
-    </div>
-    <div className="p-3 sm:p-4">{!day && <p>Chưa có ngày.</p>}{day && !day.meals.length && <p>Chưa có bữa.</p>}
-      <div className="grid items-start gap-4 xl:grid-cols-2">{meals.map(meal => <section key={meal.id} className="min-w-0 overflow-hidden rounded-md border border-[var(--line)]"><h3 className="bg-[var(--surface-soft)] px-3 py-2 font-semibold text-[var(--ink)]">Ngày {day!.dayIndex} · {meal.label}<span className="ml-2 font-normal text-[var(--muted)]">· {eatingContextLabel(mealEatingContext(data.content.eatingContext, meal.eatingContext))}</span></h3>{!meal.groupPortions.length && <p className="p-3 text-sm">Chưa có nhóm suất.</p>}{!!meal.groupPortions.length && !meal.groupPortions.some(portion => !groupId || portion.groupId === groupId) && <p className="p-3 text-sm">Bữa này chưa có suất cho nhóm đã chọn.</p>}{meal.groupPortions.filter(portion => !groupId || portion.groupId === groupId).map(portion => <div key={portion.groupId} className="border-t border-[var(--line)]">
-        <div className="flex flex-wrap justify-between gap-2 bg-[#fafcfb] px-3 py-2 text-sm"><h4 className="font-semibold">{data.content.groups.find(group => group.id === portion.groupId)?.label}</h4><span>{portion.headcount === null ? "Chưa nhập số suất" : `${portion.headcount} suất`}</span></div>
-        {!portion.dishes.length && <p className="px-3 py-2 text-sm text-neutral-600">Chưa có món.</p>}
-        {portion.dishes.map(dish => <div key={dish.id} className="border-t border-[#e0e8e2]"><p className="px-3 py-2 text-sm font-semibold">{dish.label} <span className="font-normal text-neutral-600">· {dish.sourceKind === "ai" ? "AI gợi ý" : dish.sourceKind === "catalog" ? "Công thức tham chiếu trong kho" : "Tự biên soạn"}</span></p>{!!dish.ingredients.length && <table className="w-full table-fixed text-left text-sm"><caption className="sr-only">Nguyên liệu {dish.label}, định lượng sống sạch cho một suất</caption><thead className="bg-[var(--surface-soft)]"><tr><th scope="col" className="px-3 py-1 font-normal">Nguyên liệu</th><th scope="col" className="w-32 px-3 py-1 text-right font-normal">Sống sạch / suất</th></tr></thead><tbody>{dish.ingredients.map((ingredient, index) => <tr key={index} className="border-t border-[#e0e8e2]"><td className="break-words px-3 py-2">{data.foods?.find(food => food.id === ingredient.foodId)?.name ?? ingredient.foodId}</td><td className="px-3 py-2 text-right font-semibold">{ingredient.quantityPerPortion} {ingredient.unit}/suất</td></tr>)}</tbody></table>}{!dish.ingredients.length && <p className="px-3 pb-2 text-sm text-neutral-600">Chưa có nguyên liệu.</p>}</div>)}
-      </div>)}</section>)}</div>
-    </div>
-    {!!data.warnings.length && <details className="border-t border-[var(--line)] px-4 py-3 text-sm"><summary className="cursor-pointer font-semibold text-[#715500]">Lưu ý cần xem lại ({data.warnings.length})</summary><ul className="mt-2 list-disc space-y-1 pl-5">{data.warnings.map(text => <li key={text}>{text}</li>)}</ul></details>}
-    <details className="border-t border-[var(--line)] px-4 py-3 text-sm"><summary className="cursor-pointer font-semibold">Lịch sử phiên bản ({data.history.length})</summary><ol className="mt-2 space-y-2">{data.history.map(item => <li key={item.revision}>v{item.revision} · {date(item.createdAt)} · {item.reason}</li>)}</ol></details>
-  </section>;
-}
-
 export default function TemplateCatalog() {
   const [items, setItems] = useState<Item[]>([]), [opened, setOpened] = useState<Opened | null>(null);
   const [q, setQ] = useState(""), [direction, setDirection] = useState(""), [eatingContext, setEatingContext] = useState(""), [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true), [opening, setOpening] = useState(false), [next, setNext] = useState<number | null>(null);
-  const [editing, setEditing] = useState(false), [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [listError, setListError] = useState(""), [openError, setOpenError] = useState(""), [filtered, setFiltered] = useState(false);
   const listSequence = useRef(0), openSequence = useRef(0);
   const appliedFilter = useRef({ q: "", direction: "", eatingContext: "" }), requestedFilter = useRef({ q: "", direction: "", eatingContext: "" });
@@ -51,7 +23,7 @@ export default function TemplateCatalog() {
 
   const open = useCallback(async (id: string) => {
     const sequence = ++openSequence.current;
-    lastOpenedId.current = id; setNotice(""); setOpenError(""); setOpened(null); setOpening(true); setEditing(false); setDirty(false);
+    lastOpenedId.current = id; setNotice(""); setOpenError(""); setOpened(null); setOpening(true); setDirty(false);
     try {
       const response = await fetch(`/api/admin/menu-library/templates/${encodeURIComponent(id)}`, { cache: "no-store" });
       const data = await response.json();
@@ -100,7 +72,7 @@ export default function TemplateCatalog() {
 
   function close() {
     if (dirty && !window.confirm("Bỏ các thay đổi chưa lưu?")) return;
-    setEditing(false); setDirty(false);
+    setDirty(false);
     openSequence.current++; setOpened(null); setOpening(false); setOpenError("");
     const url = new URL(window.location.href); url.searchParams.delete("template"); window.history.replaceState(null, "", url);
     requestAnimationFrame(() => {
@@ -128,11 +100,7 @@ export default function TemplateCatalog() {
     {opening && <div><button type="button" onClick={close} className={styles.back}>← Danh sách mẫu</button><p role="status" className={styles.notice}>Đang mở mẫu…</p></div>}
     {opened && <>
       <div className={styles.detailActions}><button type="button" onClick={close} className={styles.back}>← Danh sách mẫu</button><button type="button" className={styles.copy} aria-label={`Sao chép liên kết ${opened.template.title}`} onClick={() => void copyLink(opened.template)}><Icon name="copy" className="h-4 w-4" />Chép liên kết</button></div>
-      {editing && opened.csrf ? <TemplateEditor content={opened.content} csrf={opened.csrf} foods={opened.foods} onDirty={setDirty} onCancel={() => { setEditing(false); setDirty(false); }} onSaved={() => { void open(opened.template.id); void load(appliedFilter.current.q, 0, appliedFilter.current.direction, appliedFilter.current.eatingContext); }} /> : <>
-        {opened.csrf && <button type="button" onClick={() => setEditing(true)} className="mb-3 min-h-11 rounded-md border border-[var(--control-line)] bg-white px-4 py-2 font-semibold">Chỉnh sửa món & định lượng</button>}
-        <TemplatePreview key={`${opened.template.id}-${opened.template.revision}`} data={opened} />
-        {opened.csrf && <TemplateReview key={`${opened.template.id}-${opened.template.revision}-${opened.currentReview?.id ?? "none"}`} id={opened.template.id} revision={opened.template.revision} csrf={opened.csrf} currentReview={opened.currentReview} reviews={opened.reviews ?? []} onReviewed={() => { void open(opened.template.id); void load(appliedFilter.current.q, 0, appliedFilter.current.direction, appliedFilter.current.eatingContext); }} />}
-      </>}
+      <TemplateWorkspace key={`${opened.template.id}-${opened.template.revision}`} data={opened} onDirty={setDirty} onReload={() => { void open(opened.template.id); void load(appliedFilter.current.q, 0, appliedFilter.current.direction, appliedFilter.current.eatingContext); }} />
     </>}
     <section aria-label="Danh sách mẫu" className={styles.catalog} hidden={showingDetail} aria-busy={loading}>
       <div className={styles.listHeader}><h2 ref={listHeading} tabIndex={-1}>Danh sách mẫu <span>{loading && !items.length ? "—" : `${items.length}${next !== null ? "+" : ""}`}</span></h2><span>Mới nhất</span></div>

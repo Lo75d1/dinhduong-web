@@ -7,7 +7,7 @@ import { validateOperationObject, operationId } from "@/lib/nutrition-chat/servi
 import { NutritionSecurityError } from "@/lib/nutrition-chat/oauth-validation";
 import { assertMenuActor, lockActor, type MenuActor } from "./store";
 import { analyzeLibraryDraft } from "./analysis";
-import { menuInputError } from "./validation";
+import { menuInputError, validateMenuLibraryDraft } from "./validation";
 import type { MenuLibraryDraft } from "./contracts";
 
 type Tx = Prisma.TransactionClient;
@@ -26,8 +26,11 @@ async function current(tx: Tx, id: string, expected: unknown) {
 }
 export async function analyzeMenuTemplate(actor: MenuActor, id: string, value: unknown) {
   await assertMenuActor(actor);
-  const args = validateOperationObject(value, ["expectedRevision"], ["expectedRevision"]);
-  const draft = await current(prisma, id, args.expectedRevision);
+  const args = validateOperationObject(value, ["expectedRevision", "content"], ["expectedRevision"]);
+  const saved = await current(prisma, id, args.expectedRevision);
+  const draft = args.content === undefined ? saved : validateMenuLibraryDraft(args.content);
+  if (draft.id !== saved.id || draft.version !== saved.version) menuInputError("Bản đang sửa không khớp mẫu hoặc phiên bản.", "content", 409);
+  // An unsaved calculation never writes a template, version, or approval.
   return analysisFor(prisma, draft);
 }
 export async function getMenuReview(actor: MenuActor, id: string, reviewId: string) {
