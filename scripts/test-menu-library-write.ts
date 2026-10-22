@@ -93,11 +93,20 @@ async function main() {
       { ...original, days: [{ ...original.days[0], date: "2026-02-30" }] },
     ];
     for (const invalid of invalids) await fail(() => validateMenuLibraryDraft(invalid));
+    const legacy = structuredClone(original); legacy.schemaVersion = "1.0.0"; delete legacy.eatingContext; for (const day of legacy.days) for (const meal of day.meals) delete meal.eatingContext;
+    check(!Object.hasOwn(validateMenuLibraryDraft(legacy), "eatingContext"), "Legacy drafts keep omitted classification, without changing idempotency payloads");
+    for (const eatingContext of ["home", "restaurant", "mixed", null] as const) check(validateMenuLibraryDraft({ ...original, eatingContext }).eatingContext === eatingContext, "Supported contexts and explicit unknown roundtrip");
+    await fail(() => validateMenuLibraryDraft({ ...original, eatingContext: "school" }));
+    const mixed = structuredClone(original); mixed.eatingContext = "mixed"; mixed.days[0].meals[0].eatingContext = "home"; mixed.days[0].meals[1].eatingContext = "restaurant";
+    check(validateMenuLibraryDraft(mixed).days[0].meals[1].eatingContext === "restaurant", "Mixed menu retains distinct meal classifications");
+    await fail(() => validateMenuLibraryDraft({ ...mixed, eatingContext: "home" }));
+    const invalidMealContext = structuredClone(mixed); Object.assign(invalidMealContext.days[0].meals[0], { eatingContext: "invalid" }); await fail(() => validateMenuLibraryDraft(invalidMealContext));
     const wrongGroup = structuredClone(original); wrongGroup.days[0].meals[0].groupPortions[0].groupId = "missing"; await fail(() => validateMenuLibraryDraft(wrongGroup));
     const wrongRule = structuredClone(original); wrongRule.days[0].meals[0].groupPortions[0].mealRuleIds = ["nursery-lunch"]; await fail(() => validateMenuLibraryDraft(wrongRule));
     const pending = structuredClone(original); pending.groups[0].dailyReferences = [{ nutrient: "energyKcal", unit: "kcal", kind: "target", target: 1000, min: null, max: null, denominator: "person_day", sourceId: "vdd-rni-2026", sourceVersion: "2026-02-12", locator: "unread" }]; await fail(() => validateMenuLibraryDraft(pending));
     const invalidFraction = structuredClone(original); invalidFraction.days[0].meals[0].groupPortions[0].dishes = [{ id: "rice-dish", label: "Cơm", sourceKind: "ai", recipeId: null, ingredients: [{ foodId: "rice", quantityPerPortion: 60, unit: "g", basis: "edible_raw", edibleFraction: 0, cookingYield: null }] }]; await fail(() => validateMenuLibraryDraft(invalidFraction));
     const populated = structuredClone(invalidFraction); populated.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].edibleFraction = null; populated.version = 2;
+    populated.eatingContext = "mixed"; populated.days[0].meals[0].eatingContext = "home"; populated.days[0].meals[1].eatingContext = "restaurant";
     const update = { ...args, content: populated, expectedRevision: 1 };
     const unknown = structuredClone(populated); unknown.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].foodId = "invented"; await fail(() => app.saveMenuTemplate(actor, { ...update, content: unknown }, original.id), 422);
     const wrongUnit = structuredClone(populated); wrongUnit.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].unit = "ml"; await fail(() => app.saveMenuTemplate(actor, { ...update, content: wrongUnit }, original.id), 422);
@@ -108,22 +117,32 @@ async function main() {
     const opened = await app.getMenuTemplate(actor, original.id);
     check(opened.history.length === 2 && opened.content.days[0].meals[0].groupPortions[0].headcount === null, "Immutable revisions and null counts survive database roundtrip");
     check(opened.foods[0].name === "Gạo kiểm thử", "Canonical food names accompany previews");
+    check(opened.content.eatingContext === "mixed" && opened.content.days[0].meals[1].eatingContext === "restaurant", "Menu and meal context survive database save/open");
     check((await app.listMenuTemplates(actor, "' OR 1=1 --")).items.length === 0, "Parameterized literal search");
     const metadata = (await app.listMenuTemplates(actor, "Tiểu học" )).items[0];
     check(metadata.unitLabel === original.unit!.label && metadata.dayCount === 1 && metadata.groupCount === 3, "Catalog projects the real unit, days and groups");
     check(metadata.mealLabels.join("|") === "Trưa|Xế", "Meal labels reflect the stored draft");
+    check(metadata.eatingContext === "mixed", "Catalog exposes the persisted context, without guessing from the title");
     check(!("document" in metadata) && !("content" in metadata), "Catalog does not serialize the full document");
     check((await app.listMenuTemplates(actor, "TRƯỜNG MINH HỌA")).items.some(item => item.id === original.id), "Unit name search is case-insensitive at the database");
     check((await app.listMenuTemplates(actor, "  Trường minh họa  ")).items.length === 1, "Search trims outside spaces");
 
     // Filter before pagination so later pages cannot mix directions or miss matches.
-    for (let i = 0; i < 24; i++) await app.fixtureQuery('INSERT INTO menu_library_templates(id,title,direction,document,"createdBy","requestKey","contentHash","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)', [`filter-${i}`, "Bộ lọc kiểm thử", i < 22 ? "collective" : "individual", JSON.stringify(original), actor.userId, `filter-${i}`, "fixture"]);
+    for (let i = 0; i < 24; i++) await app.fixtureQuery('INSERT INTO menu_library_templates(id,title,direction,document,"createdBy","requestKey","contentHash","updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,CURRENT_TIMESTAMP)', [`filter-${i}`, "Bộ lọc kiểm thử", i < 22 ? "collective" : "individual", JSON.stringify({ ...original, eatingContext: i < 22 ? "home" : "restaurant" }), actor.userId, `filter-${i}`, "fixture"]);
     const filtered = await app.listMenuTemplates(actor, "Bộ lọc", 0, "collective");
     check(filtered.items.length === 20 && filtered.nextOffset === 20 && filtered.items.every(item => item.direction === "collective"), "Direction and search applied before first page");
     const secondPage = await app.listMenuTemplates(actor, "Bộ lọc", filtered.nextOffset!, "collective");
     check(secondPage.items.length === 2 && secondPage.nextOffset === null && secondPage.items.every(item => !filtered.items.some(first => first.id === item.id)), "Filtered next page has no overlap");
     check((await app.listMenuTemplates(actor, "Bộ lọc", 0, "individual")).items.length === 2, "Individual filter excludes collective drafts");
     await status(await app.templates.GET(req("templates?direction=unknown")), 400);
+    const homeFirst = await app.listMenuTemplates(actor, "Bộ lọc", 0, "collective", "home");
+    const homeNext = await app.listMenuTemplates(actor, "Bộ lọc", homeFirst.nextOffset!, "collective", "home");
+    check(homeFirst.items.length === 20 && homeNext.items.length === 2 && homeNext.nextOffset === null, "Context filter runs before pagination");
+    check([...homeFirst.items, ...homeNext.items].every(item => item.eatingContext === "home") && homeNext.items.every(item => !homeFirst.items.some(first => first.id === item.id)), "Context pagination preserves distinct matching rows");
+    check((await app.listMenuTemplates(actor, "Bộ lọc", 0, "individual", "home")).items.length === 0, "Direction and context combine, not replace each other");
+    const restaurant = await app.templates.GET(req("templates?q=Bộ%20lọc&direction=individual&eatingContext=restaurant")); await status(restaurant, 200);
+    check((await restaurant.json()).items.length === 2, "HTTP route applies context and direction");
+    await status(await app.templates.GET(req("templates?eatingContext=unknown")), 400);
     const unitsFirst = await app.listMenuTemplates(actor, "TRƯỜNG MINH HỌA", 0, "collective");
     check(unitsFirst.items.length === 20 && unitsFirst.nextOffset === 20, "Unit search also paginates on the server");
     const unitsSecond = await app.listMenuTemplates(actor, "TRƯỜNG MINH HỌA", unitsFirst.nextOffset!, "collective");
@@ -180,6 +199,8 @@ async function main() {
     check("items" in listResult && listResult.items.length === 1, "Granted AI can read catalog");
     const personalOnly = await app.executeAdminMenuTool("list_admin_menu_templates", { direction: "individual" }, identity);
     check("items" in personalOnly && personalOnly.items.length === 0, "Delegated tool uses the same direction filter");
+    const mixedOnly = await app.executeAdminMenuTool("list_admin_menu_templates", { eatingContext: "mixed" }, identity);
+    check("items" in mixedOnly && mixedOnly.items.length === 1 && mixedOnly.items[0].eatingContext === "mixed", "Delegated tool uses the persisted context filter");
 
     await fail(() => app.executeAdminMenuTool("save_admin_menu_template", args, identity), 403);
     const readOnly = await blockedCall("save_admin_menu_template", args, ai.headers);

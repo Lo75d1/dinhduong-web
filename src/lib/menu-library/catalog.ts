@@ -1,8 +1,8 @@
-import { PRIMARY_SCHOOL_DRAFT } from "./contracts";
+import { EATING_CONTEXT_OPTIONS, PRIMARY_SCHOOL_DRAFT } from "./contracts";
 import type { MealCode } from "./contracts";
 
-export const LIBRARY_VERSION = "1.1.0";
-export const LIBRARY_UPDATED_AT = "2026-10-21";
+export const LIBRARY_VERSION = "1.2.0";
+export const LIBRARY_UPDATED_AT = "2026-10-22";
 export const LIBRARY_PATH = "/quan-tri/kho-thuc-don";
 export const LIBRARY_API_PATH = "/api/admin/menu-library";
 
@@ -129,9 +129,9 @@ export function menuLibraryCatalog() {
   return {
     schemaVersion: LIBRARY_VERSION, updatedAt: LIBRARY_UPDATED_AT, access: "ADMIN_SESSION_ONLY",
     capabilities: { readGuidance: true, readSources: true, copyAiInstructions: true, persistTemplates: true, delegateAiDrafts: true, collectiveCalculation: false, collectiveShoppingExport: false, automaticClinicalPrescription: false },
-    classification: CLASSIFICATION, sources: REFERENCE_SOURCES, mealRules: MEAL_REFERENCE_RULES,
-    contract: { name: "MenuLibraryDraft", schemaVersion: "1.0.0", file: "src/lib/menu-library/contracts.ts", compatibleWithNutritionChatMenuInput: false, purpose: "Lưu nháp bằng /api/admin/menu-library/templates hoặc công cụ save_admin_menu_template. Chỉ nhận status=draft; không thay cho tính dinh dưỡng." },
+    classification: CLASSIFICATION, eatingContexts: EATING_CONTEXT_OPTIONS, sources: REFERENCE_SOURCES, mealRules: MEAL_REFERENCE_RULES,
+    contract: { name: "MenuLibraryDraft", schemaVersion: "1.1.0", supportedSchemaVersions: ["1.0.0", "1.1.0"], file: "src/lib/menu-library/contracts.ts", compatibleWithNutritionChatMenuInput: false, purpose: "Lưu nháp bằng /api/admin/menu-library/templates hoặc công cụ save_admin_menu_template. Chỉ nhận status=draft; không thay cho tính dinh dưỡng." },
     example: PRIMARY_SCHOOL_DRAFT,
-    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Lưu nháp có phiên bản, ủy quyền AI theo phiên OAuth, tách trang Admin thành ba nhóm và tách hướng dẫn khỏi danh sách mẫu." }, { version: "1.0.0", date: LIBRARY_UPDATED_AT, change: "Khởi tạo danh mục căn cứ và hướng dẫn nội bộ." }],
+    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Thêm bối cảnh ăn uống ở thực đơn và từng bữa; lọc kho theo bối cảnh; hướng dẫn bữa cơm gồm cơm, canh và hai món riêng." }, { version: "1.1.0", date: "2026-10-21", change: "Lưu nháp có phiên bản và ủy quyền AI theo phiên OAuth." }, { version: "1.0.0", date: "2026-10-21", change: "Khởi tạo danh mục căn cứ và hướng dẫn nội bộ." }],
   };
 }

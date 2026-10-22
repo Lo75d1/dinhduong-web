@@ -9,6 +9,7 @@ import { getNutritionIdentity, enforceNutritionRateLimit } from "@/lib/nutrition
 import { validateOperationObject, operationId } from "@/lib/nutrition-chat/service";
 import { validateMenuLibraryDraft, draftWarnings, menuInputError } from "./validation";
 import type { MenuLibraryDraft } from "./contracts";
+import { EATING_CONTEXT_OPTIONS } from "./contracts";
 import { menuListMetadata } from "./list-metadata";
 import { menuConnectionCode } from "./connection";
 
@@ -67,9 +68,9 @@ function summary(item: { id: string; title: string; direction: string; revision:
 }
 const summarySelect = { id: true, title: true, direction: true, revision: true, createdBy: true, createdAt: true, updatedAt: true } as const;
 
-export async function listMenuTemplates(actor: MenuActor, q = "", offset = 0, direction = "") {
+export async function listMenuTemplates(actor: MenuActor, q = "", offset = 0, direction = "", eatingContext = "") {
   await assertMenuActor(actor);
-  if (!["", "individual", "collective"].includes(direction) || q.length > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) menuInputError("Bộ lọc không hợp lệ.", "query");
+  if (!["", "individual", "collective"].includes(direction) || !["", ...EATING_CONTEXT_OPTIONS.map(option => option.value)].includes(eatingContext) || q.length > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000) menuInputError("Bộ lọc không hợp lệ.", "query");
   q = q.trim();
   // Search and direction both run before pagination. At most one page plus lookahead
   // is read; only the small metadata projection leaves this server function.
@@ -79,6 +80,7 @@ export async function listMenuTemplates(actor: MenuActor, q = "", offset = 0, di
       { document: { path: ["unit", "label"], string_contains: q, mode: "insensitive" as const } },
     ] } : {}),
     ...(direction ? { direction } : {}),
+    ...(eatingContext ? { document: { path: ["eatingContext"], equals: eatingContext } } : {}),
   }, orderBy: [{ updatedAt: "desc" }, { id: "asc" }], skip: offset, take: 21, select: { ...summarySelect, document: true } });
   return { items: rows.slice(0, 20).map(row => ({ ...summary(row), ...menuListMetadata(row.document) })), nextOffset: rows.length > 20 ? offset + 20 : null, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}) };
 }

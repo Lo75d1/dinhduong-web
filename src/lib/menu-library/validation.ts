@@ -1,4 +1,4 @@
-import type { MenuLibraryDraft } from "./contracts";
+import { EATING_CONTEXT_OPTIONS, type MenuLibraryDraft } from "./contracts";
 import { MEAL_REFERENCE_RULES, REFERENCE_SOURCES } from "./catalog";
 import { ALL_NUTRIENT_FIELDS } from "@/lib/nutrient-fields";
 import { NutritionInputError } from "@/lib/nutrition-chat/validation";
@@ -10,12 +10,13 @@ const number = (maximum = 1_000_000): Schema => ({ type: "number", minimum: 0, m
 const integer = (minimum: number, maximum: number): Schema => ({ type: "integer", minimum, maximum });
 const en = (...values: string[]): Schema => ({ type: "string", enum: values });
 const nullable = (schema: Schema): Schema => ({ anyOf: [schema, { type: "null" }] });
-const obj = (properties: Record<string, Schema>): Schema => ({ type: "object", additionalProperties: false, properties, required: Object.keys(properties) });
+const obj = (properties: Record<string, Schema>, optional: string[] = []): Schema => ({ type: "object", additionalProperties: false, properties, required: Object.keys(properties).filter(key => !optional.includes(key)) });
 const arr = (items: Schema, maxItems: number, minItems = 0): Schema => ({ type: "array", items, maxItems, minItems });
 
 export const MENU_LIBRARY_DRAFT_SCHEMA = obj({
-  schemaVersion: en("1.0.0"), id, version: integer(1, 1_000_000), status: en("draft"), title: text(),
+  schemaVersion: en("1.0.0", "1.1.0"), id, version: integer(1, 1_000_000), status: en("draft"), title: text(),
   direction: en("individual", "collective"),
+  eatingContext: nullable(en(...EATING_CONTEXT_OPTIONS.map(option => option.value))),
   unit: nullable(obj({ id, label: text(), type: en("school", "workplace", "agency", "hospital", "other") })),
   coverage: en("full_day", "served_meals"), derivedFrom: nullable(obj({ templateId: id, version: integer(1, 1_000_000) })),
   groups: arr(obj({
@@ -26,12 +27,13 @@ export const MENU_LIBRARY_DRAFT_SCHEMA = obj({
   }), 20, 1),
   days: arr(obj({ id, dayIndex: integer(1, 31), date: nullable({ ...text(10), pattern: "^\\d{4}-\\d{2}-\\d{2}$" }), meals: arr(obj({
     id, code: en("breakfast", "lunch", "afternoon_main", "afternoon_snack", "dinner", "shift_main", "other"), label: text(100),
+    eatingContext: nullable(en(...EATING_CONTEXT_OPTIONS.map(option => option.value))),
     groupPortions: arr(obj({ groupId: id, headcount: nullable(integer(0, 100_000)), mealRuleIds: arr(id, 6), dishes: arr(obj({
       id, recipeId: nullable(id), label: text(), sourceKind: en("catalog", "ai", "manual"),
       ingredients: arr(obj({ foodId: id, quantityPerPortion: number(100_000), unit: en("g", "ml"), basis: en("edible_raw"), edibleFraction: nullable({ type: "number", exclusiveMinimum: 0, maximum: 1 }), cookingYield: nullable({ type: "number", exclusiveMinimum: 0, maximum: 100 }) }), 30),
     }), 12) }), 20),
-  }), 8) }), 31, 1),
-});
+  }, ["eatingContext"]), 8) }), 31, 1),
+}, ["eatingContext"]);
 
 export function menuInputError(message: string, field = "content", status = 400): never {
   throw new NutritionInputError(message, field, status);
@@ -81,6 +83,7 @@ export function validateMenuLibraryDraft(value: unknown): MenuLibraryDraft {
   for (const day of draft.days) {
     if (day.date && (Number.isNaN(Date.parse(day.date)) || new Date(day.date).toISOString().slice(0, 10) !== day.date)) menuInputError("Ngày lịch không tồn tại.", "date");
     for (const meal of day.meals) {
+      if (draft.eatingContext && draft.eatingContext !== "mixed" && meal.eatingContext && meal.eatingContext !== draft.eatingContext) menuInputError("Bữa có bối cảnh khác: đặt bối cảnh thực đơn là Kết hợp và khai báo riêng từng bữa.", "eatingContext");
       mealIds.push(meal.id); unique(meal.groupPortions.map(group => group.groupId), "groupPortions");
       for (const portion of meal.groupPortions) {
         const group = draft.groups.find(group => group.id === portion.groupId);

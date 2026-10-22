@@ -60,6 +60,9 @@ function whereSql(where: Where | undefined, parameters: unknown[]): string {
     if (value === null) return `${column} IS NULL`;
     if (typeof value === "object" && !(value instanceof Date) && !Array.isArray(value)) {
       const filter = value as Row;
+      if (Array.isArray(filter.path) && Object.hasOwn(filter, "equals")) {
+        return `(${column} #> ${bind(filter.path)}::text[]) = ${bind(JSON.stringify(filter.equals))}::jsonb`;
+      }
       if (Array.isArray(filter.path) && typeof filter.string_contains === "string") {
         const jsonText = `(${column} #>> ${bind(filter.path)}::text[])`;
         const pattern = '%' + filter.string_contains.replace(/[\\%_]/g, '\\$&') + '%';

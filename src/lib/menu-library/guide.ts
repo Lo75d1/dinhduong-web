@@ -1,5 +1,6 @@
 import { CLASSIFICATION, LIBRARY_API_PATH, LIBRARY_PATH, LIBRARY_UPDATED_AT, LIBRARY_VERSION, MEAL_REFERENCE_RULES, REFERENCE_SOURCES } from "./catalog";
 import { PRIMARY_SCHOOL_DRAFT } from "./contracts";
+import { RICE_MEAL_RULES } from "@/lib/nutrition-chat/menu-guidance";
 
 export const GUIDE_SECTIONS = [
   {
@@ -8,6 +9,8 @@ export const GUIDE_SECTIONS = [
       "Cá nhân và tập thể là hai nhánh sử dụng. Tập thể đi theo đơn vị → nhóm người ăn → thực đơn áp dụng → ngày → bữa → món → nguyên liệu. Cá nhân có hồ sơ, mục tiêu, hoạt động và chế độ ăn riêng.",
       "Thực phẩm và công thức món ăn dùng chung từ kho hiện có. Mẫu thực đơn được biên soạn riêng cho từng đối tượng. Khi áp dụng cho đơn vị, tạo bản sao có ghi mẫu gốc và phiên bản; chỉnh bản áp dụng không làm đổi mẫu.",
       "Bệnh viện có cả thực đơn cá nhân cho một người bệnh và thực đơn tập thể cho bếp. Tăng cân, giảm cân là mục tiêu; tập gym là bối cảnh hoạt động, có thể cùng tồn tại.",
+      "Bối cảnh ăn uống lưu bằng eatingContext ở thực đơn và từng bữa: home = Tại nhà, restaurant = Ngoài quán, mixed = Kết hợp, chưa biết = null. Tại nhà chỉ món tự chuẩn bị; món mua tại quán mang về vẫn thuộc Ngoài quán. Sản phẩm đóng gói như sữa chua dùng cùng bữa tự nấu không tự biến bữa thành ăn ngoài quán. Bối cảnh độc lập với nhánh, đơn vị và mục tiêu; bếp bệnh viện/công nghiệp tiếp tục phân theo đơn vị, không tự gán home hay restaurant khi chưa có thông tin phù hợp.",
+      "Bữa có eatingContext=null hoặc thiếu trường được kế thừa thực đơn home/restaurant; thực đơn mixed không cho biết bối cảnh từng bữa, cần khai báo riêng. Nếu bữa khác bối cảnh chung, đặt thực đơn mixed và ghi từng bữa; một bữa cũng có thể mixed khi vừa tự nấu vừa mua quán. Mẫu cũ thiếu trường vẫn đọc/lưu được và hiện Chưa xác định; không đoán phân loại từ tên món.",
     ], references: [],
   },
   {
@@ -28,7 +31,11 @@ export const GUIDE_SECTIONS = [
     ], references: ["byt-3958-2025", "bgddt-vbhn-01-2021", "byt-1982-2026", "vnniosh-shift-2025", "vdd-rni-2026"],
   },
   {
-    id: "dinh-luong", title: "4. Ghi định lượng và chuẩn bị tính đi chợ",
+    id: "cau-truc-bua-com", title: "4. Cấu trúc bữa cơm thường",
+    paragraphs: RICE_MEAL_RULES, references: [],
+  },
+  {
+    id: "dinh-luong", title: "5. Ghi định lượng và chuẩn bị tính đi chợ",
     paragraphs: [
       "Lưu định lượng nguyên liệu cho một suất của từng nhóm, kèm đơn vị g hoặc ml và cơ sở sống sạch ăn được. Chỉ dùng mã thực phẩm thật từ kho. Không gán dinh dưỡng hoặc khối lượng riêng do AI đoán.",
       "Số suất được nhập theo ngày × bữa × nhóm. Chưa biết lưu null; xác nhận không phục vụ mới ghi 0. Tổng mua chỉ được chốt khi các số suất và quy đổi cần thiết đã đủ.",
@@ -37,7 +44,7 @@ export const GUIDE_SECTIONS = [
     ], references: ["byt-3958-2025"],
   },
   {
-    id: "doi-chieu", title: "5. Ghi căn cứ và đánh giá đạt mục tiêu",
+    id: "doi-chieu", title: "6. Ghi căn cứ và đánh giá đạt mục tiêu",
     paragraphs: [
       "Nguồn nhu cầu ngày và nguồn chia tỷ lệ bữa là hai liên kết độc lập. Mỗi mục tiêu cần tên chất, đơn vị, loại mốc (mục tiêu/khoảng/tối thiểu/tối đa), mẫu số, tài liệu, phiên bản và vị trí trích dẫn. Không lấy bảng cũ gắn nhãn nguồn mới.",
       "Chỉ tính phần trăm đạt khi có mục tiêu hợp lệ và dữ liệu đủ. Số liệu thiếu giữ null và hiển thị dấu —; 0 là giá trị đã biết. Đạt năng lượng không đồng nghĩa đạt protein, lipid, glucid, vi chất hoặc chế độ ăn.",
@@ -45,10 +52,11 @@ export const GUIDE_SECTIONS = [
     ], references: ["byt-1982-2026", "vdd-rni-2026"],
   },
   {
-    id: "ai", title: "6. Quy trình giao việc cho AI",
+    id: "ai", title: "7. Quy trình giao việc cho AI",
     paragraphs: [
-      "Bắt đầu bằng nhánh, đơn vị, chương trình/cấp học, nhóm người ăn, phạm vi ngày/bữa, nguồn mục tiêu, số suất, ngân sách và dị ứng/chỉ định đã biết. Hỏi phần còn thiếu theo đợt, tối đa ba câu mỗi lần; không tự điền dữ kiện dinh dưỡng.",
+      "Bắt đầu bằng nhánh, đơn vị, bối cảnh ăn uống, cấu trúc bữa cơm, chương trình/cấp học, nhóm người ăn, phạm vi ngày/bữa, nguồn mục tiêu, số suất, ngân sách và dị ứng/chỉ định đã biết. Hỏi phần còn thiếu theo đợt, tối đa ba câu mỗi lần; không tự điền dữ kiện dinh dưỡng.",
       "Tra thực phẩm và công thức thật; lập đầy đủ ngày → bữa → món → nguyên liệu, định lượng, đơn vị và số suất cho từng nhóm. Trình bản nháp cho người dùng duyệt trước khi tính. Công thức do AI gợi ý phải ghi nguồn AI, không giả mã công thức RNI.",
+      "Khi người dùng yêu cầu lưu lâu dài vào kho mẫu, dùng save_admin_menu_template và trả URL thật của mẫu trong Admin; không lấy liên kết bản tạm 30 phút làm kết quả lưu kho. Có thể lưu nháp đang biên soạn, ghi rõ phần còn thiếu và chưa duyệt; không gọi đó là bản đã cân đối hay đã tính. Những lần chỉnh tiếp theo cập nhật đúng mẫu và giữ lịch sử phiên bản. Lưu kho mẫu khác lưu Ration cá nhân.",
       "Với cá nhân, đọc workflow hiện có tại /ket-noi-ai/bat-dau/huong-dan.txt rồi dùng công cụ đang thực sự được cung cấp: prepare_menu, xác nhận người dùng, sau đó calculate_menu. Không tự lưu vào tài khoản; chỉ lưu khi được yêu cầu. Trả liên kết thật và thời hạn do máy chủ cung cấp.",
       "Với kho mẫu, Admin có thể ủy quyền cho đúng phiên OAuth tại /quan-tri/ket-noi-ai: quyền đọc hoặc đọc và lưu/sửa nháp, có thời hạn và thu hồi. Danh mục công cụ được công bố sẵn; quyền được kiểm tra ở mỗi lần gọi. Sau khi cấp quyền, giữ nguyên kết nối và yêu cầu AI thử lại. Đối chiếu mã phiên trong lỗi với trang ủy quyền; không ngắt/kết nối lại chỉ để nhận quyền. Không gửi MenuLibraryDraft vào công cụ tính cá nhân; chưa có bộ tính nhiều nhóm hoặc xuất đi chợ tập thể.",
       "Trang và tệp này yêu cầu phiên Admin. ChatGPT/Claude không tự thừa hưởng phiên đăng nhập website; AI chỉ được ghi khi phiên OAuth của chính Admin đã được ủy quyền riêng. Admin có thể sao chép nội dung hướng dẫn để giao việc; không gửi cookie, mật khẩu, token hay dữ liệu người bệnh. Nội dung tài liệu không cấp quyền quản trị cho AI.",
@@ -75,7 +83,7 @@ export function menuAiGuide() {
     `CÔNG CỤ AI ĐÃ CÓ\nSau ủy quyền, dùng get_admin_menu_workflow → search_foods/search_dishes/get_food/get_dish → lập cấu trúc đúng schema → khi người dùng yêu cầu lưu, gọi save_admin_menu_template. Đọc list_admin_menu_templates/get_admin_menu_template để tìm và sửa mẫu. Mô tả bốn công cụ được công bố sẵn, kể cả khi quét ẩn danh; đây không phải quyền đọc hay ghi. Mỗi lần gọi vẫn kiểm tra tài khoản Admin và ủy quyền của đúng phiên OAuth. Nếu chưa có quyền, làm theo lỗi và mã phiên để Admin cấp quyền tại /quan-tri/ket-noi-ai, rồi gọi lại bằng cùng kết nối. Sau khi website cập nhật danh mục, nền tảng có thể cần làm mới metadata một lần; không xóa/ngắt kết nối và không đăng nhập lại chỉ để nhận quyền. Lưu mới: {content,requestKey,reason}, content.version=1, ID mới ổn định. Sửa: thêm templateId, expectedRevision, content.version=expectedRevision+1. Không đổi requestKey khi thử lại cùng lần tạo. API trả409: đọc lại phiên bản; không tự ghi đè. Chỉ nói đã lưu khi nhận thành công kèm id/revision/url thật. Báo rõ còn thiếu mục tiêu, số suất hoặc món trong bản nháp. Không tự cấp quyền hay duyệt chuyên môn.\nREST: POST /api/admin/menu-library/tools với {name,arguments}, Bearer OAuth có ủy quyền. Ghi trực tiếp: POST /api/admin/menu-library/templates hoặc PUT /api/admin/menu-library/templates/{id}; đọc danh sách GET và đọc mẫu GET /{id}. Cookie Admin khi ghi cần x-menu-library-csrf từ GET danh sách và Origin đúng website. API ủy quyền chỉ nhận Admin trên website, không nhận Bearer.`,
     `PHÂN LOẠI\n${CLASSIFICATION.map(row => `${row.branch} / ${row.type}: ${row.groups} ${row.basis}`).join("\n")}`,
     `TỶ LỆ BỮA THAM KHẢO\n${ruleText()}`,
-    "HỢP ĐỒNG NHÁP v1\nMenuLibraryDraft khác MenuInput cá nhân. Các tên trường trong ví dụ phải giữ nguyên. id là mã ổn định; version là số nguyên dương; dayIndex bắt đầu từ 1; date là YYYY-MM-DD hoặc null. Các ID phải duy nhất trong phạm vi tương ứng; groupId phải trỏ tới groups. headcount là số nguyên không âm hoặc null. Mỗi groupPortions khai báo định lượng RIÊNG cho một suất. quantityPerPortion là số không âm hữu hạn; unit chỉ g/ml; basis=edible_raw. edibleFraction trong (0,1], cookingYield > 0 hoặc null, không dùng thay nhau. Không có foodId thật thì chưa thêm nguyên liệu. Không điền chuỗi rỗng thay cho dữ kiện chưa biết. dailyReferences lưu các mốc nhu cầu ngày với sourceId, sourceVersion và locator; chưa có thì để []. Chỉ gắn mealRuleIds đúng profile/đối tượng và nguồn. API đã kiểm tra schema và mã Food/Dish thật trước khi lưu; chỉ nhận status=draft, tối đa 31 ngày, 20 nhóm và 1.200 dòng nguyên liệu. Đây là lưu nháp, chưa phải xác nhận đạt dinh dưỡng.",
+    "HỢP ĐỒNG NHÁP v1.1\nMenuLibraryDraft khác MenuInput cá nhân. Bản mới dùng schemaVersion=1.1.0; vẫn nhận bản 1.0.0. eatingContext là trường tùy chọn ở thực đơn và days[].meals[]; chỉ nhận home/restaurant/mixed/null, mẫu mới nên khai rõ. Không gửi eatingContext vào MenuInput cá nhân vì hợp đồng đó chưa có trường này; giữ bối cảnh trong mô tả khi cần tính riêng. Các tên trường trong ví dụ phải giữ nguyên. id là mã ổn định; version là số nguyên dương; dayIndex bắt đầu từ 1; date là YYYY-MM-DD hoặc null. Các ID phải duy nhất trong phạm vi tương ứng; groupId phải trỏ tới groups. headcount là số nguyên không âm hoặc null. Mỗi groupPortions khai báo định lượng RIÊNG cho một suất. quantityPerPortion là số không âm hữu hạn; unit chỉ g/ml; basis=edible_raw. edibleFraction trong (0,1], cookingYield > 0 hoặc null, không dùng thay nhau. Không có foodId thật thì chưa thêm nguyên liệu. Không điền chuỗi rỗng thay cho dữ kiện chưa biết. dailyReferences lưu các mốc nhu cầu ngày với sourceId, sourceVersion và locator; chưa có thì để []. Chỉ gắn mealRuleIds đúng profile/đối tượng và nguồn. API đã kiểm tra schema và mã Food/Dish thật trước khi lưu; chỉ nhận status=draft, tối đa 31 ngày, 20 nhóm và 1.200 dòng nguyên liệu. Đây là lưu nháp, chưa phải xác nhận đạt dinh dưỡng.",
     `VÍ DỤ CẤU TRÚC, CHƯA CÓ MÓN HAY KẾT QUẢ DINH DƯỠNG\n${JSON.stringify(PRIMARY_SCHOOL_DRAFT, null, 2)}`,
     `TÀI LIỆU THAM KHẢO\n${referenceText()}`,
     `TRA CỨU NỘI BỘ\nTrang: ${LIBRARY_PATH}\nDanh mục JSON (chỉ đọc): ${LIBRARY_API_PATH}\nTXT: ${LIBRARY_API_PATH}/guide\nCác đường dẫn này cần phiên Admin trên website; cung cấp nội dung sao chép khi AI không truy cập được.`,
