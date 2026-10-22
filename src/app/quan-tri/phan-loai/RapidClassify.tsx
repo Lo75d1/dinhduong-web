@@ -352,7 +352,7 @@ export default function RapidClassify() {
         .pl-skel{background:linear-gradient(90deg,#eef3f1 25%,#e0eae6 37%,#eef3f1 63%);background-size:200% 100%;animation:plShim 1.2s ease-in-out infinite}
       `}</style>
       {(!focusMode || configOpen) ? (
-      <header className="max-h-[calc(100svh-1rem)] shrink-0 overflow-y-auto rounded-2xl border-2 border-[#123c36] bg-[#eef6f1] p-3">
+      <header className="max-h-[calc(100svh-1rem)] shrink-0 overflow-y-auto rounded-2xl border-2 border-[var(--brand)] bg-[#eef6f1] p-3">
         {!focusMode && <>
         <p className="text-[11px] font-bold tracking-[.16em] text-[#0f5a4e]">GAME KIỂM DUYỆT DỮ LIỆU</p>
         <div className="flex flex-wrap items-end justify-between gap-2"><div><h1 className="text-lg font-semibold text-[#102f2b]">👑 Ca trực 2598</h1><p className="text-xs text-[#527168]">Sinh tồn bằng những lựa chọn có căn cứ.</p></div><div className="flex gap-2 text-xs font-bold"><span className="rounded-full bg-white px-2.5 py-1 text-[#0c5f4d]">✅ {reviewed} thẻ</span><span className="rounded-full bg-[#102f59] px-2.5 py-1 text-white">Kỷ lục {bestRun} lượt</span></div></div>
@@ -364,41 +364,41 @@ export default function RapidClassify() {
         </>}
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <label className="text-xs font-semibold text-[#24483f]">Trường phân loại
-            <select value={field} onChange={(e) => setField(e.target.value as FieldKey)} className="mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-2 py-2 text-sm">
+            <select value={field} onChange={(e) => setField(e.target.value as FieldKey)} className="mt-1 w-full rounded-lg border-2 border-[var(--control-line)] bg-white px-2 py-2 text-sm">
               {(Object.keys(FIELD_LABEL) as FieldKey[]).map((k) => <option key={k} value={k}>{FIELD_LABEL[k]}</option>)}
             </select>
           </label>
           <label className="text-xs font-semibold text-[#24483f]">Nguồn
-            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-2 py-2 text-sm">
+            <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="mt-1 w-full rounded-lg border-2 border-[var(--control-line)] bg-white px-2 py-2 text-sm">
               <option value="">Tất cả</option>
               {sources.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </label>
           <label className="text-xs font-semibold text-[#24483f]">Loại
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-2 py-2 text-sm"><option value="">Tất cả</option>{types.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="mt-1 w-full rounded-lg border-2 border-[var(--control-line)] bg-white px-2 py-2 text-sm"><option value="">Tất cả</option>{types.map((value) => <option key={value} value={value}>{value}</option>)}</select>
           </label>
           <label className="text-xs font-semibold text-[#24483f]">Nhóm
-            <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} className="mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-2 py-2 text-sm"><option value="">Tất cả</option>{groups.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+            <select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} className="mt-1 w-full rounded-lg border-2 border-[var(--control-line)] bg-white px-2 py-2 text-sm"><option value="">Tất cả</option>{groups.map((value) => <option key={value} value={value}>{value}</option>)}</select>
           </label>
         </div>
         <label className="mt-2 block text-xs font-semibold text-[#24483f]">Tìm theo tên
-          <input value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} placeholder="VD: cá, sữa, món cháo…" className="mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-3 py-2 text-sm" />
+          <input value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} placeholder="VD: cá, sữa, món cháo…" className="mt-1 w-full rounded-lg border-2 border-[var(--control-line)] bg-white px-3 py-2 text-sm" />
         </label>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2"><label className="flex items-center gap-2 text-xs font-semibold text-[#24483f]">
           <input type="checkbox" checked={onlyMissing} onChange={(e) => setOnlyMissing(e.target.checked)} className="h-4 w-4" />
           Chỉ dòng còn trống ({remainingMissing} dòng)
-        </label><label className="flex items-center gap-2 text-xs font-semibold text-[#24483f]"><input type="checkbox" checked={hideReviewed} onChange={(e) => setHideReviewed(e.target.checked)} className="h-4 w-4" />Ẩn thẻ đã rà trên máy</label><label className="ml-auto flex items-center gap-2 text-xs font-semibold text-[#24483f]">Mỗi lượt<select value={roundSize} onChange={(e) => setRoundSize(Number(e.target.value))} className="rounded-md border border-[#8fa99e] bg-white px-2 py-1"><option value={10}>10 thẻ</option><option value={30}>30 thẻ</option><option value={50}>50 thẻ</option><option value={100}>100 thẻ</option></select></label></div>
-        <div className="mt-2 flex flex-wrap items-center gap-2"><button type="button" onClick={() => { setCampaign((value) => !value); setOnlyMissing(false); }} className={`rounded-lg border-2 px-3 py-1.5 text-xs font-bold ${campaign ? "border-[#102f59] bg-[#102f59] text-white" : "border-[#8fa99e] bg-white text-[#24483f]"}`}>🏆 Chiến dịch đủ 6 trường {campaign ? "✓" : ""}</button><button type="button" onClick={resetGameProgress} className="rounded-lg border border-[#8fa99e] bg-white px-3 py-1.5 text-xs font-semibold text-[#637a73]">Đặt lại ca/tiến độ</button></div>
+        </label><label className="flex items-center gap-2 text-xs font-semibold text-[#24483f]"><input type="checkbox" checked={hideReviewed} onChange={(e) => setHideReviewed(e.target.checked)} className="h-4 w-4" />Ẩn thẻ đã rà trên máy</label><label className="ml-auto flex items-center gap-2 text-xs font-semibold text-[#24483f]">Mỗi lượt<select value={roundSize} onChange={(e) => setRoundSize(Number(e.target.value))} className="rounded-md border border-[var(--control-line)] bg-white px-2 py-1"><option value={10}>10 thẻ</option><option value={30}>30 thẻ</option><option value={50}>50 thẻ</option><option value={100}>100 thẻ</option></select></label></div>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><button type="button" onClick={() => { setCampaign((value) => !value); setOnlyMissing(false); }} className={`rounded-lg border-2 px-3 py-1.5 text-xs font-bold ${campaign ? "border-[#102f59] bg-[#102f59] text-white" : "border-[var(--control-line)] bg-white text-[#24483f]"}`}>🏆 Chiến dịch đủ 6 trường {campaign ? "✓" : ""}</button><button type="button" onClick={resetGameProgress} className="rounded-lg border border-[var(--control-line)] bg-white px-3 py-1.5 text-xs font-semibold text-[#637a73]">Đặt lại ca/tiến độ</button></div>
         <div className="mt-2 flex gap-2">
-          <button type="button" onClick={buildQueue} disabled={loading} className="flex-1 rounded-lg bg-[#123c36] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+          <button type="button" onClick={buildQueue} disabled={loading} className="flex-1 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
             {loading ? "Đang tải dữ liệu…" : queue.length ? "Làm lại hàng đợi" : campaign ? "Bắt đầu chiến dịch" : "Bắt đầu"}
           </button>
-          {focusMode && <button type="button" onClick={() => setConfigOpen(false)} className="rounded-lg border-2 border-[#8fa99e] bg-white px-4 py-2.5 text-sm font-bold text-[#24483f]">Đóng</button>}
+          {focusMode && <button type="button" onClick={() => setConfigOpen(false)} className="rounded-lg border-2 border-[var(--control-line)] bg-white px-4 py-2.5 text-sm font-bold text-[#24483f]">Đóng</button>}
         </div>
       </header>
       ) : (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border-2 border-[#123c36] bg-[#eef6f1] px-2.5 py-2 sm:flex-nowrap">
-          <button type="button" onClick={() => setConfigOpen(true)} aria-label="Cài đặt" className="shrink-0 rounded-lg border-2 border-[#8fa99e] bg-white px-2.5 py-1.5 text-base leading-none text-[#24483f]">⚙</button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border-2 border-[var(--brand)] bg-[#eef6f1] px-2.5 py-2 sm:flex-nowrap">
+          <button type="button" onClick={() => setConfigOpen(true)} aria-label="Cài đặt" className="shrink-0 rounded-lg border-2 border-[var(--control-line)] bg-white px-2.5 py-1.5 text-base leading-none text-[#24483f]">⚙</button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-bold text-[#0f5a4e]">{campaign ? "🏆 Chiến dịch · " : ""}{FIELD_LABEL[field]}{sourceFilter ? ` · ${sourceFilter}` : ""} · còn {remainingMissing}</p>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#dbe7e1]"><div className="h-full bg-[#0c5f4d] transition-all" style={{ width: `${pct}%` }} /></div>
@@ -417,16 +417,16 @@ export default function RapidClassify() {
         </div>
       )}
 
-      {message && <p className="mt-2 rounded-lg border-2 border-[#9bb9ad] bg-[#f7faf8] px-3 py-2 text-sm text-[#193e35]">{message}</p>}
+      {message && <p className="mt-2 rounded-lg border-2 border-[#9bb9ad] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[#193e35]">{message}</p>}
 
       {focusMode && current && (
         <article
           key={current.id}
           onTouchStart={(e) => setTouchX(e.touches[0].clientX)}
           onTouchEnd={(e) => { if (touchX !== null && e.changedTouches[0].clientX - touchX < -70) skip(); setTouchX(null); }}
-          className="pl-cardin relative mt-2 flex min-h-0 flex-1 flex-col rounded-2xl border-2 border-[#123c36] bg-white p-3 shadow-[0_8px_20px_rgba(18,60,54,.08)]"
+          className="pl-cardin relative mt-2 flex min-h-0 flex-1 flex-col rounded-2xl border-2 border-[var(--brand)] bg-white p-3 shadow-[0_8px_20px_rgba(18,60,54,.08)]"
         >
-          {phase !== "idle" && <div className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow ${phase === "saving" ? "bg-[#123c36]" : "bg-[#0c5f4d]"}`}>{phase === "saving" ? <><span className="pl-spin" />Đang lưu…</> : <>✓ {savedLabel}</>}</div>}
+          {phase !== "idle" && <div className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold text-white shadow ${phase === "saving" ? "bg-[var(--brand)]" : "bg-[#0c5f4d]"}`}>{phase === "saving" ? <><span className="pl-spin" />Đang lưu…</> : <>✓ {savedLabel}</>}</div>}
           <div className="shrink-0">
             <div className="flex gap-3">
               {current.imageUrl
@@ -435,7 +435,7 @@ export default function RapidClassify() {
                 : <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-dashed border-[#cdddd6] bg-[#f5f8f6] text-3xl text-[#9fb7ae]">🍽️</div>}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-full bg-[#eef4f1] px-2 py-0.5 text-xs font-bold text-[#0c5f4d]">{current.source || "—"}</span>
+                  <span className="rounded-full bg-[var(--surface-soft)] px-2 py-0.5 text-xs font-bold text-[#0c5f4d]">{current.source || "—"}</span>
                   {currentOf(current, field) && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Hiện: {currentOf(current, field)}</span>}
                 </div>
                 <h2 className="mt-1 text-lg font-bold leading-6 text-[#122f2a]">{current.name}</h2>
@@ -444,7 +444,7 @@ export default function RapidClassify() {
                 </p>
               </div>
             </div>
-            <div className="mt-2 rounded-lg border border-[#cdddd6] bg-[#f7faf8] px-2.5 py-1.5">
+            <div className="mt-2 rounded-lg border border-[#cdddd6] bg-[var(--surface-soft)] px-2.5 py-1.5">
               <button type="button" onClick={inspectSource} className="w-full text-left text-xs font-bold text-[#24483f]">📊 {sourceOpen ? "Ẩn" : "Mở"} số liệu nguồn — chỉ đọc, không chỉnh</button>
               {sourceOpen && <>
               <div className="mt-2 grid grid-cols-3 gap-1.5 text-center text-[11px] sm:grid-cols-6">
@@ -474,14 +474,14 @@ export default function RapidClassify() {
             </div>
             {!LEVEL_FIELDS.has(field) && field !== "foodType" && (
               <div className="mt-2 flex gap-2">
-                <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Giá trị khác…" className="min-w-0 flex-1 rounded-lg border-2 border-[#8fa99e] px-3 py-2 text-sm" />
-                <button type="button" disabled={busy || !custom.trim()} onClick={() => void apply(custom.trim())} className="rounded-lg bg-[#123c36] px-3 py-2 text-sm font-bold text-white disabled:opacity-50">Gán</button>
+                <input value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="Giá trị khác…" className="min-w-0 flex-1 rounded-lg border-2 border-[var(--control-line)] px-3 py-2 text-sm" />
+                <button type="button" disabled={busy || !custom.trim()} onClick={() => void apply(custom.trim())} className="rounded-lg bg-[var(--brand)] px-3 py-2 text-sm font-bold text-white disabled:opacity-50">Gán</button>
               </div>
             )}
           </div>
 
           <div className="mt-2 flex shrink-0 items-center justify-between gap-2 border-t border-[#e1ebe6] pt-2">
-            <button type="button" disabled={busy || !history.length} onClick={() => void undo()} className="rounded-lg border-2 border-[#8fa99e] px-2.5 py-1.5 text-xs font-semibold text-[#24483f] disabled:opacity-40">↩ Hoàn tác</button>
+            <button type="button" disabled={busy || !history.length} onClick={() => void undo()} className="rounded-lg border-2 border-[var(--control-line)] px-2.5 py-1.5 text-xs font-semibold text-[#24483f] disabled:opacity-40">↩ Hoàn tác</button>
             <button type="button" disabled={busy} onClick={() => void apply(null)} className="rounded-lg border-2 border-rose-300 px-2.5 py-1.5 text-xs font-semibold text-rose-700 disabled:opacity-40">Xóa</button>
             <button type="button" onClick={skip} className="rounded-lg bg-[#f0f7f3] px-2.5 py-1.5 text-xs font-semibold text-[#0f5a4e]">Bỏ qua →</button>
           </div>
@@ -493,7 +493,7 @@ export default function RapidClassify() {
           <p className="text-2xl">🎉</p>
           <p className="mt-1 font-semibold text-[#122f2a]">Xong hàng đợi {queue.length} thẻ!</p>
           <p className="mt-1 text-sm text-[#4b655e]">Còn {remainingMissing} dòng trống {FIELD_LABEL[field].toLowerCase()} trong CSDL.</p>
-          {campaign ? (hasMoreInField ? <button type="button" onClick={buildQueue} className="mt-3 rounded-lg bg-[#102f59] px-4 py-2.5 text-sm font-bold text-white">Lượt tiếp: {FIELD_LABEL[field]} →</button> : <button type="button" onClick={nextCampaignField} className="mt-3 rounded-lg bg-[#102f59] px-4 py-2.5 text-sm font-bold text-white">{FIELD_ORDER.indexOf(field) < FIELD_ORDER.length - 1 ? <>Trường kế: {FIELD_LABEL[FIELD_ORDER[FIELD_ORDER.indexOf(field) + 1]]} →</> : <>🏆 Hoàn tất chiến dịch</>}</button>) : <button type="button" onClick={buildQueue} className="mt-3 rounded-lg bg-[#123c36] px-4 py-2.5 text-sm font-bold text-white">Tải lượt tiếp</button>}
+          {campaign ? (hasMoreInField ? <button type="button" onClick={buildQueue} className="mt-3 rounded-lg bg-[#102f59] px-4 py-2.5 text-sm font-bold text-white">Lượt tiếp: {FIELD_LABEL[field]} →</button> : <button type="button" onClick={nextCampaignField} className="mt-3 rounded-lg bg-[#102f59] px-4 py-2.5 text-sm font-bold text-white">{FIELD_ORDER.indexOf(field) < FIELD_ORDER.length - 1 ? <>Trường kế: {FIELD_LABEL[FIELD_ORDER[FIELD_ORDER.indexOf(field) + 1]]} →</> : <>🏆 Hoàn tất chiến dịch</>}</button>) : <button type="button" onClick={buildQueue} className="mt-3 rounded-lg bg-[var(--brand)] px-4 py-2.5 text-sm font-bold text-white">Tải lượt tiếp</button>}
         </div>
       )}
       {eventOpen && !gameOver && <ShiftEvent round={eventRound} onChoose={(impact) => { applyImpact(impact); setEventRound((value) => value + 1); setEventOpen(false); }} />}
@@ -528,5 +528,5 @@ function SurvivalMeters({ stats, compact = false }: { stats: SurvivalStats; comp
 
 function GameOver({ stats, turns, best, onRestart }: { stats: SurvivalStats; turns: number; best: number; onRestart: () => void }) {
   const failed = (Object.keys(stats) as (keyof SurvivalStats)[]).find((key) => stats[key] <= 0);
-  return <div className="fixed inset-0 z-[110] grid place-items-center bg-[#071b17]/85 p-4 backdrop-blur-sm"><section className="w-full max-w-md rounded-3xl border-4 border-[#9bb9ad] bg-[#f7faf8] p-6 text-center shadow-2xl"><div className="text-5xl">🕯️</div><p className="mt-3 text-xs font-black tracking-[.16em] text-[#6b7f78]">CA TRỰC KẾT THÚC</p><h2 className="mt-2 text-2xl font-black text-[#102f2b]">{failed ? `${STAT_META[failed].label} đã cạn` : "Đã đến lúc nghỉ ca"}</h2><p className="mt-2 text-sm leading-6 text-[#4f6b62]">Bạn trụ được <b>{turns} lượt</b>. Kỷ lục trên thiết bị này là <b>{best} lượt</b>. Các chỉnh sửa đã lưu vẫn giữ nguyên và có nhật ký.</p><SurvivalMeters stats={stats} /><button type="button" onClick={onRestart} className="mt-5 w-full rounded-xl bg-[#123c36] px-4 py-3 font-black text-white">Bắt đầu ca mới</button></section></div>;
+  return <div className="fixed inset-0 z-[110] grid place-items-center bg-[#071b17]/85 p-4 backdrop-blur-sm"><section className="w-full max-w-md rounded-3xl border-4 border-[#9bb9ad] bg-[var(--surface-soft)] p-6 text-center shadow-2xl"><div className="text-5xl">🕯️</div><p className="mt-3 text-xs font-black tracking-[.16em] text-[#6b7f78]">CA TRỰC KẾT THÚC</p><h2 className="mt-2 text-2xl font-black text-[#102f2b]">{failed ? `${STAT_META[failed].label} đã cạn` : "Đã đến lúc nghỉ ca"}</h2><p className="mt-2 text-sm leading-6 text-[#4f6b62]">Bạn trụ được <b>{turns} lượt</b>. Kỷ lục trên thiết bị này là <b>{best} lượt</b>. Các chỉnh sửa đã lưu vẫn giữ nguyên và có nhật ký.</p><SurvivalMeters stats={stats} /><button type="button" onClick={onRestart} className="mt-5 w-full rounded-xl bg-[var(--brand)] px-4 py-3 font-black text-white">Bắt đầu ca mới</button></section></div>;
 }

@@ -170,7 +170,7 @@ export default function DataManager() {
 
   return (
     <div className="space-y-3">
-      <section className="rounded-xl border-2 border-[#123c36] bg-white p-4 shadow-[0_8px_20px_rgba(18,60,54,.04)]">
+      <section className="rounded-xl border-2 border-[var(--brand)] bg-white p-4 shadow-[0_8px_20px_rgba(18,60,54,.04)]">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-bold tracking-[.16em] text-[#0f5a4e]">BẢNG TÍNH DỮ LIỆU</p>
@@ -182,15 +182,15 @@ export default function DataManager() {
 
         <div className="mt-3 flex flex-col gap-2 lg:flex-row lg:items-center">
           <form onSubmit={(event) => { event.preventDefault(); void load(); }} className="flex min-w-0 flex-1 gap-2">
-            <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Tìm tên thực phẩm, món ăn hoặc mã nguồn… (tối đa 100 dòng)" className="min-w-0 flex-1 rounded-lg border-2 border-[#8fa99e] bg-white px-3 py-2 text-sm outline-none focus:border-[#0b6957] focus:ring-2 focus:ring-[#b9ddd0]" />
-            <button type="submit" className="rounded-lg bg-[#123c36] px-4 py-2 text-sm font-bold text-white hover:bg-[#0b5549]">Tìm</button>
+            <input value={q} onChange={(event) => setQ(event.target.value)} placeholder="Tìm tên thực phẩm, món ăn hoặc mã nguồn… (tối đa 100 dòng)" className="min-w-0 flex-1 rounded-lg border-2 border-[var(--control-line)] bg-white px-3 py-2 text-sm outline-none focus:border-[#0b6957] focus:ring-2 focus:ring-[#b9ddd0]" />
+            <button type="submit" className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-bold text-white hover:bg-[#0b5549]">Tìm</button>
           </form>
           <button type="button" onClick={exportCsv} className="rounded-lg border-2 border-[#0b6957] bg-white px-4 py-2 text-sm font-bold text-[#0b6957] hover:bg-[#eef6f1]">⬇ Xuất CSV (Excel)</button>
         </div>
 
         <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
           <input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Lý do thay đổi & nguồn đối chiếu (bắt buộc để lưu)" className="min-w-0 flex-1 rounded-lg border border-[#cdb56d] bg-[#fffdf5] px-3 py-2 text-sm outline-none focus:border-[#9a7615] focus:ring-2 focus:ring-[#eadcaa]" />
-          <button type="button" disabled={busy || !dirtyCount || !reason.trim()} onClick={() => void saveAll()} className="rounded-lg bg-[#123c36] px-4 py-2 text-sm font-bold text-white hover:bg-[#0b5549] disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Đang lưu…" : `Lưu ${dirtyCount || ""} thay đổi`}</button>
+          <button type="button" disabled={busy || !dirtyCount || !reason.trim()} onClick={() => void saveAll()} className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-bold text-white hover:bg-[#0b5549] disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Đang lưu…" : `Lưu ${dirtyCount || ""} thay đổi`}</button>
         </div>
 
         {message && <p role="status" className="mt-3 rounded-lg border border-[#9bb9ad] bg-[#f5faf7] px-3 py-2 text-sm font-medium text-[#193e35]">{message}</p>}
@@ -198,7 +198,7 @@ export default function DataManager() {
 
       <datalist id="food-group-options">{foodGroupOptions.map((option) => <option key={option} value={option} />)}</datalist>
 
-      <section className="overflow-hidden rounded-xl border-2 border-[#123c36] bg-white shadow-[0_8px_20px_rgba(18,60,54,.04)]">
+      <section className="overflow-hidden rounded-xl border-2 border-[var(--brand)] bg-white shadow-[0_8px_20px_rgba(18,60,54,.04)]">
         <div className="max-h-[74vh] overflow-auto">
           <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 z-20 bg-[#eef6f1] text-xs uppercase tracking-wide text-[#3f5b53]">

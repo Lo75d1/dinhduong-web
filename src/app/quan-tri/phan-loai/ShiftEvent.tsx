@@ -42,13 +42,13 @@ const EVENTS = [
 export default function ShiftEvent({ round, onChoose }: { round: number; onChoose: (impact: StatImpact) => void }) {
   const event = EVENTS[(round - 1) % EVENTS.length];
   return <div className="fixed inset-0 z-[100] grid place-items-center overflow-y-auto bg-[#071b17]/80 p-3 backdrop-blur-sm">
-    <section className="w-full max-w-lg rounded-3xl border-4 border-[#89b7a7] bg-[#f7faf8] p-5 text-[#102f2b] shadow-2xl sm:p-7">
-      <p className="text-xs font-black tracking-[.16em] text-[#52786d]">SỰ KIỆN CA TRỰC · LƯỢT {round}</p>
+    <section className="w-full max-w-lg rounded-3xl border-4 border-[#89b7a7] bg-[var(--surface-soft)] p-5 text-[#102f2b] shadow-2xl sm:p-7">
+      <p className="text-xs font-black tracking-[.16em] text-[var(--muted)]">SỰ KIỆN CA TRỰC · LƯỢT {round}</p>
       <div className="mt-3 text-5xl" aria-hidden>{event.icon}</div>
       <h2 className="mt-3 text-2xl font-black">{event.title}</h2>
       <p className="mt-2 leading-7 text-[#36574f]">{event.text}</p>
       <div className="mt-5 grid gap-3">
-        {event.choices.map((choice) => <button key={choice.label} type="button" onClick={() => onChoose(choice.impact)} className="rounded-2xl border-2 border-[#9bb9ad] bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[#123c36] hover:shadow-md active:scale-[.99]"><span className="font-black text-[#123c36]">{choice.label}</span><span className="mt-1 block text-sm text-[#567168]">{choice.note}</span><span className="mt-2 flex flex-wrap gap-1.5 text-xs font-bold">{Object.entries(choice.impact).map(([key, value]) => <span key={key} className={`rounded-full px-2 py-0.5 ${Number(value) >= 0 ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-800"}`}>{LABEL[key as keyof typeof LABEL]} {Number(value) >= 0 ? "+" : ""}{value}</span>)}</span></button>)}
+        {event.choices.map((choice) => <button key={choice.label} type="button" onClick={() => onChoose(choice.impact)} className="rounded-2xl border-2 border-[#9bb9ad] bg-white p-4 text-left transition hover:-translate-y-0.5 hover:border-[var(--brand)] hover:shadow-md active:scale-[.99]"><span className="font-black text-[var(--brand)]">{choice.label}</span><span className="mt-1 block text-sm text-[#567168]">{choice.note}</span><span className="mt-2 flex flex-wrap gap-1.5 text-xs font-bold">{Object.entries(choice.impact).map(([key, value]) => <span key={key} className={`rounded-full px-2 py-0.5 ${Number(value) >= 0 ? "bg-emerald-100 text-emerald-900" : "bg-rose-100 text-rose-800"}`}>{LABEL[key as keyof typeof LABEL]} {Number(value) >= 0 ? "+" : ""}{value}</span>)}</span></button>)}
       </div>
     </section>
   </div>;

@@ -1,0 +1,83 @@
+.workspace { --protein:#4c647f; --lipid:#a87936; --glucid:#537b69; color:var(--ink); font-size:17px; }
+.workspace :where(button,input,select,textarea):focus-visible { outline:3px solid #277b9a; outline-offset:3px; }
+.titleRow { display:flex; gap:18px; align-items:flex-start; justify-content:space-between; padding:8px 0 18px; }
+.titleRow h2 { font-size:27px; line-height:1.25; font-weight:700; max-width:850px; }
+.titleRow h2:focus { outline:none; }.titleRow>div { min-width:0; }
+.meta { display:flex; align-items:center; flex-wrap:wrap; gap:6px 16px; color:var(--muted); margin-top:8px; font-size:16px; }
+.status { display:inline-flex; padding:3px 9px; border-radius:3px; color:#855124; background:#faefe1; font-size:15px; white-space:nowrap; }
+.approved { color:#285c4b; background:#eaf2ed; }
+.action,.secondary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:9px 16px; border:1px solid var(--ink); border-radius:5px; background:var(--ink); color:white; font-weight:700; cursor:pointer; }
+.secondary { background:white; color:var(--ink); border-color:var(--control-line); }
+.action:disabled,.secondary:disabled { opacity:.5; cursor:default; }
+.contextBar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 24px; padding:12px 0; border-top:1px solid var(--line); }
+.selectors { display:flex; gap:16px; align-items:center; flex-wrap:wrap; min-width:0; }
+.selectors label { display:flex; align-items:center; gap:8px; min-width:0; }
+.selectors select { min-height:44px; max-width:360px; border:1px solid var(--control-line); border-radius:4px; background:white; padding:6px 28px 6px 10px; }
+.scopeNote { color:var(--muted); font-size:15px; }
+.nutrition { background:white; border:1px solid var(--line); border-radius:6px; margin:0 0 24px; padding:16px 20px 0; }
+.nutritionHeading { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin-bottom:13px; }
+.nutritionHeading h3 { font-size:17px; font-weight:700; }
+.nutritionHeading>span { color:var(--muted); font-size:15px; }
+.nutritionGrid { display:grid; grid-template-columns:1.5fr repeat(3,1fr); margin-bottom:16px; }
+.nutritionGrid>div { padding-left:24px; border-left:1px solid var(--line); display:flex; flex-direction:column; gap:3px; }
+.nutritionGrid>div:first-child { padding-left:0; border-left:0; }
+.nutritionGrid strong { font-size:28px; line-height:1.25; font-variant-numeric:tabular-nums; font-weight:700; }
+.nutritionGrid small { font-size:16px; font-weight:400; margin-left:3px; color:var(--muted); }
+.nutritionGrid>div>span:last-child { color:var(--muted); font-size:15px; }
+.protein>strong { color:var(--protein); }.lipid>strong { color:var(--lipid); }.glucid>strong { color:var(--glucid); }
+.macroBar { display:flex; height:5px; margin:0 -20px; overflow:hidden; border-radius:0 0 5px 5px; }
+.macroBar .protein { background:var(--protein); }.macroBar .lipid { background:var(--lipid); }.macroBar .glucid { background:var(--glucid); }
+.dataNotice,.calculationError { border-top:1px solid #e6d5bc; padding:10px 0; color:#805622; font-size:15px; }
+.calculationError { color:#9b3030; border-color:#eed5d5; }
+.mealSheet { min-width:0; background:white; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+.sheetCaption { padding:17px 20px; display:flex; align-items:baseline; justify-content:space-between; gap:8px 20px; flex-wrap:wrap; }
+.sheetCaption h3 { font-size:21px; font-weight:700; }.sheetCaption>span { color:var(--muted); font-size:15px; }
+.meal { border-top:1px solid var(--line); }
+.mealHeader { padding:12px 20px; display:flex; justify-content:space-between; gap:8px 16px; background:#f5f5f1; }
+.mealHeader>div { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.mealIndex { color:#8a8d88; font-size:15px; }.mealHeader h4 { font-size:21px; font-weight:700; }
+.mealContext,.mealEnergy { color:var(--muted); font-size:15px; }.mealEnergy { font-variant-numeric:tabular-nums; }
+.textButton { min-height:44px; padding:4px 2px; color:var(--brand); text-decoration:underline; text-underline-offset:4px; font-size:16px; }
+.foodTable { width:100%; border-collapse:collapse; table-layout:fixed; }
+.foodTable .dishColumn { width:30%; }.foodTable .amountColumn { width:115px; }
+.foodTable thead th { padding:8px 20px; border-bottom:1px solid var(--line); color:var(--muted); text-align:left; font-size:14px; font-weight:400; }
+.foodTable thead th:last-child { text-align:right; }
+.foodTable tbody+tbody { border-top:1px solid var(--line); }
+.foodTable :where(td,tbody th) { padding:6px 20px; vertical-align:top; overflow-wrap:anywhere; }
+.foodTable tbody tr:first-child :where(td,th) { padding-top:13px; }.foodTable tbody tr:last-child td { padding-bottom:13px; }
+.foodTable tbody th { font-weight:700; font-size:18px; text-align:left; }
+.foodTable .quantity { text-align:right; font-variant-numeric:tabular-nums; font-weight:700; white-space:nowrap; }
+.quantity>span { font-weight:400; color:var(--muted); }
+.empty { padding:20px; color:var(--muted); }
+.bottom { margin-top:24px; border-top:1px solid var(--line); }
+.disclosure { padding:14px 0; border-bottom:1px solid var(--line); }
+.disclosure>summary { display:flex; align-items:center; gap:9px; min-height:44px; cursor:pointer; font-size:18px; font-weight:700; }
+.disclosure>summary::before { content:'+'; font-weight:400; color:var(--muted); }.disclosure[open]>summary::before { content:'−'; }
+.disclosure>div { margin-top:10px; }
+.review { padding:20px 0; }.reviewHeader { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center; }
+.reviewHeader h3 { font-size:21px; font-weight:700; }.reviewHeader p { color:var(--muted); font-size:15px; margin-top:3px; }
+.reviewForm { margin-top:16px; padding:18px; border:1px solid var(--line); border-radius:5px; background:white; display:grid; gap:14px; }
+.reviewForm textarea { width:100%; min-height:80px; border:1px solid var(--control-line); border-radius:4px; padding:9px; margin-top:5px; }
+.reviewForm label:has(input[type=checkbox]) { display:flex; gap:10px; align-items:flex-start; }.reviewForm input[type=checkbox] { width:20px; height:20px; flex-shrink:0; margin-top:3px; }
+.reviewActions { display:flex; gap:10px; flex-wrap:wrap; }.detailTable { width:100%; border-collapse:collapse; text-align:right; font-variant-numeric:tabular-nums; }
+.detailTable :where(th,td) { padding:10px 12px; border-bottom:1px solid var(--line); font-size:16px; }.detailTable th { font-weight:400; color:var(--muted); }.detailTable :where(th,td):first-child { text-align:left; }.tableScroll { overflow-x:auto; }
+.historyList { list-style:none; }.historyList li { border-bottom:1px solid var(--line); padding:12px 0; }.historyList strong { font-weight:700; }.historyList p { color:var(--muted); font-size:15px; margin-top:3px; }
+.editor { background:white; border:1px solid var(--line); border-radius:6px; padding:18px 20px; }
+.editor fieldset { min-width:0; }.editorIntro { display:flex; gap:12px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; margin-bottom:16px; }.editorIntro h3 { font-size:21px; font-weight:700; }.editorIntro p { color:var(--muted); font-size:15px; }
+.editorSettings { border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:12px; }.editorSettings>summary { cursor:pointer; color:var(--muted); min-height:44px; padding:9px 0; }
+.editorSettings label { display:block; margin-top:12px; }.editorSettings input { display:block; width:100%; max-width:700px; margin-top:5px; }
+.control { min-height:44px; border:1px solid var(--control-line); border-radius:4px; padding:7px 10px; background:white; max-width:100%; }
+.editMeal { border-top:1px solid var(--line); margin-top:18px; padding-top:12px; }.editMeal>h4 { font-size:21px; font-weight:700; }.editDish { padding:14px 0; border-bottom:1px solid var(--line); }
+.dishEditHeader { display:flex; gap:12px; align-items:center; margin-bottom:10px; }.dishEditHeader>label { flex:1; min-width:0; }.dishEditHeader input { width:100%; font-size:18px; font-weight:700; }.remove { color:#986352; min-height:44px; padding:6px 8px; font-size:15px; }
+.editIngredient { display:grid; grid-template-columns:minmax(0,1fr) 100px 28px 44px; align-items:center; gap:8px; padding:5px 0; }.editIngredient label { font-size:17px; }.editIngredient input { width:100%; text-align:right; font-variant-numeric:tabular-nums; }.editIngredient>span { color:var(--muted); font-size:15px; }
+.picker { margin-top:5px; font-size:15px; }.picker summary { min-height:44px; padding:10px 0; cursor:pointer; color:var(--brand); }.pickerSearch { display:flex; gap:8px; }.pickerSearch input { flex:1; min-width:0; }.picker ul { max-height:240px; overflow-y:auto; }.picker li { padding:9px 0; border-bottom:1px solid var(--line); }.picker li button { text-align:left; min-height:44px; }.picker li small { display:block; color:var(--muted); }
+.saveBar { position:sticky; bottom:0; z-index:5; display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:20px; padding:14px 0; background:white; border-top:1px solid var(--line); }.saveBar>label { flex:1; min-width:180px; }.saveBar input { width:100%; }.saveBar>span { color:var(--muted); font-size:15px; }
+@media (max-width:640px) {
+  .titleRow { gap:12px; }.titleRow h2 { font-size:23px; }.titleRow>.action { padding:8px 10px; font-size:15px; white-space:nowrap; }.meta { font-size:14px; gap:5px 10px; }
+  .selectors { width:100%; gap:8px; }.selectors label { flex:1; }.selectors select { width:100%; max-width:none; min-width:0; }
+  .contextBar { padding:9px 0; gap:6px; }.contextBar>.scopeNote { display:none; }.selectors { font-size:15px; gap:5px 12px; }
+  .nutrition { padding:12px 14px 0; margin-bottom:16px; }.nutritionGrid { grid-template-columns:repeat(3,1fr); row-gap:10px; }.nutritionGrid>div { padding-left:10px; }.nutritionGrid strong { font-size:23px; }.nutritionGrid>div>span { font-size:14px; }.nutritionGrid>div>span:last-child { font-size:13px; }.nutritionGrid>div:not(.energy)>span:last-child { white-space:nowrap; }.nutritionGrid small { font-size:13px; margin-left:1px; }.nutritionGrid>.energy { grid-column:1/-1; display:grid; grid-template-columns:1fr auto; align-items:baseline; padding-bottom:10px; border-bottom:1px solid var(--line); }.energy>strong { text-align:right; }.energy>span:last-child { grid-column:1/-1; }.nutritionGrid>div:nth-child(2) { border-left:0; padding-left:0; }.macroBar { margin:0 -14px; }.nutritionHeading { margin-bottom:8px; }.nutritionHeading[data-idle=true] { display:none; }.dataNotice { font-size:14px; }
+  .sheetCaption { padding:14px; }.sheetCaption>span { font-size:14px; }.mealHeader { padding:10px 14px; }.mealHeader>div { gap:5px 9px; }.mealContext { display:none; }.mealHeader h4 { font-size:20px; }.mealHeader>div:last-child { justify-content:flex-end; }.mealEnergy { font-size:14px; }
+  .foodTable colgroup,.foodTable thead { display:none; }.foodTable,.foodTable tbody { display:block; }.foodTable tbody { padding:12px 14px; }.foodTable tr { display:grid; grid-template-columns:minmax(0,1fr) 80px; column-gap:12px; }.foodTable .dishName { grid-column:1/-1; padding:0 0 7px!important; font-size:18px; }.foodTable td { padding:4px 0!important; }.foodTable td:last-child { grid-column:2; }.foodTable td[colspan] { grid-column:1/-1; }.foodTable td { font-size:16px; }
+  .editor { padding:14px; }.editIngredient { grid-template-columns:minmax(0,1fr) 74px 20px 34px; gap:5px; }.editIngredient label { font-size:16px; }.editIngredient input { padding-left:5px; padding-right:5px; }.dishEditHeader { gap:6px; }.saveBar { bottom:0; gap:8px; }.saveBar>label { flex-basis:100%; }.saveBar .action { flex:1; }.reviewHeader>.action { width:100%; }.reviewForm { padding:14px; }.detailTable { min-width:520px; }
+}

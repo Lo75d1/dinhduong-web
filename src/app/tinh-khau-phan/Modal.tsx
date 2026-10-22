@@ -40,9 +40,9 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
     >
       <div
         onClick={(event) => event.stopPropagation()}
-        className={`my-4 w-full ${maxWidth} rounded-xl border-2 border-[#123c36] bg-white shadow-xl ${printable ? "modal-print-box" : ""}`}
+        className={`my-4 w-full ${maxWidth} rounded-xl border-2 border-[var(--brand)] bg-white shadow-xl ${printable ? "modal-print-box" : ""}`}
       >
-        <div data-no-print className="flex items-center justify-between gap-3 rounded-t-xl border-b-2 border-[#123c36] bg-[#edf4f0] px-4 py-3">
+        <div data-no-print className="flex items-center justify-between gap-3 rounded-t-xl border-b-2 border-[var(--brand)] bg-[var(--surface-soft)] px-4 py-3">
           <h2 className="text-lg font-semibold text-neutral-950">{title}</h2>
           <button
             type="button"

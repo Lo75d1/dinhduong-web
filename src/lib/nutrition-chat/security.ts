@@ -51,7 +51,9 @@ export async function getNutritionIdentity(request: Request, requiredScope: stri
   validateNutritionOrigin(request);
   const scopes = parseNutritionScopes(requiredScope);
   const authorization = request.headers.get("authorization") ?? "";
-  if (/^Bearer ng_/i.test(authorization)) {
+  // OAuth tokens are 43 random base64url characters and can also start with ng_.
+  // Only the full 46-character guest shape selects guest authentication.
+  if (/^Bearer ng_[A-Za-z0-9_-]{43}$/i.test(authorization)) {
     await enforceNutritionRateLimit("nutrition-guest-auth:global", { limit: 600, windowSeconds: 60 });
     const identity = await guestSessionIdentity(authorization.slice(7));
     if (scopes.some(scope => !identity.scopes.includes(scope))) throw new NutritionSecurityError("guest_account_required", 403, "Phiên tạm chỉ tra kho chung, tính và xuất file; lưu/mở bản riêng cần kết nối tài khoản.");

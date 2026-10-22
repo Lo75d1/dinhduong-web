@@ -1,5 +1,5 @@
 {
-  "summary": "Khi lập thực đơn, ưu tiên món/công thức RNI có sẵn và phù hợp; đọc get_dish, giữ Food ID/nguồn thật. Lên khung toàn kỳ và rà độ lặp trước khi trình: mặc định 7 ngày, cùng món/nền bữa sáng không quá 2 lần, tránh liền ngày; khoai luộc/hấp/nướng vẫn cùng nền khoai. Cơm trắng ở bữa chính có thể lặp theo thói quen. Tôn trọng lựa chọn và chỉ định đã có, không áp quy tắc đổi món vào khẩu phần24giờ đã ăn. Công thức sáng tạo phải nấu/ăn được, phù hợp khẩu vị và điều kiện, ghi rõ AI/biến thể cùng nguyên liệu thật để tôi duyệt; không ghép đồ ăn chỉ để đủ kcal.",
+  "summary": "Khi lập thực đơn, ưu tiên món/công thức RNI có sẵn và phù hợp; đọc get_dish, giữ Food ID/nguồn thật. Lên khung toàn kỳ và rà độ lặp trước khi trình: mặc định 7 ngày, cùng món/nền bữa sáng không quá 2 lần, tránh liền ngày; khoai luộc/hấp/nướng vẫn cùng nền khoai. Cơm trắng ở bữa chính có thể lặp theo thói quen. Tôn trọng lựa chọn và chỉ định đã có, không áp quy tắc đổi món vào khẩu phần24giờ đã ăn. Công thức sáng tạo phải nấu/ăn được, phù hợp khẩu vị và điều kiện, ghi rõ AI/biến thể cùng nguyên liệu thật để tôi duyệt; không ghép đồ ăn chỉ để đủ kcal. Bữa cơm thường trong kho mẫu và suất bệnh viện/công nghiệp theo cấu trúc cơm + canh + hai món riêng: món đạm và món rau hoặc đậu; canh có thịt/tôm không thay món đạm riêng.",
   "sections": [
     {
       "title": "Lập thực đơn: ưu tiên RNI và bữa ăn thực tế",
@@ -7,6 +7,17 @@
         "Chỉ áp dụng quy tắc đổi món khi đề xuất thực đơn mới. Với khẩu phần24giờ đã ăn, ghi đúng lịch sử kể cả món lặp; với món người dùng đã chọn, chỉ góp ý và xin đổi, không tự thay. Dị ứng, chỉ định, khả năng ăn/nuốt, sở thích và điều kiện đã biết được ưu tiên hơn độ đa dạng hoặc nguồn RNI.",
         "Ưu tiên search_dishes/get_dish cho món RNI phù hợp; tìm nhiều loại theo bữa, kiểm nguồn và đủ Food liên kết, lượng/cơ sở. Không lấy dòng đầu theo thứ hạng. Chỉ tra món nguyên khối qua search_foods type=MA khi cần hoặc người dùng chọn.",
         "Được giao lập thực đơn thì chủ động chọn phương án từ ứng viên thật để trình duyệt, không bắt chọn từng món trong danh sách3–5 cho mọi bữa. Chỉ so sánh lựa chọn khi còn mơ hồ, khác biệt ảnh hưởng an toàn/khẩu vị hoặc người dùng muốn chọn. Đề xuất không phải đã được chấp nhận."
+      ]
+    },
+    {
+      "id": "rice_meal_structure",
+      "title": "Bữa cơm thường: cơm, canh và hai món riêng",
+      "rules": [
+        "Bữa cơm thường ở bệnh viện, suất ăn công nghiệp và bộ mẫu cơm tại nhà: cơm + canh + món đạm + món rau/đậu riêng; trình bốn mục, ba món không tính cơm. Đây là quy ước kho do Admin yêu cầu, không phải quy định pháp lý hay tiêu chuẩn đủ chất.",
+        "Hai món riêng phối hợp đạm và rau/đậu theo chế độ, không bắt buộc cả hai là thịt. Mỗi món tính một lần: canh có thịt/tôm vẫn là canh; xào thịt với rau vẫn là một món, không thay hai món riêng. Gia vị, nước chấm, trái cây, sữa không thay ba món này.",
+        "Chọn đủ cấu trúc rồi phân bổ lại cơm, đạm, rau/đậu, dầu, gia vị theo mục tiêu năng lượng. Thêm món vào bản cũ phải prepare và duyệt bản mới trước tính; không giữ kcal hoặc kết luận đủ chất của bản trước.",
+        "Chỉ áp cho bữa cơm chính thông thường; không ép bữa sáng/phụ, bún/phở/cháo, trẻ nhỏ, đơn ăn đặc biệt hoặc khẩu phần24giờ đã ăn. Giữ cấu trúc khác đã được người dùng/đơn vị chốt và ghi ngoại lệ; ưu tiên chỉ định chuyên môn. Cơm nhà ngoài bộ mẫu thống nhất số món theo điều kiện.",
+        "Trước prepare_menu hoặc lưu kho, rà từng bữa/nhóm: đủ cơm, canh, món đạm, món rau/đậu riêng và nguyên liệu/định lượng chưa. Thiếu thì báo thiếu; số món không chứng minh đạt mục tiêu dinh dưỡng."
       ]
     },
     {

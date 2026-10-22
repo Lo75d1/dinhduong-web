@@ -17,7 +17,7 @@ type FixtureModel = {
 type FixturePrisma = {
   user: FixtureModel; session: FixtureModel; patient: FixtureModel; dataChangeLog: FixtureModel;
   personalFood: FixtureModel; personalDish: FixtureModel;
-  menuLibraryTemplate: FixtureModel; menuLibraryVersion: FixtureModel; menuLibraryGrant: FixtureModel;
+  menuLibraryTemplate: FixtureModel; menuLibraryVersion: FixtureModel; menuLibraryGrant: FixtureModel; menuLibraryReview: FixtureModel;
   food: FixtureModel; dish: FixtureModel; dietCode: FixtureModel;
   nutritionOAuthClient: FixtureModel; nutritionOAuthCode: FixtureModel; nutritionOAuthToken: FixtureModel; nutritionApiWindow: FixtureModel; ration: FixtureModel;
   $queryRaw<T>(parts: TemplateStringsArray, ...values: unknown[]): Promise<T[]>;
@@ -59,6 +59,15 @@ function whereSql(where: Where | undefined, parameters: unknown[]): string {
     if (key === "tokens") return `EXISTS (SELECT 1 FROM nutrition_oauth_tokens WHERE "clientId" = nutrition_oauth_clients.id AND ${whereSql((value as {some:Where}).some, parameters)})`;
     if (value === null) return `${column} IS NULL`;
     if (typeof value === "object" && !(value instanceof Date) && !Array.isArray(value)) {
+      const filter = value as Row;
+      if (Array.isArray(filter.path) && Object.hasOwn(filter, "equals")) {
+        return `(${column} #> ${bind(filter.path)}::text[]) = ${bind(JSON.stringify(filter.equals))}::jsonb`;
+      }
+      if (Array.isArray(filter.path) && typeof filter.string_contains === "string") {
+        const jsonText = `(${column} #>> ${bind(filter.path)}::text[])`;
+        const pattern = '%' + filter.string_contains.replace(/[\\%_]/g, '\\$&') + '%';
+        return `${jsonText} ${filter.mode === "insensitive" ? "ILIKE" : "LIKE"} ${bind(pattern)}`;
+      }
       return Object.entries(value as Row).map(([operator, operand]) => {
         if (operator === "mode") return "TRUE";
         if (operator === "contains") return `${column} ILIKE ${bind('%' + String(operand).replace(/[\\%_]/g, '\\$&') + '%')}`;
@@ -82,7 +91,7 @@ function fixture(executor: Executor): FixturePrisma {
     function updateValues(data: Row) {
       return Object.entries(data).map(([key, value]) => {
         if (value && typeof value === "object" && "increment" in value) return value.increment;
-        if (["conversationJson", "profileJson", "beforeJson", "afterJson", "content", "document"].includes(key) && value !== null) return JSON.stringify(value);
+        if (["conversationJson", "profileJson", "beforeJson", "afterJson", "content", "document", "analysis"].includes(key) && value !== null) return JSON.stringify(value);
         return value;
       });
     }
@@ -172,6 +181,7 @@ function fixture(executor: Executor): FixturePrisma {
     user: model("app_users"), session: model("app_sessions"), patient: model("patients"), dataChangeLog: model("data_change_logs"),
     personalFood: model("personal_foods"), personalDish: model("personal_dishes"),
     menuLibraryTemplate: model("menu_library_templates"), menuLibraryVersion: model("menu_library_versions"), menuLibraryGrant: model("menu_library_grants"),
+    menuLibraryReview: model("menu_library_reviews"),
     food: model("foods"), dish: model("dishes"), dietCode: model("diet_codes"),
     nutritionOAuthClient: model("nutrition_oauth_clients"), nutritionOAuthCode: model("nutrition_oauth_codes"),
     nutritionOAuthToken: model("nutrition_oauth_tokens"), nutritionApiWindow: model("nutrition_api_windows"),

@@ -23,8 +23,13 @@
     "test:accounts": "tsx scripts/test-account-management.ts",
     "test:menu-library": "node --import tsx scripts/test-menu-library.tsx",
     "test:menu-library-write": "node --import tsx scripts/test-menu-library-write.ts",
+    "test:menu-library-ui": "node --import tsx scripts/test-menu-library-ui.tsx",
+    "test:menu-library-analysis": "node --import tsx scripts/test-menu-library-analysis.ts",
     "package:nutrition-chat": "node scripts/package-nutrition-chat-plugin.mjs",
-    "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts"
+    "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts",
+    "preview:menu-library": "node scripts/build-menu-library-comparison.mjs",
+    "preview:menu-clinical": "node scripts/build-clinical-menu-preview.mjs",
+    "test:menu-clinical-browser": "node scripts/test-clinical-menu-browser.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -45,6 +50,7 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.4.1",
     "@tailwindcss/postcss": "^4",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",
     "@types/qrcode": "^1.5.6",
@@ -53,6 +59,7 @@
     "esbuild": "^0.28.1",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
+    "jsdom": "^30.1.3",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",

@@ -200,6 +200,11 @@ async function main() {
     assert.equal((await api.nutritionOAuthHandler(api.revokeNutritionToken, form("revoke", { client_id: client.client_id, token: randomNutritionToken() }))).status, 200); checks++;
 
     const personal = await newTokens();
+    // A random 43-character OAuth token can share the guest prefix without being
+    // a 46-character guest token. Exercise this deterministically.
+    const prefixCollision = "ng_" + "A".repeat(40);
+    await api.fixtureQuery('UPDATE nutrition_oauth_tokens SET "accessHash"=$1 WHERE "accessHash"=$2', [hashNutritionToken(prefixCollision), hashNutritionToken(personal.access_token)]);
+    personal.access_token = prefixCollision;
     const connections = await api.nutritionConnectionsPageData();
     const family = (await api.fixtureQuery<{ familyId: string }>('SELECT "familyId" FROM "nutrition_oauth_tokens" WHERE "accessHash"=$1', [hashNutritionToken(personal.access_token)]))[0].familyId;
     api.setFixtureUser({ id: "user-b", email: "fixture-b@example.test", displayName: "Người dùng B", role: "CLINICIAN" });

@@ -8,7 +8,8 @@ import {nutritionMcpOutput} from "@/lib/nutrition-chat/mcp-output";
 import {nutritionSkillCatalog} from "@/lib/nutrition-chat/skill-catalog";
 import {startGuestSession} from "@/lib/nutrition-chat/guest-session";
 import {GUEST_TOOL_NAMES,nutritionErrorGuidance,nutritionResponseGuidance} from "@/lib/nutrition-chat/response-guidance";
-import {discoverAdminMenuTools,isAdminMenuTool,executeAdminMenuTool} from "@/lib/menu-library/ai-tools";
+import {ADMIN_MENU_TOOLS,isAdminMenuTool,executeAdminMenuTool} from "@/lib/menu-library/ai-tools";
+import {menuLibraryAccessGuidance} from "@/lib/menu-library/connection";
 const skillMethods=["skills/list","skills/get","resources/list","resources/read"];
 const capabilities={tools:{listChanged:false},resources:{listChanged:false},extensions:{"io.modelcontextprotocol/skills":{}}};
 export const runtime="nodejs";
@@ -53,7 +54,9 @@ export async function POST(request:Request) {
     if(rpc.method==="server/discover" && rpc.modern){validateOperationObject(rpc.params,["_meta"]);return nutritionJson(nutritionRpcResult(rpc,{supportedVersions:NUTRITION_MCP_VERSIONS,capabilities,instructions:NUTRITION_WORKFLOW.start+" "+NUTRITION_WORKFLOW.steps.join(" ")},true));}
     if(skillMethods.includes(rpc.method)){validateOperationObject(rpc.params,rpc.method==="skills/list"?["cursor","_meta"]:rpc.method==="resources/list"?["_meta"]:["uri","_meta"],rpc.method.endsWith("/get")||rpc.method==="resources/read"?["uri"]:[]);return nutritionJson(nutritionRpcResult(rpc,await nutritionSkillCatalog(rpc.method,rpc.params),true));}
     if(rpc.method==="ping"){validateOperationObject(rpc.params,["_meta"]);return nutritionJson(nutritionRpcResult(rpc,{}));}
-    if(rpc.method==="tools/list"){validateOperationObject(rpc.params,["cursor","_meta"]);if(rpc.params.cursor!==undefined)throw new NutritionProtocolError(-32602,"Unknown cursor");return nutritionJson(nutritionRpcResult(rpc,{tools:[...NUTRITION_TOOLS,...await discoverAdminMenuTools(identity)]},true));}
+    // Publish definitions before OAuth/delegation, including anonymous initial scans.
+    // Every invocation still checks identity, Admin role and the live family grant.
+    if(rpc.method==="tools/list"){validateOperationObject(rpc.params,["cursor","_meta"]);if(rpc.params.cursor!==undefined)throw new NutritionProtocolError(-32602,"Unknown cursor");return nutritionJson(nutritionRpcResult(rpc,{tools:[...NUTRITION_TOOLS,...ADMIN_MENU_TOOLS]},true));}
     if(rpc.method!=="tools/call")throw new NutritionProtocolError(-32601,"Method not found",404);
     validateOperationObject(rpc.params,["name","arguments","_meta"],["name"]);
     if(!nutritionToolScope(name)&&!isAdminMenuTool(name))throw new NutritionProtocolError(-32602,"Unknown tool");
@@ -72,6 +75,10 @@ export async function POST(request:Request) {
       return nutritionJson(nutritionRpcResult(rpc,{isError:true,content:[{type:"text",text:JSON.stringify({error:"invalid_input",message:error.message,field:error.field,status:error.status,guidance:nutritionErrorGuidance(error.status,error.field)})}]}));
     }
   }catch(error) {
+    // Delegation is an application permission, not a request for a new OAuth login.
+    if(error instanceof NutritionSecurityError && error.code==="menu_library_access" && rpc?.method==="tools/call" && rpc.id!==undefined && isAdminMenuTool(String(rpc.params.name))){
+      return nutritionJson(nutritionRpcResult(rpc,{isError:true,content:[{type:"text",text:JSON.stringify({error:error.code,status:error.status,error_description:error.description,guidance:menuLibraryAccessGuidance()})}]}));
+    }
     // Guest-capable tools are usable without OAuth. Return a recoverable tool error
     // rather than an OAuth challenge that would force a login on expired sessions.
     if(error instanceof NutritionSecurityError && error.code==="invalid_token" && !request.headers.has("authorization") && rpc?.method==="tools/call" && rpc.id!==undefined && GUEST_TOOL_NAMES.includes(String(rpc.params.name))){

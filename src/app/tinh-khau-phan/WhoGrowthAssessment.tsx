@@ -107,8 +107,8 @@ export default function WhoGrowthAssessment({ entries, ageMonths, weightKg, heig
 
   if (!items.length) return <p className="rounded-md border border-amber-600 bg-amber-50 p-3 text-sm text-neutral-950">Chưa có chuẩn WHO phù hợp với tuổi hoặc chỉ số đã nhập.</p>;
 
-  return <section className="rounded-lg border-2 border-[#123c36] bg-white p-4" aria-label="Đánh giá tăng trưởng WHO bằng Z-score">
-    <div className="border-b-2 border-[#123c36] pb-3"><p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">TĂNG TRƯỞNG TRẺ EM · WHO LMS</p><h2 className="mt-1 text-xl font-semibold text-neutral-950">Đối chiếu Z-score</h2><p className="mt-1 text-sm text-neutral-900">Tính từ L/M/S của chuẩn WHO theo giới và tuổi đã nhập. Kết quả hỗ trợ sàng lọc, không thay thế khám và đánh giá lâm sàng.</p></div>
+  return <section className="rounded-lg border-2 border-[var(--brand)] bg-white p-4" aria-label="Đánh giá tăng trưởng WHO bằng Z-score">
+    <div className="border-b-2 border-[var(--brand)] pb-3"><p className="text-xs font-semibold tracking-[0.14em] text-[var(--brand)]">TĂNG TRƯỞNG TRẺ EM · WHO LMS</p><h2 className="mt-1 text-xl font-semibold text-neutral-950">Đối chiếu Z-score</h2><p className="mt-1 text-sm text-neutral-900">Tính từ L/M/S của chuẩn WHO theo giới và tuổi đã nhập. Kết quả hỗ trợ sàng lọc, không thay thế khám và đánh giá lâm sàng.</p></div>
     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{items.map((item) => <article key={item.label} className={`border-l-4 p-3 ${tone(item.status)}`}><p className="text-sm font-semibold text-neutral-950">{item.label}</p><p className="mt-1 text-sm text-neutral-900">{round(item.value)} {item.unit}</p><p className="mt-2 text-2xl font-semibold text-neutral-950">Z {round(item.score)}</p><p className="mt-1 text-sm font-semibold text-neutral-950">{item.status}</p></article>)}</div>
     {charts.length > 0 && <div className="mt-5 border-t border-[#9fb9b1] pt-4">
       <h3 className="text-base font-semibold text-neutral-950">Biểu đồ tăng trưởng WHO</h3>

@@ -6,19 +6,25 @@ import { createRequire } from "node:module";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { LIBRARY_VERSION, MEAL_REFERENCE_RULES, REFERENCE_SOURCES, menuLibraryCatalog } from "../src/lib/menu-library/catalog";
-import { PRIMARY_SCHOOL_DRAFT } from "../src/lib/menu-library/contracts";
+import { PRIMARY_SCHOOL_DRAFT, eatingContextLabel, mealEatingContext } from "../src/lib/menu-library/contracts";
+import { menuListMetadata } from "../src/lib/menu-library/list-metadata";
+import { RICE_MEAL_RULES } from "../src/lib/nutrition-chat/menu-guidance";
 import { menuAiGuide, implementationAiGuide } from "../src/lib/menu-library/guide";
-import LibraryWorkspace from "../src/app/quan-tri/kho-thuc-don/LibraryWorkspace";
 import GuidanceArticle from "../src/app/quan-tri/kho-thuc-don/GuidanceArticle";
 import type { GET as CatalogGet } from "../src/app/api/admin/menu-library/route";
 import type { GET as GuideGet } from "../src/app/api/admin/menu-library/guide/route";
 import type Page from "../src/app/quan-tri/kho-thuc-don/page";
+import type { TemplatePreview } from "../src/app/quan-tri/kho-thuc-don/TemplateCatalog";
 
 let checks = 0;
 function check(value: unknown, message: string) { assert.ok(value, message); checks++; }
 
 async function main() {
   const catalog = menuLibraryCatalog();
+  check(catalog.contract.supportedSchemaVersions.includes("1.0.0") && catalog.eatingContexts.length === 3, "Catalog advertises contexts and backward compatibility");
+  check(mealEatingContext("home", null) === "home" && mealEatingContext("restaurant", undefined) === "restaurant", "Unspecified meal inherits a concrete menu context");
+  check(mealEatingContext("mixed", null) === null && mealEatingContext("mixed", "restaurant") === "restaurant", "Mixed menu does not guess each meal context");
+  check(eatingContextLabel(undefined) === "Chưa xác định" && menuListMetadata({}).eatingContext === null, "Legacy missing context displays unknown");
   check(catalog.capabilities.collectiveCalculation === false && catalog.capabilities.persistTemplates === true, "Draft persistence is separate from collective calculation");
   check(new Set(REFERENCE_SOURCES.map(source => source.id)).size === REFERENCE_SOURCES.length, "Unique source IDs");
   for (const rule of MEAL_REFERENCE_RULES) {
@@ -38,11 +44,12 @@ async function main() {
   check(meals.every(meal => meal.groupPortions.length === 3 && meal.groupPortions.every(group => group.headcount === null && group.dishes.length === 0)), "Empty meals and unknown counts exist without fake rows");
 
   const guide = menuAiGuide();
+  for (const rule of RICE_MEAL_RULES) check(guide.includes(rule), "Admin and public workflow share rice meal rules");
+  check(guide.includes("eatingContext") && guide.includes("món mua tại quán mang về") && guide.includes("không lấy liên kết bản tạm"), "Guide covers context semantics and permanent Admin draft links");
   for (const source of REFERENCE_SOURCES) check(guide.includes(source.url) && guide.includes(`[${source.number}]`), "Guide carries original reference links");
   for (const phrase of ["không tự thừa hưởng", "save_admin_menu_template", "20,6 kg", "1,25 kg", "prepare_menu", "calculate_menu", "sourceVersion", "khác MenuInput", "null", "tối đa ba câu"]) check(guide.includes(phrase), `AI guidance: ${phrase}`);
   check(implementationAiGuide().includes("docs/menu-library/implementation.md"), "Copyable developer handoff points to maintained implementation instructions");
   const html = renderToStaticMarkup(<GuidanceArticle />);
-  check(!renderToStaticMarkup(<LibraryWorkspace />).includes("id=\"nguon-"), "The catalog landing page does not dump the guidance article");
   for (const source of REFERENCE_SOURCES) check(html.includes(`id="nguon-${source.id}"`) && html.includes(`href="#nguon-${source.id}"`), "Reference citations resolve inside page");
   check(html.includes("Chờ xác minh bản gốc") && html.includes("chưa được mở") && html.includes("Sao chép hướng dẫn AI lập thực đơn"), "Admin sees source status and honest capability boundary");
 
@@ -51,11 +58,13 @@ async function main() {
   try {
     const outfile = join(directory, "routes.cjs");
     await build({
-      stdin: { contents: `export {GET as getCatalog} from ${JSON.stringify(resolve("src/app/api/admin/menu-library/route.ts"))};\nexport {GET as getGuide} from ${JSON.stringify(resolve("src/app/api/admin/menu-library/guide/route.ts"))};\nexport {default as page} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/page.tsx"))};\nexport {setRole} from "fixture-session";`, resolveDir: process.cwd(), loader: "ts" },
+      stdin: { contents: `export {GET as getCatalog} from ${JSON.stringify(resolve("src/app/api/admin/menu-library/route.ts"))};\nexport {GET as getGuide} from ${JSON.stringify(resolve("src/app/api/admin/menu-library/guide/route.ts"))};\nexport {default as page} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/page.tsx"))};\nexport {TemplatePreview} from ${JSON.stringify(resolve("src/app/quan-tri/kho-thuc-don/TemplateCatalog.tsx"))};\nexport {setRole} from "fixture-session";`, resolveDir: process.cwd(), loader: "ts" },
       outfile, bundle: true, platform: "node", format: "cjs", packages: "external", jsx: "automatic", logLevel: "silent",
       plugins: [{ name: "session-fixture", setup(builder) {
         builder.onResolve({ filter: /^(?:@\/lib\/auth|fixture-session)$/ }, () => ({ path: "fixture-session", namespace: "fixture" }));
         builder.onLoad({ filter: /.*/, namespace: "fixture" }, () => ({ contents: `let role=null; export function setRole(value){role=value;} export async function getSessionUser(){if(role==="ERROR")throw new Error("private database detail");return role ? {role} : null;}` }));
+        builder.onResolve({ filter: /\.module\.css$/ }, () => ({ path: "module-css", namespace: "css-fixture" }));
+        builder.onLoad({ filter: /.*/, namespace: "css-fixture" }, () => ({ contents: "export default {}" }));
         builder.onResolve({ filter: /^server-only$/ }, () => ({ path: "empty", namespace: "empty" }));
         builder.onLoad({ filter: /.*/, namespace: "empty" }, () => ({ contents: "export {}" }));
         builder.onResolve({ filter: /^next\/navigation$/ }, () => ({ path: "navigation", namespace: "navigation" }));
@@ -63,7 +72,15 @@ async function main() {
       } }],
     });
     const require = createRequire(resolve("package.json"));
-    const api = require(outfile) as { getCatalog: typeof CatalogGet; getGuide: typeof GuideGet; page: typeof Page; setRole(role: string | null): void };
+    const api = require(outfile) as { getCatalog: typeof CatalogGet; getGuide: typeof GuideGet; page: typeof Page; TemplatePreview: typeof TemplatePreview; setRole(role: string | null): void };
+    const mixedPreview = structuredClone(PRIMARY_SCHOOL_DRAFT);
+    mixedPreview.eatingContext = "mixed"; mixedPreview.days[0].meals[0].eatingContext = "home"; mixedPreview.days[0].meals[1].eatingContext = "restaurant";
+    const previewData = { template: { id: mixedPreview.id, title: mixedPreview.title, direction: "collective", revision: 1, updatedAt: "2026-10-22T03:00:00Z", url: "https://example.test" }, content: mixedPreview, warnings: [], foods: [], history: [] };
+    const preview = renderToStaticMarkup(<api.TemplatePreview data={previewData} />);
+    check(preview.includes("Tại nhà") && preview.includes("Ngoài quán") && preview.includes("Kết hợp"), "Preview shows menu context and distinct meal contexts");
+    mixedPreview.eatingContext = "home"; delete mixedPreview.days[0].meals[0].eatingContext; mixedPreview.days[0].meals[1].eatingContext = null;
+    const inheritedPreview = renderToStaticMarkup(<api.TemplatePreview data={previewData} />);
+    check(inheritedPreview.includes("Tại nhà") && !inheritedPreview.includes("Ngoài quán") && !inheritedPreview.includes("Chưa xác định"), "Preview inherits concrete context for omitted/null meal fields");
     for (const [role, status] of [[null, 401], ["USER", 403], ["CLINICIAN", 403], ["EDITOR", 403], ["ERROR", 503], ["ADMIN", 200]] as const) {
       api.setRole(role);
       for (const response of [await api.getCatalog(), await api.getGuide(new Request("https://example.test/api/admin/menu-library/guide")), await api.getGuide(new Request("https://example.test/api/admin/menu-library/guide?mode=implementation"))]) {
@@ -78,6 +95,7 @@ async function main() {
       } else {
         const pageHtml = renderToStaticMarkup(await api.page());
         check(pageHtml.includes("data-menu-library") === (role === "ADMIN"), "Only Admin page renders workspace or AI instructions");
+        if (role === "ADMIN") check(!pageHtml.includes('id="nguon-'), "The catalog landing page does not dump the guidance article");
         if (role !== "ADMIN") check(!pageHtml.includes("3958") && !pageHtml.includes("day-1-lunch"), "Denied page does not serialize private content");
       }
     }

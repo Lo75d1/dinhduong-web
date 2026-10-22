@@ -85,7 +85,7 @@ export default async function KnowledgeHubPage({
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <section className="overflow-hidden rounded-2xl border-2 border-[#123c36] bg-gradient-to-br from-[#123c36] via-[#185247] to-[#2f7b68] px-6 py-8 text-white shadow-[0_14px_34px_rgba(18,60,54,.18)] sm:px-9">
+      <section className="overflow-hidden rounded-2xl border-2 border-[var(--brand)] bg-gradient-to-br from-[var(--brand)] via-[#185247] to-[#2f7b68] px-6 py-8 text-white shadow-[0_14px_34px_rgba(18,60,54,.18)] sm:px-9">
         <p className="text-xs font-semibold tracking-[.16em] text-[#d7eee6]">
           TRUNG TÂM TRI THỨC DINH DƯỠNG
         </p>
@@ -111,7 +111,7 @@ export default async function KnowledgeHubPage({
             defaultValue={query}
             maxLength={120}
             placeholder="Ví dụ: suy dinh dưỡng người cao tuổi"
-            className="min-h-12 rounded-md border border-[#9bb6ab] px-4"
+            className="min-h-12 rounded-md border border-[var(--control-line)] px-4"
           />
           <label className="sr-only" htmlFor="knowledge-type">
             Loại tài liệu
@@ -120,7 +120,7 @@ export default async function KnowledgeHubPage({
             id="knowledge-type"
             name="type"
             defaultValue={kind}
-            className="min-h-12 rounded-md border border-[#9bb6ab] px-3"
+            className="min-h-12 rounded-md border border-[var(--control-line)] px-3"
           >
             {TYPE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -130,7 +130,7 @@ export default async function KnowledgeHubPage({
           </select>
           <button
             type="submit"
-            className="min-h-12 rounded-md bg-[#123c36] px-5 font-semibold text-white hover:bg-[#0b302b]"
+            className="min-h-12 rounded-md bg-[var(--brand)] px-5 font-semibold text-white hover:bg-[var(--brand-hover)]"
           >
             Tìm thông tin
           </button>
@@ -156,9 +156,9 @@ export default async function KnowledgeHubPage({
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <section>
-          <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[#123c36] pb-3">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b-2 border-[var(--brand)] pb-3">
             <div>
-              <p className="text-xs font-semibold tracking-[.14em] text-[#123c36]">MỚI CẬP NHẬT</p>
+              <p className="text-xs font-semibold tracking-[.14em] text-[var(--brand)]">MỚI CẬP NHẬT</p>
               <h2 className="mt-1 text-2xl font-semibold">
                 {query ? `Kết quả cho “${query}”` : "Thông tin mới và tài liệu nền"}
               </h2>
@@ -173,7 +173,7 @@ export default async function KnowledgeHubPage({
               ))}
             </div>
           ) : (
-            <div className="mt-4 rounded-xl border-2 border-dashed border-[#8fa99e] bg-white p-7">
+            <div className="mt-4 rounded-xl border-2 border-dashed border-[var(--control-line)] bg-white p-7">
               <h3 className="text-xl font-semibold">Chưa tìm thấy kết quả phù hợp</h3>
               <p className="mt-2">
                 Thử từ khóa ngắn hơn hoặc chọn “Tất cả”. Không có kết quả không có nghĩa là
@@ -184,8 +184,8 @@ export default async function KnowledgeHubPage({
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-5">
-          <div className="rounded-xl border-2 border-[#123c36] bg-white p-5">
-            <h2 className="text-xl font-semibold text-[#123c36]">Nguồn đang theo dõi</h2>
+          <div className="rounded-xl border-2 border-[var(--brand)] bg-white p-5">
+            <h2 className="text-xl font-semibold text-[var(--ink)]">Nguồn đang theo dõi</h2>
             <div className="mt-3 divide-y divide-[#c8d7d0]">
               {KNOWLEDGE_SOURCES.map((source) => (
                 <a
@@ -193,11 +193,11 @@ export default async function KnowledgeHubPage({
                   href={source.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="block py-3 hover:text-[#0f5c51]"
+                  className="block py-3 hover:text-[var(--brand-hover)]"
                 >
                   <span className="font-semibold">{source.name}</span>
                   <span className="mt-0.5 block text-sm">{source.scope}</span>
-                  <span className="mt-1 inline-block rounded bg-[#edf4f0] px-2 py-0.5 text-xs font-semibold text-[#123c36]">
+                  <span className="mt-1 inline-block rounded bg-[var(--surface-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
                     {source.mode}
                   </span>
                 </a>
@@ -214,7 +214,7 @@ export default async function KnowledgeHubPage({
           </div>
           <Link
             href="/tai-lieu-tham-khao"
-            className="block rounded-md border-2 border-[#123c36] bg-white px-4 py-3 text-center font-semibold text-[#123c36]"
+            className="block rounded-md border-2 border-[var(--brand)] bg-white px-4 py-3 text-center font-semibold text-[var(--brand)]"
           >
             Xem danh mục tài liệu nền
           </Link>
@@ -226,8 +226,8 @@ export default async function KnowledgeHubPage({
 
 function Metric({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-xl border border-[#9bb6ab] bg-white p-4 shadow-sm">
-      <span className="text-2xl font-semibold text-[#123c36]">{value}</span>
+    <div className="rounded-xl border border-[var(--control-line)] bg-white p-4 shadow-sm">
+      <span className="text-2xl font-semibold text-[var(--brand)]">{value}</span>
       <span className="ml-2 text-sm text-neutral-700">{label}</span>
     </div>
   );
@@ -237,10 +237,10 @@ function KnowledgeCard({ item }: { item: KnowledgeItem }) {
   return (
     <article className="rounded-xl border-2 border-[#a9bdb4] bg-white p-5 shadow-[0_7px_20px_rgba(18,60,54,.05)]">
       <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-        <span className="rounded-full bg-[#123c36] px-2.5 py-1 text-white">
+        <span className="rounded-full bg-[var(--brand)] px-2.5 py-1 text-white">
           {KIND_LABEL[item.kind]}
         </span>
-        <span className="rounded-full border border-[#9bb6ab] px-2.5 py-1 text-[#123c36]">
+        <span className="rounded-full border border-[var(--control-line)] px-2.5 py-1 text-[var(--brand)]">
           {item.sourceName}
         </span>
         <span className="text-neutral-700">{displayDate(item.publishedAt)}</span>
@@ -258,7 +258,7 @@ function KnowledgeCard({ item }: { item: KnowledgeItem }) {
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {item.topics.slice(0, 4).map((topic) => (
-          <span key={topic} className="rounded bg-[#edf4f0] px-2 py-1 text-xs text-[#123c36]">
+          <span key={topic} className="rounded bg-[var(--surface-soft)] px-2 py-1 text-xs text-[var(--brand)]">
             #{topic}
           </span>
         ))}
@@ -275,7 +275,7 @@ function KnowledgeCard({ item }: { item: KnowledgeItem }) {
           href={item.sourceUrl}
           target="_blank"
           rel="noreferrer"
-          className="rounded-md bg-[#123c36] px-4 py-2 font-semibold text-white"
+          className="rounded-md bg-[var(--brand)] px-4 py-2 font-semibold text-white"
         >
           Mở nguồn gốc ↗
         </a>

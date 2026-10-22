@@ -1,13 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f1f6f4;
-  --foreground: #111827;
-  --ink: #111827;
-  --institution: #123c36;
-  --clinical-teal: #0f5c51;
-  --clinical-mint: #dcebe5;
-  --clinical-line: #9bb6ab;
+  --background: #f7f6f2;
+  --foreground: #272c33;
+  --ink: #272c33;
+  --brand: #0f766e;
+  --brand-hover: #115e59;
+  --surface-soft: #f3f3ef;
+  --selected: #e7f1ed;
+  --line: #dededa;
+  --control-line: #858a87;
+  --muted: #626a6a;
+  --accent: #b85b37;
+  --accent-soft: #faefe7;
+  --accent-ink: #92462d;
+  --institution: var(--brand);
+  --clinical-teal: var(--brand);
+  --clinical-mint: var(--selected);
+  --clinical-line: var(--line);
   --clinical-paper: #ffffff;
 }
 
@@ -19,9 +29,7 @@
 }
 
 body {
-  background:
-    linear-gradient(rgba(248, 251, 250, 0.88), rgba(241, 246, 244, 0.94)),
-    url("/dinh-duong-2597-cover.jpg") center / cover fixed;
+  background: var(--background);
   color: var(--ink);
   font-family: "Times New Roman", Times, serif;
   font-size: 17px;
@@ -41,6 +49,50 @@ a:active {
   transform: translateY(1px);
 }
 
+/* Shared navigation and keyboard access. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--brand-hover);
+  outline-offset: 3px;
+}
+:where(button, a, summary) { touch-action: manipulation; }
+:where(h1, h2, h3) { text-wrap: balance; }
+:where(td, dd, time) { font-variant-numeric: tabular-nums; }
+.skip-link {
+  position: absolute;
+  top: 0.5rem;
+  left: 1rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  border: 2px solid var(--brand);
+  border-radius: 0.35rem;
+  padding: 0.65rem 1rem;
+  background: white;
+  color: var(--ink);
+  font-weight: 700;
+}
+.skip-link:focus { transform: translateY(0); }
+.site-nav-item {
+  display: inline-flex;
+  min-height: 44px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.7rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+.site-nav-item:hover { background: var(--surface-soft); }
+.site-nav-item[aria-current="page"] { background: var(--selected); }
+.site-nav-item[aria-current="page"] { text-decoration: underline; text-underline-offset: 0.35rem; }
+.site-nav-primary { border: 1px solid var(--line); }
+.site-nav-primary[aria-current="page"] { border-color: var(--brand); color: var(--brand-hover); }
+.site-nav-hospital { border: 1px solid var(--line); }
+.site-menu-toggle::-webkit-details-marker { display: none; }
+.site-mobile-menu { overscroll-behavior: contain; }
+
 .hospital-main {
   position: relative;
 }
@@ -56,37 +108,19 @@ a:active {
 .admin-help-toggle::after { content: "Mở +"; }
 .admin-help[open] .admin-help-toggle::after { content: "Thu gọn −"; }
 
-.hospital-main::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 3%;
-  width: 12rem;
-  height: 3px;
-  border-radius: 99px;
-  background: linear-gradient(90deg, transparent, #2d8c76, transparent);
-}
+.hospital-main::before { display: none; }
 
 .clinical-page-heading {
   position: relative;
-  border: 1px solid #b1c8bd;
-  border-left: 6px solid var(--clinical-teal);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
   border-radius: 0.85rem;
-  background: linear-gradient(120deg, #ffffff, #f3f9f6);
-  box-shadow: 0 8px 24px rgba(18, 60, 54, 0.07);
+  background: white;
+  box-shadow: none;
   padding: 1.25rem 1.4rem;
 }
 
-.clinical-page-heading::after {
-  content: "HỒ SƠ DINH DƯỠNG";
-  position: absolute;
-  right: 1rem;
-  top: 1rem;
-  color: #69877b;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
+.clinical-page-heading::after { display: none; }
 
 .clinical-panel {
   box-shadow: 0 10px 28px rgba(18, 60, 54, 0.06);
@@ -210,21 +244,15 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid #1f6b5d;
+  outline: 2px solid var(--brand);
   outline-offset: 1px;
 }
 
-/* Toàn bộ chữ trung tính dùng màu đen để dễ đọc với font serif. */
-.text-neutral-400 {
-  color: #171717 !important;
-}
-
-.text-neutral-500 {
-  color: #171717 !important;
-}
-
+/* Secondary text remains legible while titles and values carry more weight. */
+.text-neutral-400,
+.text-neutral-500,
 .text-neutral-600 {
-  color: #171717 !important;
+  color: var(--muted) !important;
 }
 
 /* Bảng báo cáo cần đọc rõ khi đối chiếu và khi in. */
@@ -239,18 +267,18 @@ textarea:focus {
 
 table th,
 table td {
-  border: 1px solid #aeb8b4;
+  border: 1px solid #c7c9c5;
 }
 
 table th {
-  background-color: #e1ece6;
-  color: #102d28;
+  background-color: var(--surface-soft);
+  color: var(--ink);
 }
 
 .border-neutral-100,
 .border-neutral-200,
 .border-neutral-300 {
-  border-color: #aeb8b4 !important;
+  border-color: var(--line) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -344,7 +372,7 @@ table th {
     break-inside: avoid;
     flex-direction: column;
     justify-content: center;
-    border: 0.35mm solid #123c36;
+    border: 0.35mm solid var(--brand);
     border-radius: 2mm;
     padding: 3mm;
     text-align: center;
@@ -362,7 +390,7 @@ table th {
     font-size: 15pt;
     font-weight: 700;
     line-height: 1.1;
-    color: #123c36;
+    color: var(--brand);
   }
 
   body.print-meal-labels .meal-label-department {
@@ -435,3 +463,35 @@ body.app-fullscreen > footer,
 body.app-fullscreen footer { display: none; }
 body.app-fullscreen .hospital-main { max-width: none; padding: 0; }
 body.app-fullscreen .hospital-main::before { display: none; }
+
+/* Shared task surfaces: room for data, a restrained illustration on entry pages. */
+.task-title { display: flex; align-items: center; gap: 0.6rem; color: var(--ink); }
+.task-icon { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; flex-shrink: 0; border-radius: 0.7rem; background: var(--accent-soft); color: var(--accent-ink); }
+.catalog-workspace > form { order: -1; }
+.catalog-workspace > header { order: -2; }
+.catalog-workspace input, .catalog-workspace select, .catalog-workspace button { min-height: 44px; }
+.calculation-workspace [data-calculator-input-toolbar] { border: 1px solid var(--line); border-radius: 0.55rem; background: white; padding: 0.5rem; }
+.calculation-workspace [data-calculator-meal-workspace] { gap: 1rem; }
+.calculation-workspace [data-calculator-meal-workspace] button { min-height: 36px; }
+@media (max-width: 1023px) {
+  .calculation-workspace [data-calculator-meal-workspace] button { min-height: 44px; }
+}
+@media (max-width: 359px) {
+  .site-nav-item { padding-inline: 0.45rem; font-size: 0.875rem; gap: 0.25rem; }
+  .site-nav-item svg { display: none; }
+}
+
+/* The library uses a compact task header; all public destinations stay in Menu. */
+@media (max-width:1023px) {
+  .site-header:has(.site-nav-compact) > div { gap: 8px; padding: 10px 16px; }
+  .hospital-main:has([data-menu-library]) { padding-inline: 16px; }
+}
+
+.hospital-main:has([data-menu-library]) { background: white; }
+
+@media (max-width:359px) {
+  .site-header:has(.site-nav-compact) > div { column-gap: 4px; flex-wrap: nowrap; }
+  .site-header:has(.site-nav-compact) > div > a { gap: 4px; }
+  .site-header:has(.site-nav-compact) > div > a > span { min-width: 0; padding-left: 6px; }
+  .site-header:has(.site-nav-compact) > div > a > span > span:first-child { font-size: 13px; letter-spacing: 0; }
+}

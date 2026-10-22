@@ -8,10 +8,10 @@ import { buildMealLabelGroups, expandMealLabels } from "@/lib/meal-labels";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = Record<string, any>;
 const input =
-  "mt-1 w-full rounded-lg border-2 border-[#8fa99e] bg-white px-3 py-2 text-sm";
-const panel = "rounded-2xl border-2 border-[#123c36] bg-white p-4 shadow-sm";
+  "mt-1 w-full rounded-lg border-2 border-[var(--control-line)] bg-white px-3 py-2 text-sm";
+const panel = "rounded-2xl border-2 border-[var(--brand)] bg-white p-4 shadow-sm";
 const adminInput =
-  "mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm";
+  "mt-1 w-full rounded-lg border border-[var(--control-line)] bg-white px-3 py-2 text-sm";
 const today = () =>
   new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
 
@@ -64,13 +64,13 @@ export default function OperationsApp({
     return (
       <main className="mx-auto max-w-xl">
         <div className={panel}>
-          <h1 className="text-2xl font-black text-[#123c36]">
+          <h1 className="text-2xl font-black text-[var(--ink)]">
             Vận hành suất ăn
           </h1>
           <p className="mt-3 text-rose-700">{notice || "Đang tải…"}</p>
           <a
             href="/dang-nhap"
-            className="mt-4 inline-block rounded-lg bg-[#123c36] px-4 py-2 font-bold text-white"
+            className="mt-4 inline-block rounded-lg bg-[var(--brand)] px-4 py-2 font-bold text-white"
           >
             Đăng nhập
           </a>
@@ -79,7 +79,7 @@ export default function OperationsApp({
     );
   return (
     <main className="mx-auto max-w-7xl space-y-4 pb-10">
-      <header className="rounded-2xl bg-[#123c36] p-5 text-white">
+      <header className="rounded-2xl bg-[var(--brand)] p-5 text-white">
         <p className="text-xs font-bold tracking-[.16em] text-[#b9d8cc]">
           DINH DƯỠNG 2598 · VẬN HÀNH BẾP
         </p>
@@ -104,7 +104,7 @@ export default function OperationsApp({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="ml-2 rounded-lg px-3 py-2 text-[#123c36]"
+              className="ml-2 rounded-lg px-3 py-2 text-[var(--brand)]"
             />
           </label>
         </div>
@@ -112,7 +112,7 @@ export default function OperationsApp({
       {notice && (
         <p
           role="status"
-          className="rounded-xl border-2 border-[#7ca796] bg-[#edf7f2] px-4 py-3 font-bold text-[#123c36]"
+          className="rounded-xl border-2 border-[#7ca796] bg-[#edf7f2] px-4 py-3 font-bold text-[var(--brand)]"
         >
           {notice}
         </p>
@@ -129,9 +129,9 @@ export default function OperationsApp({
         data.dietOrdersEnabled ? (
           <DoctorPanel data={data} date={date} busy={busy} act={act} />
         ) : (
-          <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-            <div className="border-b border-[#123c36]/10 px-5 py-4">
-              <h2 className="text-lg font-semibold text-[#123c36]">Chỉ định chế độ ăn chưa bật</h2>
+          <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+            <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+              <h2 className="text-lg font-semibold text-[var(--ink)]">Chỉ định chế độ ăn chưa bật</h2>
             </div>
             <p className="px-5 py-4 text-sm text-neutral-600">Bệnh viện đang dùng quy trình báo suất tổng theo khoa. Quản trị viên có thể bật tính năng chỉ định theo từng người bệnh khi cần.</p>
           </section>
@@ -240,9 +240,9 @@ function ReportPanel({
     (m: Row) => m.id === mealTypeId,
   )?.name;
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#123c36]/20 bg-white shadow-sm">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[#123c36]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[#123c36]">Phiếu báo suất</h2>
+    <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/20 bg-white shadow-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--brand)]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[var(--ink)]">Phiếu báo suất</h2>
         {currentDeptName && (
           <span className="text-sm text-neutral-500">
             {currentDeptName}
@@ -282,7 +282,7 @@ function ReportPanel({
                   setDepartmentId(e.target.value);
                   selectOrder(e.target.value, mealTypeId);
                 }}
-                className="mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm text-[#123c36]"
+                className="mt-1 w-full rounded-lg border border-[var(--control-line)] bg-white px-3 py-2 text-sm text-[var(--brand)]"
               >
                 {data.departments.map((d: Row) => (
                   <option key={d.id} value={d.id}>
@@ -299,7 +299,7 @@ function ReportPanel({
                   setMealTypeId(e.target.value);
                   selectOrder(departmentId, e.target.value);
                 }}
-                className="mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm text-[#123c36]"
+                className="mt-1 w-full rounded-lg border border-[var(--control-line)] bg-white px-3 py-2 text-sm text-[var(--brand)]"
               >
                 {data.mealTypes.map((m: Row) => (
                   <option key={m.id} value={m.id}>
@@ -315,7 +315,7 @@ function ReportPanel({
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[520px] text-sm">
               <thead>
-                <tr className="border-y border-[#123c36]/10 text-left text-xs text-neutral-500">
+                <tr className="border-y border-[var(--brand)]/10 text-left text-xs text-neutral-500">
                   <th className="px-5 py-2 font-normal">Chế độ ăn</th>
                   {hasSuggestions && <th className="px-2 py-2 text-right font-normal">
                     Gợi ý từ chỉ định
@@ -332,7 +332,7 @@ function ReportPanel({
                   return (
                     <tr
                       key={d.id}
-                      className={`border-b border-[#123c36]/5 ${diff !== 0 ? "bg-amber-50" : ""}`}
+                      className={`border-b border-[var(--brand)]/5 ${diff !== 0 ? "bg-amber-50" : ""}`}
                     >
                       <td className="px-5 py-2.5 font-medium text-[#24483f]">
                         {d.name}
@@ -352,7 +352,7 @@ function ReportPanel({
                               [d.id]: Number(e.target.value),
                             })
                           }
-                          className={`w-[76px] rounded-lg border bg-white px-2 py-1.5 text-center text-xl font-semibold tabular-nums text-[#123c36] ${hasSuggestions && diff !== 0 ? "border-amber-400" : "border-[#8fa99e]"}`}
+                          className={`w-[76px] rounded-lg border bg-white px-2 py-1.5 text-center text-xl font-semibold tabular-nums text-[var(--brand)] ${hasSuggestions && diff !== 0 ? "border-amber-400" : "border-[var(--control-line)]"}`}
                         />
                       </td>
                       <td className="px-5 py-2.5 text-right">
@@ -372,13 +372,13 @@ function ReportPanel({
               </tbody>
             </table>
           </div>
-          <div className="flex items-center justify-between gap-3 border-t border-[#123c36]/10 bg-[#e1f5ee] px-5 py-3">
+          <div className="flex items-center justify-between gap-3 border-t border-[var(--brand)]/10 bg-[#e1f5ee] px-5 py-3">
             <span className="text-sm text-[#085041]">Tổng suất</span>
             <span className="text-2xl font-semibold tabular-nums text-[#085041]">
               {total} suất
             </span>
           </div>
-          <div className="border-t border-[#123c36]/10 px-5 py-4">
+          <div className="border-t border-[var(--brand)]/10 px-5 py-4">
             <label
               className={`block text-sm ${mismatch ? "text-amber-700" : "text-[#24483f]"}`}
             >
@@ -392,7 +392,7 @@ function ReportPanel({
                     ? "Ghi rõ lý do lệch so với gợi ý…"
                     : "Ghi chú thêm (không bắt buộc)"
                 }
-                className={`mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm ${mismatch ? "border-amber-400" : "border-[#8fa99e]"}`}
+                className={`mt-1 w-full rounded-lg border bg-white px-3 py-2 text-sm ${mismatch ? "border-amber-400" : "border-[var(--control-line)]"}`}
               />
             </label>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
@@ -409,8 +409,8 @@ function ReportPanel({
           </div>
         </form>
       )}
-      <div className="border-t border-[#123c36]/10 px-5 py-4">
-        <h3 className="text-sm font-semibold text-[#123c36]">
+      <div className="border-t border-[var(--brand)]/10 px-5 py-4">
+        <h3 className="text-sm font-semibold text-[var(--ink)]">
           Phiếu đã báo trong ngày
         </h3>
         <div className="mt-2">
@@ -548,10 +548,10 @@ function Summary({
     [data],
   );
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
+    <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-[#123c36]">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
             Tổng hợp ngày {date}
           </h2>
           <p className="text-sm text-neutral-600">
@@ -561,7 +561,7 @@ function Summary({
         </div>
         <a
           href={`/api/admin/meal-orders/export?date=${date}`}
-          className="rounded-lg border border-[#123c36]/25 px-3 py-1.5 font-medium text-[#123c36] hover:bg-[#f6faf8]"
+          className="rounded-lg border border-[var(--brand)]/25 px-3 py-1.5 font-medium text-[var(--brand)] hover:bg-[#f6faf8]"
         >
           Xuất Excel
         </a>
@@ -569,7 +569,7 @@ function Summary({
       <div className="overflow-x-auto px-5 py-4">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-y border-[#123c36]/10 text-left text-xs text-neutral-500">
+            <tr className="border-y border-[var(--brand)]/10 text-left text-xs text-neutral-500">
               <th className="px-3 py-2 font-normal">Khoa · bữa</th>
               {data.dietTypes.map((d: Row) => (
                 <th key={d.id} className="px-3 py-2 text-right font-normal">
@@ -582,7 +582,7 @@ function Summary({
           </thead>
           <tbody>
             {data.orders.map((o: Row) => (
-              <tr key={o.id} className="border-b border-[#123c36]/5">
+              <tr key={o.id} className="border-b border-[var(--brand)]/5">
                 <td className="px-3 py-2.5 font-medium text-[#24483f]">
                   {o.department.name} · {o.mealType.name}
                 </td>
@@ -606,7 +606,7 @@ function Summary({
                         onClick={() =>
                           void act({ action: "lockOrder", id: o.id })
                         }
-                        className="rounded-lg border border-[#123c36]/25 px-3 py-1.5 text-xs font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
+                        className="rounded-lg border border-[var(--brand)]/25 px-3 py-1.5 text-xs font-medium text-[var(--brand)] hover:bg-[#f6faf8] disabled:opacity-50"
                       >
                         Khóa
                       </button>
@@ -653,9 +653,9 @@ function ChangeApprovals({
   );
   if (!pending.length) return null;
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-      <div className="border-b border-[#123c36]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[#123c36]">
+    <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+      <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[var(--ink)]">
           Thay đổi chờ bếp trưởng duyệt
         </h2>
       </div>
@@ -695,7 +695,7 @@ function ChangeApprovals({
                     reviewNote: "Bếp trưởng từ chối",
                   })
                 }
-                className="rounded-lg border border-[#123c36]/25 bg-white px-3 py-1.5 font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
+                className="rounded-lg border border-[var(--brand)]/25 bg-white px-3 py-1.5 font-medium text-[var(--brand)] hover:bg-[#f6faf8] disabled:opacity-50"
               >
                 Từ chối
               </button>
@@ -724,9 +724,9 @@ function ConfigPanel({
   const [userId, setUserId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-      <div className="border-b border-[#123c36]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[#123c36]">Cấu hình ban đầu</h2>
+    <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+      <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[var(--ink)]">Cấu hình ban đầu</h2>
       </div>
       <form
         onSubmit={async (e) => {
@@ -859,32 +859,32 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
   }
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)]">
-      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-        <div className="border-b border-[#123c36]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[#123c36]">Thực đơn đã duyệt</h2>
+      <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+        <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Thực đơn đã duyệt</h2>
           <p className="mt-1 text-sm text-neutral-600">Chỉ đọc bản chụp từ Tính khẩu phần; không nhập món hoặc gram tại đây.</p>
         </div>
         <div className="grid gap-3 px-5 py-4">
           {data.menus.length ? data.menus.map((menu: Row) => (
-            <article key={menu.id} className="overflow-hidden rounded-xl border border-[#123c36]/10">
-              <div className="border-b border-[#123c36]/10 px-4 py-3 font-medium text-[#123c36]">{menu.mealType.name}</div>
+            <article key={menu.id} className="overflow-hidden rounded-xl border border-[var(--brand)]/10">
+              <div className="border-b border-[var(--brand)]/10 px-4 py-3 font-medium text-[var(--brand)]">{menu.mealType.name}</div>
               <div className="grid gap-2 p-3">
                 {menu.items.map((item: Row) => (
                   <div key={item.id} className="rounded-lg bg-[#e1f5ee] px-3 py-2 text-sm">
                     <span className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-[#085041]">{item.dietType.name}</span>
                     <p className="mt-1 text-[#24483f]">{item.dishName}</p>
                     <p className="mt-1 text-xs text-neutral-500">Duyệt {item.approvedAt ? new Date(item.approvedAt).toLocaleString("vi-VN") : "—"}{item.approvedBy?.displayName ? " · " + item.approvedBy.displayName : ""}</p>
-                    {item.photoUrl && <div className="mt-2 overflow-hidden rounded-lg border border-[#123c36]/10 bg-white">
+                    {item.photoUrl && <div className="mt-2 overflow-hidden rounded-lg border border-[var(--brand)]/10 bg-white">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.photoUrl} alt={`Ảnh đối chứng ${item.dietType.name}`} className="aspect-[4/3] w-full object-cover" />
                     </div>}
-                    {["ADMIN", "DIETITIAN"].includes(data.user.role) && <a href={`/tinh-khau-phan?menuDate=${date}&dietTypeId=${item.dietType.id}`} className="mt-2 inline-flex rounded-lg border border-[#123c36]/25 bg-white px-3 py-1.5 text-xs font-medium text-[#123c36] hover:bg-[#f6faf8]">Mở và chỉnh tại Tính khẩu phần →</a>}
+                    {["ADMIN", "DIETITIAN"].includes(data.user.role) && <a href={`/tinh-khau-phan?menuDate=${date}&dietTypeId=${item.dietType.id}`} className="mt-2 inline-flex rounded-lg border border-[var(--brand)]/25 bg-white px-3 py-1.5 text-xs font-medium text-[var(--brand)] hover:bg-[#f6faf8]">Mở và chỉnh tại Tính khẩu phần →</a>}
                     {["DIETITIAN", "KITCHEN_MANAGER", "KITCHEN_STAFF"].includes(data.user.role) && <form className="mt-2 flex flex-wrap items-center gap-2" onSubmit={(event) => {
                       event.preventDefault();
                       const file = new FormData(event.currentTarget).get("photo");
                       if (file instanceof File && file.size > 0) void uploadPhoto(item.id, file);
                     }}>
-                      <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required className="min-w-0 flex-1 rounded-lg border border-[#8fa99e] bg-white px-2 py-1.5 text-xs" />
+                      <input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required className="min-w-0 flex-1 rounded-lg border border-[var(--control-line)] bg-white px-2 py-1.5 text-xs" />
                       <button disabled={busy} className="rounded-lg bg-[#0f6e56] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">{item.photoUrl ? "Đổi ảnh" : "Tải ảnh đối chứng"}</button>
                     </form>}
                   </div>
@@ -894,14 +894,14 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
           )) : <p className="rounded-lg border border-amber-400 bg-amber-50 px-4 py-3 text-sm text-amber-900">Chưa có thực đơn nào được duyệt cho ngày này.</p>}
         </div>
       </section>
-      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-        <div className="border-b border-[#123c36]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[#123c36]">Bảng đi chợ toàn viện</h2>
+      <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+        <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Bảng đi chợ toàn viện</h2>
           <p className="mt-1 text-sm text-neutral-600">Sống sạch = gram/người × tổng suất các khoa. Số mua có tính tỷ lệ thải bỏ.</p>
         </div>
         <div className="grid gap-3 px-5 py-4">
           {data.shoppingLists.map((list: Row) => (
-            <article key={list.mealType.id} className="overflow-hidden rounded-xl border border-[#123c36]/10">
+            <article key={list.mealType.id} className="overflow-hidden rounded-xl border border-[var(--brand)]/10">
               <div className="flex items-center justify-between gap-3 bg-[#e1f5ee] px-5 py-3">
                 <span className="font-medium text-[#085041]">{list.mealType.name}</span>
                 <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#085041]">Đi chợ</span>
@@ -909,8 +909,8 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
               {list.items.length ? (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[480px] text-sm">
-                    <thead><tr className="border-y border-[#123c36]/10 text-left text-xs text-neutral-500"><th className="px-4 py-2 font-normal">Thực phẩm</th><th className="px-4 py-2 text-right font-normal">Sống sạch</th><th className="px-4 py-2 text-right font-normal">Mua</th></tr></thead>
-                    <tbody>{list.items.map((item: Row) => <tr key={item.foodId} className="border-b border-[#123c36]/5 last:border-b-0"><td className="px-4 py-2.5 font-medium text-[#24483f]">{item.foodName}</td><td className="px-4 py-2.5 text-right tabular-nums">{Math.round(item.edibleGrams).toLocaleString("vi-VN")} g</td><td className="px-4 py-2.5 text-right font-medium tabular-nums text-[#085041]">{item.rawGrams == null ? "—" : Math.round(item.rawGrams).toLocaleString("vi-VN") + " g"}</td></tr>)}</tbody>
+                    <thead><tr className="border-y border-[var(--brand)]/10 text-left text-xs text-neutral-500"><th className="px-4 py-2 font-normal">Thực phẩm</th><th className="px-4 py-2 text-right font-normal">Sống sạch</th><th className="px-4 py-2 text-right font-normal">Mua</th></tr></thead>
+                    <tbody>{list.items.map((item: Row) => <tr key={item.foodId} className="border-b border-[var(--brand)]/5 last:border-b-0"><td className="px-4 py-2.5 font-medium text-[#24483f]">{item.foodName}</td><td className="px-4 py-2.5 text-right tabular-nums">{Math.round(item.edibleGrams).toLocaleString("vi-VN")} g</td><td className="px-4 py-2.5 text-right font-medium tabular-nums text-[#085041]">{item.rawGrams == null ? "—" : Math.round(item.rawGrams).toLocaleString("vi-VN") + " g"}</td></tr>)}</tbody>
                   </table>
                 </div>
               ) : <p className="px-5 py-4 text-sm text-neutral-600">Chưa có nguyên liệu đủ điều kiện tính.</p>}
@@ -919,10 +919,10 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
           ))}
         </div>
       </section>
-      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white xl:col-span-2">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
+      <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white xl:col-span-2">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-[#123c36]">Tem dán suất ăn</h2>
+            <h2 className="text-lg font-semibold text-[var(--ink)]">Tem dán suất ăn</h2>
             <p className="mt-1 text-sm text-neutral-600">Mỗi suất đã chốt tạo một tem, chỉ gồm ngày, bữa, khoa và chế độ ăn.</p>
           </div>
           <button type="button" onClick={printLabels} disabled={!labels.length} className="rounded-lg bg-[#0f6e56] px-4 py-2 font-semibold text-white hover:bg-[#0c5a47] disabled:opacity-50">
@@ -933,8 +933,8 @@ function SnapshotMenuPanel({ data, date, busy, uploadPhoto }: { data: Row; date:
           {labelGroups.length ? (
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {labelGroups.map((group: Row) => (
-                <div key={group.key} className="flex items-center justify-between gap-3 rounded-lg border border-[#123c36]/10 px-3 py-2 text-sm">
-                  <div><span className="font-medium text-[#123c36]">{group.department}</span><span className="text-neutral-500"> · {group.mealType} · {group.dietType}</span></div>
+                <div key={group.key} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--brand)]/10 px-3 py-2 text-sm">
+                  <div><span className="font-medium text-[var(--brand)]">{group.department}</span><span className="text-neutral-500"> · {group.mealType} · {group.dietType}</span></div>
                   <span className="rounded-full bg-[#e1f5ee] px-2.5 py-1 font-medium tabular-nums text-[#085041]">{group.quantity} tem</span>
                 </div>
               ))}
@@ -979,9 +979,9 @@ function ShiftPanel({
     ["KITCHEN_MANAGER", "KITCHEN_STAFF", "ADMIN"].includes(u.role),
   );
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-      <div className="border-b border-[#123c36]/10 px-5 py-4">
-        <h2 className="text-lg font-semibold text-[#123c36]">
+    <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+      <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+        <h2 className="text-lg font-semibold text-[var(--ink)]">
           Lịch trực và nhiệm vụ
         </h2>
       </div>
@@ -1123,13 +1123,13 @@ function KitchenPanel({
   act: (p: Row) => Promise<boolean>;
 }) {
   return (
-    <div className="mt-4 grid gap-3 border-t border-[#123c36]/10 pt-4">
+    <div className="mt-4 grid gap-3 border-t border-[var(--brand)]/10 pt-4">
       {data.shifts.map((s: Row) => (
         <article
           key={s.id}
-          className="rounded-xl border border-[#123c36]/10 bg-[#f6faf8] px-4 py-3"
+          className="rounded-xl border border-[var(--brand)]/10 bg-[#f6faf8] px-4 py-3"
         >
-          <h3 className="font-semibold text-[#123c36]">
+          <h3 className="font-semibold text-[var(--ink)]">
             {s.name} ·{" "}
             {new Date(s.startsAt).toLocaleTimeString("vi-VN", {
               hour: "2-digit",
@@ -1175,7 +1175,7 @@ function KitchenPanel({
                           status: "ACKNOWLEDGED",
                         })
                       }
-                      className="rounded-lg border border-[#123c36]/25 px-3 py-1.5 text-xs font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
+                      className="rounded-lg border border-[var(--brand)]/25 px-3 py-1.5 text-xs font-medium text-[var(--brand)] hover:bg-[#f6faf8] disabled:opacity-50"
                     >
                       Đã nhận
                     </button>
@@ -1202,7 +1202,7 @@ function KitchenPanel({
         </article>
       ))}
       {!data.shifts.length && (
-        <p className="rounded-xl border border-dashed border-[#8fa99e] p-5 text-center text-neutral-600">
+        <p className="rounded-xl border border-dashed border-[var(--control-line)] p-5 text-center text-neutral-600">
           Chưa có ca trực trong ngày.
         </p>
       )}
@@ -1216,7 +1216,7 @@ function OrderCards({ orders }: { orders: Row[] }) {
       {orders.map((o) => (
         <article
           key={o.id}
-          className="rounded-xl border border-[#c9d9d2] bg-[#f7faf8] p-3"
+          className="rounded-xl border border-[#c9d9d2] bg-[var(--surface-soft)] p-3"
         >
           <div className="flex justify-between gap-2">
             <b>
@@ -1244,14 +1244,14 @@ function WorkflowHint({ role }: { role: "nurse" | "manager" }) {
   return (
     <nav
       aria-label="Quy trình nhanh"
-      className="grid grid-cols-2 gap-2 rounded-2xl border border-[#123c36]/15 bg-[#e1f5ee] p-3 sm:grid-cols-4"
+      className="grid grid-cols-2 gap-2 rounded-2xl border border-[var(--brand)]/15 bg-[#e1f5ee] p-3 sm:grid-cols-4"
     >
       {steps.map((step, index) => (
         <div
           key={step}
-          className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-[#123c36]"
+          className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-[var(--brand)]"
         >
-          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#123c36] text-xs text-white">
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--brand)] text-xs text-white">
             {index + 1}
           </span>
           {step}
@@ -1277,9 +1277,9 @@ function PublicNoteReview({
   );
   if (!notes.length)
     return (
-      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-        <div className="border-b border-[#123c36]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[#123c36]">
+      <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+        <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
             Ghi chú người bệnh chờ duyệt
           </h2>
         </div>
@@ -1289,10 +1289,10 @@ function PublicNoteReview({
       </section>
     );
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-      <div className="flex items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
+    <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
         <div>
-          <h2 className="text-lg font-semibold text-[#123c36]">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">
             Ghi chú người bệnh chờ duyệt
           </h2>
           <p className="mt-1 text-sm text-neutral-600">
@@ -1311,7 +1311,7 @@ function PublicNoteReview({
             className="rounded-xl border border-amber-400 bg-amber-50 px-4 py-3 text-amber-900"
           >
             <div className="flex flex-wrap justify-between gap-2">
-              <span className="font-medium text-[#123c36]">
+              <span className="font-medium text-[var(--brand)]">
                 {note.departmentName} ·{" "}
                 {note.roomBed || "Chưa ghi phòng/giường"}
               </span>
@@ -1354,7 +1354,7 @@ function PublicNoteReview({
                     reviewNote: "Không chuyển bếp",
                   })
                 }
-                className="rounded-lg border border-[#123c36]/25 bg-white px-3 py-1.5 font-medium text-[#123c36] hover:bg-[#f6faf8] disabled:opacity-50"
+                className="rounded-lg border border-[var(--brand)]/25 bg-white px-3 py-1.5 font-medium text-[var(--brand)] hover:bg-[#f6faf8] disabled:opacity-50"
               >
                 Không chuyển
               </button>
@@ -1374,14 +1374,14 @@ function ApprovedPublicNotes({ data }: { data: Row }) {
     <section className={panel}>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-black text-[#123c36]">
+          <h2 className="text-xl font-black text-[var(--ink)]">
             Ghi chú đã được điều dưỡng duyệt
           </h2>
           <p className="mt-1 text-sm text-neutral-600">
             Chỉ thực hiện các ghi chú đã qua xác nhận của khoa.
           </p>
         </div>
-        <span className="rounded-full bg-[#e7f2ed] px-3 py-1 text-sm font-black text-[#123c36]">
+        <span className="rounded-full bg-[#e7f2ed] px-3 py-1 text-sm font-black text-[var(--brand)]">
           {notes.length}
         </span>
       </div>
@@ -1390,7 +1390,7 @@ function ApprovedPublicNotes({ data }: { data: Row }) {
           {notes.map((note: Row) => (
             <article
               key={note.id}
-              className="rounded-xl border-l-4 border-[#123c36] bg-[#f3f8f6] p-4"
+              className="rounded-xl border-l-4 border-[var(--brand)] bg-[#f3f8f6] p-4"
             >
               <b>
                 {note.departmentName} ·{" "}
@@ -1435,8 +1435,8 @@ function DoctorPanel({
   });
   if (data.user.role !== "CLINICIAN")
     return (
-      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-        <div className="border-b border-[#123c36]/10 px-5 py-4">
+      <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+        <div className="border-b border-[var(--brand)]/10 px-5 py-4">
           <h2 className="text-lg font-semibold text-rose-800">Không đúng vai trò</h2>
         </div>
         <p className="px-5 py-4">
@@ -1448,7 +1448,7 @@ function DoctorPanel({
     (order: Row) => order.status === "ACTIVE",
   );
   const doctorInput =
-    "mt-1 w-full rounded-lg border border-[#8fa99e] bg-white px-3 py-2 text-sm";
+    "mt-1 w-full rounded-lg border border-[var(--control-line)] bg-white px-3 py-2 text-sm";
   async function submit(e: FormEvent) {
     e.preventDefault();
     const ok = await act({
@@ -1467,9 +1467,9 @@ function DoctorPanel({
   }
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,440px)_1fr]">
-      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-        <div className="border-b border-[#123c36]/10 px-5 py-4">
-          <h2 className="text-lg font-semibold text-[#123c36]">Tạo chỉ định</h2>
+      <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+        <div className="border-b border-[var(--brand)]/10 px-5 py-4">
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Tạo chỉ định</h2>
           <p className="mt-1 text-sm text-neutral-600">
             Chỉ nhập mã người bệnh nội bộ. Không nhập họ tên, chẩn đoán, CCCD hoặc
             bệnh án.
@@ -1596,10 +1596,10 @@ function DoctorPanel({
           </button>
         </form>
       </section>
-      <section className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-        <div className="flex items-center justify-between gap-3 border-b border-[#123c36]/10 px-5 py-4">
+      <section className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+        <div className="flex items-center justify-between gap-3 border-b border-[var(--brand)]/10 px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-[#123c36]">
+            <h2 className="text-lg font-semibold text-[var(--ink)]">
               Chỉ định đang hoạt động
             </h2>
             <p className="mt-1 text-sm text-neutral-600">
@@ -1614,11 +1614,11 @@ function DoctorPanel({
           {active.map((order: Row) => (
             <article
               key={order.id}
-              className={`rounded-xl border px-4 py-3 ${order.critical ? "border-amber-400 bg-amber-50 text-amber-900" : "border-[#123c36]/10 bg-white"}`}
+              className={`rounded-xl border px-4 py-3 ${order.critical ? "border-amber-400 bg-amber-50 text-amber-900" : "border-[var(--brand)]/10 bg-white"}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <span className="text-lg font-semibold text-[#123c36]">{order.patientCode}</span>
+                  <span className="text-lg font-semibold text-[var(--brand)]">{order.patientCode}</span>
                   <p className="text-sm">
                     {order.department.name} · {order.room || "Chưa ghi phòng"}
                   </p>
@@ -1666,7 +1666,7 @@ function DoctorPanel({
             </article>
           ))}
           {!active.length && (
-            <p className="rounded-xl border border-dashed border-[#8fa99e] p-5 text-center text-neutral-600">
+            <p className="rounded-xl border border-dashed border-[var(--control-line)] p-5 text-center text-neutral-600">
               Chưa có chỉ định đang hoạt động trong ngày.
             </p>
           )}

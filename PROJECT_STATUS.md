@@ -1,5 +1,24 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Giảm phủ xanh và làm gọn kho mẫu — 21/10/2026
+
+- Sau phản hồi ảnh VPS, đã sửa nền trắng ấm/chữ xám than/viền xám, giữ xanh cho nhận diện và hành động, thêm cam đất ở icon/nhãn. Kho mẫu bỏ nhãn đầu và hai nút lớn; trợ giúp chứa ủy quyền/tài liệu, bộ lọc mobile hai hàng. Menu/avatar và tiêu đề các màn liên quan trung tính, giữ Times.
+- Build/TypeScript/lint tệp sửa đạt;153 kho mẫu,31 giao diện chung,27 link,46 tài khoản. Chromium89 trang chủ +32 bộ tính +73 Admin +53 RootLayout/kho mẫu đạt, không lỗi JS/tràn ngang; danh sách ở khoảng463px trên390/320px. Next production HTTP cục bộ21 đạt. Fixture/API/phiên minh họa; biên bản và ảnh: `docs/design/neutral-ui-2026-10-21.md`.
+- **Bản màu trung tính chưa lên VPS.** Không đổi engine/API/quyền/migration. Bản trước `84dec6c` đã được người dùng triển khai thành công và áp migration kho mẫu; kiểm HTTPS công khai/khách tám đường đạt. Nút Thông tin mới bỏ, Caddy/tệp xác minh Google cục bộ giữ nguyên.
+
+## Bố cục, icon và nhận diện xanh ngọc–trắng — 21/10/2026
+
+- Đã triển khai phương án người dùng chốt trên `codex/ui-navigation-refresh`/PR#9: logo bát/lá, favicon/app/maskable/ảnh chia sẻ, SVG Lucide có nhãn và minh họa Storyset có ghi công. Bảng màu dùng token chung, giữ Times; nguồn/giấy phép ở `docs/design/asset-sources.md`.
+- Trang chủ ưu tiên tìm và ba công cụ; tra cứu đưa tìm/lọc trước dữ liệu; trợ giúp một khung trắng thu gọn. Màn nhập khẩu phần dành thêm chiều rộng cho nguyên liệu, cây bữa–món gọn, mobile chuyển pane; Admin/AI đồng bộ màu/icon. Không đổi engine/API/quyền/Prisma.
+- Build/TypeScript và19 script Nutrition Chat đạt; kho mẫu153+100. Chromium:89 trang chủ,32 bộ tính (1440/768/390/320px),73 Admin (1440/390px); fixture, không lỗi JS/tràn trang. Next production HTTP cục bộ68 đạt. Lint rộng phát hiện một lỗi effect có sẵn ở Nhật ký lỗi và bảy warning cũ, đã đối chiếu HEAD; không đổi logic để né lỗi. Biên bản: `docs/design/ui-implementation-2026-10-21.md`.
+- **Đã lên VPS ở commit84dec6c** theo log người dùng: build/migration kho mẫu thành công, app Healthy, health ok; kiểm trực tiếp tám đường HTTPS công khai/khách đạt. Chưa kiểm phiên Admin thật, mọi trang sâu hoặc đo thời gian thao tác. Đợt chỉnh màu tiếp theo được ghi ở mục phía trên.
+
+## Trang chủ và điều hướng chung theo rà UI — 21/10/2026
+
+- Nhánh `codex/ui-navigation-refresh` dựa trên Admin `f365a88`. Đã đọc Frontend Design (Anthropic), Web Design Guidelines (Vercel), W3C Reflow/Labels; hướng thiết kế và kết quả trong `docs/design/ui-review-2026-10-21.md`.
+- Trang chủ đưa tra thực phẩm lên đầu, các lối vào bộ tính/món ăn/AI rõ; gom nguồn/hỗ trợ/cảm ơn trong khung trắng thu gọn. Dữ liệu số lượng/cấu hình vẫn từ máy chủ, dùng ảnh hiện có. Menu di động thu gọn, chỉ báo trang hiện tại, skip link/main, focus và vùng chạm; menu tài khoản hỗ trợ focus/Escape/Tab ra ngoài. Giữ slot điều hướng bộ tính.
+- TypeScript/lint/build đạt; Chromium58 kiểm tra1440/390/320px với component thật và fixture dữ liệu/pathname/phiên/QR, không lỗi JS. Đã xem ảnh và sửa lỗi hero che ô nhập/avatar xuống dòng ở320px. Hồi quy31 bộ tính chung,46 tài khoản,125 hướng dẫn,153 kho mẫu đạt; Admin browser73 sau CSS chung đạt. Next production cục bộ15 kiểm tra khách/SSR đạt. **Chưa triển khai hoặc nghiệm thu VPS; chưa rà mọi màn hình sâu.**
+
 ## Admin gọn và rộng hơn — 21/10/2026
 
 - Tổng quan có ba nhóm hàng thao tác mở trực tiếp, thanh lọc nhóm và một thanh trắng “Trợ giúp & hướng dẫn” thu gọn; vùng làm việc tối đa1600px. Cấp quyền AI đưa form lên đầu, bỏ ba thẻ hướng dẫn lớn.

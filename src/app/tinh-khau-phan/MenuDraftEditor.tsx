@@ -14,7 +14,7 @@ import { webNutritionReportInput, webRowFoodSource } from "./nutrition-excel-dow
 
 type Props = { input: MenuInput; menu?: ResolvedMenu; names: Record<string,string>; disabled: boolean; sourceMode?: "all"|"catalog"; onChange: (next: MenuInput) => void; onNames: (names: Record<string,string>) => void; onAmount: (day:number,row:number,field:"quantity"|"servings",value:string) => void };
 type DisplayRow = Row & { sourceRow?: MenuRowInput };
-const field = "w-full min-w-0 rounded border border-[#8fa99e] bg-white px-2 py-1.5 text-sm text-neutral-950 focus:outline-2 focus:outline-[#123c36]";
+const field = "w-full min-w-0 rounded border border-[var(--control-line)] bg-white px-2 py-1.5 text-sm text-neutral-950 focus:outline-2 focus:outline-[var(--brand)]";
 const numberField = field + " text-right tabular-nums";
 
 /** The same MealInput component owns the tree, navigation and pinned catalogue
@@ -79,7 +79,7 @@ export default function MenuDraftEditor({ input, menu, names, disabled, sourceMo
   const mealNames=[...new Set(displayRows.map(row=>row.meal))];
   const tree=mealNames.map(meal=>({meal,kcal:energy(day.rows.filter(row=>row.meal===meal)),dishes:[...new Set(displayRows.filter(row=>row.meal===meal).map(row=>row.dish))].map(dish=>({dish,kcal:energy(day.rows.filter(row=>row.meal===meal&&row.dish===dish))}))}));
   const controlled:ControlledMealInput={rows:displayRows,mode:input.mode,disabled,showActions:true,onChange:structuralChange,onModeChange:mode=>onChange({...input,mode}),onPickFood:pickFood,onPickDish:pickDish,tree,renderDish:(meal,dish,actions)=><DishInputFrame name={dish.dish} disabled={disabled} onRename={actions.rename} onDelete={actions.remove} onDuplicate={actions.duplicate}>
-    <div className="relative overflow-x-auto"><table className="w-full min-w-[980px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[#eef4f1] [&_td]:border [&_td]:border-[#e0e8e3]">
+    <div className="relative overflow-x-auto"><table className="w-full min-w-[980px] table-fixed border-collapse text-sm [&_th]:border [&_th]:border-[#cbd8d1] [&_th]:bg-[var(--surface-soft)] [&_td]:border [&_td]:border-[#e0e8e3]">
       <caption className="p-2 text-left text-sm font-semibold">Thực phẩm / nguyên liệu của món · lượng, đơn vị và số suất giữ theo bản đang mở</caption>
       <colgroup><col className="w-[24%]"/><col className="w-[12%]"/><col className="w-[10%]"/><col className="w-[11%]"/><col className="w-[10%]"/><col className="w-[8%]"/><col className="w-[8%]"/><col className="w-[13%]"/><col className="w-[4%]"/></colgroup>
       <thead><tr><th className="px-2 py-2 text-left">Thực phẩm</th><th className="px-1 py-2">{input.mode==="recall24h"?"Đã ăn / suất":"Lượng / suất"}</th><th className="px-1 py-2">Hệ số</th><th className="px-1 py-2">Theo nguồn</th><th className="px-1 py-2">Mua/kho</th><th className="px-1 py-2">Thải bỏ</th><th className="px-1 py-2">Số suất</th><th className="px-2 py-2 text-left">Ghi chú</th><th><span className="sr-only">Thao tác</span></th></tr></thead>
@@ -104,7 +104,7 @@ export default function MenuDraftEditor({ input, menu, names, disabled, sourceMo
       {!day.rows.some(row=>row.meal===meal&&row.dish===dish.dish)?<p className="p-3 text-sm">Chưa có thực phẩm. Chọn món này rồi tìm ở ô phía dưới.</p>:null}
     </DishInputFrame>};
   return <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:flex-1">
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Ngày trong khẩu phần">{input.days.map(item=><button key={item.id} type="button" disabled={disabled} aria-pressed={item.id===day.id} onClick={()=>setSelectedDay(item.id)} className={`rounded border px-3 py-2 text-sm font-semibold ${item.id===day.id?"bg-[#123c36] text-white":"bg-white text-[#123c36]"}`}>{item.label}{item.date?` · ${item.date}`:""}</button>)}</div>
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Ngày trong khẩu phần">{input.days.map(item=><button key={item.id} type="button" disabled={disabled} aria-pressed={item.id===day.id} onClick={()=>setSelectedDay(item.id)} className={`rounded border px-3 py-2 text-sm font-semibold ${item.id===day.id?"bg-[var(--brand)] text-white":"bg-white text-[var(--brand)]"}`}>{item.label}{item.date?` · ${item.date}`:""}</button>)}</div>
     <div className="grid grid-cols-2 gap-3"><label className="min-w-0 text-sm">Tên ngày<input disabled={disabled} value={day.label} maxLength={100} onChange={event=>{const next=structuredClone(input);next.days[dayIndex].label=event.target.value;onChange(next);}} className={field}/></label><label className="min-w-0 text-sm">Ngày ăn<input disabled={disabled} type="date" value={day.date} onChange={event=>{const next=structuredClone(input);next.days[dayIndex].date=event.target.value;onChange(next);}} className={field}/></label></div>
     {error?<p role="alert" className="text-sm text-red-800">{error}</p>:null}
     <MealInput key={day.id} controlled={controlled}/>

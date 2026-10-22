@@ -50,7 +50,7 @@ export default function SusSurveyForm() {
   return (
     <div className="flex flex-col gap-5">
       <section className="clinical-page-heading">
-        <p className="text-xs font-semibold tracking-[.16em] text-[#123c36]">KHẢO SÁT NGƯỜI DÙNG</p>
+        <p className="text-xs font-semibold tracking-[.16em] text-[var(--brand)]">KHẢO SÁT NGƯỜI DÙNG</p>
         <h1 className="mt-1 text-3xl font-semibold">Đánh giá mức độ dễ sử dụng của hệ thống</h1>
         <p className="mt-2 max-w-3xl">
           Phiếu khảo sát ngắn (thang SUS, 10 câu) dùng cho nghiên cứu đánh giá và cải tiến website Dinh dưỡng 2598.
@@ -58,22 +58,22 @@ export default function SusSurveyForm() {
         </p>
       </section>
 
-      <form onSubmit={submit} className="rounded-xl border-2 border-[#123c36] bg-white p-5 shadow-sm">
+      <form onSubmit={submit} className="rounded-xl border-2 border-[var(--brand)] bg-white p-5 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="font-semibold">Vai trò của bạn
-            <select name="role" className="mt-1 w-full rounded border-2 border-[#8fa99e] px-3 py-2 font-normal">
+            <select name="role" className="mt-1 w-full rounded border-2 border-[var(--control-line)] px-3 py-2 font-normal">
               {SUS_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </label>
           <label className="font-semibold">Số lần đã dùng hệ thống
-            <select name="useFreq" className="mt-1 w-full rounded border-2 border-[#8fa99e] px-3 py-2 font-normal">
+            <select name="useFreq" className="mt-1 w-full rounded border-2 border-[var(--control-line)] px-3 py-2 font-normal">
               {SUS_USE_FREQ.map((f) => <option key={f} value={f}>{f} lần</option>)}
             </select>
           </label>
         </div>
 
         <fieldset className="mt-5">
-          <legend className="font-semibold text-[#123c36]">Mỗi câu chọn một mức (1 = rất không đồng ý … 5 = rất đồng ý)</legend>
+          <legend className="font-semibold text-[var(--brand)]">Mỗi câu chọn một mức (1 = rất không đồng ý … 5 = rất đồng ý)</legend>
           <div className="mt-3 flex flex-col gap-3">
             {SUS_ITEMS.map((item, idx) => {
               const i = idx + 1;
@@ -84,7 +84,7 @@ export default function SusSurveyForm() {
                     <span className="text-xs text-[#5b736b]">{SCALE_ENDS[0]}</span>
                     {SCALE.map((v) => (
                       <label key={v} className="inline-flex items-center gap-1 text-sm font-semibold">
-                        <input type="radio" name={`q${i}`} value={v} required className="h-4 w-4 accent-[#123c36]" />
+                        <input type="radio" name={`q${i}`} value={v} required className="h-4 w-4 accent-[var(--brand)]" />
                         {v}
                       </label>
                     ))}
@@ -97,13 +97,13 @@ export default function SusSurveyForm() {
         </fieldset>
 
         <label className="mt-5 block font-semibold">Góp ý thêm (tùy chọn)
-          <textarea name="comment" rows={4} className="mt-1 w-full rounded border-2 border-[#8fa99e] px-3 py-2 font-normal" placeholder="Điểm hữu ích nhất / điểm cần cải thiện. Không nhập dữ liệu sức khỏe định danh." />
+          <textarea name="comment" rows={4} className="mt-1 w-full rounded border-2 border-[var(--control-line)] px-3 py-2 font-normal" placeholder="Điểm hữu ích nhất / điểm cần cải thiện. Không nhập dữ liệu sức khỏe định danh." />
         </label>
 
-        <button disabled={sending || ok} className="mt-4 rounded bg-[#123c36] px-5 py-2.5 font-semibold text-white disabled:bg-[#66847b]">
+        <button disabled={sending || ok} className="mt-4 rounded bg-[var(--brand)] px-5 py-2.5 font-semibold text-white disabled:bg-[#66847b]">
           {sending ? "Đang gửi…" : ok ? "Đã gửi" : "Gửi đánh giá"}
         </button>
-        {message && <p className="mt-3 rounded border border-[#8fa99e] bg-[#f1f6f4] p-3 font-semibold">{message}</p>}
+        {message && <p className="mt-3 rounded border border-[var(--control-line)] bg-[var(--background)] p-3 font-semibold">{message}</p>}
       </form>
     </div>
   );

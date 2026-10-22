@@ -87,7 +87,7 @@ export default function EnergyDistribution({ rows, totals, profile }: { rows: Ro
   return (
     <section className="rounded-lg border border-neutral-200 bg-white p-4" aria-label="Phân bổ năng lượng và đối chiếu">
       <div className="border-b border-neutral-200 pb-3">
-        <p className="text-xs font-semibold tracking-[0.14em] text-[#123c36]">ĐỐI CHIẾU KHẨU PHẦN</p>
+        <p className="text-xs font-semibold tracking-[0.14em] text-[var(--brand)]">ĐỐI CHIẾU KHẨU PHẦN</p>
         <h2 className="mt-1 text-lg font-semibold text-neutral-900">Phân bổ năng lượng &amp; đối chiếu</h2>
         <p className="mt-1 text-sm text-neutral-700">Năng lượng theo bữa, chênh lệch với nhu cầu và tỷ lệ năng lượng từ các chất sinh năng lượng. Ưu tiên bảng Nhu cầu dinh dưỡng khuyến nghị cho người Việt Nam.</p>
       </div>
@@ -106,7 +106,7 @@ export default function EnergyDistribution({ rows, totals, profile }: { rows: Ro
         </div>
         <div>
           <h3 className="text-sm font-semibold text-neutral-900">Phân bổ năng lượng theo bữa</h3>
-          <div className="mt-2 overflow-x-auto"><table className="w-full text-sm"><thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-800"><tr><th className="px-2 py-2">Bữa</th><th className="px-2 py-2 text-right">Năng lượng</th><th className="px-2 py-2 text-right">Tỷ trọng</th></tr></thead><tbody>{mealRows.map((item) => { const pct = actualEnergy ? (item.kcal / actualEnergy) * 100 : 0; return <tr key={item.meal} className="border-b border-neutral-100"><td className="px-2 py-2"><div className="font-medium">{item.meal}</div><div className="mt-1 h-1.5 w-full bg-neutral-100"><div className="h-full bg-[#123c36]" style={{ width: `${Math.min(100, pct)}%` }} /></div></td><td className="px-2 py-2 text-right">{round(item.kcal)} kcal</td><td className="px-2 py-2 text-right">{round(pct)}%</td></tr>; })}</tbody></table></div>
+          <div className="mt-2 overflow-x-auto"><table className="w-full text-sm"><thead className="border-y border-neutral-200 bg-neutral-50 text-left text-xs text-neutral-800"><tr><th className="px-2 py-2">Bữa</th><th className="px-2 py-2 text-right">Năng lượng</th><th className="px-2 py-2 text-right">Tỷ trọng</th></tr></thead><tbody>{mealRows.map((item) => { const pct = actualEnergy ? (item.kcal / actualEnergy) * 100 : 0; return <tr key={item.meal} className="border-b border-neutral-100"><td className="px-2 py-2"><div className="font-medium">{item.meal}</div><div className="mt-1 h-1.5 w-full bg-neutral-100"><div className="h-full bg-[var(--brand)]" style={{ width: `${Math.min(100, pct)}%` }} /></div></td><td className="px-2 py-2 text-right">{round(item.kcal)} kcal</td><td className="px-2 py-2 text-right">{round(pct)}%</td></tr>; })}</tbody></table></div>
         </div>
       </div>
       {!profile && <p className="mt-4 border-l-2 border-amber-400 bg-amber-50 px-3 py-2 text-sm text-neutral-900">Nhập hồ sơ cá nhân để đối chiếu năng lượng khẩu phần với nhu cầu ước tính.</p>}
@@ -115,6 +115,6 @@ export default function EnergyDistribution({ rows, totals, profile }: { rows: Ro
 }
 
 function Metric({ label, value, status }: { label: string; value: string; status?: "balanced" | "low" | "high" }) {
-  const color = status === "balanced" ? "border-emerald-700" : status === "low" ? "border-amber-600" : status === "high" ? "border-rose-700" : "border-[#123c36]";
+  const color = status === "balanced" ? "border-emerald-700" : status === "low" ? "border-amber-600" : status === "high" ? "border-rose-700" : "border-[var(--brand)]";
   return <div className={`border-l-4 ${color} bg-neutral-50 p-3`}><div className="text-xs font-semibold text-neutral-800">{label}</div><div className="mt-1 text-lg font-semibold text-neutral-900">{value}</div></div>;
 }

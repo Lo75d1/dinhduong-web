@@ -1,6 +1,6 @@
 import Link from "next/link";
 export default function LongTermUse() {
-  return <section id="luu-lau-dai" aria-labelledby="long-term-title" className="scroll-mt-6 rounded-xl border border-[#9bb6ab] bg-[#edf4f0] p-5 sm:p-7">
+  return <section id="luu-lau-dai" aria-labelledby="long-term-title" className="scroll-mt-6 rounded-xl border border-[var(--control-line)] bg-[var(--surface-soft)] p-5 sm:p-7">
     <h2 id="long-term-title" className="text-2xl font-semibold">Muốn lưu và dùng lại lâu dài?</h2>
     <p className="mt-3 text-neutral-700">Tạo tài khoản Dinh dưỡng 2598 khi bạn muốn giữ thực đơn, thực phẩm và món ăn riêng để dùng nhiều lần. Chỉ tra, tính hoặc lấy Excel thì không cần bước này.</p>
     <ol className="mt-4 list-decimal space-y-3 pl-5 text-neutral-800">

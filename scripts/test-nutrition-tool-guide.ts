@@ -26,6 +26,7 @@ async function main(){let checks=0;const check=(v:unknown)=>{assert.ok(v);checks
  check(MENU_PLANNING_GUIDANCE.includes("không phải giới hạn y khoa"));check(MENU_PLANNING_GUIDANCE.includes("ghi đúng lịch sử kể cả món lặp"));
  check(MENU_PLANNING_GUIDANCE.includes("Dị ứng, chỉ định"));check(MENU_PLANNING_GUIDANCE.includes("Cơm trắng bữa trưa/tối có thể lặp"));
  check(MENU_PLANNING_GUIDANCE.includes("kind=ai"));check(MENU_PLANNING_GUIDANCE.includes("không có dishId RNI giả"));
+ check(MENU_PLANNING_GUIDANCE.includes("ba món không tính cơm"));check(MENU_PLANNING_GUIDANCE.includes("canh có thịt/tôm vẫn là canh"));check(MENU_PLANNING_GUIDANCE.includes("không phải quy định pháp lý"));check(MENU_PLANNING_GUIDANCE.includes("phải prepare và duyệt bản mới"));
  check(NUTRITION_WORKFLOW.toolGuide.search_dishes.next.includes("khung toàn kỳ"));check(NUTRITION_WORKFLOW.toolGuide.get_dish.next.includes("kind=ai"));
  check(NUTRITION_WORKFLOW.accountUse.loginPath.startsWith("/dang-nhap?next="));check(NUTRITION_WORKFLOW.accountUse.steps.some(step=>step.includes("Không tái dùng confirmationToken")));
  check(text.includes("Đăng ký mới"));check(text.includes("Đăng nhập website không tự gắn tài khoản với plugin"));check(text.includes("không bắt học tên API"));

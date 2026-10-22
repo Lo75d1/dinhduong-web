@@ -6,6 +6,14 @@
 - Ưu tiên search_dishes/get_dish cho món RNI phù hợp; tìm nhiều loại theo bữa, kiểm nguồn và đủ Food liên kết, lượng/cơ sở. Không lấy dòng đầu theo thứ hạng. Chỉ tra món nguyên khối qua search_foods type=MA khi cần hoặc người dùng chọn.
 - Được giao lập thực đơn thì chủ động chọn phương án từ ứng viên thật để trình duyệt, không bắt chọn từng món trong danh sách3–5 cho mọi bữa. Chỉ so sánh lựa chọn khi còn mơ hồ, khác biệt ảnh hưởng an toàn/khẩu vị hoặc người dùng muốn chọn. Đề xuất không phải đã được chấp nhận.
 
+## Bữa cơm thường: cơm, canh và hai món riêng
+
+- Bữa cơm thường ở bệnh viện, suất ăn công nghiệp và bộ mẫu cơm tại nhà: cơm + canh + món đạm + món rau/đậu riêng; trình bốn mục, ba món không tính cơm. Đây là quy ước kho do Admin yêu cầu, không phải quy định pháp lý hay tiêu chuẩn đủ chất.
+- Hai món riêng phối hợp đạm và rau/đậu theo chế độ, không bắt buộc cả hai là thịt. Mỗi món tính một lần: canh có thịt/tôm vẫn là canh; xào thịt với rau vẫn là một món, không thay hai món riêng. Gia vị, nước chấm, trái cây, sữa không thay ba món này.
+- Chọn đủ cấu trúc rồi phân bổ lại cơm, đạm, rau/đậu, dầu, gia vị theo mục tiêu năng lượng. Thêm món vào bản cũ phải prepare và duyệt bản mới trước tính; không giữ kcal hoặc kết luận đủ chất của bản trước.
+- Chỉ áp cho bữa cơm chính thông thường; không ép bữa sáng/phụ, bún/phở/cháo, trẻ nhỏ, đơn ăn đặc biệt hoặc khẩu phần24giờ đã ăn. Giữ cấu trúc khác đã được người dùng/đơn vị chốt và ghi ngoại lệ; ưu tiên chỉ định chuyên môn. Cơm nhà ngoài bộ mẫu thống nhất số món theo điều kiện.
+- Trước prepare_menu hoặc lưu kho, rà từng bữa/nhóm: đủ cơm, canh, món đạm, món rau/đậu riêng và nguyên liệu/định lượng chưa. Thiếu thì báo thiếu; số món không chứng minh đạt mục tiêu dinh dưỡng.
+
 ## Lập khung toàn kỳ và kiểm tra món lặp
 
 - Lập khung ngày × bữa toàn kỳ trước định lượng. Theo dõi món/công thức gốc, nền bữa sáng, đạm, rau, cách nấu; so ngày liền nhau và toàn kỳ, không sao chép một ngày cho cả tuần hoặc chỉ đổi tên món.

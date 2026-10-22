@@ -13,8 +13,8 @@ export default function LibraryIngredientPicker({ onPick, recipes = true, disabl
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [searched, setSearched] = useState(false), [message, setMessage] = useState("");
   const sourceName = kind === "catalog" ? "Thực phẩm trong kho" : kind === "catalog-dish" ? "Công thức món trong kho" : kind === "food" ? "Thực phẩm của tôi" : "Món ăn của tôi";
-  const control = "mt-1 block min-h-11 w-full min-w-0 rounded border border-[#8fa99e] bg-white px-3 py-2 text-base text-[#123c36] focus:border-[#123c36] focus:outline-none focus:ring-2 focus:ring-[#b1c8bd]";
-  const action = "min-h-11 rounded border border-[#123c36] bg-white px-4 py-2 text-base font-semibold text-[#123c36] hover:bg-[#eaf2ee] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#123c36] disabled:cursor-wait disabled:opacity-50";
+  const control = "mt-1 block min-h-11 w-full min-w-0 rounded border border-[var(--control-line)] bg-white px-3 py-2 text-base text-[var(--brand)] focus:border-[var(--brand)] focus:outline-none focus:ring-2 focus:ring-[var(--line)]";
+  const action = "min-h-11 rounded border border-[var(--brand)] bg-white px-4 py-2 text-base font-semibold text-[var(--brand)] hover:bg-[#eaf2ee] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand)] disabled:cursor-wait disabled:opacity-50";
   function resetSearch() { setItems([]); setPage(0); setNextPage(null); setSearched(false); setError(""); setMessage(""); }
   async function search(targetPage = 0) {
     setBusy(true); setError(""); setMessage(""); setSearched(false); setItems([]);
@@ -45,8 +45,8 @@ export default function LibraryIngredientPicker({ onPick, recipes = true, disabl
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Chưa dùng được mục này."); }
     finally { setBusy(false); }
   }
-  return <fieldset disabled={busy || disabled} aria-busy={busy} className="min-w-0 rounded border border-[#b1c8bd] bg-[#f5f8f5] p-4">
-    <legend className="px-2 text-lg font-semibold text-[#123c36]">{sourceMode === "catalog" ? "Thêm từ kho dữ liệu" : recipes ? "Thêm nguyên liệu hoặc món ăn" : "Thêm nguyên liệu"}</legend>
+  return <fieldset disabled={busy || disabled} aria-busy={busy} className="min-w-0 rounded border border-[var(--line)] bg-[#f5f8f5] p-4">
+    <legend className="px-2 text-lg font-semibold text-[var(--brand)]">{sourceMode === "catalog" ? "Thêm từ kho dữ liệu" : recipes ? "Thêm nguyên liệu hoặc món ăn" : "Thêm nguyên liệu"}</legend>
     <div className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_auto]">
       <label className="min-w-0 text-sm font-semibold">Tìm trong<select value={kind} onChange={e => { setKind(e.target.value); resetSearch(); }} className={control}>
         {sourceMode === "all" ? <><option value="food">Thực phẩm của tôi</option>{recipes ? <option value="dish">Món ăn của tôi</option> : null}</> : null}
@@ -57,15 +57,15 @@ export default function LibraryIngredientPicker({ onPick, recipes = true, disabl
     </div>
     <p className="mt-3 text-sm text-neutral-700">{kind === "catalog-dish" ? "Công thức có đủ thành phần sẽ thêm từng thực phẩm vào bảng. Định lượng lấy theo toàn công thức nguồn." : kind === "dish" ? "Món đã lưu sẽ thêm đầy đủ nguyên liệu, nguồn và định lượng của phiên bản đang dùng." : kind === "food" ? "Thực phẩm riêng giữ nguyên nguồn và cơ sở số liệu bạn đã lưu." : "Chọn thực phẩm có nguồn trong kho, rồi điều chỉnh lượng thực dùng trong bảng."}</p>
     {error ? <p role="alert" className="mt-3 border-l-4 border-red-700 bg-red-50 px-3 py-2 text-sm text-red-900">{error}</p> : null}
-    {message ? <p role="status" className="mt-3 border-l-4 border-[#123c36] bg-[#eaf2ee] px-3 py-2 text-sm text-[#123c36]">{message}</p> : null}
+    {message ? <p role="status" className="mt-3 border-l-4 border-[var(--brand)] bg-[#eaf2ee] px-3 py-2 text-sm text-[var(--brand)]">{message}</p> : null}
     {busy ? <p role="status" className="mt-3 text-sm text-neutral-700">Đang đọc dữ liệu từ {sourceName.toLocaleLowerCase("vi-VN")}…</p> : null}
-    {items.length ? <div className="mt-4 overflow-hidden rounded border border-[#b1c8bd] bg-white">
-      <p className="border-b border-[#b1c8bd] bg-[#edf4f0] px-3 py-2 text-sm font-semibold">Kết quả từ {sourceName.toLocaleLowerCase("vi-VN")}</p>
+    {items.length ? <div className="mt-4 overflow-hidden rounded border border-[var(--line)] bg-white">
+      <p className="border-b border-[var(--line)] bg-[var(--surface-soft)] px-3 py-2 text-sm font-semibold">Kết quả từ {sourceName.toLocaleLowerCase("vi-VN")}</p>
       <ul className="max-h-80 divide-y divide-[#d7e2dc] overflow-y-auto">{items.map(item => <li key={item.id} className="flex min-w-0 items-center justify-between gap-3 px-3 py-3">
-        <div className="min-w-0"><p className="break-words font-semibold text-[#123c36]">{item.name}</p>{kind === "catalog-dish" ? <p className="mt-1 text-sm text-neutral-600">{item.ingredients?.length ? `${item.ingredients.length} thành phần trong công thức nguồn` : "Chưa có chi tiết thành phần"}</p> : null}</div>
+        <div className="min-w-0"><p className="break-words font-semibold text-[var(--brand)]">{item.name}</p>{kind === "catalog-dish" ? <p className="mt-1 text-sm text-neutral-600">{item.ingredients?.length ? `${item.ingredients.length} thành phần trong công thức nguồn` : "Chưa có chi tiết thành phần"}</p> : null}</div>
         <button type="button" onClick={() => void pick(item)} className={`${action} shrink-0`} aria-label={`Thêm ${item.name}`}>Thêm</button>
       </li>)}</ul>
-    </div> : searched && !busy && !error ? <p role="status" className="mt-4 rounded border border-dashed border-[#b1c8bd] bg-white p-4 text-sm text-neutral-700">Không tìm thấy {q ? `“${q}”` : "mục phù hợp"} trong {sourceName.toLocaleLowerCase("vi-VN")}. Thử tên ngắn hơn hoặc chọn nguồn khác.</p> : null}
+    </div> : searched && !busy && !error ? <p role="status" className="mt-4 rounded border border-dashed border-[var(--line)] bg-white p-4 text-sm text-neutral-700">Không tìm thấy {q ? `“${q}”` : "mục phù hợp"} trong {sourceName.toLocaleLowerCase("vi-VN")}. Thử tên ngắn hơn hoặc chọn nguồn khác.</p> : null}
     {page > 0 || nextPage !== null ? <nav aria-label="Trang kết quả tìm nguyên liệu" className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm"><span>Trang {page + 1}</span><div className="flex gap-3">{page > 0 ? <button type="button" onClick={() => void search(page - 1)} className={action}>Trang trước</button> : null}{nextPage !== null ? <button type="button" onClick={() => void search(nextPage)} className={action}>Trang sau</button> : null}</div></nav> : null}
   </fieldset>;
 }

@@ -51,11 +51,11 @@ export type AccountData = {
   activity: Activity[];
 };
 const input =
-  "mt-1 block w-full min-w-0 rounded-md border border-[#8fa99e] bg-white px-3 py-2 text-neutral-900 focus:outline-2 focus:outline-[#123c36]";
+  "mt-1 block w-full min-w-0 rounded-md border border-[var(--control-line)] bg-white px-3 py-2 text-neutral-900 focus:outline-2 focus:outline-[var(--brand)]";
 const button =
-  "rounded-md bg-[#123c36] px-4 py-2.5 font-semibold text-white hover:bg-[#0f5c51] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#123c36]";
+  "rounded-md bg-[var(--brand)] px-4 py-2.5 font-semibold text-white hover:bg-[var(--brand-hover)] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand)]";
 const secondary =
-  "rounded-md border border-[#8fa99e] px-3 py-2 text-sm font-semibold text-[#123c36] hover:bg-[#edf4ef] disabled:opacity-50";
+  "rounded-md border border-[var(--control-line)] px-3 py-2 text-sm font-semibold text-[var(--brand)] hover:bg-[#edf4ef] disabled:opacity-50";
 const scopes = [
   ["nutrition:read", "Tra kho, thư viện riêng và khẩu phần"],
   ["nutrition:calculate", "Tính thành phần dinh dưỡng"],
@@ -217,8 +217,8 @@ export default function AccountSettings({
     ["activity", "Lịch sử tài khoản"],
   ];
   return (
-    <div className="mx-auto max-w-5xl text-[#123c36]">
-      <header className="border-b border-[#b7ccc0] pb-6">
+    <div className="mx-auto max-w-5xl text-[var(--brand)]">
+      <header className="border-b border-[var(--line)] pb-6">
         <p className="text-sm font-semibold tracking-wide">CÀI ĐẶT CÁ NHÂN</p>
         <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">
           Tài khoản của tôi
@@ -261,7 +261,7 @@ export default function AccountSettings({
       {message && (
         <p
           role="status"
-          className="mb-5 rounded-md border border-[#8fa99e] bg-[#f1f6f3] p-4 text-neutral-900"
+          className="mb-5 rounded-md border border-[var(--control-line)] bg-[#f1f6f3] p-4 text-neutral-900"
         >
           {message}
         </p>
@@ -293,7 +293,7 @@ export default function AccountSettings({
       {tab === "profile" && (
         <section
           aria-labelledby="profile-title"
-          className="rounded-lg border border-[#b7ccc0] bg-white p-5 sm:p-7"
+          className="rounded-lg border border-[var(--line)] bg-white p-5 sm:p-7"
         >
           <h2 id="profile-title" className="text-2xl font-semibold">
             Thông tin hồ sơ
@@ -361,7 +361,7 @@ export default function AccountSettings({
       )}
       {tab === "security" && (
         <div className="space-y-7">
-          <section className="rounded-lg border border-[#b7ccc0] bg-white p-5 sm:p-7">
+          <section className="rounded-lg border border-[var(--line)] bg-white p-5 sm:p-7">
             <h2 className="text-2xl font-semibold">Đổi mật khẩu</h2>
             <p className="mt-2 text-sm text-neutral-700">
               Sau khi đổi, mọi phiên đăng nhập và kết nối ứng dụng sẽ bị thu
@@ -424,7 +424,7 @@ export default function AccountSettings({
               </button>
             </form>
           </section>
-          <section className="rounded-lg border border-[#b7ccc0] bg-white p-5 sm:p-7">
+          <section className="rounded-lg border border-[var(--line)] bg-white p-5 sm:p-7">
             <h2 className="text-2xl font-semibold">Phiên đăng nhập website</h2>
             <p className="mt-2 text-sm text-neutral-600">
               Trình duyệt được nhận diện từ thông tin đăng nhập, không phải vị
@@ -489,14 +489,14 @@ export default function AccountSettings({
       )}
       {tab === "connections" && (
         <div className="space-y-7">
-          <section className="rounded-lg border border-[#b7ccc0] bg-white p-5 sm:p-7">
+          <section className="rounded-lg border border-[var(--line)] bg-white p-5 sm:p-7">
             <h2 className="text-2xl font-semibold">Ứng dụng đã cấp quyền</h2>
             <p className="mt-2 text-sm text-neutral-700">
               Chỉ hiện kết nối đã cấp quyền thành công. Cài plugin chưa đồng
               nghĩa với đã liên kết tài khoản.
             </p>
             {!data.connections.length && (
-              <p className="mt-5 border-l-4 border-[#9bb6ab] bg-[#f1f6f3] p-4">
+              <p className="mt-5 border-l-4 border-[var(--control-line)] bg-[#f1f6f3] p-4">
                 Chưa có kết nối còn hiệu lực.{" "}
                 <Link href="/ket-noi-ai#cai-ket-noi" className="underline">
                   Mở hướng dẫn kết nối
@@ -553,7 +553,7 @@ export default function AccountSettings({
           <ApiTokenPanel tokens={data.apiTokens??[]} csrf={data.csrf} mcpUrl={data.mcpUrl} onChanged={reload}/>
           <section
             id="ket-noi-thu-cong"
-            className="scroll-mt-6 rounded-lg border border-[#b7ccc0] bg-white p-5 sm:p-7"
+            className="scroll-mt-6 rounded-lg border border-[var(--line)] bg-white p-5 sm:p-7"
           >
             <h2 className="text-2xl font-semibold">Kết nối thủ công</h2>
             <p className="mt-2 max-w-3xl text-sm text-neutral-700">
@@ -621,7 +621,7 @@ export default function AccountSettings({
                             : v.scopes.filter((s) => s !== key),
                         }))
                       }
-                      className="mt-1 accent-[#123c36]"
+                      className="mt-1 accent-[var(--brand)]"
                     />
                     {label}
                   </label>
@@ -652,7 +652,7 @@ export default function AccountSettings({
               <div
                 role="region"
                 aria-label="Thông tin kết nối vừa tạo"
-                className="mt-6 rounded-md border border-[#8fa99e] bg-[#f1f6f3] p-4"
+                className="mt-6 rounded-md border border-[var(--control-line)] bg-[#f1f6f3] p-4"
               >
                 <h3 className="font-semibold">Sao chép thông tin kết nối</h3>
                 <p className="mt-2 text-sm text-neutral-700">
@@ -754,7 +754,7 @@ export default function AccountSettings({
         </div>
       )}
       {tab === "activity" && (
-        <section className="rounded-lg border border-[#b7ccc0] bg-white p-5 sm:p-7">
+        <section className="rounded-lg border border-[var(--line)] bg-white p-5 sm:p-7">
           <h2 className="text-2xl font-semibold">Lịch sử thay đổi tài khoản</h2>
           <p className="mt-2 text-sm text-neutral-600">
             20 thao tác gần nhất từ khi bật quản lý tài khoản. Không ghi mật

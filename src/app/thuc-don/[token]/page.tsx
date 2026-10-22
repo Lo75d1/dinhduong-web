@@ -21,29 +21,29 @@ export default async function Page({ params }: { params: Promise<{ token: string
   ]);
   const menuByMeal = new Map(menus.map((menu) => [menu.mealTypeId, menu]));
   return <main className="mx-auto max-w-3xl space-y-4 px-4 pb-12">
-    <header className="rounded-3xl bg-[#123c36] p-6 text-white sm:p-8">
+    <header className="rounded-3xl bg-[var(--brand)] p-6 text-white sm:p-8">
       <p className="text-xs font-medium tracking-[.18em] text-[#bad8cd]">DINH DƯỠNG 2598 · {department.name.toUpperCase()}</p>
       <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Thực đơn hôm nay</h1>
       <p className="mt-2 text-[15px] leading-relaxed text-white/80">Ngày {today.key.split("-").reverse().join("/")} · Chọn đúng dòng chế độ ăn đã được nhân viên y tế hướng dẫn.</p>
     </header>
-    <section aria-labelledby="menu-title" className="overflow-hidden rounded-2xl border border-[#123c36]/15 bg-white">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#123c36]/10 px-5 py-4">
-        <h2 id="menu-title" className="text-lg font-semibold text-[#123c36]">Các bữa trong ngày</h2>
+    <section aria-labelledby="menu-title" className="overflow-hidden rounded-2xl border border-[var(--brand)]/15 bg-white">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--brand)]/10 px-5 py-4">
+        <h2 id="menu-title" className="text-lg font-semibold text-[var(--ink)]">Các bữa trong ngày</h2>
         <span className="rounded-full bg-[#e1f5ee] px-3 py-1 text-xs font-medium text-[#085041]">Chỉ hiển thị thực đơn đã duyệt</span>
       </div>
-      <div className="divide-y divide-[#123c36]/8">{mealTypes.map((meal) => {
+      <div className="divide-y divide-[var(--brand)]/8">{mealTypes.map((meal) => {
         const menu = menuByMeal.get(meal.id);
         return <article key={meal.id} className="px-5 py-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-lg font-semibold text-[#123c36]">{meal.name}</h3>
+            <h3 className="text-lg font-semibold text-[var(--ink)]">{meal.name}</h3>
             <span className="text-sm text-neutral-500">Phục vụ {meal.serviceLocalTime}</span>
           </div>
           {menu ? <div className="mt-3 grid gap-2.5 sm:grid-cols-2">{menu.items.map((item) =>
-            <div key={item.id} className="rounded-xl border border-[#123c36]/10 bg-[#f6faf8] p-3.5">
+            <div key={item.id} className="rounded-xl border border-[var(--brand)]/10 bg-[#f6faf8] p-3.5">
               <b className="text-sm font-semibold text-[#0f6e56]">{item.dietType.name}</b>
               <p className="mt-1 text-[17px] leading-snug text-neutral-800">{item.dishName}</p>
               {item.note && <p className="mt-1 text-sm text-neutral-500">{item.note}</p>}
-              {item.photoStoragePath && mealPhotoPublicUrl(item.photoStoragePath) && <figure className="mt-3 overflow-hidden rounded-xl border border-[#123c36]/10 bg-white">
+              {item.photoStoragePath && mealPhotoPublicUrl(item.photoStoragePath) && <figure className="mt-3 overflow-hidden rounded-xl border border-[var(--brand)]/10 bg-white">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={mealPhotoPublicUrl(item.photoStoragePath) ?? undefined} alt={`Ảnh đối chứng ${item.dietType.name}`} className="aspect-[4/3] w-full object-cover" />
                 <figcaption className="px-3 py-2 text-xs text-neutral-500">Ảnh suất mẫu để đối chiếu</figcaption>

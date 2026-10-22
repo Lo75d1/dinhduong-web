@@ -1,0 +1,23 @@
+{
+  "checks": 110,
+  "errors": [],
+  "positions": [
+    {
+      "width": 1440,
+      "firstRow": 345
+    },
+    {
+      "width": 768,
+      "firstRow": 351
+    },
+    {
+      "width": 390,
+      "firstRow": 267
+    },
+    {
+      "width": 320,
+      "firstRow": 267
+    }
+  ],
+  "scope": "Actual RootLayout/navigation/library/preview with API/session fixtures. No live Admin session or VPS."
+}

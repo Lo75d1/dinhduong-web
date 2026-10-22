@@ -106,16 +106,16 @@ export default function BulkClassifyEditor() {
     setSelected(new Set());
   }
 
-  return <section className="rounded-xl border-2 border-[#123c36] bg-white p-5">
+  return <section className="rounded-xl border-2 border-[var(--brand)] bg-white p-5">
     <h2 className="text-xl font-semibold">Sửa phân loại hàng loạt</h2>
     <p className="mt-1 text-sm">Lọc, tích chọn nhiều dòng, rồi gán 1 giá trị cho 1 trường phân loại cùng lúc — dùng cho việc đối chiếu thủ công nhóm/nguồn đạm giữa VDD và RNI. Không dùng để sửa số liệu dinh dưỡng.</p>
     {loading && <p className="mt-3 text-sm">Đang tải {items.length ? `(${items.length})` : ""}…</p>}
-    {message && <p className="mt-3 rounded border-2 border-[#8fa99e] bg-[#f7faf8] p-3 text-sm">{message}</p>}
+    {message && <p className="mt-3 rounded border-2 border-[var(--control-line)] bg-[var(--surface-soft)] p-3 text-sm">{message}</p>}
 
     <div className="mt-4 flex flex-wrap gap-2">
-      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên…" className="min-w-56 flex-1 rounded border-2 border-[#8fa99e] px-3 py-2 text-sm" />
+      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm theo tên…" className="min-w-56 flex-1 rounded border-2 border-[var(--control-line)] px-3 py-2 text-sm" />
       {(["source", "foodType", "foodGroup", "proteinOrigin", "giLevel", "purinLevel", "cholesterolLevel"] as (keyof FoodRow)[]).map((col) => (
-        <select key={col} value={filters[col] ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, [col]: e.target.value }))} className="rounded border-2 border-[#8fa99e] px-2 py-2 text-sm">
+        <select key={col} value={filters[col] ?? ""} onChange={(e) => setFilters((prev) => ({ ...prev, [col]: e.target.value }))} className="rounded border-2 border-[var(--control-line)] px-2 py-2 text-sm">
           <option value="">{FIELD_LABEL[col as FieldKey] ?? col}: tất cả</option>
           {(distinct[col] ?? []).map((v) => <option key={v} value={v}>{v}</option>)}
         </select>
@@ -125,12 +125,12 @@ export default function BulkClassifyEditor() {
 
     <label className="mt-3 flex items-center gap-2 text-sm font-semibold">
       <input type="checkbox" checked={allVisibleSelected} onChange={(e) => toggleAllFiltered(e.target.checked)} />
-      Chọn tất cả đang lọc ({filtered.length}){selected.size > 0 && <span className="ml-2 rounded-full bg-[#123c36] px-2 py-0.5 text-xs font-semibold text-white">Đã chọn {selected.size}</span>}
+      Chọn tất cả đang lọc ({filtered.length}){selected.size > 0 && <span className="ml-2 rounded-full bg-[var(--brand)] px-2 py-0.5 text-xs font-semibold text-white">Đã chọn {selected.size}</span>}
     </label>
 
-    <div className="mt-2 max-h-80 overflow-auto rounded border-2 border-[#8fa99e]">
+    <div className="mt-2 max-h-80 overflow-auto rounded border-2 border-[var(--control-line)]">
       <table className="min-w-full text-sm">
-        <thead className="sticky top-0 bg-[#edf4f0]"><tr>
+        <thead className="sticky top-0 bg-[var(--surface-soft)]"><tr>
           <th className="p-2"></th><th className="p-2 text-left">Tên</th><th className="p-2 text-left">Nguồn</th>
           <th className="p-2 text-left">Loại</th><th className="p-2 text-left">Nhóm</th><th className="p-2 text-left">Nguồn đạm</th>
           <th className="p-2 text-left">GI</th><th className="p-2 text-left">Purin</th><th className="p-2 text-left">Cholesterol</th>
@@ -157,24 +157,24 @@ export default function BulkClassifyEditor() {
     {selected.size > 0 && <div className="mt-4 rounded-xl border-2 border-[#73540d] bg-[#fffdf6] p-4">
       <h3 className="font-semibold">Sửa hàng loạt cho {selected.size} dòng đã chọn</h3>
       <label className="mt-3 block text-sm font-semibold">Trường cần sửa
-        <select value={field} onChange={(e) => { setField(e.target.value as FieldKey); setValue(""); }} className="mt-1 block rounded border-2 border-[#8fa99e] px-3 py-2">
+        <select value={field} onChange={(e) => { setField(e.target.value as FieldKey); setValue(""); }} className="mt-1 block rounded border-2 border-[var(--control-line)] px-3 py-2">
           {(Object.keys(FIELD_LABEL) as FieldKey[]).map((key) => <option key={key} value={key}>{FIELD_LABEL[key]}</option>)}
         </select>
       </label>
       <div className="mt-3">
         <p className="text-sm font-semibold">Giá trị mới</p>
         <div className="mt-1 flex flex-wrap gap-2">
-          <button type="button" onClick={() => setValue(UNSET)} className={`rounded-full border-2 px-3 py-1 text-sm ${value === UNSET ? "border-[#123c36] bg-[#123c36] text-white" : "border-[#8fa99e]"}`}>Xóa giá trị (để trống)</button>
+          <button type="button" onClick={() => setValue(UNSET)} className={`rounded-full border-2 px-3 py-1 text-sm ${value === UNSET ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--control-line)]"}`}>Xóa giá trị (để trống)</button>
           {LEVEL_FIELDS.has(field)
-            ? LEVEL_OPTIONS.map((opt) => <button key={opt.value} type="button" onClick={() => setValue(String(opt.value))} className={`rounded-full border-2 px-3 py-1 text-sm ${value === String(opt.value) ? "border-[#123c36] bg-[#123c36] text-white" : "border-[#8fa99e]"}`}>{opt.label}</button>)
-            : valueOptions.map((opt) => <button key={opt} type="button" onClick={() => setValue(opt)} className={`rounded-full border-2 px-3 py-1 text-sm ${value === opt ? "border-[#123c36] bg-[#123c36] text-white" : "border-[#8fa99e]"}`}>{opt}</button>)}
+            ? LEVEL_OPTIONS.map((opt) => <button key={opt.value} type="button" onClick={() => setValue(String(opt.value))} className={`rounded-full border-2 px-3 py-1 text-sm ${value === String(opt.value) ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--control-line)]"}`}>{opt.label}</button>)
+            : valueOptions.map((opt) => <button key={opt} type="button" onClick={() => setValue(opt)} className={`rounded-full border-2 px-3 py-1 text-sm ${value === opt ? "border-[var(--brand)] bg-[var(--brand)] text-white" : "border-[var(--control-line)]"}`}>{opt}</button>)}
         </div>
-        {!LEVEL_FIELDS.has(field) && <input value={value === UNSET ? "" : value} onChange={(e) => setValue(e.target.value)} placeholder="Hoặc gõ giá trị mới…" className="mt-2 w-full max-w-sm rounded border-2 border-[#8fa99e] px-3 py-2 text-sm" />}
+        {!LEVEL_FIELDS.has(field) && <input value={value === UNSET ? "" : value} onChange={(e) => setValue(e.target.value)} placeholder="Hoặc gõ giá trị mới…" className="mt-2 w-full max-w-sm rounded border-2 border-[var(--control-line)] px-3 py-2 text-sm" />}
       </div>
       <label className="mt-3 block text-sm font-semibold">Lý do
-        <textarea required value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 min-h-16 w-full rounded border-2 border-[#8fa99e] px-3 py-2 text-sm" />
+        <textarea required value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1 min-h-16 w-full rounded border-2 border-[var(--control-line)] px-3 py-2 text-sm" />
       </label>
-      <button type="button" disabled={busy} onClick={() => void applyBulk()} className="mt-3 rounded bg-[#123c36] px-5 py-2.5 font-semibold text-white disabled:opacity-60">{busy ? "Đang cập nhật…" : `Cập nhật ${FIELD_LABEL[field]} cho ${selected.size} dòng`}</button>
+      <button type="button" disabled={busy} onClick={() => void applyBulk()} className="mt-3 rounded bg-[var(--brand)] px-5 py-2.5 font-semibold text-white disabled:opacity-60">{busy ? "Đang cập nhật…" : `Cập nhật ${FIELD_LABEL[field]} cho ${selected.size} dòng`}</button>
     </div>}
   </section>;
 }

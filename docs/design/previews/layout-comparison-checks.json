@@ -1,0 +1,48 @@
+{
+  "checks": 147,
+  "errors": [],
+  "network": [],
+  "metrics": [
+    {
+      "width": 1440,
+      "layout": "a",
+      "firstDataY": 389
+    },
+    {
+      "width": 1440,
+      "layout": "b",
+      "firstDataY": 498
+    },
+    {
+      "width": 768,
+      "layout": "a",
+      "firstDataY": 395
+    },
+    {
+      "width": 768,
+      "layout": "b",
+      "firstDataY": 557
+    },
+    {
+      "width": 390,
+      "layout": "a",
+      "firstDataY": 313
+    },
+    {
+      "width": 390,
+      "layout": "b",
+      "firstDataY": 451
+    },
+    {
+      "width": 320,
+      "layout": "a",
+      "firstDataY": 337
+    },
+    {
+      "width": 320,
+      "layout": "b",
+      "firstDataY": 509
+    }
+  ],
+  "scope": "Standalone fixture prototypes, no production/VPS/admin access. Capture omits review controls only."
+}

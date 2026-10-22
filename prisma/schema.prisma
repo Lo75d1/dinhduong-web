@@ -711,8 +711,26 @@ model MenuLibraryVersion {
   reason String
   createdAt DateTime @default(now())
   template MenuLibraryTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  reviews MenuLibraryReview[]
   @@unique([templateId, revision])
   @@map("menu_library_versions")
+}
+
+// Human review belongs to an immutable revision, never to the mutable template head.
+model MenuLibraryReview {
+  id String @id @default(cuid())
+  templateId String
+  revision Int
+  decision String
+  reviewerId String
+  reviewerName String
+  note String
+  analysis Json
+  analysisDigest String
+  createdAt DateTime @default(now())
+  version MenuLibraryVersion @relation(fields: [templateId, revision], references: [templateId, revision], onDelete: Restrict)
+  @@index([templateId, revision, createdAt])
+  @@map("menu_library_reviews")
 }
 
 model MenuLibraryGrant {
