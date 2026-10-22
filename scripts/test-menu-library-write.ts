@@ -17,8 +17,11 @@ import type * as Item from "../src/app/api/admin/menu-library/templates/[id]/rou
 import type * as Grants from "../src/app/api/admin/menu-library/delegations/route";
 import type * as Rest from "../src/app/api/admin/menu-library/tools/route";
 import type * as Mcp from "../src/app/api/nutrition/v1/mcp/route";
+import type * as Review from "../src/lib/menu-library/review-store";
+import type * as AnalysisRoute from "../src/app/api/admin/menu-library/templates/[id]/analysis/route";
+import type * as ReviewRoute from "../src/app/api/admin/menu-library/templates/[id]/review/route";
 
-type Api = typeof Store & typeof Db & typeof State & typeof Tools & typeof Security & { templates: typeof Templates; item: typeof Item; grants: typeof Grants; rest: typeof Rest; mcp: typeof Mcp };
+type Api = typeof Store & typeof Db & typeof State & typeof Tools & typeof Security & typeof Review & { templates: typeof Templates; item: typeof Item; grants: typeof Grants; rest: typeof Rest; mcp: typeof Mcp; analysisRoute: typeof AnalysisRoute; reviewRoute: typeof ReviewRoute };
 let checks = 0;
 function check(value: unknown, label: string) { assert.ok(value, label); checks++; }
 async function main() {
@@ -30,21 +33,22 @@ async function main() {
     process.env.NUTRITION_PUBLIC_URL = "https://dinhduong2598.food";
     delete process.env.NUTRITION_ALLOWED_ORIGINS;
     delete process.env.NUTRITION_TRUST_PROXY;
-    const paths = ["src/lib/menu-library/store.ts", "src/lib/menu-library/ai-tools.ts", "src/lib/nutrition-chat/security.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts"];
-    const routes = { templates: "src/app/api/admin/menu-library/templates/route.ts", item: "src/app/api/admin/menu-library/templates/[id]/route.ts", grants: "src/app/api/admin/menu-library/delegations/route.ts", rest: "src/app/api/admin/menu-library/tools/route.ts", mcp: "src/app/api/nutrition/v1/mcp/route.ts" };
+    const paths = ["src/lib/menu-library/store.ts", "src/lib/menu-library/review-store.ts", "src/lib/menu-library/ai-tools.ts", "src/lib/nutrition-chat/security.ts", "scripts/fixtures/nutrition-oauth/database.ts", "scripts/fixtures/nutrition-oauth/state.ts"];
+    const routes = { templates: "src/app/api/admin/menu-library/templates/route.ts", item: "src/app/api/admin/menu-library/templates/[id]/route.ts", grants: "src/app/api/admin/menu-library/delegations/route.ts", rest: "src/app/api/admin/menu-library/tools/route.ts", mcp: "src/app/api/nutrition/v1/mcp/route.ts", analysisRoute: "src/app/api/admin/menu-library/templates/[id]/analysis/route.ts", reviewRoute: "src/app/api/admin/menu-library/templates/[id]/review/route.ts" };
     const outfile = join(directory, "fixture.cjs");
     await build({ stdin: { contents: paths.map(path => `export * from ${JSON.stringify(resolve(path))};`).join("\n") + "\n" + Object.entries(routes).map(([name, path]) => `import * as ${name} from ${JSON.stringify(resolve(path))};export {${name}};`).join("\n"), resolveDir: process.cwd(), loader: "ts" }, outfile, bundle: true, platform: "node", format: "cjs", logLevel: "silent", plugins: [{ name: "menu-write-fixture", setup(builder) {
       builder.onResolve({ filter: /^server-only$/ }, () => ({ path: "empty", namespace: "empty" }));
       builder.onLoad({ filter: /.*/, namespace: "empty" }, () => ({ contents: "export {}" }));
       builder.onResolve({ filter: /^@\/lib\/prisma$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/database.ts") }));
       builder.onResolve({ filter: /^(next\/headers|@\/lib\/auth)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/state.ts") }));
-      builder.onResolve({ filter: /^(\.\/repository|@\/lib\/nutrition-chat\/repository)$/ }, args => /nutrition-chat[\\/]/.test(args.importer) || args.path.startsWith("@/") ? { path: resolve("scripts/fixtures/nutrition-oauth/repository.ts") } : null);
+      builder.onResolve({ filter: /^(\.\/repository|@\/lib\/nutrition-chat\/repository)$/ }, args => /menu-library[\\/]review-store/.test(args.importer) ? { path: resolve("src/lib/nutrition-chat/repository.ts") } : /nutrition-chat[\\/]/.test(args.importer) || args.path.startsWith("@/") ? { path: resolve("scripts/fixtures/nutrition-oauth/repository.ts") } : null);
       builder.onResolve({ filter: /^(\.\/downloads|@\/lib\/nutrition-chat\/downloads)$/ }, () => ({ path: resolve("scripts/fixtures/nutrition-oauth/downloads.ts") }));
       builder.onResolve({ filter: /^(@electric-sql\/pglite|exceljs)$/ }, args => ({ path: require.resolve(args.path), external: true }));
     } }] });
     api = require(outfile) as Api; const app = api;
     await app.initializeOAuthFixture(resolve("prisma/migrations/20261014090000_nutrition_chat_oauth/migration.sql"));
     await app.applyFixtureMigration(resolve("prisma/migrations/20261021090000_admin_menu_library/migration.sql"));
+    await app.applyFixtureMigration(resolve("prisma/migrations/20261022120000_menu_library_reviews/migration.sql"));
     await app.fixtureQuery('UPDATE app_users SET role=$1 WHERE id=$2', ["ADMIN", "user-a"]);
     await app.fixtureQuery('CREATE TABLE foods(id TEXT PRIMARY KEY, name TEXT NOT NULL, unit TEXT NOT NULL)');
     await app.fixtureQuery('CREATE TABLE dishes(id TEXT PRIMARY KEY)');
@@ -151,6 +155,59 @@ async function main() {
 
     check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM menu_library_versions'))[0].n === 2, "No duplicate version on retries");
 
+    // Real calculation + human review routes, isolated from production nutrition data.
+    await app.fixtureQuery('ALTER TABLE foods ADD COLUMN source TEXT DEFAULT \'RNI\', ADD COLUMN "energyKcal" DOUBLE PRECISION, ADD COLUMN "proteinG" DOUBLE PRECISION, ADD COLUMN "lipidG" DOUBLE PRECISION, ADD COLUMN "glucidG" DOUBLE PRECISION');
+    await app.fixtureQuery('UPDATE foods SET "energyKcal"=360,"proteinG"=8,"lipidG"=1,"glucidG"=80 WHERE id=\'rice\'');
+    const reviewDraft = structuredClone(populated); reviewDraft.id = "human-review-fixture"; reviewDraft.version = 1;
+    reviewDraft.direction = "individual"; reviewDraft.unit = null; reviewDraft.groups = [{ ...reviewDraft.groups[0], schoolLevel: null, designEnergyKcal: 216 }];
+    reviewDraft.days[0].meals = [reviewDraft.days[0].meals[0]];
+    reviewDraft.days[0].meals[0].groupPortions = [reviewDraft.days[0].meals[0].groupPortions[0]];
+    reviewDraft.days[0].meals[0].groupPortions[0].mealRuleIds = [];
+    await app.saveMenuTemplate(actor, { content: reviewDraft, requestKey: "human-review-fixture", reason: "Test human review" });
+    const reviewContext = { params: Promise.resolve({ id: reviewDraft.id }) };
+    const previewArgs = { expectedRevision: 1 };
+    await status(await app.analysisRoute.POST(req(`templates/${reviewDraft.id}/analysis`, "POST", previewArgs), reviewContext), 403);
+    const previewResponse = await app.analysisRoute.POST(req(`templates/${reviewDraft.id}/analysis`, "POST", previewArgs, web), reviewContext);
+    await status(previewResponse, 200); const analysis = await previewResponse.json();
+    check(analysis.sections[0].totals.energyKcal.value === 216 && analysis.sections[0].energyPercent === 100, "Per-person energy and explicit design target, without multiplying unknown headcount");
+    check(analysis.sections[0].totals.calciumMg.value === null && analysis.sections[0].totals.calciumMg.incomplete, "Missing calcium remains unknown, never zero");
+    check(analysis.canApprove && analysis.sections[0].macroPercent.proteinG > 0, "Complete structure with partial micronutrients can be reviewed explicitly");
+    const reviewArgs = { expectedRevision: 1, decision: "approved", note: "Đã kiểm tra; còn thiếu canxi trong nguồn.", analysisDigest: analysis.digest, acknowledged: true };
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", reviewArgs), reviewContext), 403);
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", { ...reviewArgs, acknowledged: false }, web), reviewContext), 400);
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", { ...reviewArgs, analysisDigest: "forged" }, web), reviewContext), 409);
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", reviewArgs, { ...web, Origin: "https://evil.example" }), reviewContext), 403);
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", reviewArgs, web), reviewContext), 200);
+    check((await app.reviewMenuTemplate(actor, reviewDraft.id, reviewArgs)).replayed, "Identical review retry creates no duplicate decision");
+    const reviewed = await app.getMenuTemplate(actor, reviewDraft.id);
+    check(reviewed.currentReview?.reviewerName === "Fixture" && reviewed.currentReview.revision === 1, "Reviewer identity comes from authenticated user, tied to immutable revision");
+    check(reviewed.currentReview?.analysis && JSON.stringify(reviewed.currentReview.analysis).includes('"value":216'), "Analysis snapshot survives database roundtrip");
+    check((await app.listMenuTemplates(actor, reviewDraft.title)).items.find(item => item.id === reviewDraft.id)?.reviewState === "approved", "Catalog status reflects the current revision's human approval");
+    await app.fixtureQuery('UPDATE foods SET "energyKcal"=361 WHERE id=\'rice\'');
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", { ...reviewArgs, decision: "changes_requested", note: "Check changed source" }, web), reviewContext), 409);
+    const changedAnalysis = await app.analyzeMenuTemplate(actor, reviewDraft.id, previewArgs);
+    check(changedAnalysis.digest !== analysis.digest, "Changed source nutrition invalidates preview digest");
+    const nextReviewDraft = { ...reviewDraft, version: 2, title: "Mẫu đã sửa sau duyệt" };
+    await app.saveMenuTemplate(actor, { content: nextReviewDraft, expectedRevision: 1, requestKey: "manual-review-v2", reason: "Changed after approval" }, reviewDraft.id);
+    const afterEdit = await app.getMenuTemplate(actor, reviewDraft.id);
+    check(!afterEdit.currentReview && afterEdit.reviews.length === 1 && afterEdit.reviews[0].revision === 1, "Editing resets current approval while preserving historical review");
+    const historyResponse = await app.reviewRoute.GET(req(`templates/${reviewDraft.id}/review?reviewId=${reviewed.currentReview!.id}`), reviewContext);
+    await status(historyResponse, 200);
+    check((await historyResponse.json()).analysis.sections[0].totals.energyKcal.value === 216, "Historical review opens its original nutrition snapshot after edit and source change");
+    await fail(() => app.getMenuReview(actor, original.id, reviewed.currentReview!.id), 404);
+    await status(await app.reviewRoute.POST(req(`templates/${reviewDraft.id}/review`, "POST", reviewArgs, web), reviewContext), 409);
+    const nextAnalysis = await app.analyzeMenuTemplate(actor, reviewDraft.id, { expectedRevision: 2 });
+    await fail(() => app.reviewMenuTemplate(actor, reviewDraft.id, { ...reviewArgs, expectedRevision: 2, analysisDigest: nextAnalysis.digest, decision: "changes_requested", note: "" }), 400);
+    await app.reviewMenuTemplate(actor, reviewDraft.id, { ...reviewArgs, expectedRevision: 2, analysisDigest: nextAnalysis.digest, decision: "changes_requested", note: "Sửa cơm" });
+    check((await app.getMenuTemplate(actor, reviewDraft.id)).currentReview?.decision === "changes_requested", "Changes requested is a persisted explicit decision");
+    await fail(() => app.reviewMenuTemplate({ ...actor, via: "oauth" }, reviewDraft.id, reviewArgs), 403);
+    const incomplete = await app.analyzeMenuTemplate(actor, original.id, { expectedRevision: 2 });
+    check(!incomplete.canApprove && incomplete.sections.some(section => section.structureMissing), "An absent group or empty meal cannot be approved");
+    await fail(() => app.reviewMenuTemplate(actor, original.id, { ...reviewArgs, expectedRevision: 2, analysisDigest: incomplete.digest }), 422);
+    await app.fixtureQuery('DELETE FROM menu_library_reviews WHERE "templateId"=$1', [reviewDraft.id]);
+    await app.fixtureQuery('DELETE FROM menu_library_versions WHERE "templateId"=$1', [reviewDraft.id]);
+    await app.fixtureQuery('DELETE FROM menu_library_templates WHERE id=$1', [reviewDraft.id]);
+
     async function oauth(userId = "user-a", familyId = randomNutritionToken(), clientId = "") {
       const access = randomNutritionToken();
       if (!clientId) { clientId = "nc_" + randomNutritionToken(); await app.fixtureQuery('INSERT INTO nutrition_oauth_clients(id,name,"redirectUris",scopes,"expiresAt") VALUES ($1,$2,$3,$4,$5)', [clientId, "AI fixture", ["https://claude.ai/api/mcp/auth_callback"], ["nutrition:read"], new Date(Date.now() + 86400000)]); }
@@ -244,7 +301,7 @@ async function main() {
     await app.changeMenuDelegation(actor, { familyId: ai.familyId, permission: "write", hours: 1 });
     await app.fixtureQuery('UPDATE nutrition_oauth_tokens SET "revokedAt"=$1 WHERE "familyId"=$2', [new Date(), ai.familyId]);
     await status(await app.templates.GET(req("templates", "GET", undefined, ai.headers)), 401);
-    for (const table of ["menu_library_templates", "menu_library_versions", "menu_library_grants"]) for (const role of ["anon", "authenticated", "nutrition_fixture_public_probe"]) {
+    for (const table of ["menu_library_templates", "menu_library_versions", "menu_library_grants", "menu_library_reviews"]) for (const role of ["anon", "authenticated", "nutrition_fixture_public_probe"]) {
       const row = (await app.fixtureQuery<{ allowed: boolean; rls: boolean }>("SELECT has_table_privilege($1,$2,'SELECT,INSERT,UPDATE,DELETE') allowed, relrowsecurity rls FROM pg_class WHERE relname=$2", [role, table]))[0];
       check(!row.allowed && row.rls, `${table}: RLS and no public table access`);
     }

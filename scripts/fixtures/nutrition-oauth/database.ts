@@ -17,7 +17,7 @@ type FixtureModel = {
 type FixturePrisma = {
   user: FixtureModel; session: FixtureModel; patient: FixtureModel; dataChangeLog: FixtureModel;
   personalFood: FixtureModel; personalDish: FixtureModel;
-  menuLibraryTemplate: FixtureModel; menuLibraryVersion: FixtureModel; menuLibraryGrant: FixtureModel;
+  menuLibraryTemplate: FixtureModel; menuLibraryVersion: FixtureModel; menuLibraryGrant: FixtureModel; menuLibraryReview: FixtureModel;
   food: FixtureModel; dish: FixtureModel; dietCode: FixtureModel;
   nutritionOAuthClient: FixtureModel; nutritionOAuthCode: FixtureModel; nutritionOAuthToken: FixtureModel; nutritionApiWindow: FixtureModel; ration: FixtureModel;
   $queryRaw<T>(parts: TemplateStringsArray, ...values: unknown[]): Promise<T[]>;
@@ -91,7 +91,7 @@ function fixture(executor: Executor): FixturePrisma {
     function updateValues(data: Row) {
       return Object.entries(data).map(([key, value]) => {
         if (value && typeof value === "object" && "increment" in value) return value.increment;
-        if (["conversationJson", "profileJson", "beforeJson", "afterJson", "content", "document"].includes(key) && value !== null) return JSON.stringify(value);
+        if (["conversationJson", "profileJson", "beforeJson", "afterJson", "content", "document", "analysis"].includes(key) && value !== null) return JSON.stringify(value);
         return value;
       });
     }
@@ -181,6 +181,7 @@ function fixture(executor: Executor): FixturePrisma {
     user: model("app_users"), session: model("app_sessions"), patient: model("patients"), dataChangeLog: model("data_change_logs"),
     personalFood: model("personal_foods"), personalDish: model("personal_dishes"),
     menuLibraryTemplate: model("menu_library_templates"), menuLibraryVersion: model("menu_library_versions"), menuLibraryGrant: model("menu_library_grants"),
+    menuLibraryReview: model("menu_library_reviews"),
     food: model("foods"), dish: model("dishes"), dietCode: model("diet_codes"),
     nutritionOAuthClient: model("nutrition_oauth_clients"), nutritionOAuthCode: model("nutrition_oauth_codes"),
     nutritionOAuthToken: model("nutrition_oauth_tokens"), nutritionApiWindow: model("nutrition_api_windows"),

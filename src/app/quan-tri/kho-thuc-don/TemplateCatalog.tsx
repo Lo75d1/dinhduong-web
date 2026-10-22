@@ -4,9 +4,11 @@ import type { MenuLibraryDraft } from "@/lib/menu-library/contracts";
 import { EATING_CONTEXT_OPTIONS, eatingContextLabel, mealEatingContext, type EatingContext } from "@/lib/menu-library/contracts";
 import Icon from "@/components/ui/Icon";
 import styles from "./library.module.css";
+import TemplateEditor from "./TemplateEditor";
+import TemplateReview, { type ReviewRecord } from "./TemplateReview";
 
-type Item = { id: string; title: string; direction: string; revision: number; updatedAt: string; url: string; unitLabel?: string | null; dayCount?: number | null; groupCount?: number | null; mealLabels?: string[]; eatingContext?: EatingContext | null };
-type Opened = { template: Item; content: MenuLibraryDraft; warnings: string[]; foods: { id: string; name: string; unit: string }[]; history: { revision: number; reason: string; createdAt: string }[] };
+type Item = { id: string; title: string; direction: string; revision: number; updatedAt: string; url: string; unitLabel?: string | null; dayCount?: number | null; groupCount?: number | null; mealLabels?: string[]; eatingContext?: EatingContext | null; reviewState?: string };
+type Opened = { template: Item; content: MenuLibraryDraft; warnings: string[]; foods: { id: string; name: string; unit: string }[]; history: { revision: number; reason: string; createdAt: string }[]; csrf?: string; reviews?: ReviewRecord[]; currentReview?: ReviewRecord | null };
 const date = (value: string) => new Date(value).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 const shortDate = (value: string) => new Date(value).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
 const input = "min-h-11 w-full rounded-md border border-[var(--control-line)] bg-white px-3 py-2 font-normal";
@@ -18,7 +20,7 @@ export function TemplatePreview({ data }: { data: Opened }) {
   const day = data.content.days.find(item => item.id === dayId);
   const meals = day?.meals.filter(meal => !mealId || meal.id === mealId) ?? [];
   return <section className="min-w-0 rounded-lg border border-[var(--line)] bg-white" aria-label="Chi tiết mẫu">
-    <header className="border-b border-[var(--line)] px-4 py-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 ref={heading} tabIndex={-1} className="text-xl font-semibold text-[var(--ink)]">{data.content.title}</h2><span className="rounded bg-[var(--surface-soft)] px-2 py-1 text-xs font-semibold text-[var(--muted)]">BẢN NHÁP · v{data.template.revision}</span></div><p className="mt-1 text-sm">{data.content.unit?.label ?? "Cá nhân"} · {data.content.coverage === "served_meals" ? "Các bữa phục vụ" : "Cả ngày"} · {data.content.days.length} ngày · {data.content.groups.length} nhóm · {eatingContextLabel(data.content.eatingContext)}</p></header>
+    <header className="border-b border-[var(--line)] px-4 py-3"><div className="flex flex-wrap items-center justify-between gap-2"><h2 ref={heading} tabIndex={-1} className="text-xl font-semibold text-[var(--ink)]">{data.content.title}</h2><span className="rounded bg-[var(--surface-soft)] px-2 py-1 text-xs font-semibold text-[var(--muted)]">{data.currentReview?.decision === "approved" ? "ĐÃ DUYỆT" : data.currentReview?.decision === "changes_requested" ? "CẦN CHỈNH SỬA" : "BẢN NHÁP"} · v{data.template.revision}</span></div><p className="mt-1 text-sm">{data.content.unit?.label ?? "Cá nhân"} · {data.content.coverage === "served_meals" ? "Các bữa phục vụ" : "Cả ngày"} · {data.content.days.length} ngày · {data.content.groups.length} nhóm · {eatingContextLabel(data.content.eatingContext)}</p></header>
     <div className="grid gap-3 border-b border-[var(--line)] bg-[var(--surface-soft)] p-3 sm:grid-cols-3">
       <label className="min-w-0 text-sm font-semibold">Ngày<select value={dayId} onChange={event => { setDayId(event.target.value); setMealId(""); }} className={input}>{data.content.days.map(item => <option key={item.id} value={item.id}>Ngày {item.dayIndex}{item.date ? ` · ${item.date}` : ""}</option>)}</select></label>
       <label className="min-w-0 text-sm font-semibold">Bữa<select value={mealId} onChange={event => setMealId(event.target.value)} className={input}><option value="">Tất cả bữa</option>{day?.meals.map(meal => <option key={meal.id} value={meal.id}>{meal.label}</option>)}</select></label>
@@ -40,6 +42,7 @@ export default function TemplateCatalog() {
   const [items, setItems] = useState<Item[]>([]), [opened, setOpened] = useState<Opened | null>(null);
   const [q, setQ] = useState(""), [direction, setDirection] = useState(""), [eatingContext, setEatingContext] = useState(""), [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true), [opening, setOpening] = useState(false), [next, setNext] = useState<number | null>(null);
+  const [editing, setEditing] = useState(false), [dirty, setDirty] = useState(false);
   const [listError, setListError] = useState(""), [openError, setOpenError] = useState(""), [filtered, setFiltered] = useState(false);
   const listSequence = useRef(0), openSequence = useRef(0);
   const appliedFilter = useRef({ q: "", direction: "", eatingContext: "" }), requestedFilter = useRef({ q: "", direction: "", eatingContext: "" });
@@ -48,7 +51,7 @@ export default function TemplateCatalog() {
 
   const open = useCallback(async (id: string) => {
     const sequence = ++openSequence.current;
-    lastOpenedId.current = id; setNotice(""); setOpenError(""); setOpened(null); setOpening(true);
+    lastOpenedId.current = id; setNotice(""); setOpenError(""); setOpened(null); setOpening(true); setEditing(false); setDirty(false);
     try {
       const response = await fetch(`/api/admin/menu-library/templates/${encodeURIComponent(id)}`, { cache: "no-store" });
       const data = await response.json();
@@ -96,6 +99,8 @@ export default function TemplateCatalog() {
   }, [q, direction, eatingContext, load]);
 
   function close() {
+    if (dirty && !window.confirm("Bỏ các thay đổi chưa lưu?")) return;
+    setEditing(false); setDirty(false);
     openSequence.current++; setOpened(null); setOpening(false); setOpenError("");
     const url = new URL(window.location.href); url.searchParams.delete("template"); window.history.replaceState(null, "", url);
     requestAnimationFrame(() => {
@@ -123,7 +128,11 @@ export default function TemplateCatalog() {
     {opening && <div><button type="button" onClick={close} className={styles.back}>← Danh sách mẫu</button><p role="status" className={styles.notice}>Đang mở mẫu…</p></div>}
     {opened && <>
       <div className={styles.detailActions}><button type="button" onClick={close} className={styles.back}>← Danh sách mẫu</button><button type="button" className={styles.copy} aria-label={`Sao chép liên kết ${opened.template.title}`} onClick={() => void copyLink(opened.template)}><Icon name="copy" className="h-4 w-4" />Chép liên kết</button></div>
-      <TemplatePreview key={`${opened.template.id}-${opened.template.revision}`} data={opened} />
+      {editing && opened.csrf ? <TemplateEditor content={opened.content} csrf={opened.csrf} foods={opened.foods} onDirty={setDirty} onCancel={() => { setEditing(false); setDirty(false); }} onSaved={() => { void open(opened.template.id); void load(appliedFilter.current.q, 0, appliedFilter.current.direction, appliedFilter.current.eatingContext); }} /> : <>
+        {opened.csrf && <button type="button" onClick={() => setEditing(true)} className="mb-3 min-h-11 rounded-md border border-[var(--control-line)] bg-white px-4 py-2 font-semibold">Chỉnh sửa món & định lượng</button>}
+        <TemplatePreview key={`${opened.template.id}-${opened.template.revision}`} data={opened} />
+        {opened.csrf && <TemplateReview key={`${opened.template.id}-${opened.template.revision}-${opened.currentReview?.id ?? "none"}`} id={opened.template.id} revision={opened.template.revision} csrf={opened.csrf} currentReview={opened.currentReview} reviews={opened.reviews ?? []} onReviewed={() => { void open(opened.template.id); void load(appliedFilter.current.q, 0, appliedFilter.current.direction, appliedFilter.current.eatingContext); }} />}
+      </>}
     </>}
     <section aria-label="Danh sách mẫu" className={styles.catalog} hidden={showingDetail} aria-busy={loading}>
       <div className={styles.listHeader}><h2 ref={listHeading} tabIndex={-1}>Danh sách mẫu <span>{loading && !items.length ? "—" : `${items.length}${next !== null ? "+" : ""}`}</span></h2><span>Mới nhất</span></div>
@@ -140,7 +149,7 @@ export default function TemplateCatalog() {
         <div className={styles.identity}><button ref={node => { if (node) rowButtons.current.set(item.id, node); else rowButtons.current.delete(item.id); }} type="button" onClick={() => choose(item.id)}>{item.title}</button><span>{item.direction === "individual" ? "Cá nhân" : `${item.unitLabel ?? "Chưa có tên đơn vị"} · Tập thể`} · {eatingContextLabel(item.eatingContext)}</span></div>
         <span className={styles.size}>{item.dayCount ?? "—"} ngày · {item.groupCount ?? "—"} nhóm</span>
         <span className={styles.mealLabels}>{item.mealLabels?.length ? item.mealLabels.join(" · ") : item.dayCount == null ? "—" : "Chưa có bữa"}</span>
-        <span className={styles.revision}><span className={styles.draft}>Nháp v{item.revision}</span><time dateTime={item.updatedAt} title={date(item.updatedAt)}>{shortDate(item.updatedAt)}</time></span>
+        <span className={styles.revision}><span className={styles.draft}>{item.reviewState === "approved" ? "Đã duyệt" : item.reviewState === "changes_requested" ? "Cần sửa" : "Nháp"} v{item.revision}</span><time dateTime={item.updatedAt} title={date(item.updatedAt)}>{shortDate(item.updatedAt)}</time></span>
         <button type="button" onClick={() => choose(item.id)} aria-label={`Xem mẫu ${item.title}`} className={styles.open}>Xem <Icon name="arrow-right" className="h-4 w-4" /></button>
       </li>)}</ul>
       {next !== null && <button type="button" disabled={loading} onClick={() => void load(appliedFilter.current.q, next, appliedFilter.current.direction, appliedFilter.current.eatingContext)} className={styles.more}>Xem thêm mẫu</button>}

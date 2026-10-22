@@ -22,9 +22,9 @@ export const MENU_LIBRARY_DRAFT_SCHEMA = obj({
   groups: arr(obj({
     id, label: text(), schoolLevel: nullable(en("nursery", "kindergarten", "primary", "lower_secondary", "upper_secondary")),
     ageYears: nullable(obj({ min: integer(0, 120), max: integer(0, 120) })), gender: en("male", "female", "mixed", "unspecified"),
-    activity: nullable(text()), goal: nullable(text()), dietCode: nullable(id),
+    activity: nullable(text()), goal: nullable(text()), designEnergyKcal: nullable({ type: "number", exclusiveMinimum: 0, maximum: 20000 }), dietCode: nullable(id),
     dailyReferences: arr(obj({ nutrient: { type: "string", enum: ALL_NUTRIENT_FIELDS.map(field => field.key) }, unit: text(20), kind: en("target", "range", "minimum", "maximum"), target: nullable(number()), min: nullable(number()), max: nullable(number()), denominator: en("person_day"), sourceId: id, sourceVersion: text(150), locator: text(500) }), 30),
-  }), 20, 1),
+  }, ["designEnergyKcal"]), 20, 1),
   days: arr(obj({ id, dayIndex: integer(1, 31), date: nullable({ ...text(10), pattern: "^\\d{4}-\\d{2}-\\d{2}$" }), meals: arr(obj({
     id, code: en("breakfast", "lunch", "afternoon_main", "afternoon_snack", "dinner", "shift_main", "other"), label: text(100),
     eatingContext: nullable(en(...EATING_CONTEXT_OPTIONS.map(option => option.value))),
@@ -110,6 +110,7 @@ export function validateMenuLibraryDraft(value: unknown): MenuLibraryDraft {
 export function draftWarnings(draft: MenuLibraryDraft): string[] {
   const warnings = ["Đã lưu bản nháp; chưa duyệt chuyên môn và chưa tính dinh dưỡng/đi chợ tập thể."];
   if (draft.groups.some(group => !group.dailyReferences.length)) warnings.push("Còn nhóm chưa có mốc nhu cầu ngày.");
-  if (draft.days.some(day => !day.meals.length || day.meals.some(meal => meal.groupPortions.length < draft.groups.length || meal.groupPortions.some(portion => portion.headcount === null || portion.headcount !== 0 && !portion.dishes.length)))) warnings.push("Còn thiếu bữa, nhóm, số suất hoặc món; dữ kiện thiếu được giữ nguyên.");
+  if (draft.days.some(day => !day.meals.length || day.meals.some(meal => meal.groupPortions.length < draft.groups.length || meal.groupPortions.some(portion => portion.headcount !== 0 && !portion.dishes.length)))) warnings.push("Còn thiếu bữa, nhóm hoặc món; dữ kiện thiếu được giữ nguyên.");
+  if (draft.days.some(day => day.meals.some(meal => meal.groupPortions.some(portion => portion.headcount === null)))) warnings.push("Chưa đủ số suất để tổng hợp số lượng phục vụ/đi chợ; vẫn có thể phân tích định lượng một suất.");
   return warnings;
 }

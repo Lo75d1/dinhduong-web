@@ -52,7 +52,7 @@ export async function requestMenuActor(request: Request, write = false, humanOnl
   await enforceNutritionRateLimit(`menu-library:${write ? "write" : "read"}:${actor.userId}`, { limit: write ? 30 : 120, windowSeconds: 60 });
   return actor;
 }
-async function lockActor(tx: Tx, actor: MenuActor) {
+export async function lockActor(tx: Tx, actor: MenuActor) {
   await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${"nutrition-user-grants:" + actor.userId}, 0))::text`;
   if (actor.familyId) await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${actor.familyId}, 0))::text`;
   await assertMenuActor(actor, true, tx);
@@ -82,7 +82,11 @@ export async function listMenuTemplates(actor: MenuActor, q = "", offset = 0, di
     ...(direction ? { direction } : {}),
     ...(eatingContext ? { document: { path: ["eatingContext"], equals: eatingContext } } : {}),
   }, orderBy: [{ updatedAt: "desc" }, { id: "asc" }], skip: offset, take: 21, select: { ...summarySelect, document: true } });
-  return { items: rows.slice(0, 20).map(row => ({ ...summary(row), ...menuListMetadata(row.document) })), nextOffset: rows.length > 20 ? offset + 20 : null, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}) };
+  const items = await Promise.all(rows.slice(0, 20).map(async row => {
+    const review = await prisma.menuLibraryReview.findFirst({ where: { templateId: row.id, revision: row.revision }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], select: { decision: true } });
+    return { ...summary(row), ...menuListMetadata(row.document), reviewState: review?.decision ?? "draft" };
+  }));
+  return { items, nextOffset: rows.length > 20 ? offset + 20 : null, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}) };
 }
 export async function getMenuTemplate(actor: MenuActor, id: string) {
   await assertMenuActor(actor); operationId(id, "id");
@@ -92,7 +96,11 @@ export async function getMenuTemplate(actor: MenuActor, id: string) {
   const draft = item.document as unknown as MenuLibraryDraft;
   const ids = [...new Set(draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.dishes.flatMap(dish => dish.ingredients.map(ingredient => ingredient.foodId))))))];
   const foods = ids.length ? await prisma.food.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, unit: true } }) : [];
-  return { template: summary({ id: item.id, title: item.title, direction: item.direction, revision: item.revision, createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt }), content: draft, foods, history, warnings: draftWarnings(draft) };
+  const reviews = await prisma.menuLibraryReview.findMany({ where: { templateId: id }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], take: 30, select: { id: true, revision: true, decision: true, reviewerName: true, note: true, createdAt: true, analysisDigest: true } });
+  const currentReview = await prisma.menuLibraryReview.findFirst({ where: { templateId: id, revision: item.revision }, orderBy: [{ createdAt: "desc" }, { id: "desc" }], select: { id: true, revision: true, decision: true, reviewerName: true, note: true, createdAt: true, analysisDigest: true, analysis: true } });
+  const warnings = draftWarnings(draft);
+  if (currentReview) warnings[0] = currentReview.decision === "approved" ? "Đã duyệt phiên bản này. Khi áp dụng cần đối chiếu hồ sơ và chỉ định; không phải xác nhận đủ mọi chất hoặc tính đi chợ." : "Phiên bản này được yêu cầu chỉnh sửa; xem nhận xét của người duyệt.";
+  return { template: summary({ id: item.id, title: item.title, direction: item.direction, revision: item.revision, createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt }), content: draft, foods, history, reviews, currentReview, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}), warnings };
 }
 async function checkCatalogIds(tx: Tx, draft: MenuLibraryDraft) {
   const dishes = draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.dishes)));

@@ -47,6 +47,8 @@ export type MenuLibraryDraft = {
     gender: "male" | "female" | "mixed" | "unspecified";
     activity: string | null;
     goal: string | null;
+    /** User-selected library design target, independent of official daily references. */
+    designEnergyKcal?: number | null;
     dietCode: string | null;
     dailyReferences: TargetReference[];
   }[];

@@ -57,7 +57,7 @@ async function main() {
   const wrongState = structuredClone(normalized); wrongState.days[1].rows[0].sourceState = "raw_clean";
   assert.throws(() => assertMenuComplete(resolveMenu(wrongState, foods))); checks++;
   const report = nutritionChatReport(menu); check(report.summaryText.includes("504")); check(report.summaryText.length < report.text.length);
-  check(NUTRITION_WORKFLOW.menuGuidance.includes("Không tự chọn dòng đầu")); check(NUTRITION_WORKFLOW.resultPresentation.includes("không cần tạo/tải Excel")); check(nutritionStartMessage("https://example.test").includes("save_menu"));
+  check(NUTRITION_WORKFLOW.menuGuidance.toLocaleLowerCase("vi-VN").includes("không tự chọn dòng đầu")); check(NUTRITION_WORKFLOW.resultPresentation.includes("không cần tạo/tải Excel")); check(nutritionStartMessage("https://example.test").includes("save_menu"));
   const bytes = await buildNutritionWorkbook(menu, foods);
   await fs.mkdir("evidence/nutrition-chat", { recursive: true }); await fs.writeFile("evidence/nutrition-chat/recall-2598-test.xlsx", bytes);
   const workbook = new ExcelJS.Workbook(); await workbook.xlsx.load(Buffer.from(bytes) as unknown as ExcelJS.Buffer);

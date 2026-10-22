@@ -31,7 +31,7 @@ nhập thực đơn bằng JSON vào giao diện web.
 
 AI đã được ủy quyền có thể tạo và sửa mẫu thật trong PostgreSQL, nhận URL thật để
 Admin mở xem. Mẫu chỉ có trạng thái `draft`; lưu nháp không đồng nghĩa duyệt chuyên
-môn hoặc đã tính dinh dưỡng. Chưa có tính nhiều nhóm, phiếu chia suất, xuất đi chợ,
+môn hoặc đã tính dinh dưỡng. Website có phân tích một suất cho từng nhóm và duyệt theo phiên bản; chưa có phiếu chia suất, xuất đi chợ,
 phát hành mẫu hoặc xóa mẫu qua API. Không thay Food/Dish/RNI hay luồng Ration cá nhân.
 
 ## Quyền và lưu trữ
@@ -68,10 +68,8 @@ phát hành mẫu hoặc xóa mẫu qua API. Không thay Food/Dish/RNI hay luồ
 | `GET/POST/DELETE /api/admin/menu-library/delegations` | Liệt kê/cấp/thu hồi; chỉ phiên Admin website |
 | `POST /api/admin/menu-library/tools` | REST `{name,arguments}`; Bearer được ủy quyền |
 
-MCP hiện có `/api/nutrition/v1/mcp` cung cấp thêm bốn công cụ chỉ sau khi đúng phiên
-được ủy quyền: `get_admin_menu_workflow`, `list_admin_menu_templates`,
-`get_admin_menu_template`, `save_admin_menu_template`. Grant chỉ đọc không thấy
-công cụ lưu. Khách/người dùng thường giữ16 công cụ cũ; hướng dẫn và ZIP công khai
+MCP hiện có `/api/nutrition/v1/mcp` công bố sẵn bốn công cụ; kiểm tra ủy quyền ở mỗi lần gọi: `get_admin_menu_workflow`, `list_admin_menu_templates`,
+`get_admin_menu_template`, `save_admin_menu_template`. Grant chỉ đọc không được gọi công cụ lưu. Danh mục 20 công cụ giữ nguyên trước/sau cấp quyền; hướng dẫn và ZIP công khai
 không chứa dữ liệu kho Admin. Bộ scope OAuth hiện có giữ nguyên; grant kho mẫu là
 một bước đồng ý riêng, không tự phát sinh khi đăng nhập.
 
@@ -153,3 +151,39 @@ xóa bảng để rollback giao diện. Chưa ghi nhận triển khai hoặc ngh
   form cũ, cấp/thu hồi grant, bản nháp/null/0 và clipboard; không lỗi JavaScript.
 - Next production HTTP cục bộ: 30 kiểm tra quyền khách/cache/không lộ nội dung trên
   10 yêu cầu đọc/ghi/trang. Chưa nghiệm thu Admin với PostgreSQL/VPS hoặc nền tảng AI thật.
+
+
+## Sửa tay, phân tích và duyệt (22/10/2026)
+
+- Chạy migration `20261022120000_menu_library_reviews` trước khi khởi động bản mới.
+  Bảng `menu_library_reviews` bật RLS, không cấp PUBLIC/anon/authenticated; mỗi
+  quyết định tham chiếu cặp templateId/revision bất biến. Không sửa nguồn Food/Dish.
+- Mở mẫu → **Chỉnh sửa món & định lượng** → lưu với lý do. Có thêm/xóa món,
+  tra/thêm/xóa thực phẩm thật, sửa lượng g/ml. Món sửa được ghi `manual` và bỏ
+  recipeId để không giả là nguyên bản RNI. Khi chưa lưu có cảnh báo rời trang.
+- `groups[].designEnergyKcal` tùy chọn là mục tiêu thiết kế do người dùng nhập;
+  chưa biết để null/không khai báo. Không lấy số trong tiêu đề làm mục tiêu và
+  không gán nguồn RNI cho mục tiêu tự chọn.
+- `POST templates/{id}/analysis` nhận `{expectedRevision}`. Dùng engine hiện có,
+  giữ null/0, kiểm tra mẫu số VDD nguyên món và g/ml, theo một suất mỗi nhóm/ngày;
+  không nhân số suất hay lấy trung bình các nhóm. Hiển thị theo bữa và tổng bữa.
+- `POST templates/{id}/review` nhận `{expectedRevision, decision, note,
+  analysisDigest, acknowledged:true}`. Chỉ phiên Admin website + Origin + CSRF;
+  OAuth/AI không được duyệt. `approved` cần đủ cấu trúc/cơ sở tính;
+  `changes_requested` cần nhận xét. Chất thiếu vẫn hiển thị rõ, không được hiểu
+  rằng duyệt mẫu đồng nghĩa đủ tất cả dinh dưỡng hoặc phù hợp mọi bệnh nhân.
+- Máy chủ tính lại từ bản lưu và nguồn hiện tại trước khi ghi; từ chối 409 khi
+  revision hoặc digest khác bản đã xem. Dùng cùng khóa mẫu với lưu sửa, kiểm tra
+  tài khoản trong transaction. Retry cùng quyết định không tạo bản trùng.
+- Duyệt lưu người duyệt từ phiên, thời gian, ghi chú và phân tích. GET mẫu trả
+  lịch sử quyết định, `currentReview` cùng snapshot phân tích của phiên bản hiện tại.
+  Sửa tạo revision mới tự hiển thị chưa duyệt; không xóa phê duyệt cũ.
+- `GET foods?q=` dành cho Admin website để chọn thực phẩm. Mọi endpoint mới giữ
+  private/no-store, không mở thêm scope hay công cụ MCP.
+
+Kiểm tra cho thay đổi này: 273 kiểm tra PGlite/route/quyền/lưu/duyệt và lịch sử;
+14 kiểm tra tính một suất từng nhóm, null/0, dữ liệu thiếu, g/ml, digest;
+16 kiểm tra tương tác DOM sửa tay, giữ nội dung khi 409, phân tích và xác nhận duyệt;
+165 kiểm tra danh mục/hướng dẫn/trang. Bộ `test:nutrition-chat`, TypeScript, ESLint,
+Prisma validate và production build đạt. Tương tác dùng JSDOM; chưa nghiệm thu hình
+ảnh bằng Chromium hay trên VPS thật. Không tự duyệt bảy mẫu đang lưu của người dùng.
