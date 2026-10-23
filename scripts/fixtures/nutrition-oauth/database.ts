@@ -20,7 +20,7 @@ type FixturePrisma = {
   menuLibraryTemplate: FixtureModel; menuLibraryVersion: FixtureModel; menuLibraryGrant: FixtureModel; menuLibraryReview: FixtureModel;
   food: FixtureModel; dish: FixtureModel; dietCode: FixtureModel;
   nutritionOAuthClient: FixtureModel; nutritionOAuthCode: FixtureModel; nutritionOAuthToken: FixtureModel; nutritionApiWindow: FixtureModel; ration: FixtureModel;
-  $queryRaw<T>(parts: TemplateStringsArray, ...values: unknown[]): Promise<T[]>;
+  $queryRaw<T>(parts: TemplateStringsArray | { text: string; values: unknown[] }, ...values: unknown[]): Promise<T[]>;
   $transaction<T>(callback: (tx: FixturePrisma) => Promise<T>): Promise<T>;
 };
 let database: PGlite;
@@ -168,7 +168,8 @@ function fixture(executor: Executor): FixturePrisma {
       },
     };
   }
-  function raw<T>(parts: TemplateStringsArray, ...values: unknown[]) {
+  function raw<T>(parts: TemplateStringsArray | { text: string; values: unknown[] }, ...values: unknown[]) {
+    if ("text" in parts) return executor.query<T>(parts.text, parts.values).then(result => result.rows);
     const sql = parts.reduce((text, part, i) => text + part + (i < values.length ? `$${i + 1}` : ""), "");
     // Explicitly substituted contention response: single-backend PGlite cannot hold a
     // conflicting advisory lock from an independent PostgreSQL worker.

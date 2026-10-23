@@ -19,6 +19,8 @@ export function hasReferenceProfileInputs(profile: MenuLibraryDraft["groups"][nu
 /** Empty editor lines are not instructions. Preserve actual text and order. */
 export function tidyInstructions(draft: MenuLibraryDraft): MenuLibraryDraft {
   const clean = structuredClone(draft);
+  if (clean.description != null) clean.description = clean.description.trim().replace(/\s+/g, " ") || null;
+  if (clean.tags) clean.tags = [...new Set(clean.tags.map(tag => tag.trim().replace(/^#+/, "")).filter(Boolean))];
   const lines = (items: string[]) => items.map(item => item.trim()).filter(Boolean);
   for (const group of clean.groups) if (group.guidance) {
     group.guidance.notes = lines(group.guidance.notes);

@@ -32,7 +32,8 @@
     "test:menu-clinical-browser": "node scripts/test-clinical-menu-browser.mjs",
     "test:menu-library-daily": "node --import tsx scripts/test-menu-library-daily.ts",
     "test:menu-library-daily-ui": "node --import tsx scripts/test-menu-library-daily-ui.tsx",
-    "test:menu-library-content": "node --import tsx scripts/test-menu-library-content.ts"
+    "test:menu-library-content": "node --import tsx scripts/test-menu-library-content.ts",
+    "test:menu-library-manager": "node --import tsx scripts/test-menu-library-manager.ts && node --import tsx scripts/test-menu-library-manager-ui.tsx"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,5 +1,13 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Kho thực đơn: thao tác nhiều mục và kéo thả — 23/10/2026
+
+- Danh mục quản trị dùng thẻ theo bộ thực đơn; số đếm không còn nhân theo ngày. Xem nhanh cạnh danh mục, chọn ngày/nhóm, xem món/nguyên liệu/cách chế biến. Ba kho Cá thể / Tập thể / Bệnh viện; hai mục bệnh viện là Thực đơn bệnh lý và Suất ăn bệnh lý. Các nhãn còn lại hiển thị dạng hashtag, bỏ dàn bộ lọc và nhãn Đủ ngày.
+- Nhập tay thực đơn mới, sửa tên/mô tả/đối tượng/kcal/hashtag, thêm ngày và bữa. Chọn nhiều thực đơn để xóa vào thùng rác, khôi phục, chuyển kho hoặc gắn nhãn. Khay bữa giữ lựa chọn qua nhiều thực đơn; sao chép sang nhiều đích hoặc chuyển sang một ngày/nhóm, kéo tay nắm sắp xếp bữa và chuyển kho. Có nút thao tác thay cho kéo thả.
+- API danh mục theo bộ và batch dùng quyền Admin, CSRF, kiểm tra phiên bản, transaction toàn bộ, lịch sử và mã chống lặp khi gửi lại. Sao chép lấy đúng bữa nguồn từ máy chủ, giữ Food/Dish ID và định lượng; không tự sửa kcal/nhóm nhận hoặc nâng thành bản đã duyệt. Giới hạn ngày/bữa và chuyển mẫu nhiều nhóm có kiểm tra. Không sửa dữ liệu kho thật trong phiên lập trình, không migration.
+- Kiểm tra: 61 API/SQL và 53 DOM mới; hồi quy 165 nguồn/quyền, 287 ghi/CSRF/OAuth, 26 UI, 14 phân tích, SQL danh mục ngày, nội dung và DOM chế biến/định lượng. TypeScript đạt. Build đã biên dịch/tạo 86 trang rồi dừng SecurityFatalError của Next 16.4.0 đang có; không tắt kiểm tra hoặc tự nâng dependency trong thay đổi kho. Chưa nghiệm thu hình ảnh/cảm ứng trên máy thật và chưa deploy VPS. Xem docs/design/menu-library-manager-2026-10-23.md.
+
+
 ## Gỡ quy tắc AI thiết kế giao diện — 23/10/2026
 
 - Theo yêu cầu chủ dự án, xóa `DESIGN.md`; bỏ cam kết phông, màu và bố cục đã chọn khỏi `PRODUCT.md`; bỏ chỉ dẫn phong cách giao diện trong `CLAUDE_HANDOFF.md`.

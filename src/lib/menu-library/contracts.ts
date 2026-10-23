@@ -52,6 +52,8 @@ export type MenuLibraryDraft = {
   version: number;
   status: "draft" | "reviewed" | "published";
   title: string;
+  description?: string | null;
+  tags?: string[];
   direction: "individual" | "collective";
   librarySection?: "individual" | "collective" | "hospital";
   hospitalUse?: "patient_guidance" | "hospital_kitchen" | null;

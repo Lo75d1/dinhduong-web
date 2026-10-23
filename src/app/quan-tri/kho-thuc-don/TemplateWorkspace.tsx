@@ -34,9 +34,9 @@ function Scope({ content, dayId, groupId, setDayId, setGroupId }: { content: Men
   </div><span className={styles.scopeNote}>Định lượng cho 1 suất</span></div>;
 }
 
-export default function TemplateWorkspace({ data, onReload, onDirty, initialDayId, initialGroupId, onScopeChange }: { data: OpenedTemplate; onReload: () => void; onDirty: (dirty: boolean) => void; initialDayId?: string; initialGroupId?: string; onScopeChange?: (scope: { dayId: string; groupId: string }) => void }) {
+export default function TemplateWorkspace({ data, onReload, onDirty, initialDayId, initialGroupId, onScopeChange, initialEditing = false, onCancelEditing, onSaving }: { data: OpenedTemplate; onReload: () => void; onDirty: (dirty: boolean) => void; initialDayId?: string; initialGroupId?: string; onScopeChange?: (scope: { dayId: string; groupId: string }) => void; initialEditing?: boolean; onCancelEditing?: () => void; onSaving?: (saving: boolean) => void }) {
   const [dayId, setDayId] = useState(data.content.days.find(day => day.id === initialDayId)?.id ?? data.content.days[0]?.id ?? ""), [groupId, setGroupId] = useState(data.content.groups.find(group => group.id === initialGroupId)?.id ?? data.content.groups[0]?.id ?? "");
-  const [editing, setEditing] = useState(false), [mealId, setMealId] = useState("");
+  const [editing, setEditing] = useState(initialEditing), [mealId, setMealId] = useState("");
   const [workingDraft, setWorkingDraft] = useState(data.content), [refresh, setRefresh] = useState(0);
   const [result, setResult] = useState<{ key: string; value: LibraryAnalysis | null; error: string }>({ key: "", value: null, error: "" });
   const heading = useRef<HTMLDivElement>(null);
@@ -67,7 +67,7 @@ export default function TemplateWorkspace({ data, onReload, onDirty, initialDayI
     return () => { window.clearTimeout(timeout); abort.abort(); };
   }, [data.csrf, data.template.id, data.template.revision, draft, editing, requestKey]);
   function edit(id = "") { setWorkingDraft(data.content); setMealId(id); setEditing(true); }
-  function cancel() { setEditing(false); setWorkingDraft(data.content); onDirty(false); }
+  function cancel() { setEditing(false); setWorkingDraft(data.content); onDirty(false); onCancelEditing?.(); }
   return <section className={styles.workspace} aria-label="Biên soạn và duyệt thực đơn">
     <div ref={heading}><Heading data={data} action={!editing && data.csrf ? <button type="button" className={styles.action} onClick={() => edit()}>Chỉnh khẩu phần</button> : undefined} /></div>
     <Scope content={draft} dayId={dayId} groupId={groupId} setDayId={id => { setDayId(id); setMealId(""); onScopeChange?.({ dayId: id, groupId }); }} setGroupId={id => { setGroupId(id); onScopeChange?.({ dayId, groupId: id }); }} />
@@ -76,7 +76,7 @@ export default function TemplateWorkspace({ data, onReload, onDirty, initialDayI
     {current && result.error && <button type="button" className={styles.textButton} onClick={() => setRefresh(value => value + 1)}>Thử tính lại</button>}
     {editing && data.csrf ? <>
       <div className={styles.contextBar}><label>Chỉnh bữa <select aria-label="Bữa cần chỉnh" value={mealId} onChange={event => setMealId(event.target.value)} className={styles.control}><option value="">Tất cả bữa</option>{draft.days.find(day => day.id === dayId)?.meals.map(meal => <option key={meal.id} value={meal.id}>{meal.label}</option>)}</select></label></div>
-      <TemplateEditor content={data.content} csrf={data.csrf} foods={data.foods} onDirty={onDirty} onDraftChange={setWorkingDraft} onSaved={onReload} onCancel={cancel} dayId={dayId} groupId={groupId} mealId={mealId} />
+      <TemplateEditor content={data.content} csrf={data.csrf} foods={data.foods} onDirty={onDirty} onDraftChange={setWorkingDraft} onSaved={onReload} onCancel={cancel} onSaving={onSaving} dayId={dayId} groupId={groupId} mealId={mealId} />
       {analysis && <details className={styles.disclosure}><summary>Phân tích chi tiết theo lượng đang chỉnh</summary><div><DraftAnalysis analysis={{ ...analysis, sections: section ? [section] : [] }} /></div></details>}
     </> : <>
       <MealSheet content={draft} day={draft.days.find(day => day.id === dayId)} groupId={groupId} foods={data.foods} section={section} pending={pending} onEdit={data.csrf ? edit : undefined} />

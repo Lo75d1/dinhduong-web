@@ -23,6 +23,7 @@ const profileSchema = obj({
 
 export const MENU_LIBRARY_DRAFT_SCHEMA = obj({
   schemaVersion: en("1.0.0", "1.1.0", "1.2.0"), id, version: integer(1, 1_000_000), status: en("draft"), title: text(),
+  description: nullable(text(1000)), tags: arr(text(50), 20),
   direction: en("individual", "collective"),
   librarySection: en("individual", "collective", "hospital"),
   hospitalUse: nullable(en("patient_guidance", "hospital_kitchen")),
@@ -49,7 +50,7 @@ export const MENU_LIBRARY_DRAFT_SCHEMA = obj({
       ingredients: arr(obj({ foodId: id, quantityPerPortion: number(100_000), unit: en("g", "ml"), basis: en("edible_raw"), edibleFraction: nullable({ type: "number", exclusiveMinimum: 0, maximum: 1 }), cookingYield: nullable({ type: "number", exclusiveMinimum: 0, maximum: 100 }) }), 30),
     }, ["preparation"]), 12) }), 20),
   }, ["eatingContext"]), 8) }), 31, 1),
-}, ["eatingContext", "librarySection", "hospitalUse", "availability"]);
+}, ["eatingContext", "librarySection", "hospitalUse", "availability", "description", "tags"]);
 
 export function menuInputError(message: string, field = "content", status = 400): never {
   throw new NutritionInputError(message, field, status);

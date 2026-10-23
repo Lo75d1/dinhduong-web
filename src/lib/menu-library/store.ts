@@ -63,7 +63,7 @@ function canonical(value: unknown): string {
   if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${canonical(item)}`).join(",")}}`;
   return JSON.stringify(value);
 }
-function contentHash(content: unknown) { return createHash("sha256").update(canonical(content)).digest("hex"); }
+export function contentHash(content: unknown) { return createHash("sha256").update(canonical(content)).digest("hex"); }
 function summary(item: { id: string; title: string; direction: string; revision: number; createdBy: string; createdAt: Date; updatedAt: Date }) {
   return { id: item.id, title: item.title, direction: item.direction, revision: item.revision, createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt, url: `${getNutritionPublicUrl()}/quan-tri/kho-thuc-don?template=${encodeURIComponent(item.id)}` };
 }
@@ -103,7 +103,7 @@ export async function getMenuTemplate(actor: MenuActor, id: string) {
   if (currentReview) warnings[0] = currentReview.decision === "approved" ? "Đã duyệt phiên bản này. Khi áp dụng cần đối chiếu hồ sơ và chỉ định; không phải xác nhận đủ mọi chất hoặc tính đi chợ." : "Phiên bản này được yêu cầu chỉnh sửa; xem nhận xét của người duyệt.";
   return { template: summary({ id: item.id, title: item.title, direction: item.direction, revision: item.revision, createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt }), content: draft, foods, history, reviews, currentReview, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}), warnings };
 }
-async function checkCatalogIds(tx: Tx, draft: MenuLibraryDraft) {
+export async function checkCatalogIds(tx: Tx, draft: MenuLibraryDraft) {
   const dishes = draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.dishes)));
   const ingredients = dishes.flatMap(dish => dish.ingredients), foodIds = [...new Set(ingredients.map(item => item.foodId))], recipeIds = [...new Set(dishes.flatMap(dish => dish.recipeId ? [dish.recipeId] : []))];
   const foods = foodIds.length ? await tx.food.findMany({ where: { id: { in: foodIds } }, select: { id: true, unit: true } }) : [];
