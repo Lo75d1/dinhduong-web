@@ -1,5 +1,14 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Gỡ quy tắc AI thiết kế giao diện — 23/10/2026
+
+- Theo yêu cầu chủ dự án, xóa `DESIGN.md`; bỏ cam kết phông, màu và bố cục đã chọn khỏi `PRODUCT.md`; bỏ chỉ dẫn phong cách giao diện trong `CLAUDE_HANDOFF.md`.
+- `CLAUDE.md` giữ hướng dẫn kỹ thuật Next.js, bỏ tự nạp toàn bộ `PROJECT_STATUS.md` để nhật ký UI cũ không trở thành chỉ dẫn mặc định.
+- Bảy báo cáo/kế hoạch UI cũ bên dưới `docs/design/` được ghi rõ là lịch sử đã ngừng áp dụng. Ảnh, prototype, kết quả kiểm tra và tài liệu nguồn/giấy phép vẫn được giữ để truy nguyên; ghi chú thị giác trong danh mục tài sản cũng được đánh dấu là lịch sử.
+- Thay đổi chỉ nằm ở tài liệu và bộ nhớ AI. Không đổi mã giao diện đang hiển thị, phép tính, dữ liệu dinh dưỡng, phân quyền hoặc quy trình nghiệp vụ. Lịch sử commit Git được giữ nguyên bằng commit bổ sung.
+
+> Các quyết định về phông, màu và bố cục trong nhật ký bên dưới là ghi nhận tại thời điểm triển khai, không còn là quy tắc AI thiết kế giao diện.
+
 ## Ba kho, hướng dẫn chế biến và phần trăm khuyến nghị — 23/10/2026
 
 - Bản sửa cục bộ trên `codex/menu-library-restructure-local`: Cá thể / Tập thể / Bệnh viện; bệnh viện có hai vai trò. Nhóm tuổi là bộ lọc dùng chung; nguồn cũ chưa khai nhãn hiện Chưa phân loại. Kho vẫn chọn một ngày, kcal là thuộc tính. Tạm dừng bổ sung nội dung bệnh viện.

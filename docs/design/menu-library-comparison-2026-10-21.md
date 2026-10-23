@@ -1,5 +1,7 @@
 # Hai bố cục kho mẫu — 21/10/2026
 
+> Lưu trữ lịch sử: các lựa chọn và chỉ dẫn thiết kế trong tài liệu này đã được ngừng áp dụng ngày 23/10/2026. Nội dung được giữ để truy nguyên, không phải quy tắc thiết kế giao diện cho AI ở các lần làm tiếp.
+
 **Quyết định sau xem thử:** người dùng chọn A. Bản triển khai trong mã nguồn và kiểm tra ở `layout-a-implementation-2026-10-21.md`; các mô tả “cần trước production” dưới đây là ghi nhận lúc dựng hai prototype.
 
 Người dùng chốt dựng hai phương án cùng màn hình, cùng dữ liệu sau khi tham khảo Emil Kowalski,

@@ -1,5 +1,7 @@
 # Chi tiết kho thực đơn cho bác sĩ dinh dưỡng
 
+> Lưu trữ lịch sử: các lựa chọn và chỉ dẫn thiết kế trong tài liệu này đã được ngừng áp dụng ngày 23/10/2026. Nội dung được giữ để truy nguyên, không phải quy tắc thiết kế giao diện cho AI ở các lần làm tiếp.
+
 Brief xác nhận trong hội thoại 22/10/2026: tập trung bữa → món → thực phẩm và định lượng,
 tỷ lệ P–L–G; phân tích chi tiết ở dưới. Tính ngay, không yêu cầu bấm thêm bước phân tích.
 Giữ nền trắng ấm, Times và bố cục danh sách A của kho. Không có yêu cầu thay nguồn dinh dưỡng.

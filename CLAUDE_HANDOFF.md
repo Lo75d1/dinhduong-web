@@ -6,7 +6,7 @@ VPS: `/opt/dinhduong` (Docker Compose + Caddy + Next.js + Prisma/Supabase)
 
 ## Nguyên tắc bắt buộc
 
-- Đây là công cụ hỗ trợ chuyên môn dinh dưỡng của Bệnh viện Đa khoa Nam Liên Chiểu, Sở Y tế TP. Đà Nẵng. Giao diện cần trang trọng, rõ ràng, ưu tiên người dùng là bác sĩ/dinh dưỡng viên/PT/gia đình.
+- Đây là công cụ hỗ trợ chuyên môn dinh dưỡng của Bệnh viện Đa khoa Nam Liên Chiểu, Sở Y tế TP. Đà Nẵng.
 - **Không tự ý sửa hoặc xoá dữ liệu Food/Dish hiện có.** Mọi nhập/cập nhật dữ liệu phải có bước xem trước, lý do, xác nhận rõ của Admin và ghi `DataChangeLog` (ai sửa, lúc nào, giá trị cũ/mới).
 - Ưu tiên nguồn chính thức; luôn hiển thị nguồn và không suy diễn dữ liệu thiếu.
 - Tên đề tài/website đúng: **Dinh dưỡng 2598** (không phải 2597).
