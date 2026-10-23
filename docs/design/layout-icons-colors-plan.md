@@ -1,5 +1,7 @@
 # Kế hoạch bố cục, biểu tượng và màu sắc — Dinh dưỡng 2598
 
+> Lưu trữ lịch sử: các lựa chọn và chỉ dẫn thiết kế trong tài liệu này đã được ngừng áp dụng ngày 23/10/2026. Nội dung được giữ để truy nguyên, không phải quy tắc thiết kế giao diện cho AI ở các lần làm tiếp.
+
 Ngày: 21/10/2026. Người dùng đã chốt triển khai phương án A: xanh ngọc–trắng,
 logo bát/lá, icon Lucide và minh họa Storyset Pana. Đã triển khai trong mã nguồn
 PR#9; bản84dec6c đã lên VPS. Sau phản hồi quá nhiều xanh, người dùng chốt đợt

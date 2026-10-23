@@ -1,6 +1,25 @@
-/** Draft contract for the collective library. Not a Nutrition Chat MenuInput. */
+import type { Profile } from "@/app/tinh-khau-phan/PersonalProfile";
+import type { MealIllustration } from "./illustration";
+/** Library draft, distinct from a Nutrition Chat MenuInput. */
 export type SchoolLevel = "nursery" | "kindergarten" | "primary" | "lower_secondary" | "upper_secondary";
 export type MealCode = "breakfast" | "lunch" | "afternoon_main" | "afternoon_snack" | "dinner" | "shift_main" | "other";
+export const LIFE_STAGE_OPTIONS = [
+  { value: "complementary_feeding", label: "Ăn dặm" },
+  { value: "child", label: "Trẻ em" },
+  { value: "adult", label: "Người lớn" },
+] as const;
+export const TEXTURE_OPTIONS = [
+  { value: "regular", label: "Thông thường" }, { value: "soft", label: "Mềm" },
+  { value: "minced", label: "Băm nhỏ" }, { value: "pureed", label: "Nghiền / xay" },
+  { value: "liquid", label: "Lỏng" },
+] as const;
+export const COOKING_METHOD_OPTIONS = [
+  { value: "boil", label: "Luộc" }, { value: "steam", label: "Hấp" },
+  { value: "stew", label: "Hầm / ninh" }, { value: "simmer", label: "Nấu / kho" },
+  { value: "stir_fry", label: "Xào" }, { value: "bake", label: "Nướng" },
+  { value: "mix", label: "Trộn / pha" }, { value: "other", label: "Khác" },
+] as const;
+export type LifeStage = typeof LIFE_STAGE_OPTIONS[number]["value"];
 export const EATING_CONTEXT_OPTIONS = [
   { value: "home", label: "Tại nhà" },
   { value: "restaurant", label: "Ngoài quán" },
@@ -29,12 +48,17 @@ export type TargetReference = {
 };
 
 export type MenuLibraryDraft = {
-  schemaVersion: "1.0.0" | "1.1.0";
+  schemaVersion: "1.0.0" | "1.1.0" | "1.2.0";
   id: string;
   version: number;
   status: "draft" | "reviewed" | "published";
   title: string;
+  description?: string | null;
+  tags?: string[];
   direction: "individual" | "collective";
+  librarySection?: "individual" | "collective" | "hospital";
+  hospitalUse?: "patient_guidance" | "hospital_kitchen" | null;
+  availability?: { state: "active" | "archived"; reason: string | null };
   eatingContext?: EatingContext | null;
   unit: { id: string; label: string; type: "school" | "workplace" | "agency" | "hospital" | "other" } | null;
   coverage: "full_day" | "served_meals";
@@ -44,6 +68,11 @@ export type MenuLibraryDraft = {
     label: string;
     schoolLevel: SchoolLevel | null;
     ageYears: { min: number; max: number } | null;
+    lifeStage?: LifeStage | null;
+    ageMonths?: { min: number; max: number } | null;
+    guidance?: { notes: string[]; recommendations: string[] };
+    /** Explicit reference profile for this template/group; no names or patient identifiers. */
+    recommendationProfile?: Profile | null;
     gender: "male" | "female" | "mixed" | "unspecified";
     activity: string | null;
     goal: string | null;
@@ -63,6 +92,7 @@ export type MenuLibraryDraft = {
       eatingContext?: EatingContext | null;
       groupPortions: {
         groupId: string;
+        illustration?: MealIllustration | null;
         headcount: number | null;
         mealRuleIds: string[];
         dishes: {
@@ -70,6 +100,12 @@ export type MenuLibraryDraft = {
           recipeId: string | null;
           label: string;
           sourceKind: "catalog" | "ai" | "manual";
+          preparation?: {
+            method: typeof COOKING_METHOD_OPTIONS[number]["value"] | null;
+            texture: typeof TEXTURE_OPTIONS[number]["value"] | null;
+            steps: string[];
+            notes: string[];
+          };
           ingredients: {
             foodId: string;
             quantityPerPortion: number;

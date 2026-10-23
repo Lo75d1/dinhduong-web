@@ -1,5 +1,7 @@
 # Tài sản giao diện — 21/10/2026
 
+> Thông tin phông, màu và cách trình bày dưới đây là ghi nhận lịch sử, đã ngừng dùng làm quy tắc AI thiết kế giao diện ngày 23/10/2026. Thông tin nguồn và giấy phép vẫn được giữ cùng các tài sản hiện có.
+
 Bảng màu được điều chỉnh sau phản hồi giao diện quá nhiều xanh: nền trắng ấm,
 chữ xám than, xanh ngọc cho nhận diện/thao tác và cam đất nhấn nhẹ.
 `--brand=#0F766E`, `--brand-hover=#115E59`, `--ink=#272C33`,

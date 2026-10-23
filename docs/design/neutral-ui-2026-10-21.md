@@ -1,5 +1,7 @@
 # Giảm phủ xanh và làm gọn kho mẫu — 21/10/2026
 
+> Lưu trữ lịch sử: các lựa chọn và chỉ dẫn thiết kế trong tài liệu này đã được ngừng áp dụng ngày 23/10/2026. Nội dung được giữ để truy nguyên, không phải quy tắc thiết kế giao diện cho AI ở các lần làm tiếp.
+
 Sau khi xem ảnh VPS, người dùng phản hồi giao diện quá nhiều xanh ngọc và chốt
 hướng trắng ấm–xám than, xanh cho nhận diện/thao tác và cam đất nhấn nhẹ.
 Bản này tiếp nối commit VPS `84dec6c`, chưa được đưa lên VPS.

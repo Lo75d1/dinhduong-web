@@ -1,5 +1,7 @@
 # Kho mẫu — triển khai phương án A
 
+> Lưu trữ lịch sử: các lựa chọn và chỉ dẫn thiết kế trong tài liệu này đã được ngừng áp dụng ngày 23/10/2026. Nội dung được giữ để truy nguyên, không phải quy tắc thiết kế giao diện cho AI ở các lần làm tiếp.
+
 Người dùng chọn A sau khi xem hai prototype. Mã nguồn chuyển kho mẫu sang danh sách,
 không dùng bảng ngày/bữa theo đơn vị của B. Người dùng đã cho phép chuyển giao lên `Lo75d1/dinhduong-web`; chưa triển khai VPS.
 

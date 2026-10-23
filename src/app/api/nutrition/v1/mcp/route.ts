@@ -1,5 +1,5 @@
 import { parseNutritionRpc, nutritionRpcResult, NutritionProtocolError, NUTRITION_MCP_VERSIONS, NUTRITION_SERVER_INFO, type NutritionRpc } from "@/lib/nutrition-chat/protocol";
-import { getNutritionIdentity, nutritionJson, nutritionErrorResponse, validateNutritionOrigin, readNutritionJson, NutritionSecurityError, nutritionAuthenticateChallenge, enforceNutritionRateLimit, nutritionAnonymousKey } from "@/lib/nutrition-chat/security";
+import { getNutritionIdentity, nutritionJson, nutritionErrorResponse, validateNutritionOrigin, NutritionSecurityError, nutritionAuthenticateChallenge, enforceNutritionRateLimit, nutritionAnonymousKey } from "@/lib/nutrition-chat/security";
 import { NUTRITION_TOOLS, NUTRITION_WORKFLOW, nutritionToolScope } from "@/lib/nutrition-chat/tools";
 import { executeNutritionTool } from "@/lib/nutrition-chat/operations";
 import { validateOperationObject } from "@/lib/nutrition-chat/service";
@@ -10,6 +10,9 @@ import {startGuestSession} from "@/lib/nutrition-chat/guest-session";
 import {GUEST_TOOL_NAMES,nutritionErrorGuidance,nutritionResponseGuidance} from "@/lib/nutrition-chat/response-guidance";
 import {ADMIN_MENU_TOOLS,isAdminMenuTool,executeAdminMenuTool} from "@/lib/menu-library/ai-tools";
 import {menuLibraryAccessGuidance} from "@/lib/menu-library/connection";
+import { readNutritionJsonWithSize } from "@/lib/nutrition-chat/http";
+import { MENU_IMAGE_JSON_BYTES } from "@/lib/menu-library/illustration";
+import { assertMenuActor, delegatedActor } from "@/lib/menu-library/store";
 const skillMethods=["skills/list","skills/get","resources/list","resources/read"];
 const capabilities={tools:{listChanged:false},resources:{listChanged:false},extensions:{"io.modelcontextprotocol/skills":{}}};
 export const runtime="nodejs";
@@ -19,10 +22,14 @@ export async function POST(request:Request) {
   let requestId:string|number|undefined;
   try {
     validateNutritionOrigin(request);
-    const body=await readNutritionJson(request,NUTRITION_LIMITS.jsonBytes);
+    const largeAuthenticatedRequest=request.headers.has("authorization") && (!request.headers.has("content-length") || Number(request.headers.get("content-length"))>NUTRITION_LIMITS.jsonBytes);
+    if(largeAuthenticatedRequest && request.headers.has("content-length")) await assertMenuActor(delegatedActor(await getNutritionIdentity(request,"nutrition:read")),true);
+    const received=await readNutritionJsonWithSize(request,largeAuthenticatedRequest?MENU_IMAGE_JSON_BYTES:NUTRITION_LIMITS.jsonBytes);
+    const body=received.value;
     if(body && typeof body==="object" && !Array.isArray(body) && "id" in body && (typeof body.id==="string" || typeof body.id==="number" && Number.isSafeInteger(body.id)))requestId=body.id;
     rpc=parseNutritionRpc(body,request.headers);
     const name=typeof rpc.params.name==="string"?rpc.params.name:"";
+    if(received.byteLength>NUTRITION_LIMITS.jsonBytes && !(rpc.method==="tools/call" && name==="upload_admin_menu_image"))throw new NutritionInputError("Yêu cầu vượt dung lượng cho phép.","body",413);
     // Discovery/schema and the public guide contain no account or catalogue data.
     // They must load before ChatGPT can discover which tool needs OAuth.
     const hasAuthorization=request.headers.has("authorization");

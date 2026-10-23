@@ -15,7 +15,8 @@ const fields = ALL_NUTRIENT_FIELDS.map(field => field.key);
 async function analysisFor(tx: Tx, draft: MenuLibraryDraft) {
   const ids = [...new Set(draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.dishes.flatMap(dish => dish.ingredients.map(ingredient => ingredient.foodId))))))];
   const raw = await tx.food.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, source: true, sourceCode: true, foodType: true, unit: true, wastePercent: true, foodGroup: true, ...Object.fromEntries(fields.map(key => [key, true])) } });
-  return analyzeLibraryDraft(draft, raw.map(food => mapNutritionFood(food as unknown as Record<string, unknown>, fields)));
+  const recommendations = draft.groups.some(group => group.recommendationProfile) ? await tx.nutritionRecommendation.findMany({ orderBy: { stt: "asc" } }) : [];
+  return analyzeLibraryDraft(draft, raw.map(food => mapNutritionFood(food as unknown as Record<string, unknown>, fields)), recommendations);
 }
 async function current(tx: Tx, id: string, expected: unknown) {
   operationId(id, "id");

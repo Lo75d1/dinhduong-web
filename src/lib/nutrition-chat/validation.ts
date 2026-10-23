@@ -119,7 +119,7 @@ function row(value: unknown, path: string): MenuRowInput {
   if (r.actualFoodName && !r.foodId) throw new NutritionInputError("Tham chiếu tương tự cần Food ID trong kho.", path);
   return r;
 }
-function profile(value: unknown): Profile {
+export function parseNutritionProfile(value: unknown): Profile {
   const d = object(value, ["age", "ageUnit", "gender", "height", "weight", "activityLevel", "physiology", "pregnancyWeek", "prePregnancyWeight", "pregnancyNote"], "profile");
   for (const [key, label] of [["age", "tuổi"], ["ageUnit", "đơn vị tuổi (tuoi/thang)"], ["gender", "giới tính"], ["activityLevel", "mức vận động"], ["physiology", "tình trạng sinh lý"]] as const) {
     if (d[key] === undefined || typeof d[key] === "string" && !d[key].trim()) throw new NutritionInputError(`Hồ sơ còn thiếu ${label}. Hỏi người dùng, không tự điền. Chỉ tính thành phần: chọn comparison.mode=none và bỏ profile; mục tiêu có nguồn đã biết: chọn manual và bỏ profile. Giữ các dữ kiện đã biết để bổ sung sau.`, `profile.${key}`, 422);
@@ -157,7 +157,7 @@ export function parseMenuInput(value: unknown): MenuInput {
   if (comparison.mode !== "manual" && comparison.targets?.length) throw new NutritionInputError("Mục tiêu tự nhập chỉ dùng ở chế độ manual.", "comparison");
   if (comparison.mode === "manual" && !comparison.targets?.length) throw new NutritionInputError("Cần ít nhất một mục tiêu có nguồn.", "comparison");
   const parsed: MenuInput = { title: text(d.title, 160, "title"), mode: choice(d.mode, ["recall24h", "menu"] as const, "mode"), days, comparison };
-  if (d.profile !== undefined) parsed.profile = profile(d.profile);
+  if (d.profile !== undefined) parsed.profile = parseNutritionProfile(d.profile);
   if (d.clinicalContext !== undefined) {
     const p = "clinicalContext", c = object(d.clinicalContext, ["conditions", "notes", "targetGroup", "dietCodeId", "selection"], p);
     const clinical: NonNullable<MenuInput["clinicalContext"]> = {};

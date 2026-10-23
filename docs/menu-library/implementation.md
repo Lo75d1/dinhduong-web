@@ -1,3 +1,7 @@
+# Cập nhật kho thực đơn — 23/10/2026
+
+Bản hiện tại thêm ba kho Cá thể/Tập thể/Bệnh viện, nhóm tuổi là bộ lọc, các bước chế biến và hướng dẫn bắt buộc khi duyệt mới, ngừng dùng có lý do, và đối chiếu bảng KhuyenNghi sẵn có theo hồ sơ nhóm. Hợp đồng nháp 1.2.0 tương thích 1.0/1.1; lưu các trường bổ sung trong JSON hiện có, không cần migration mới. Xem `docs/design/menu-library-daily-selection.md` và schema do get_admin_menu_workflow công bố. Chưa deploy, không tự sửa hay xóa dữ liệu thật. Phần dưới là tài liệu nền ngày 21/10, được giữ để truy nguyên.
+
 # Kho mẫu thực đơn và ủy quyền AI — v1.1.0
 
 Ngày: 21/10/2026. Repository: https://github.com/Lo75d1/dinhduong-web

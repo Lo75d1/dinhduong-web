@@ -1,5 +1,7 @@
 # Triển khai giao diện và nhận diện — 21/10/2026
 
+> Lưu trữ lịch sử: các lựa chọn và chỉ dẫn thiết kế trong tài liệu này đã được ngừng áp dụng ngày 23/10/2026. Nội dung được giữ để truy nguyên, không phải quy tắc thiết kế giao diện cho AI ở các lần làm tiếp.
+
 Người dùng đã chốt phương án xanh ngọc–trắng trong kế hoạch
 `layout-icons-colors-plan.md`. Mã nguồn nằm ở PR#9, nhánh
 `codex/ui-navigation-refresh`, tiếp nối `8def63c`. Cập nhật: bản84dec6c đã lên

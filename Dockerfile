@@ -19,8 +19,10 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV MENU_LIBRARY_IMAGE_DIR=/app/var/menu-library-images
 
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+RUN mkdir -p /app/var/menu-library-images && chown nextjs:nodejs /app/var/menu-library-images && chmod 700 /app/var/menu-library-images
 RUN mkdir -p /tmp/dinhduong2598-nutrition-chat-v1/web-menus && chown nextjs:nodejs /tmp/dinhduong2598-nutrition-chat-v1 /tmp/dinhduong2598-nutrition-chat-v1/web-menus && chmod 700 /tmp/dinhduong2598-nutrition-chat-v1 /tmp/dinhduong2598-nutrition-chat-v1/web-menus
 
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public

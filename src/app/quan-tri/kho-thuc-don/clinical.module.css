@@ -14,6 +14,8 @@
 .selectors label { display:flex; align-items:center; gap:8px; min-width:0; }
 .selectors select { min-height:44px; max-width:360px; border:1px solid var(--control-line); border-radius:4px; background:white; padding:6px 28px 6px 10px; }
 .scopeNote { color:var(--muted); font-size:15px; }
+.contextBar > label { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.contextBar > label input, .contextBar > label select { min-height:44px; max-width:240px; padding:6px 10px; background:white; border:1px solid var(--control-line); border-radius:4px; }
 .nutrition { background:white; border:1px solid var(--line); border-radius:6px; margin:0 0 24px; padding:16px 20px 0; }
 .nutritionHeading { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:4px 16px; margin-bottom:13px; }
 .nutritionHeading h3 { font-size:17px; font-weight:700; }
@@ -81,3 +83,13 @@
   .foodTable colgroup,.foodTable thead { display:none; }.foodTable,.foodTable tbody { display:block; }.foodTable tbody { padding:12px 14px; }.foodTable tr { display:grid; grid-template-columns:minmax(0,1fr) 80px; column-gap:12px; }.foodTable .dishName { grid-column:1/-1; padding:0 0 7px!important; font-size:18px; }.foodTable td { padding:4px 0!important; }.foodTable td:last-child { grid-column:2; }.foodTable td[colspan] { grid-column:1/-1; }.foodTable td { font-size:16px; }
   .editor { padding:14px; }.editIngredient { grid-template-columns:minmax(0,1fr) 74px 20px 34px; gap:5px; }.editIngredient label { font-size:16px; }.editIngredient input { padding-left:5px; padding-right:5px; }.dishEditHeader { gap:6px; }.saveBar { bottom:0; gap:8px; }.saveBar>label { flex-basis:100%; }.saveBar .action { flex:1; }.reviewHeader>.action { width:100%; }.reviewForm { padding:14px; }.detailTable { min-width:520px; }
 }
+
+.instructions {padding:18px;margin:14px 0;background:#f6f9f7;border:1px solid #dce7e1;border-radius:8px}
+.instructions label {display:grid;gap:6px;margin:12px 0;font-weight:600}
+.instructions small {font-weight:400;color:#566761}
+.instructions ol,.instructions ul {padding-left:24px}
+.ageRange {display:flex;flex-wrap:wrap;gap:16px}
+.editorStructure {display:flex;align-items:end;flex-wrap:wrap;gap:12px;padding:15px 0;border-bottom:1px solid var(--line)}
+.editorStructure label {display:grid;gap:5px;font-size:14px;color:var(--muted)}
+.editorSettings textarea {width:100%;max-width:700px;display:block;margin-top:5px}
+.instructions>summary {cursor:pointer;font-size:16px;font-weight:600;min-height:44px;display:list-item;padding:8px 0}

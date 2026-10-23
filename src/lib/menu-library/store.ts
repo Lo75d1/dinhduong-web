@@ -12,6 +12,8 @@ import type { MenuLibraryDraft } from "./contracts";
 import { EATING_CONTEXT_OPTIONS } from "./contracts";
 import { menuListMetadata } from "./list-metadata";
 import { menuConnectionCode } from "./connection";
+import { changedFractionalQuantity } from "./production";
+import { assertIllustrationsExist } from "./image-storage";
 
 type Tx = Prisma.TransactionClient;
 export type MenuActor = { userId: string; clientId: string | null; familyId: string | null; via: "session" | "oauth" };
@@ -62,7 +64,7 @@ function canonical(value: unknown): string {
   if (value && typeof value === "object") return `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => `${JSON.stringify(key)}:${canonical(item)}`).join(",")}}`;
   return JSON.stringify(value);
 }
-function contentHash(content: unknown) { return createHash("sha256").update(canonical(content)).digest("hex"); }
+export function contentHash(content: unknown) { return createHash("sha256").update(canonical(content)).digest("hex"); }
 function summary(item: { id: string; title: string; direction: string; revision: number; createdBy: string; createdAt: Date; updatedAt: Date }) {
   return { id: item.id, title: item.title, direction: item.direction, revision: item.revision, createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt, url: `${getNutritionPublicUrl()}/quan-tri/kho-thuc-don?template=${encodeURIComponent(item.id)}` };
 }
@@ -102,7 +104,8 @@ export async function getMenuTemplate(actor: MenuActor, id: string) {
   if (currentReview) warnings[0] = currentReview.decision === "approved" ? "Đã duyệt phiên bản này. Khi áp dụng cần đối chiếu hồ sơ và chỉ định; không phải xác nhận đủ mọi chất hoặc tính đi chợ." : "Phiên bản này được yêu cầu chỉnh sửa; xem nhận xét của người duyệt.";
   return { template: summary({ id: item.id, title: item.title, direction: item.direction, revision: item.revision, createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt }), content: draft, foods, history, reviews, currentReview, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}), warnings };
 }
-async function checkCatalogIds(tx: Tx, draft: MenuLibraryDraft) {
+export async function checkCatalogIds(tx: Tx, draft: MenuLibraryDraft) {
+  await assertIllustrationsExist(draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.illustration ? [portion.illustration] : []))));
   const dishes = draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.dishes)));
   const ingredients = dishes.flatMap(dish => dish.ingredients), foodIds = [...new Set(ingredients.map(item => item.foodId))], recipeIds = [...new Set(dishes.flatMap(dish => dish.recipeId ? [dish.recipeId] : []))];
   const foods = foodIds.length ? await tx.food.findMany({ where: { id: { in: foodIds } }, select: { id: true, unit: true } }) : [];
@@ -138,8 +141,12 @@ export async function saveMenuTemplate(actor: MenuActor, value: unknown, templat
         return { ...summary(existing), replayed: true, warnings: draftWarnings(existing.document as unknown as MenuLibraryDraft) };
       }
       if (await tx.menuLibraryTemplate.findUnique({ where: { id: draft.id } })) menuInputError("ID mẫu đã tồn tại.", "id", 409);
+      if (changedFractionalQuantity(null, draft)) menuInputError("Lượng mới dùng bước 1 g/ml. Cân chỉnh cả công thức; không tự nâng từng gia vị lẻ lên 1 g.", "quantityPerPortion", 422);
       await tx.menuLibraryTemplate.create({ data: { id: draft.id, title: draft.title, direction: draft.direction, revision: 1, document: draft as unknown as Prisma.InputJsonValue, createdBy: actor.userId, requestKey, contentHash: hash } });
     } else {
+      const original = await tx.menuLibraryTemplate.findUnique({ where: { id: templateId } });
+      if (!original || original.revision !== expected) menuInputError("Mẫu đã đổi phiên bản hoặc không tồn tại. Đọc lại trước khi sửa.", "expectedRevision", 409);
+      if (changedFractionalQuantity(original.document as unknown as MenuLibraryDraft, draft)) menuInputError("Lượng mới dùng bước 1 g/ml; lượng lẻ cũ chỉ được giữ nguyên để đối soát.", "quantityPerPortion", 422);
       const changed = await tx.menuLibraryTemplate.updateMany({ where: { id: templateId, revision: Number(expected) }, data: { title: draft.title, direction: draft.direction, revision: draft.version, document: draft as unknown as Prisma.InputJsonValue, contentHash: hash } });
       if (changed.count !== 1) menuInputError("Mẫu đã đổi phiên bản hoặc không tồn tại. Đọc lại trước khi sửa.", "expectedRevision", 409);
     }
