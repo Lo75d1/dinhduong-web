@@ -12,6 +12,7 @@ import type { MenuLibraryDraft } from "./contracts";
 import { EATING_CONTEXT_OPTIONS } from "./contracts";
 import { menuListMetadata } from "./list-metadata";
 import { menuConnectionCode } from "./connection";
+import { changedFractionalQuantity } from "./production";
 
 type Tx = Prisma.TransactionClient;
 export type MenuActor = { userId: string; clientId: string | null; familyId: string | null; via: "session" | "oauth" };
@@ -138,8 +139,12 @@ export async function saveMenuTemplate(actor: MenuActor, value: unknown, templat
         return { ...summary(existing), replayed: true, warnings: draftWarnings(existing.document as unknown as MenuLibraryDraft) };
       }
       if (await tx.menuLibraryTemplate.findUnique({ where: { id: draft.id } })) menuInputError("ID mẫu đã tồn tại.", "id", 409);
+      if (changedFractionalQuantity(null, draft)) menuInputError("Lượng mới dùng bước 1 g/ml. Cân chỉnh cả công thức; không tự nâng từng gia vị lẻ lên 1 g.", "quantityPerPortion", 422);
       await tx.menuLibraryTemplate.create({ data: { id: draft.id, title: draft.title, direction: draft.direction, revision: 1, document: draft as unknown as Prisma.InputJsonValue, createdBy: actor.userId, requestKey, contentHash: hash } });
     } else {
+      const original = await tx.menuLibraryTemplate.findUnique({ where: { id: templateId } });
+      if (!original || original.revision !== expected) menuInputError("Mẫu đã đổi phiên bản hoặc không tồn tại. Đọc lại trước khi sửa.", "expectedRevision", 409);
+      if (changedFractionalQuantity(original.document as unknown as MenuLibraryDraft, draft)) menuInputError("Lượng mới dùng bước 1 g/ml; lượng lẻ cũ chỉ được giữ nguyên để đối soát.", "quantityPerPortion", 422);
       const changed = await tx.menuLibraryTemplate.updateMany({ where: { id: templateId, revision: Number(expected) }, data: { title: draft.title, direction: draft.direction, revision: draft.version, document: draft as unknown as Prisma.InputJsonValue, contentHash: hash } });
       if (changed.count !== 1) menuInputError("Mẫu đã đổi phiên bản hoặc không tồn tại. Đọc lại trước khi sửa.", "expectedRevision", 409);
     }

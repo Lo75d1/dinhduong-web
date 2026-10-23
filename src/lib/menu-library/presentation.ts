@@ -7,9 +7,9 @@ export function clinicalNumber(value: number | null | undefined) {
 }
 /** Presentation only: these title labels never populate numeric nutrition targets. */
 export function menuTitleParts(title: string) {
-  const parts = title.split("|").map(part => part.trim()).filter(Boolean);
+  const parts = title.split(/[|·]/).map(part => part.trim()).filter(Boolean);
   if (parts.length < 2) return { title, labels: [] as string[] };
-  const labels = parts.filter(part => /^\d+(?:[.,]\d+)?\s*kcal$/i.test(part) || /^\d+\s*bữa$/i.test(part));
-  const name = parts.filter(part => !labels.includes(part) && !["Ăn tại nhà", "Tại nhà", "Ngoài quán", "Kết hợp"].includes(part)).join(" · ");
+  const labels = parts.filter(part => /^\d+(?:[.,]\d+)?(?:\/\d+)*\s*kcal$/i.test(part) || /^\d+\s*(bữa|ngày)$/i.test(part));
+  const name = parts.filter(part => !labels.includes(part) && !["Ăn tại nhà", "Tại nhà", "Ngoài quán", "Kết hợp", "BV", "người bệnh", "bếp, lượng 1 suất"].includes(part)).join(" · ");
   return { title: name || title, labels };
 }

@@ -24,6 +24,9 @@ async function main() {
     const draft = structuredClone(PRIMARY_SCHOOL_DRAFT);
     draft.groups = [draft.groups[0]]; draft.days[0].meals = [draft.days[0].meals[0]];
     draft.days[0].meals[0].groupPortions = [{ groupId: draft.groups[0].id, headcount: null, mealRuleIds: [], dishes: [{ id: "rice-dish", label: "Cơm", recipeId: "rice-recipe", sourceKind: "catalog", ingredients: [{ foodId: "rice", quantityPerPortion: 60, unit: "g", basis: "edible_raw", edibleFraction: null, cookingYield: null }] }] }];
+    draft.groups[0].lifeStage = "child";
+    draft.groups[0].guidance = { notes: ["Lưu ý kiểm thử"], recommendations: ["Khuyến nghị kiểm thử"] };
+    draft.days[0].meals[0].groupPortions[0].dishes[0].preparation = { method: "simmer", texture: "regular", steps: ["Bước kiểm thử"], notes: ["Lưu ý kiểm thử"] };
     const rice: NutritionFood = { id: "rice", name: "Gạo kiểm thử", unit: "g", wastePercent: null, foodGroup: null, source: { kind: "catalog", label: "RNI", confirmed: true }, nutrients: { energyKcal: 360, proteinG: null, lipidG: 1, glucidG: 80 } };
     const analysis = analyzeLibraryDraft(draft, [rice]);
     const inputs = () => [...document.querySelectorAll("input")];

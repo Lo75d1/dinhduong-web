@@ -1,4 +1,23 @@
 .workspace { color: var(--ink); display: grid; gap: 20px; }
+.dailyToolbar[hidden] { display: none; }
+.dailyToolbar { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; padding: 16px 0 20px; }
+.dailyToolbar label, .dayChoice label { display: grid; gap: 6px; min-width: 0; font-size: 15px; color: var(--muted); }
+.dailyToolbar input, .dailyToolbar select, .dayChoice select { width: 100%; min-height: 44px; padding: 8px 10px; background: white; border: 1px solid var(--control-line); border-radius: 5px; color: var(--ink); font-size: 16px; }
+.dailySearch { grid-column: 1 / -1; }
+.filterActions { display: flex; align-items: end; gap: 16px; }
+.filterActions button { min-height: 44px; color: var(--brand); text-decoration: underline; text-underline-offset: 4px; }
+.dayList { list-style: none; padding: 0; }
+.dayRow { display: grid; grid-template-columns: minmax(180px,1fr) minmax(250px,1.6fr) minmax(170px,.7fr); gap: 24px; padding: 20px 0; border-bottom: 1px solid var(--line); }
+.dayIdentity h3 { font-size: 19px; font-weight: 700; line-height: 1.35; }
+.dayIdentity p { font-size: 15px; color: var(--muted); margin-top: 6px; }
+.dayMeals { min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+.dayMeals ul { margin-top: 6px; display: grid; gap: 4px; }
+.dayMeals li span { font-weight: 600; }
+.dayChoice { display: flex; flex-direction: column; gap: 12px; justify-content: center; min-width: 0; font-variant-numeric: tabular-nums; }
+.dayChoice button { min-height: 44px; background: var(--ink); color: white; border-radius: 5px; padding: 8px 16px; }
+.dayChoice button:disabled { background: var(--surface-soft); color: var(--muted); cursor: not-allowed; }
+@media(max-width:900px) { .dailyToolbar { grid-template-columns: repeat(2,minmax(0,1fr)); } .dayRow { grid-template-columns: minmax(0,1fr) minmax(150px,.6fr); gap: 16px; } .dayIdentity { grid-column: 1 / -1; } }
+@media(max-width:540px) { .dayRow { grid-template-columns: minmax(0,1fr); gap: 14px; } .dayChoice { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; } .dayChoice label { flex: 1; min-width: 150px; } .dayChoice button { flex-shrink: 0; } }
 .header { position: relative; }
 .breadcrumb { display: inline-flex; align-items: center; min-height: 36px; color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
 .header h1 { margin-top: 8px; padding-right: 160px; font-size: 28px; line-height: 1.2; font-weight: 700; }
@@ -77,3 +96,7 @@
   .open { grid-column: 2; grid-row: 1 / span 4; align-self: stretch; min-width: 52px; }
   .empty { padding: 24px 0; }
 }
+
+.sectionTabs {display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.sectionTabs button {padding:10px 20px;border:1px solid #d1dad7;border-radius:8px;background:#fff;color:#263b36;font:inherit;cursor:pointer}
+.sectionTabs button[aria-pressed="true"] {background:#174c40;color:#fff;border-color:#174c40}

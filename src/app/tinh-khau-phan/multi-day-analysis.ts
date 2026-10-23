@@ -212,7 +212,7 @@ function numberFromProfile(value: string) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function profileRecommendation(profile: Profile | null, rows: RecommendationRow[]) {
+export function profileRecommendation(profile: Profile | null, rows: RecommendationRow[]) {
   if (!profile) return { recommendation: null, baseRecommendation: null };
   const ageValue = numberFromProfile(profile.age);
   const ageYr = profile.ageUnit === "thang" ? ageValue / 12 : ageValue;

@@ -29,7 +29,10 @@
     "verify:nutrition-source": "tsx scripts/verify-nutrition-chat-source.ts",
     "preview:menu-library": "node scripts/build-menu-library-comparison.mjs",
     "preview:menu-clinical": "node scripts/build-clinical-menu-preview.mjs",
-    "test:menu-clinical-browser": "node scripts/test-clinical-menu-browser.mjs"
+    "test:menu-clinical-browser": "node scripts/test-clinical-menu-browser.mjs",
+    "test:menu-library-daily": "node --import tsx scripts/test-menu-library-daily.ts",
+    "test:menu-library-daily-ui": "node --import tsx scripts/test-menu-library-daily-ui.tsx",
+    "test:menu-library-content": "node --import tsx scripts/test-menu-library-content.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

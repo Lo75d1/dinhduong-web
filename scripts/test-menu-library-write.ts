@@ -163,6 +163,10 @@ async function main() {
     reviewDraft.days[0].meals = [reviewDraft.days[0].meals[0]];
     reviewDraft.days[0].meals[0].groupPortions = [reviewDraft.days[0].meals[0].groupPortions[0]];
     reviewDraft.days[0].meals[0].groupPortions[0].mealRuleIds = [];
+    reviewDraft.groups[0].lifeStage = "adult";
+    reviewDraft.groups[0].guidance = { notes: ["Lưu ý kiểm thử"], recommendations: ["Khuyến nghị kiểm thử"] };
+    for (const dish of reviewDraft.days[0].meals[0].groupPortions[0].dishes) dish.preparation = { method: "steam", texture: "regular", steps: ["Bước chế biến kiểm thử"], notes: ["Lưu ý kiểm thử"] };
+
     await app.saveMenuTemplate(actor, { content: reviewDraft, requestKey: "human-review-fixture", reason: "Test human review" });
     const reviewContext = { params: Promise.resolve({ id: reviewDraft.id }) };
     const previewArgs = { expectedRevision: 1 };
@@ -319,6 +323,24 @@ async function main() {
     }
     check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM foods'))[0].n === 2, "Canonical foods unchanged");
     check((await app.fixtureQuery<{ n: number }>('SELECT count(*)::int n FROM data_change_logs WHERE "entityType"=$1', ["MENU_LIBRARY_GRANT"]))[0].n >= 5, "Grant and revoke audit persists");
+    const fractional = structuredClone(populated); fractional.id = "new-fraction"; fractional.version = 1;
+    fractional.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion = .25;
+    await fail(() => app.saveMenuTemplate(actor, { content: fractional, requestKey: "new-fraction", reason: "Fixture" }), 422);
+    const legacyAmount = structuredClone(populated); legacyAmount.id = "legacy-amount"; legacyAmount.version = 1;
+    await app.saveMenuTemplate(actor, { content: legacyAmount, requestKey: "legacy-amount", reason: "Fixture" });
+    legacyAmount.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion = .25;
+    await app.fixtureQuery('UPDATE menu_library_templates SET document=$1::jsonb WHERE id=$2', [JSON.stringify(legacyAmount), legacyAmount.id]);
+    const retained = structuredClone(legacyAmount); retained.version = 2;
+    await app.saveMenuTemplate(actor, { content: retained, expectedRevision: 1, requestKey: "legacy-retain", reason: "Retain source fraction" }, retained.id);
+    const fractionalEdit = structuredClone(retained); fractionalEdit.version = 3; fractionalEdit.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion = .4;
+    await fail(() => app.saveMenuTemplate(actor, { content: fractionalEdit, expectedRevision: 2, requestKey: "fraction-edit", reason: "Fixture" }, retained.id), 422);
+    const archived = structuredClone(retained); archived.version = 3; archived.availability = { state: "archived", reason: "Rà nội dung kiểm thử" };
+    await app.saveMenuTemplate(actor, { content: archived, expectedRevision: 2, requestKey: "archive-fixture", reason: "Archive fixture" }, retained.id);
+    check((await app.getMenuTemplate(actor, retained.id)).content.availability?.state === "archived", "Archive persists a reversible state without deleting the source");
+    const restored = structuredClone(archived); restored.version = 4; restored.availability = { state: "active", reason: null };
+    await app.saveMenuTemplate(actor, { content: restored, expectedRevision: 3, requestKey: "restore-fixture", reason: "Restore fixture" }, retained.id);
+    const restoredSource = await app.getMenuTemplate(actor, retained.id);
+    check(restoredSource.history.length === 4 && restoredSource.content.availability?.state === "active" && restoredSource.content.days[0].meals[0].groupPortions[0].dishes[0].ingredients[0].quantityPerPortion === .25, "Restore preserves source quantity and the full version history");
     console.log(`Menu library writes: ${checks} migration, validation, persistence, idempotency, CSRF, OAuth family, MCP and revocation checks passed (PGlite/session fixture; no production data).`);
   } finally {
     if (api) await api.closeOAuthFixture();

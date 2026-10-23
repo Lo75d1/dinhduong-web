@@ -1,5 +1,25 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Ba kho, hướng dẫn chế biến và phần trăm khuyến nghị — 23/10/2026
+
+- Bản sửa cục bộ trên `codex/menu-library-restructure-local`: Cá thể / Tập thể / Bệnh viện; bệnh viện có hai vai trò. Nhóm tuổi là bộ lọc dùng chung; nguồn cũ chưa khai nhãn hiện Chưa phân loại. Kho vẫn chọn một ngày, kcal là thuộc tính. Tạm dừng bổ sung nội dung bệnh viện.
+- Hợp đồng nháp1.2 tương thích1.0/1.1: lưu preparation theo món, guidance/lifeStage/ageMonths/recommendationProfile theo nhóm, availability ngừng dùng có lý do. Editor và bản xem có đủ trường; thiếu nội dung sử dụng chặn duyệt mới. Không hủy duyệt cũ, không DELETE hoặc tự sửa/ngừng dùng thực đơn thật. Lưu/khôi phục có version guard và lịch sử. Máy chủ cũng chặn lượng lẻ mới/đổi; giữ lượng lẻ nguồn cũ.
+- Đối chiếu dùng lại bảng KhuyenNghi và bộ khớp Profile hiện có, không tạo trị số nhu cầu mới. Giữ snapshot dòng khớp và dòng nền sinh lý trong kết quả duyệt. Hiện tổng hiện có, mốc ngày và% cho cả cá thể/tập thể; tổng từng phần vẫn hiện% kèm*, không lấy100% làm điều kiện duyệt. Mốc tối đa ghi%giới hạn; khoảng P/L/G giữ theo%năng lượng, kcal thiết kế tách khỏi nhu cầu theo hồ sơ.
+- Kiểm tra đạt:165 nguồn/quyền,287 ghi/CSRF/OAuth/PGlite,26 UI cũ,14 phân tích, SQL danh mục ngày, DOM luồng mới và schema/nội dung/khớp khuyến nghị/tổng từng phần. Bộ19 script Nutrition Chat đạt. TypeScript và ESLint tệp sửa đạt. Dữ liệu tổng hợp/fixture; không chứng minh tính phù hợp lâm sàng của82 mẫu thật.
+- Build: biên dịch thành công, TypeScript/tạo86 trang thành công, nhưng `npm run build` kết thúc mã1 do SecurityFatalError của phiên bản Next16.4.0 hiện có; đã thử lại, không báo build phát hành đạt. Một lượt thử lại gặp cache persistence invalid digit; xóa output sinh ra và dựng lại vẫn bị bước bảo mật chặn. Không đổi dependencies hoặc tắt kiểm tra bảo mật trong phạm vi này.
+- Kiểm tra rộng `test:multi-day` có kỳ vọng cũ null trong khi hàm cộng phần đã biết trả600. Đã chạy cùng kiểm tra với module ở baseline bằng bundle riêng và tái hiện đúng lỗi600!==null. Thay đổi module chỉ export bộ khớp hồ sơ; không đổi logic tổng. Không sửa test/logic ngoài phạm vi để làm xanh.
+- **Chưa push/deploy; website chưa thay đổi.** Automatic approval review trước đó từ chối đẩy lên GitHub công khai vì chưa có ủy quyền cụ thể. Không vòng qua API ghi khác. Git worktree cũ mất thư mục gốc trong lượt làm việc; đã khôi phục checkpoint cục bộ từ cây nguồn và patch đã giữ, không tuyên bố các commit checkpoint là lịch sử upstream. Bản vá so với cây nguồn trước thay đổi được giữ để xem.
+- Tác vụ tự động xây kho không truy cập được bằng ID đã có; tra danh sách hiện tại không thấy tác vụ phù hợp. Kế hoạch đã đổi ưu tiên trong tệp, nhưng chưa cập nhật được tác vụ; không tự tạo trùng hoặc hứa lịch sẽ chạy. Chi tiết mô hình và giới hạn: `docs/design/menu-library-daily-selection.md`.
+
+
+## Chọn thực đơn theo ngày và lượng cân mẻ — 23/10/2026
+
+- Nhánh `codex/menu-library-daily-catalog` dựa trên `8d8cfc1` của nhánh UI đang triển khai. Kho chuyển sang danh mục theo ngày, tìm tên/món/đơn vị/chế độ và lọc ở PostgreSQL trước phân trang; bữa phục vụ một phần ngày giữ nguyên. Chọn nhóm trước mở; liên kết giữ template/day/group và báo lỗi khi ngày/nhóm đã bỏ.
+- Lượng sửa mới dùng bước1g/ml; lượng lẻ bản cũ giữ nguyên, không nâng thành1g hoặc giả0. Mẻ nấu nhập số suất, nhân trước rồi làm tròn lượng cân đến1g/ml; 0,25g×100=25g. Không thay số gốc dùng phân tích, không ghi số suất vào mẫu hoặc chốt mua/hao hụt.
+- Kiểm tra SQL thật trên PGlite, DOM cho danh mục/ngày/nhóm/liên kết/mẻ/giữ nguồn; hồi quy nguồn/quyền và biên tập cũ. Chi tiết tại `docs/design/menu-library-daily-selection.md`. Không migration, không sửa Food/Dish, không viết lại48nháp hay bản approved.
+- **Chưa deploy VPS.** Đã xem giao diện đang chạy qua Cloud Browser; preview local bị từ chối kết nối trong môi trường trình duyệt, chưa có nghiệm thu ảnh desktop/mobile của bản mới.
+
+
 ## Giảm phủ xanh và làm gọn kho mẫu — 21/10/2026
 
 - Sau phản hồi ảnh VPS, đã sửa nền trắng ấm/chữ xám than/viền xám, giữ xanh cho nhận diện và hành động, thêm cam đất ở icon/nhãn. Kho mẫu bỏ nhãn đầu và hai nút lớn; trợ giúp chứa ủy quyền/tài liệu, bộ lọc mobile hai hàng. Menu/avatar và tiêu đề các màn liên quan trung tính, giữ Times.

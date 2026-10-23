@@ -4,6 +4,7 @@ import type { MenuLibraryDraft } from "@/lib/menu-library/contracts";
 import { eatingContextLabel } from "@/lib/menu-library/contracts";
 import type { LibraryAnalysis } from "@/lib/menu-library/analysis";
 import { menuTitleParts } from "@/lib/menu-library/presentation";
+import { hasReferenceProfileInputs } from "@/lib/menu-library/content-policy";
 import MealSheet, { NutritionSummary } from "./MealSheet";
 import TemplateEditor from "./TemplateEditor";
 import TemplateReview, { AnalysisReport as DraftAnalysis, type ReviewRecord } from "./TemplateReview";
@@ -33,8 +34,8 @@ function Scope({ content, dayId, groupId, setDayId, setGroupId }: { content: Men
   </div><span className={styles.scopeNote}>Định lượng cho 1 suất</span></div>;
 }
 
-export default function TemplateWorkspace({ data, onReload, onDirty }: { data: OpenedTemplate; onReload: () => void; onDirty: (dirty: boolean) => void }) {
-  const [dayId, setDayId] = useState(data.content.days[0]?.id ?? ""), [groupId, setGroupId] = useState(data.content.groups[0]?.id ?? "");
+export default function TemplateWorkspace({ data, onReload, onDirty, initialDayId, initialGroupId, onScopeChange }: { data: OpenedTemplate; onReload: () => void; onDirty: (dirty: boolean) => void; initialDayId?: string; initialGroupId?: string; onScopeChange?: (scope: { dayId: string; groupId: string }) => void }) {
+  const [dayId, setDayId] = useState(data.content.days.find(day => day.id === initialDayId)?.id ?? data.content.days[0]?.id ?? ""), [groupId, setGroupId] = useState(data.content.groups.find(group => group.id === initialGroupId)?.id ?? data.content.groups[0]?.id ?? "");
   const [editing, setEditing] = useState(false), [mealId, setMealId] = useState("");
   const [workingDraft, setWorkingDraft] = useState(data.content), [refresh, setRefresh] = useState(0);
   const [result, setResult] = useState<{ key: string; value: LibraryAnalysis | null; error: string }>({ key: "", value: null, error: "" });
@@ -50,6 +51,7 @@ export default function TemplateWorkspace({ data, onReload, onDirty }: { data: O
     if (!data.csrf) return;
     const abort = new AbortController();
     const timeout = window.setTimeout(async () => {
+      if (draft.groups.some(group => !hasReferenceProfileInputs(group.recommendationProfile))) { setResult({ key: requestKey, value: null, error: "Chọn đủ tuổi, đơn vị tuổi, giới, vận động và tình trạng sinh lý để đối chiếu khuyến nghị." }); return; }
       const valid = draft.title.trim() && draft.groups.every(group => group.designEnergyKcal == null || Number.isFinite(group.designEnergyKcal) && group.designEnergyKcal > 0) && draft.days.every(day => day.meals.every(meal => meal.groupPortions.every(portion => portion.dishes.every(dish => dish.label.trim() && dish.ingredients.every(ingredient => Number.isFinite(ingredient.quantityPerPortion) && ingredient.quantityPerPortion >= 0)))));
       if (!valid) { setResult({ key: requestKey, value: null, error: "Nhập tên món và định lượng hợp lệ để tiếp tục tính." }); return; }
       try {
@@ -68,8 +70,9 @@ export default function TemplateWorkspace({ data, onReload, onDirty }: { data: O
   function cancel() { setEditing(false); setWorkingDraft(data.content); onDirty(false); }
   return <section className={styles.workspace} aria-label="Biên soạn và duyệt thực đơn">
     <div ref={heading}><Heading data={data} action={!editing && data.csrf ? <button type="button" className={styles.action} onClick={() => edit()}>Chỉnh khẩu phần</button> : undefined} /></div>
-    <Scope content={draft} dayId={dayId} groupId={groupId} setDayId={id => { setDayId(id); setMealId(""); }} setGroupId={setGroupId} />
-    <NutritionSummary section={section} pending={pending} error={current ? result.error : undefined} editing={editing} />
+    <Scope content={draft} dayId={dayId} groupId={groupId} setDayId={id => { setDayId(id); setMealId(""); onScopeChange?.({ dayId: id, groupId }); }} setGroupId={id => { setGroupId(id); onScopeChange?.({ dayId, groupId: id }); }} />
+    {draft.availability?.state === "archived" && <p role="status" className={styles.dataNotice}>Ngừng dùng · {draft.availability.reason}. Mở phần chỉnh sửa để khôi phục.</p>}
+    <NutritionSummary section={section} pending={pending} error={current ? result.error : undefined} editing={editing} collective={draft.direction === "collective"} />
     {current && result.error && <button type="button" className={styles.textButton} onClick={() => setRefresh(value => value + 1)}>Thử tính lại</button>}
     {editing && data.csrf ? <>
       <div className={styles.contextBar}><label>Chỉnh bữa <select aria-label="Bữa cần chỉnh" value={mealId} onChange={event => setMealId(event.target.value)} className={styles.control}><option value="">Tất cả bữa</option>{draft.days.find(day => day.id === dayId)?.meals.map(meal => <option key={meal.id} value={meal.id}>{meal.label}</option>)}</select></label></div>

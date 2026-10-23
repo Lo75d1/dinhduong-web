@@ -1,8 +1,8 @@
 import { EATING_CONTEXT_OPTIONS, PRIMARY_SCHOOL_DRAFT } from "./contracts";
 import type { MealCode } from "./contracts";
 
-export const LIBRARY_VERSION = "1.3.0";
-export const LIBRARY_UPDATED_AT = "2026-10-22";
+export const LIBRARY_VERSION = "1.5.0";
+export const LIBRARY_UPDATED_AT = "2026-10-23";
 export const LIBRARY_PATH = "/quan-tri/kho-thuc-don";
 export const LIBRARY_API_PATH = "/api/admin/menu-library";
 
@@ -119,10 +119,10 @@ export const MEAL_REFERENCE_RULES: readonly MealReferenceRule[] = [
 ];
 
 export const CLASSIFICATION = [
-  { branch: "Tập thể", type: "Trường học", groups: "Nhà trẻ; mẫu giáo; tiểu học; THCS; THPT. Một đơn vị có thể có nhiều cấp và nhiều nhóm tuổi.", basis: "Tuổi thực tế, chương trình áp dụng, số suất theo từng bữa; không lấy một mức thấp/cao cho toàn trường." },
-  { branch: "Tập thể", type: "Doanh nghiệp / khu công nghiệp / cơ quan", groups: "Nhóm tuổi, giới, mức hoạt động, ca làm và chế độ ăn nếu có.", basis: "Chọn nhu cầu ngày có nguồn rồi chọn mục tiêu cho bữa phục vụ; tỷ lệ bữa ăn ca là tham khảo theo bối cảnh." },
-  { branch: "Tập thể", type: "Bếp bệnh viện", groups: "Nhóm chế độ ăn đã được chuyên môn xác nhận; số suất theo ngày và bữa.", basis: "Lưu mã chế độ, phiên bản nguồn, người duyệt; không tự suy đơn ăn từ tên bệnh." },
-  { branch: "Cá nhân", type: "Người ăn thông thường / người bệnh", groups: "Hồ sơ tuổi, giới, hoạt động; mục tiêu duy trì, tăng hoặc giảm cân; chế độ ăn là trường riêng.", basis: "Tập gym là thông tin hoạt động. Bệnh viện là bối cảnh, không phải một mục tiêu dinh dưỡng." },
+  { branch: "Cá thể", type: "Thực đơn cá thể", groups: "Ăn dặm; trẻ em; người lớn là bộ lọc dùng chung.", basis: "Chọn thực đơn ngày và mục tiêu kcal; không tạo nhánh tăng cân / giảm cân riêng." },
+  { branch: "Tập thể", type: "Trường học / doanh nghiệp / cơ quan / khác", groups: "Nhóm người ăn và các bữa thực tế phục vụ.", basis: "Hiện phần trăm đáp ứng mốc khuyến nghị ngày có nguồn; thiếu nguồn hoặc dữ liệu giữ chưa xác định." },
+  { branch: "Bệnh viện", type: "Khuyến nghị cho người bệnh", groups: "Một người, một ngày; chế độ theo chỉ định đã xác nhận.", basis: "Tạm dừng bổ sung nội dung bệnh viện; giữ nháp và lịch sử để rà." },
+  { branch: "Bệnh viện", type: "Bếp bệnh viện", groups: "Nhóm chế độ ăn và số suất thực tế từng bữa.", basis: "Tách vai trò bếp khỏi hướng dẫn người bệnh; chưa tự quy thành đơn điều trị." },
 ] as const;
 
 export function menuLibraryCatalog() {
@@ -130,8 +130,8 @@ export function menuLibraryCatalog() {
     schemaVersion: LIBRARY_VERSION, updatedAt: LIBRARY_UPDATED_AT, access: "ADMIN_SESSION_ONLY",
     capabilities: { readGuidance: true, readSources: true, copyAiInstructions: true, persistTemplates: true, delegateAiDrafts: true, collectiveCalculation: false, collectiveShoppingExport: false, automaticClinicalPrescription: false },
     classification: CLASSIFICATION, eatingContexts: EATING_CONTEXT_OPTIONS, sources: REFERENCE_SOURCES, mealRules: MEAL_REFERENCE_RULES,
-    contract: { name: "MenuLibraryDraft", schemaVersion: "1.1.0", supportedSchemaVersions: ["1.0.0", "1.1.0"], file: "src/lib/menu-library/contracts.ts", compatibleWithNutritionChatMenuInput: false, purpose: "Lưu nháp bằng /api/admin/menu-library/templates hoặc công cụ save_admin_menu_template. Chỉ nhận status=draft; không thay cho tính dinh dưỡng." },
+    contract: { name: "MenuLibraryDraft", schemaVersion: "1.2.0", supportedSchemaVersions: ["1.0.0", "1.1.0", "1.2.0"], file: "src/lib/menu-library/contracts.ts", compatibleWithNutritionChatMenuInput: false, purpose: "Lưu nháp bằng /api/admin/menu-library/templates hoặc công cụ save_admin_menu_template. Chỉ nhận status=draft; không thay cho tính dinh dưỡng." },
     example: PRIMARY_SCHOOL_DRAFT,
-    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Thêm sửa tay, phân tích một suất từng nhóm và duyệt bởi Admin theo phiên bản; giữ lịch sử và phân tích khi duyệt." }, { version: "1.2.0", date: "2026-10-22", change: "Thêm bối cảnh ăn uống và hướng dẫn cấu trúc bữa cơm." }, { version: "1.1.0", date: "2026-10-21", change: "Lưu nháp có phiên bản và ủy quyền AI theo phiên OAuth." }, { version: "1.0.0", date: "2026-10-21", change: "Khởi tạo danh mục căn cứ và hướng dẫn nội bộ." }],
+    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Ba kho Cá thể/Tập thể/Bệnh viện; bộ lọc nhóm tuổi dùng chung; cách chế biến, kết cấu, lưu ý và khuyến nghị; ngừng dùng có lý do và tỷ lệ đáp ứng có nguồn." }, { version: "1.4.0", date: "2026-10-23", change: "Danh mục theo ngày, liên kết đúng ngày/nhóm, lượng nguồn chính xác và lượng cân mẻ theo bước 1 g/ml." }, { version: "1.3.0", date: "2026-10-22", change: "Thêm sửa tay, phân tích một suất từng nhóm và duyệt bởi Admin theo phiên bản; giữ lịch sử và phân tích khi duyệt." }, { version: "1.2.0", date: "2026-10-22", change: "Thêm bối cảnh ăn uống và hướng dẫn cấu trúc bữa cơm." }, { version: "1.1.0", date: "2026-10-21", change: "Lưu nháp có phiên bản và ủy quyền AI theo phiên OAuth." }, { version: "1.0.0", date: "2026-10-21", change: "Khởi tạo danh mục căn cứ và hướng dẫn nội bộ." }],
   };
 }
