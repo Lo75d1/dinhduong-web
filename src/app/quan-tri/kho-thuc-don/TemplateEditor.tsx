@@ -7,6 +7,7 @@ import { foodDisplayName } from "@/lib/menu-library/presentation";
 import { hasReferenceProfileInputs, librarySection, tidyInstructions } from "@/lib/menu-library/content-policy";
 import { changedFractionalQuantity } from "@/lib/menu-library/production";
 import styles from "./clinical.module.css";
+import MealIllustrationEditor from "./MealIllustrationEditor";
 
 function Lines({ label, value, onChange }: { label: string; value: string[]; onChange: (value: string[]) => void }) {
   return <label>{label}<textarea rows={3} maxLength={20000} className={styles.control} value={value.join("\n")} onChange={event => onChange(event.target.value.split(/\r?\n/))} /><small>Mỗi dòng một ý / bước. Tối đa 20 dòng, 1.000 ký tự mỗi dòng.</small></label>;
@@ -56,13 +57,14 @@ export default function TemplateEditor({ content, csrf, foods, onSaved, onCancel
   const [draft, setDraft] = useState(() => structuredClone(content)), [knownFoods, setKnownFoods] = useState(foods);
   const [reason, setReason] = useState(""), [error, setError] = useState(""), [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false);
   const [newMeal, setNewMeal] = useState<MealCode>("lunch");
+  const [imageUploading, setImageUploading] = useState(false);
   useEffect(() => { onDirty(dirty); return () => onDirty(false); }, [dirty, onDirty]);
   useEffect(() => { onDraftChange?.(tidyInstructions(draft)); }, [draft, onDraftChange]);
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !imageUploading) return;
     const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
     window.addEventListener("beforeunload", warn); return () => window.removeEventListener("beforeunload", warn);
-  }, [dirty]);
+  }, [dirty, imageUploading]);
   function change(update: (value: MenuLibraryDraft) => void) { setDraft(previous => { const next = structuredClone(previous); update(next); next.schemaVersion = "1.2.0"; return next; }); setDirty(true); setError(""); }
   function changeDish(di: number, mi: number, pi: number, si: number, update: (dish: Dish) => void) {
     change(value => { const dish = value.days[di].meals[mi].groupPortions[pi].dishes[si]; update(dish); dish.sourceKind = "manual"; dish.recipeId = null; });
@@ -79,6 +81,7 @@ export default function TemplateEditor({ content, csrf, foods, onSaved, onCancel
   }
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy || imageUploading) return;
     if (draft.groups.some(group => !hasReferenceProfileInputs(group.recommendationProfile))) { setError("Chọn đủ tuổi, đơn vị tuổi, giới, vận động và tình trạng sinh lý cho hồ sơ đối chiếu; hoặc bỏ hồ sơ khi chưa có dữ kiện."); return; }
     if (changedFractionalQuantity(content, draft)) { setError("Lượng mới dùng bước 1 g/ml. Cân chỉnh cả công thức; không tự nâng từng lượng gia vị lẻ lên 1 g."); return; }
     setBusy(true); onSaving?.(true); setError("");
@@ -95,7 +98,7 @@ export default function TemplateEditor({ content, csrf, foods, onSaved, onCancel
   }
   return <form onSubmit={save} className={styles.editor}>
     <div className={styles.editorIntro}><h3>Cân chỉnh khẩu phần</h3><p>Lượng mới dùng bước 1 g/ml. Lượng lẻ của bản cũ được giữ nguyên để cân chỉnh, không làm tròn âm thầm.</p></div>
-    <fieldset disabled={busy}>
+    <fieldset disabled={busy || imageUploading}>
       <details open className={styles.editorSettings}><summary>Thông tin thực đơn & mục tiêu năng lượng</summary>
         <label>Tên thực đơn<input required maxLength={200} className={styles.control} value={draft.title} onChange={event => change(value => { value.title = event.target.value; })} /></label>
         <label>Mô tả chung<textarea maxLength={1000} rows={2} className={styles.control} value={draft.description ?? ""} onChange={event => change(value => { value.description = event.target.value || null; })} /></label>
@@ -125,7 +128,7 @@ export default function TemplateEditor({ content, csrf, foods, onSaved, onCancel
         <label>Bữa mới<select className={styles.control} value={newMeal} onChange={event => setNewMeal(event.target.value as MealCode)}>{MEAL_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
         <button type="button" className={styles.secondary} disabled={(draft.days.find(day => day.id === dayId) ?? draft.days[0]).meals.length >= 8} onClick={() => change(value => { const day = value.days.find(day => day.id === dayId) ?? value.days[0]; day.meals.push({ id: `meal-${crypto.randomUUID()}`, code: newMeal, label: MEAL_OPTIONS.find(option => option.value === newMeal)!.label, groupPortions: value.groups.map(group => ({ groupId: group.id, headcount: null, mealRuleIds: [], dishes: [] })) }); })}>+ Thêm bữa vào ngày đang xem</button>
       </div>
-      {draft.days.map((day, di) => !dayId || day.id === dayId ? <div key={day.id}>{draft.days.length > 1 && <h3>Ngày {day.dayIndex}</h3>}{day.meals.map((meal, mi) => !mealId || meal.id === mealId ? <section key={meal.id} className={styles.editMeal}><h4>{meal.label}</h4>{meal.groupPortions.map((portion, pi) => !groupId || portion.groupId === groupId ? <div key={portion.groupId}>{!groupId && draft.groups.length > 1 && <p>{draft.groups.find(group => group.id === portion.groupId)?.label}</p>}{portion.dishes.map((dish, si) => <section key={dish.id} className={styles.editDish}>
+      {draft.days.map((day, di) => !dayId || day.id === dayId ? <div key={day.id}>{draft.days.length > 1 && <h3>Ngày {day.dayIndex}</h3>}{day.meals.map((meal, mi) => !mealId || meal.id === mealId ? <section key={meal.id} className={styles.editMeal}><h4>{meal.label}</h4>{meal.groupPortions.map((portion, pi) => !groupId || portion.groupId === groupId ? <div key={portion.groupId}>{!groupId && draft.groups.length > 1 && <p>{draft.groups.find(group => group.id === portion.groupId)?.label}</p>}<MealIllustrationEditor key={`${day.id}:${meal.id}:${portion.groupId}`} image={portion.illustration} label={`${meal.label} · Ngày ${day.dayIndex} · ${draft.groups.find(group => group.id === portion.groupId)?.label ?? ""}`} csrf={csrf} disabled={busy || imageUploading} onUploading={uploading => { setImageUploading(uploading); onSaving?.(uploading); }} onChange={image => change(value => { value.days[di].meals[mi].groupPortions[pi].illustration = image; })} />{portion.dishes.map((dish, si) => <section key={dish.id} className={styles.editDish}>
         <div className={styles.dishEditHeader}><label><span className="sr-only">Tên món</span><input required maxLength={200} value={dish.label} className={styles.control} onChange={event => changeDish(di, mi, pi, si, item => { item.label = event.target.value; })} /></label><button type="button" className={styles.remove} aria-label={`Xóa món ${dish.label}`} onClick={() => change(value => { value.days[di].meals[mi].groupPortions[pi].dishes.splice(si, 1); })}>Bỏ món</button></div>
         {dish.ingredients.map((ingredient, ii) => {
           const name = knownFoods.find(food => food.id === ingredient.foodId)?.name;

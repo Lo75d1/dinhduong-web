@@ -8,6 +8,7 @@ import { energyLabel, mealCountLabel, menuTags, type CatalogMenu, type MealSelec
 import type { MenuLibraryDraft } from "@/lib/menu-library/contracts";
 import { ingredientQuantity } from "@/lib/menu-library/production";
 import styles from "./manager.module.css";
+import MealIllustration from "./MealIllustration";
 export function ManagerDialog({
   title,
   children,
@@ -201,6 +202,7 @@ export function MealBlock({
     opacity: isDragging ? .4 : 1
   }}>
     <header><label className={styles.checkLabel}><input type="checkbox" checked={checked} onChange={onSelect} disabled={disabled} aria-label={`Chọn ${meal.label}, ${selection.title}, ngày ${selection.dayIndex}`} /><strong>{meal.label}</strong></label><button ref={setActivatorNodeRef} {...attributes} {...listeners} type="button" className={styles.dragHandle} aria-label={`Kéo ${meal.label} để sắp xếp hoặc sao chép`} disabled={disabled}><Icon name="menu" /></button></header>
+    <MealIllustration image={portion?.illustration} />
     <ul className={styles.dishList}>{portion?.dishes.length ? portion.dishes.map(dish => <li key={dish.id}>{dish.label}</li>) : <li className={styles.muted}>Chưa có món cho nhóm này</li>}</ul>
     <details className={styles.ingredients}><summary>Xem nguyên liệu &amp; cách nấu</summary>{portion?.dishes.map(dish => <div key={dish.id}><h4>{dish.label}</h4><ul>{dish.ingredients.map((ingredient, index) => <li key={index}><span>{foods.find(food => food.id === ingredient.foodId)?.name ?? "Chưa đọc được tên thực phẩm"}</span><b>{ingredientQuantity(ingredient.quantityPerPortion)} {ingredient.unit}</b></li>)}</ul>{!!dish.preparation?.steps.length && <ol>{dish.preparation.steps.map((step, index) => <li key={index}>{step}</li>)}</ol>}{dish.preparation?.notes.map((note, index) => <p key={index}>{note}</p>)}</div>)}</details>
   </section>;

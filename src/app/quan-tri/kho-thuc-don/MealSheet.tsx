@@ -7,6 +7,7 @@ import type { LibraryAnalysis } from "@/lib/menu-library/analysis";
 import { clinicalNumber, foodDisplayName } from "@/lib/menu-library/presentation";
 import { ingredientQuantity, productionAmount } from "@/lib/menu-library/production";
 import styles from "./clinical.module.css";
+import MealIllustration from "./MealIllustration";
 
 export type AnalysisSection = LibraryAnalysis["sections"][number];
 type Day = MenuLibraryDraft["days"][number];
@@ -38,6 +39,7 @@ export default function MealSheet({ content, day, groupId, foods, section, pendi
       return <section key={meal.id} className={styles.meal} aria-label={`Bữa ${meal.label}`}>
         <header className={styles.mealHeader}><div><span className={styles.mealIndex}>{String(index + 1).padStart(2, "0")}</span><h4>{meal.label}</h4><span className={styles.mealContext}>{eatingContextLabel(mealEatingContext(content.eatingContext, meal.eatingContext))}</span></div><div><span className={styles.mealEnergy}>{pending ? "Đang tính…" : energy?.value != null ? `${clinicalNumber(energy.value)} kcal${energy.incomplete ? " · chưa đủ dữ liệu" : ""}` : "— kcal"}</span>{onEdit && <button type="button" className={styles.textButton} onClick={() => onEdit(meal.id)}>Chỉnh bữa</button>}</div></header>
         {!portion && <p className={styles.empty}>Bữa này chưa có khẩu phần cho nhóm đã chọn.</p>}
+        <MealIllustration image={portion?.illustration} />
         {portion && !portion.dishes.length && <p className={styles.empty}>Chưa có món.</p>}
         {!!portion?.dishes.length && <table className={styles.foodTable}><caption className="sr-only">Món ăn và nguyên liệu bữa {meal.label}, {mode === "batch" ? n === null ? "chưa nhập số suất nấu" : `mẻ ${n} suất` : "một suất"}</caption><colgroup><col className={styles.dishColumn} /><col /><col className={styles.amountColumn} /></colgroup><thead><tr><th scope="col">Món ăn</th><th scope="col">Thực phẩm</th><th scope="col">{mode === "batch" ? "Lượng mẻ" : "Lượng / suất"}</th></tr></thead>{portion.dishes.map(dish => <tbody key={dish.id}>
           {dish.ingredients.length ? dish.ingredients.map((ingredient, ii) => {

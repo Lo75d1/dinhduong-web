@@ -1,7 +1,7 @@
 import { EATING_CONTEXT_OPTIONS, PRIMARY_SCHOOL_DRAFT } from "./contracts";
 import type { MealCode } from "./contracts";
 
-export const LIBRARY_VERSION = "1.5.0";
+export const LIBRARY_VERSION = "1.6.0";
 export const LIBRARY_UPDATED_AT = "2026-10-23";
 export const LIBRARY_PATH = "/quan-tri/kho-thuc-don";
 export const LIBRARY_API_PATH = "/api/admin/menu-library";
@@ -128,10 +128,10 @@ export const CLASSIFICATION = [
 export function menuLibraryCatalog() {
   return {
     schemaVersion: LIBRARY_VERSION, updatedAt: LIBRARY_UPDATED_AT, access: "ADMIN_SESSION_ONLY",
-    capabilities: { readGuidance: true, readSources: true, copyAiInstructions: true, persistTemplates: true, delegateAiDrafts: true, collectiveCalculation: false, collectiveShoppingExport: false, automaticClinicalPrescription: false },
+    capabilities: { readGuidance: true, readSources: true, copyAiInstructions: true, persistTemplates: true, delegateAiDrafts: true, uploadMealIllustrations: true, collectiveCalculation: false, collectiveShoppingExport: false, automaticClinicalPrescription: false },
     classification: CLASSIFICATION, eatingContexts: EATING_CONTEXT_OPTIONS, sources: REFERENCE_SOURCES, mealRules: MEAL_REFERENCE_RULES,
     contract: { name: "MenuLibraryDraft", schemaVersion: "1.2.0", supportedSchemaVersions: ["1.0.0", "1.1.0", "1.2.0"], file: "src/lib/menu-library/contracts.ts", compatibleWithNutritionChatMenuInput: false, purpose: "Lưu nháp bằng /api/admin/menu-library/templates hoặc công cụ save_admin_menu_template. Chỉ nhận status=draft; không thay cho tính dinh dưỡng." },
     example: PRIMARY_SCHOOL_DRAFT,
-    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Ba kho Cá thể/Tập thể/Bệnh viện; bộ lọc nhóm tuổi dùng chung; cách chế biến, kết cấu, lưu ý và khuyến nghị; ngừng dùng có lý do và tỷ lệ đáp ứng có nguồn." }, { version: "1.4.0", date: "2026-10-23", change: "Danh mục theo ngày, liên kết đúng ngày/nhóm, lượng nguồn chính xác và lượng cân mẻ theo bước 1 g/ml." }, { version: "1.3.0", date: "2026-10-22", change: "Thêm sửa tay, phân tích một suất từng nhóm và duyệt bởi Admin theo phiên bản; giữ lịch sử và phân tích khi duyệt." }, { version: "1.2.0", date: "2026-10-22", change: "Thêm bối cảnh ăn uống và hướng dẫn cấu trúc bữa cơm." }, { version: "1.1.0", date: "2026-10-21", change: "Lưu nháp có phiên bản và ủy quyền AI theo phiên OAuth." }, { version: "1.0.0", date: "2026-10-21", change: "Khởi tạo danh mục căn cứ và hướng dẫn nội bộ." }],
+    history: [{ version: LIBRARY_VERSION, date: LIBRARY_UPDATED_AT, change: "Ảnh minh hoạ riêng từng bữa / nhóm ăn; tải thủ công và qua AI; giữ ảnh khi sao chép bữa và lưu phiên bản." }, { version: "1.5.0", date: "2026-10-23", change: "Ba kho Cá thể/Tập thể/Bệnh viện; bộ lọc nhóm tuổi dùng chung; cách chế biến, kết cấu, lưu ý và khuyến nghị; ngừng dùng có lý do và tỷ lệ đáp ứng có nguồn." }, { version: "1.4.0", date: "2026-10-23", change: "Danh mục theo ngày, liên kết đúng ngày/nhóm, lượng nguồn chính xác và lượng cân mẻ theo bước 1 g/ml." }, { version: "1.3.0", date: "2026-10-22", change: "Thêm sửa tay, phân tích một suất từng nhóm và duyệt bởi Admin theo phiên bản; giữ lịch sử và phân tích khi duyệt." }, { version: "1.2.0", date: "2026-10-22", change: "Thêm bối cảnh ăn uống và hướng dẫn cấu trúc bữa cơm." }, { version: "1.1.0", date: "2026-10-21", change: "Lưu nháp có phiên bản và ủy quyền AI theo phiên OAuth." }, { version: "1.0.0", date: "2026-10-21", change: "Khởi tạo danh mục căn cứ và hướng dẫn nội bộ." }],
   };
 }

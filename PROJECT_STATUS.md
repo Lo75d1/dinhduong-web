@@ -1,5 +1,13 @@
 # Trạng thái dự án — Web Dinh Dưỡng Việt Nam
 
+## Ảnh minh hoạ cho từng bữa ăn — 23/10/2026
+
+- Tải/kéo ảnh thủ công trong Chỉnh bữa, xem trước, mô tả ảnh, thay/bỏ ảnh; ảnh hiển thị ở xem nhanh và phiếu thực đơn của đúng ngày/bữa/nhóm. Thêm công cụ AI `upload_admin_menu_image`, REST multipart/JSON và đường dẫn ảnh bền vững. AI tạo ảnh bằng công cụ của nền tảng rồi tải tệp kết quả lên; không giả URL hoặc gắn ảnh đối chứng bếp.
+- Nháp giữ tham chiếu ảnh tùy chọn, tương thích bản cũ. Sao chép/chuyển bữa giữ ảnh của đúng khẩu phần. Sửa tạo phiên bản mới, ảnh cũ còn cho lịch sử. Kiểm tra Admin/CSRF/OAuth ủy quyền ghi, chống lặp/xung đột, audit; giải mã/giới hạn ảnh và mã hoá lại WebP, bỏ metadata. Ảnh có URL công khai, không nhận URL bên ngoài. Named volume Docker riêng `menu_library_images` giữ tệp qua cập nhật; không cần Supabase hoặc migration.
+- Kiểm tra: 37 route/SQL/tệp ảnh và 20 DOM mới; hồi quy manager 61 API/SQL + 53 DOM, ghi/quyền 287, nguồn/hướng dẫn 165 và HTTP REST/MCP 461. TypeScript, ESLint tệp thay đổi và diff check đạt. Build Webpack và Turbopack mặc định đã thành công; đã xử lý cache Turbopack hỏng và tách dữ liệu ảnh khỏi truy vết build. Phiên bản Next 16.4.0 đang dùng vẫn phát cảnh báo bảo mật; không đổi phiên bản hay tắt kiểm tra trong tính năng này.
+- Chưa deploy VPS, chưa tạo/tải ảnh vào kho thật và chưa nghiệm thu responsive/cảm ứng trên thiết bị thật. Sau deploy cần làm mới danh mục công cụ AI để thấy công cụ tải ảnh. Xem `docs/menu-library/illustrations-2026-10-23.md`.
+
+
 ## Kho thực đơn: thao tác nhiều mục và kéo thả — 23/10/2026
 
 - Danh mục quản trị dùng thẻ theo bộ thực đơn; số đếm không còn nhân theo ngày. Xem nhanh cạnh danh mục, chọn ngày/nhóm, xem món/nguyên liệu/cách chế biến. Ba kho Cá thể / Tập thể / Bệnh viện; hai mục bệnh viện là Thực đơn bệnh lý và Suất ăn bệnh lý. Các nhãn còn lại hiển thị dạng hashtag, bỏ dàn bộ lọc và nhãn Đủ ngày.

@@ -13,6 +13,7 @@ import { EATING_CONTEXT_OPTIONS } from "./contracts";
 import { menuListMetadata } from "./list-metadata";
 import { menuConnectionCode } from "./connection";
 import { changedFractionalQuantity } from "./production";
+import { assertIllustrationsExist } from "./image-storage";
 
 type Tx = Prisma.TransactionClient;
 export type MenuActor = { userId: string; clientId: string | null; familyId: string | null; via: "session" | "oauth" };
@@ -104,6 +105,7 @@ export async function getMenuTemplate(actor: MenuActor, id: string) {
   return { template: summary({ id: item.id, title: item.title, direction: item.direction, revision: item.revision, createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt }), content: draft, foods, history, reviews, currentReview, ...(actor.via === "session" ? { csrf: connectionCsrf(actor.userId) } : {}), warnings };
 }
 export async function checkCatalogIds(tx: Tx, draft: MenuLibraryDraft) {
+  await assertIllustrationsExist(draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.illustration ? [portion.illustration] : []))));
   const dishes = draft.days.flatMap(day => day.meals.flatMap(meal => meal.groupPortions.flatMap(portion => portion.dishes)));
   const ingredients = dishes.flatMap(dish => dish.ingredients), foodIds = [...new Set(ingredients.map(item => item.foodId))], recipeIds = [...new Set(dishes.flatMap(dish => dish.recipeId ? [dish.recipeId] : []))];
   const foods = foodIds.length ? await tx.food.findMany({ where: { id: { in: foodIds } }, select: { id: true, unit: true } }) : [];

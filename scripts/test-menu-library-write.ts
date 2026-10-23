@@ -236,7 +236,7 @@ async function main() {
     await fail(() => app.executeAdminMenuTool("list_admin_menu_templates", {}, identity), 403);
     const initialTools = await toolList();
     const adminDefinitions = initialTools.filter((tool: { name: string }) => app.isAdminMenuTool(tool.name));
-    check(adminDefinitions.length === 4 && adminDefinitions.every((tool: { securitySchemes: { type: string; scopes: string[] }[] }) => tool.securitySchemes[0].type === "oauth2" && tool.securitySchemes[0].scopes.includes("nutrition:read")), "Initial anonymous scan includes four OAuth-protected definitions");
+    check(adminDefinitions.length === 5 && adminDefinitions.every((tool: { securitySchemes: { type: string; scopes: string[] }[] }) => tool.securitySchemes[0].type === "oauth2" && tool.securitySchemes[0].scopes.includes("nutrition:read")), "Initial anonymous scan includes five OAuth-protected definitions");
     check(!JSON.stringify(adminDefinitions).includes(original.title) && !JSON.stringify(adminDefinitions).includes(ai.familyId), "Public definitions contain no saved data or connection identity");
     const initialCatalog = JSON.stringify(initialTools);
     check(JSON.stringify(await toolList(ai.headers)) === initialCatalog, "Admin sees the same catalog before delegation");

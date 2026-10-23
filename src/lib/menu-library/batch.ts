@@ -162,6 +162,7 @@ export function applyBatchOperation(originals: Map<string, MenuLibraryDraft>, op
           eatingContext: context,
           groupPortions: [{
             groupId: target.groupId,
+            ...(portion.illustration ? { illustration: structuredClone(portion.illustration) } : {}),
             headcount: null,
             mealRuleIds: [],
             dishes: portion.dishes.map(dish => ({

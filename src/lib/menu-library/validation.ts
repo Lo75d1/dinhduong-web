@@ -3,6 +3,7 @@ import { contentReadiness, librarySection, hospitalUse } from "./content-policy"
 import { MEAL_REFERENCE_RULES, REFERENCE_SOURCES } from "./catalog";
 import { ALL_NUTRIENT_FIELDS } from "@/lib/nutrient-fields";
 import { NutritionInputError, parseNutritionProfile } from "@/lib/nutrition-chat/validation";
+import { MENU_IMAGE_ID_PATTERN } from "./illustration";
 
 type Schema = { type?: string; enum?: readonly unknown[]; properties?: Record<string, Schema>; required?: string[]; additionalProperties?: false; items?: Schema; minItems?: number; maxItems?: number; minLength?: number; maxLength?: number; pattern?: string; minimum?: number; maximum?: number; exclusiveMinimum?: number; anyOf?: Schema[] };
 const text = (maxLength = 200): Schema => ({ type: "string", minLength: 1, maxLength });
@@ -44,11 +45,13 @@ export const MENU_LIBRARY_DRAFT_SCHEMA = obj({
   days: arr(obj({ id, dayIndex: integer(1, 31), date: nullable({ ...text(10), pattern: "^\\d{4}-\\d{2}-\\d{2}$" }), meals: arr(obj({
     id, code: en("breakfast", "lunch", "afternoon_main", "afternoon_snack", "dinner", "shift_main", "other"), label: text(100),
     eatingContext: nullable(en(...EATING_CONTEXT_OPTIONS.map(option => option.value))),
-    groupPortions: arr(obj({ groupId: id, headcount: nullable(integer(0, 100_000)), mealRuleIds: arr(id, 6), dishes: arr(obj({
+    groupPortions: arr(obj({ groupId: id,
+      illustration: nullable(obj({ assetId: { ...text(64), pattern: MENU_IMAGE_ID_PATTERN }, alt: text(300), sourceKind: en("ai", "manual") })),
+      headcount: nullable(integer(0, 100_000)), mealRuleIds: arr(id, 6), dishes: arr(obj({
       id, recipeId: nullable(id), label: text(), sourceKind: en("catalog", "ai", "manual"),
       preparation: obj({ method: nullable(en(...COOKING_METHOD_OPTIONS.map(option => option.value))), texture: nullable(en(...TEXTURE_OPTIONS.map(option => option.value))), steps: arr(text(1000), 20), notes: arr(text(1000), 20) }),
       ingredients: arr(obj({ foodId: id, quantityPerPortion: number(100_000), unit: en("g", "ml"), basis: en("edible_raw"), edibleFraction: nullable({ type: "number", exclusiveMinimum: 0, maximum: 1 }), cookingYield: nullable({ type: "number", exclusiveMinimum: 0, maximum: 100 }) }), 30),
-    }, ["preparation"]), 12) }), 20),
+    }, ["preparation"]), 12) }, ["illustration"]), 20),
   }, ["eatingContext"]), 8) }), 31, 1),
 }, ["eatingContext", "librarySection", "hospitalUse", "availability", "description", "tags"]);
 

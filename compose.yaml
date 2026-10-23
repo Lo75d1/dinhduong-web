@@ -13,6 +13,7 @@ services:
       - "3000"
     volumes:
       - nutrition_chat_tmp:/tmp/dinhduong2598-nutrition-chat-v1
+      - menu_library_images:/app/var/menu-library-images
     healthcheck:
       test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
       interval: 30s
@@ -59,3 +60,4 @@ volumes:
   caddy_data:
   caddy_config:
   nutrition_chat_tmp:
+  menu_library_images:

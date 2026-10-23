@@ -1,4 +1,5 @@
 import type { Profile } from "@/app/tinh-khau-phan/PersonalProfile";
+import type { MealIllustration } from "./illustration";
 /** Library draft, distinct from a Nutrition Chat MenuInput. */
 export type SchoolLevel = "nursery" | "kindergarten" | "primary" | "lower_secondary" | "upper_secondary";
 export type MealCode = "breakfast" | "lunch" | "afternoon_main" | "afternoon_snack" | "dinner" | "shift_main" | "other";
@@ -91,6 +92,7 @@ export type MenuLibraryDraft = {
       eatingContext?: EatingContext | null;
       groupPortions: {
         groupId: string;
+        illustration?: MealIllustration | null;
         headcount: number | null;
         mealRuleIds: string[];
         dishes: {
